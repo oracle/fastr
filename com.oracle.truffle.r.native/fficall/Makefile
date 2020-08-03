@@ -81,23 +81,38 @@ ifeq ($(FASTR_RFFI),managed)
 	# nop
 else
 ifeq ($(OS_NAME),Darwin)
+	# On Darwin libRnative and libRllvm link to libR so that once they are loaded manually by FastR, libR is loaded
+	# Moreover, libR links with libRblas and libRlapack, so those get loaded transitively too
+	# Note that packages do not link with libR properly via @rpath, but that is OK since libR will be loaded explicitly by FastR
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) -L$(FASTR_LIB_DIR) -lRblas -lRlapack $(VERSION_FLAGS)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -Wl,-undefined,dynamic_lookup -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lR -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -Wl,-undefined,dynamic_lookup -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lR -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 
-	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRblas.dylib
-	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRlapack.dylib
-
-	install_name_tool -change bin/libpolyglot-mock.dylib $(LLVM_LIBS_DIR)/libpolyglot-mock.dylib $(LLVM_LIB)
-	
-	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(NFI_LIB)
-	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(NFI_LIB)
-	install_name_tool -change libf2c.so @rpath/libf2c$(DYLIB_EXT) $(NFI_LIB)
-
+	# make the libraries that we just created relocable
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
 	install_name_tool -id @rpath/$(NFI_LIBNAME) $(NFI_LIB)
 	install_name_tool -id @rpath/$(LLVM_LIBNAME) $(LLVM_LIB)
-    # check if we captured libpcre/libz, rpath those in libR
+
+	# libRblas/lapack should resolve any "@path" placeholder in their dependencies list to the directory where they are located
+	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRblas.dylib
+	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRlapack.dylib
+
+	# fixup the dependency libR -> libRblas/lapack
+	# we already configured libR to use its location for "@rpath" placeholder when building it,
+	# now we need to switch the libRblas/lapack dependencies from absolute paths to "@rpath/..." paths
+	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
+	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
+	install_name_tool -change libf2c.so @rpath/libf2c$(DYLIB_EXT) $(R_LIB)
+
+	# fixup the dependency libRnative/llvm -> libR in the same way as above
+	install_name_tool -change $(FASTR_LIB_DIR)/libR.dylib @rpath/libR.dylib $(NFI_LIB)
+	install_name_tool -change $(FASTR_LIB_DIR)/libR.dylib @rpath/libR.dylib $(LLVM_LIB)
+
+	# TODO: check if we really need this and linking with libpolyglot-mock
+	# given that we use -Wl,-undefined,dynamic_lookup when building libRllvm
+	install_name_tool -change bin/libpolyglot-mock.dylib $(LLVM_LIBS_DIR)/libpolyglot-mock.dylib $(LLVM_LIB)
+
+    	# check if we captured libpcre/libz, rpath those in libR
 	python $(FASTR_R_HOME)/mx.fastr/copylib.py updatelib $(FASTR_LIB_DIR) $(FASTR_R_HOME)
 else
 	# not Darwin:
