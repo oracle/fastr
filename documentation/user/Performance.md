@@ -1,7 +1,7 @@
-# High Performance
+# GraalVM R Engine Performance
 
 GraalVM optimizes R code that runs for extended periods of time.
-The speculative optimizations based on the runtime behaviour of the R code and dynamic compilation employed by the GraalVM Runtime are capable of removing most of the abstraction penalty incurred by the dynamism and complexity of the R language.
+The speculative optimizations based on the runtime behaviour of the R code and dynamic compilation employed by the GraalVM runtime are capable of removing most of the abstraction penalty incurred by the dynamism and complexity of the R language.
 
 Examine the algorithm in the following example which calculates the mutual information of a large matrix:
 ```
