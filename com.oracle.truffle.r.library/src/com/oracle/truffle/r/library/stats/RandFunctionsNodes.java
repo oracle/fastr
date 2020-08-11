@@ -94,7 +94,7 @@ public final class RandFunctionsNodes {
     protected abstract static class ConvertToLength extends Node {
         public abstract int execute(RAbstractVector value);
 
-        @Specialization(guards = "dataLib.getLength(vector) == 1")
+        @Specialization(guards = "dataLib.getLength(vector.getData()) == 1")
         public int lengthOne(RAbstractVector vector,
                         @Cached("createNonPreserving()") CastIntegerNode castNode,
                         @CachedLibrary(limit = "getCacheSize(2)") VectorDataLibrary dataLib,
@@ -108,7 +108,7 @@ public final class RandFunctionsNodes {
             return result;
         }
 
-        @Specialization(guards = "dataLib.getLength(vector) != 1", limit = "getVectorAccessCacheSize()")
+        @Specialization(guards = "dataLib.getLength(vector.getData()) != 1", limit = "getVectorAccessCacheSize()")
         public int notSingle(RAbstractVector vector,
                         @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
             return dataLib.getLength(vector.getData());

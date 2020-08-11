@@ -20,6 +20,9 @@ Added missing R builtins and C APIs:
 * define dummy `XLENGTH` macro if `USE_RINTERNALS` is defined
   * non-existence of this macro is used by some packages to detect old R versions
 * `IS_LONG_VEC` C API function
+* when loading native symbol dynamically, FastR also checks the name with trailing underscode to be compatible with GNU-R
+
+# 20.2.0
 
 Bug fixes:
 
@@ -29,7 +32,6 @@ Bug fixes:
 Added missing R builtins and C APIs
 
 * Dummy implementations of `X_IS_SORTED` and `X_NO_NA` for `X = STRING,INTEGER,REAL` #156
-* when loading native symbol dynamically, FastR also checks the name with trailing underscode to be compatible with GNU-R
 
 # 20.1.0
 
