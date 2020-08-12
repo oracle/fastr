@@ -317,6 +317,7 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
     @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
     RLogicalVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         RLogicalVector result = new RLogicalVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

@@ -58,6 +58,12 @@ public final class DuplicateNodes {
             return containerLibrary.duplicate(container, deep == 1);
         }
 
+        @Specialization(replaces = "duplicateContainer")
+        public Object duplicateContainerUncached(RAbstractContainer container, int deep,
+                         @CachedLibrary(limit = "1") AbstractContainerLibrary containerLibrary) {
+            return containerLibrary.duplicate(container, deep == 1);
+        }
+
         @Specialization
         public Object duplicateSequence(RSequence x, @SuppressWarnings("unused") int deep) {
             return x.materialize();

@@ -307,6 +307,7 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
     RDoubleVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         RDoubleVector result = new RDoubleVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

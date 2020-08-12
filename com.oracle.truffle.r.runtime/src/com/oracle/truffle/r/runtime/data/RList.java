@@ -291,6 +291,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
     RList containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         RList result = new RList(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

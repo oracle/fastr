@@ -376,6 +376,7 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
     @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
     RStringVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         RStringVector result = new RStringVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

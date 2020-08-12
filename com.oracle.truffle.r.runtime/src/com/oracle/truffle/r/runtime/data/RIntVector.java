@@ -339,6 +339,7 @@ public final class RIntVector extends RAbstractNumericVector {
     @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
     RIntVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         RIntVector result = new RIntVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

@@ -270,6 +270,7 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
     @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
     RRawVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         RRawVector result = new RRawVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
