@@ -96,7 +96,7 @@ test_default_implementations <- function() {
         # Logical
         c(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE, FALSE),
         # Raw
-        as.raw(c(1,2,3,4,56,215,113)),
+        as.raw(c(1,2,3,4,56,99)),
         # String
         c("Hello", "World", "!", "How", " ", "are", " ", "you", "?")
     )
