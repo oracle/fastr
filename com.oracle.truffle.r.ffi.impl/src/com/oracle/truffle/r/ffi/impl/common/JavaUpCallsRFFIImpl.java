@@ -2776,7 +2776,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int REAL_ELT(Object x, long index) {
+    public double REAL_ELT(Object x, long index) {
         throw implementedAsNode();
     }
 

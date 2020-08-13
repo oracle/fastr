@@ -349,7 +349,7 @@ public interface StdUpCallsRFFI {
     Object REAL(Object x);
 
     @RFFIUpCallNode(REAL_ELTNode.class)
-    int REAL_ELT(Object x, long index);
+    double REAL_ELT(Object x, long index);
 
     @RFFICpointer
     @RFFIUpCallNode(COMPLEXNode.class)
