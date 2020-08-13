@@ -60,7 +60,7 @@ public final class DuplicateNodes {
 
         @Specialization(replaces = "duplicateContainer")
         public Object duplicateContainerUncached(RAbstractContainer container, int deep,
-                         @CachedLibrary(limit = "1") AbstractContainerLibrary containerLibrary) {
+                        @CachedLibrary(limit = "1") AbstractContainerLibrary containerLibrary) {
             return containerLibrary.duplicate(container, deep == 1);
         }
 

@@ -37,8 +37,9 @@ import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDuplicateNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
- * Base class for all ALTREP vector data - altinteger, altreal, altlogical, altcomplex, altraw and altstring.
- * It exports messages of {@link VectorDataLibrary} that are common to every ALTREP vector.
+ * Base class for all ALTREP vector data - altinteger, altreal, altlogical, altcomplex, altraw and
+ * altstring. It exports messages of {@link VectorDataLibrary} that are common to every ALTREP
+ * vector.
  */
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltrepVectorData implements TruffleObject, VectorDataWithOwner {

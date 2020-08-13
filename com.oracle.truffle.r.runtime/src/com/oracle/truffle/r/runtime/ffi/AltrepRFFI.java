@@ -65,13 +65,13 @@ import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
  * with specializations for ALTREP types that have such a method, eg. {@link SetEltNode} has only
  * one specialization for {@link RStringVector}, because only altstrings have Set_elt method.
  *
- * The nodes in this class should be used only for ALTREP instances that have a corresponding
- * method registered, ie. if we want to use {@link IsSortedNode}, Is_sorted ALTREP method should
- * be registered.
+ * The nodes in this class should be used only for ALTREP instances that have a corresponding method
+ * registered, ie. if we want to use {@link IsSortedNode}, Is_sorted ALTREP method should be
+ * registered.
  *
- * Nodes corresponding to ALTREP methods that are called frequently in a usual R application
- * have cached and uncached specializations for all the ALTREP types they support. On the other
- * hand nodes for not so important ALTREP methods do not have cached specializations like
+ * Nodes corresponding to ALTREP methods that are called frequently in a usual R application have
+ * cached and uncached specializations for all the ALTREP types they support. On the other hand
+ * nodes for not so important ALTREP methods do not have cached specializations like
  * {@link NoNANode}.
  *
  * Most of the cached specializations have the same pattern - they cache the class descriptor of
@@ -286,8 +286,8 @@ public final class AltrepRFFI {
 
     /**
      * DataptrNode caches a data pointer for every ALTREP vector. We can do that because a Dataptr
-     * ALTREP method for a particular ALTREP vector should always return the same value.
-     * This is a huge performance optimization.
+     * ALTREP method for a particular ALTREP vector should always return the same value. This is a
+     * huge performance optimization.
      */
     @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class DataptrNode extends Node {

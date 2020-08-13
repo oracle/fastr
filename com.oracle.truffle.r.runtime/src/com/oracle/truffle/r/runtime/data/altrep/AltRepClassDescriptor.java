@@ -31,12 +31,13 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 
 /**
- * A base class for all the class descriptors for ALTREP. The class hierarchy of these descriptors corresponds
- * exactly to how the descriptors are managed in GNU-R.
+ * A base class for all the class descriptors for ALTREP. The class hierarchy of these descriptors
+ * corresponds exactly to how the descriptors are managed in GNU-R.
  *
- * Every descriptor class contains public static final fields describing the ALTREP methods that might be registered
- * into that descriptor. For each ALTREP method we have to know the signature, which arguments should be wrapped
- * when we call this method, and whether to unwrap the return value.
+ * Every descriptor class contains public static final fields describing the ALTREP methods that
+ * might be registered into that descriptor. For each ALTREP method we have to know the signature,
+ * which arguments should be wrapped when we call this method, and whether to unwrap the return
+ * value.
  */
 public abstract class AltRepClassDescriptor extends RBaseObject {
     public static final String unserializeMethodSignature = "(pointer, pointer): pointer";

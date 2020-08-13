@@ -37,8 +37,9 @@ import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 
 /**
- * Represents all possible *_IS_SORTED upcalls eg. INTEGER_IS_SORTED. Note that all these upcalls just dispatches
- * to {@code VectorDataLibrary.isSorted} message, therefore, we can merge them in this class.
+ * Represents all possible *_IS_SORTED upcalls eg. INTEGER_IS_SORTED. Note that all these upcalls
+ * just dispatches to {@code VectorDataLibrary.isSorted} message, therefore, we can merge them in
+ * this class.
  */
 @GenerateUncached
 @ImportStatic(DSLConfig.class)

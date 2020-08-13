@@ -34,8 +34,8 @@ import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import org.graalvm.collections.EconomicMap;
 
 /**
- * A context that stores all the class descriptors for ALTREP.
- * TODO: Currently this class is not useful. Use it for serialization.
+ * A context that stores all the class descriptors for ALTREP. TODO: Currently this class is not
+ * useful. Use it for serialization.
  */
 public final class AltRepContext implements RContext.ContextState {
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);

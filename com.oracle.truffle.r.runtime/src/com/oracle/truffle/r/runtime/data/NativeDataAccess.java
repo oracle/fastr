@@ -1201,9 +1201,11 @@ public final class NativeDataAccess {
     }
 
     /**
-     * Prepares the given ALTREP vector for usage in native code. Does not allocate any native memory.
+     * Prepares the given ALTREP vector for usage in native code. Does not allocate any native
+     * memory.
      *
      * Used by {@code toNative} messages.
+     * 
      * @param altrepVec an ALTREP vector.
      * @param length length of the vector.
      * @param address Data address of the ALTREP vector.

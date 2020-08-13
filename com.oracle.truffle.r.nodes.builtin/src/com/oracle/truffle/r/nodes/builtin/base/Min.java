@@ -67,8 +67,8 @@ public abstract class Min extends RBuiltinNode.Arg2 {
     }
 
     /**
-     * We want to dispatch to the ALTREP Min method only when there is just one ALTREP instance.
-     * See {@link Sum#sumLengthOneAltrep}.
+     * We want to dispatch to the ALTREP Min method only when there is just one ALTREP instance. See
+     * {@link Sum#sumLengthOneAltrep}.
      */
     @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasMinMethodRegistered(args.getArgument(0))"})
     protected Object minLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,

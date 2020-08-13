@@ -43,6 +43,7 @@ public abstract class NativeArrayWrapper implements TruffleObject {
 
     /**
      * Creates a wrapper for integer native array.
+     * 
      * @param arrayPtr Address to the array.
      */
     public static NativeArrayWrapper createIntWrapper(long arrayPtr, int size) {
@@ -51,6 +52,7 @@ public abstract class NativeArrayWrapper implements TruffleObject {
 
     /**
      * Creates a wrapper for double native array.
+     * 
      * @param arrayPtr Address to the array.
      */
     public static NativeArrayWrapper createDoubleWrapper(long arrayPtr, int size) {

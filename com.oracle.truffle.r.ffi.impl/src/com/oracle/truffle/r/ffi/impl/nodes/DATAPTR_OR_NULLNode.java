@@ -56,8 +56,9 @@ public abstract class DATAPTR_OR_NULLNode extends FFIUpCallNode.Arg1 {
     }
 
     /**
-     * For normal vectors we want to return NULL by default, because we do not want to allocate any off-heap
-     * native memory.
+     * For normal vectors we want to return NULL by default, because we do not want to allocate any
+     * off-heap native memory.
+     * 
      * @return NULL
      */
     @Specialization(guards = "!isAltrep(vector)")

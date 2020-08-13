@@ -192,8 +192,8 @@ public abstract class RObjectDataPtr implements TruffleObject {
      * A class that wraps a pointer to the data of an ALTREP vector. It just resembles a native
      * pointer.
      *
-     * The data pointer (return value of Dataptr ALTREP method) for a given ALTREP vector is
-     * already cached before {@link AltrepVectorDataPtr} is constructed for such a vector.
+     * The data pointer (return value of Dataptr ALTREP method) for a given ALTREP vector is already
+     * cached before {@link AltrepVectorDataPtr} is constructed for such a vector.
      */
     @ExportLibrary(InteropLibrary.class)
     protected static final class AltrepVectorDataPtr extends RObjectDataPtr {

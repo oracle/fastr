@@ -1423,6 +1423,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     /**
      * Converts the given {@code method} argument into an executable method and wraps it in
      * {@link AltrepMethodDescriptor}.
+     * 
      * @param method A reference to a native function
      * @param signature Signature of the {@code method}
      */
