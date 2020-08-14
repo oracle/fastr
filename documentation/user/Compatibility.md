@@ -7,7 +7,7 @@ tests for all aspects of the R language and the builtin functionality, and these
 tests are available as part of the R source code. GraalVM R engine aims to be
 fully compatible with GNU R, including its native interface as used by [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html). It
 can install and run unmodified complex R packages like `ggplot2`, `Shiny`, or
-`Rcpp`. As some packages rely on unspecified behavior or implementation details
+`Rcpp`. As some packages rely on unspecified behaviour or implementation details
 of GNU-R, support for packages is work in progress, and some packages might not
 install successfully or work as expected.
 
@@ -29,8 +29,7 @@ Known limitations of GraalVM implementation of R compared to GNU R:
    but do not execute any useful code. Character vectors are represented as Java Strings and therefore encoded in UTF-16 format. GraalVM implementation of R will add support for encoding in future releases.
    - Some parts of the native API (e.g., `DATAPTR`) expose implementation details that are hard to emulate for alternative implementations of R. These are implemented as needed while testing the GraalVM implementation of R with various CRAN packages.
 
-You can use the [compatibility checker](http://graalvm.org/docs/reference-manual/compatibility) to find whether the CRAN packages you are interested in are tested on GraalVM and whether the tests pass successfully.
-
+You can use the [Compatibility checker](https://www.graalvm.org/compatibility/) to find whether the CRAN packages you are interested in are tested on GraalVM and whether the tests pass successfully.
 <br/>
 <br/>
 <br/>
