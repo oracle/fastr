@@ -3,7 +3,7 @@
 GraalVM R runtime provides built-in interoperability with Java. Java class objects can be obtained via `java.type(...)`. In order to run FastR with Java interoperability features the `R` or `Rscript` commands have to be started
 with the `--jvm` switch.
 ```
-$ $GRAALVM_HOME/R --jvm
+$GRAALVM_HOME/R --jvm
 ```
 
 All the following examples are meant to be executed in the R Console, no additional Java dependencies are necessary.
@@ -51,8 +51,8 @@ openJavaWindow()
 GraalVM implementation of R provides its own rJava compatible replacement package available at [GitHub](https://github.com/oracle/fastr/tree/master/com.oracle.truffle.r.pkgs/rJava),
 which can be installed using:
 
-```shell
-$ R -e "install.fastr.packages('rJava')"
+```
+R -e "install.fastr.packages('rJava')"
 ```
 
 To access third party Java libraries, they have to be placed on FastR class path.

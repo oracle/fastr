@@ -29,9 +29,9 @@ when installing R packages by running
 
 ```shell
 # use local installation of GGC:
-$ R -e 'fastr.setToolchain("native")'
+R -e 'fastr.setToolchain("native")'
 # to revert back to using the GraalVM's LLVM toolchain:
-$ R -e 'fastr.setToolchain("llvm")'
+R -e 'fastr.setToolchain("llvm")'
 ```
 
 Using the system default compilers may be more reliable, but you loose the

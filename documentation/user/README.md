@@ -85,7 +85,7 @@ but for the sake of future compatibility the Java interoperability will not be a
 
 You can optionally build the native image using:
 ```
-$ gu rebuild-images R
+gu rebuild-images R
 ```
 The native image of FastR is intended only for curious users and experiments.
 There are known issues and limitations. Once the native image was built, you can use
