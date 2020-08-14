@@ -11,7 +11,7 @@ All the following examples are meant to be executed in the R Console, no additio
 The standard `new` function interprets string arguments as a Java class if such class exists. `new` also accepts Java types returned from `java.type`.
 Fields and methods of Java objects can be accessed using the `$` operator.
 Additionally, you can use `awt(...)` to open an R drawing device
-directly on a Java Graphics surface, for more details see [Java Based Graphics](#java-based-graphics).
+directly on a Java Graphics surface, for more details see [Java Graphics Interoperability](#java-graphics-interoperability).
 
 The following example creates a new Java `BufferedImage` object, plots random data to it using R's `grid` package,
 and shows the image in a window using Java's `AWT` framework. Note that you must start the R script with `--jvm` to have access to Java interoperability.

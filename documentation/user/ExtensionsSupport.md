@@ -3,14 +3,14 @@
 The GraalVM R engine can run [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) in two modes:
 
 * **native**: the native machine code is run directly on your CPU, this is the same as how GNU-R runs R extensions.
-* **llvm**: if the LLVM bitcode is available, it can be interpreted by [GraalVM LLVM]({{ "/docs/reference-manual/languages/llvm" | relative_url }}).
+* **llvm**: if the LLVM bitcode is available, it can be interpreted by [GraalVM LLVM](https://www.graalvm.org/docs/reference-manual/llvm/).
 
 The *native* mode is better suited for code that does not extensively interact with the R API, for example,
 plain C or Fortran numerical computations working on primitive arrays. The *llvm* mode provides significantly
 better performance for extensions that frequently call between R and the C/C++ code, because GraalVM LLVM
 engine is also partially evaluated by the [Truffle compiler](https://github.com/oracle/graal/tree/master/truffle) like the R code, both can be inlined and optimized
 as one compilation unit. Moreover, GraalVM LLVM is supported by
-[GraalVM tools](http://graalvm.org/docs/reference-manual/tools/) which allows to, for instance,
+[GraalVM tools](http://graalvm.org/docs/tools/) which allows to, for instance,
 debug R and C code together.
 
 In one GraalVM R process, any R package can be loaded in either mode. That is, GraalVM R supports
@@ -19,7 +19,7 @@ mixing packages loaded in the *native* mode with packages loaded in the *llvm* m
 ## Generating LLVM Bitcode
 
 As of version 19.3.0, the GraalVM R engine is configured to use the
-[LLVM toolchain](http://graalvm.org/docs/reference-manual/languages/llvm/#llvm-toolchain)
+[LLVM toolchain](https://www.graalvm.org/docs/reference-manual/llvm/)
 to compile R packages native code. This toolchain produces standard executable binaries for
 a given system, but it also embeds the corresponding LLVM bitcode into them.
 The binaries produced by the LLVM Toolchain can be loaded in both modes: *native* or *llvm*.

@@ -2,17 +2,16 @@
 
 GraalVM implementation of R, also known as **[FastR](https://github.com/oracle/fastr)**,
 is [compatible with GNU R](Compatibility.md),
-can run R code at [unparalleled performance](Performance.md),
-[integrates with the GraalVM ecosystem](#graalvm-integration) and provides [additional R level features](#graalvm-r-engine-additional-features).
+can run R code at [unparalleled performance](Performance.md) and [integrates with the GraalVM ecosystem](#graalvm-integration).
 
 ## Installing R
 
-The R language runtime is not provided by default, can be added to GraalVM using the [GraalVM Updater](https://www.graalvm.org/docs/reference-manual/gu/#manual-installation) tool:
+The R language runtime is not provided by default, can be added to GraalVM using the [GraalVM Updater](https://www.graalvm.org/docs/reference-manual/gu/) tool:
 ```
-$ gu install r
+gu install r
 ```
 The installation of the R language component is possible only
-[from GitHub catalog](https://www.graalvm.org/docs/reference-manual/gu/#manual-installation)
+[from GitHub catalog](https://www.graalvm.org/docs/reference-manual/gu/#component-installation)
 for both GraalVM Community and GraalVM Enterprise users. See `$GRAALVM_HOME/bin/gu --help` for more information.
 
 The R language home directory, which will be referenced as `$R_HOME` in this reference manual, is located in:
@@ -43,15 +42,15 @@ satisfy the dependencies of the most common R packages:
 
 * Ubuntu 18.04 and 19.10:
 ```
-$ apt-get install build-essential gfortran libxml2 libc++-dev
+apt-get install build-essential gfortran libxml2 libc++-dev
 ```
 * Oracle Linux 7 and 8:
 ```
-$ yum groupinstall 'Development Tools' && yum install gcc-gfortran bzip2 libxml2-devel
+yum groupinstall 'Development Tools' && yum install gcc-gfortran bzip2 libxml2-devel
 ```
 * MacOS
 ```
-$ brew install gcc
+brew install gcc
 ```
 
 Note: if the `gfortran` executable is not on your system path, you will need to configure
@@ -80,8 +79,8 @@ Use `--help` to print the list of supported options. The most important options 
   - `--vm.Djava.net.useSystemProxies=true` to pass any options to the JVM, this will be translated to `-Djava.net.useSystemProxies=true`.
 
 Note that unlike other GraalVM languages, R does not yet ship with a
-[Native Image](https://www.graalvm.org/docs/reference-manual/graalvm-native-image/) of its runtime.
-Therefore the `--native` option, which is the default, will still start Rscript on top of JVM,
+[Native Image](https://www.graalvm.org/docs/reference-manual/native-image/) of its runtime.
+Therefore the `--native` option, which is the default, will still start `Rscript` on top of JVM,
 but for the sake of future compatibility the Java interoperability will not be available in such case.
 
 You can optionally build the native image using:
@@ -101,28 +100,7 @@ The R language integration with the GraalVM ecosystem includes:
    - [VisualVM integration](https://www.graalvm.org/docs/tools/visualvm/)
 
 To start debugging the code start the R script with `--inspect` option
-```shell
-$ Rscript --inspect myScript.R
+```
+Rscript --inspect myScript.R
 ```
 Note that GNU R compatible debugging using, for example, `debug(myFunction)` is also supported.
-
-## Additional Features
-
-##### Java Based Graphics
-The GraalVM implementation of R includes its own Java based implementation of the `grid` package and the following graphics devices: `png`, `jpeg`, `bmp`, `svg` and `awt` (`X11` is aliased to `awt`). The `graphics` package and most of its functions are not supported at the moment.
-
-The `awt` device is based on the Java `Graphics2D` object and users can pass it their own `Graphics2D` object instance when opening the device using the `awt` function, as shown in the Java interop example.
-When the `Graphics2D` object is not provided to `awt`, it opens a new window similarly to `X11`.
-
-The `svg` device in GraalVM implementation of R generates more lightweight SVG code than the `svg` implementation in GNU R.
-Moreover, functions tailored to manipulate the SVG device are provided: `svg.off` and `svg.string`.
-The SVG device is demonstrated in the following code sample. Please use the `?functionName` syntax to learn more.
-
-```
-library(lattice)
-svg()
-mtcars$cars <- rownames(mtcars)
-print(barchart(cars~mpg, data=mtcars))
-svgCode <- svg.off()
-cat(svgCode)
-```
