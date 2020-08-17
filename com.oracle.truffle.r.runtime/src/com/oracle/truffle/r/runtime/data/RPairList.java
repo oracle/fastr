@@ -1313,6 +1313,24 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     }
 
     // -------------------------------
+    // AbstractContainerLibrary
+    @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
+    public RAbstractContainer duplicate(boolean deep) {
+        if (deep) {
+            RSharingAttributeStorage copy = deepCopy();
+            // deepCopy currently returns in fact only RAbstractContainer instances. If this
+            // behavior changes in the future, we should modify the signature of
+            // AbstractContainerLibrary.duplicate method.
+            // Note that only RPairList has special handling of AbstractContainerLibrary.duplicate
+            // method.
+            assert copy instanceof RAbstractContainer;
+            return (RAbstractContainer) copy;
+        } else {
+            return copy();
+        }
+    }
+
+    // -------------------------------
     // VectorDataLibrary
 
     @ExportMessage
