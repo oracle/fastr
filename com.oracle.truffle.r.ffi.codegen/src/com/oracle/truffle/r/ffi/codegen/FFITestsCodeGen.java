@@ -49,7 +49,7 @@ public final class FFITestsCodeGen extends CodeGenBase {
     private static final String FUN_PREFIX = "api_";
     private static final HashSet<String> IGNORE_FUNS = new HashSet<>(
                     Arrays.asList("Rf_cospi", "Rf_sinpi", "Rf_tanpi", "R_forceAndCall", "Rf_duplicate", "R_ToplevelExec", "R_CleanUp", "R_ParseVector", "octsize", "R_NewHashedEnv", "Rf_ScalarComplex",
-                                    "Rf_ScalarRaw", "Rf_allocList", "Rf_allocSExp", "DispatchPRIMFUN"));
+                                    "Rf_ScalarRaw", "Rf_allocList", "Rf_allocSExp", "DispatchPRIMFUN", "COMPLEX_ELT"));
 
     public static void main(String[] args) {
         new FFITestsCodeGen().run(args);

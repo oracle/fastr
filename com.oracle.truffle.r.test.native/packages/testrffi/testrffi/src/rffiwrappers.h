@@ -34,10 +34,6 @@
 #include <R_ext/Connections.h>
 #include <Rmath.h>
 
-SEXP api_OBJECT(SEXP x);
-
-SEXP api_Rf_cons(SEXP car, SEXP cdr);
-
 SEXP api_Rf_ScalarInteger(SEXP value);
 
 SEXP api_Rf_ScalarLogical(SEXP value);
@@ -56,7 +52,7 @@ SEXP api_Rf_asChar(SEXP x);
 
 SEXP api_Rf_coerceVector(SEXP x, SEXP mode);
 
-SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding);
+SEXP api_Rf_cons(SEXP car, SEXP cdr);
 
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg);
 
@@ -127,6 +123,30 @@ SEXP api_SETLEVELS(SEXP x, SEXP gpbits);
 SEXP api_SET_VECTOR_ELT(SEXP x, SEXP i, SEXP v);
 
 SEXP api_SET_ATTRIB(SEXP target, SEXP attributes);
+
+SEXP api_RAW_ELT(SEXP x, SEXP index);
+
+SEXP api_LOGICAL_ELT(SEXP x, SEXP index);
+
+SEXP api_INTEGER_ELT(SEXP x, SEXP index);
+
+SEXP api_REAL_ELT(SEXP x, SEXP index);
+
+SEXP api_INTEGER_IS_SORTED(SEXP x);
+
+SEXP api_INTEGER_NO_NA(SEXP x);
+
+SEXP api_REAL_IS_SORTED(SEXP x);
+
+SEXP api_REAL_NO_NA(SEXP x);
+
+SEXP api_LOGICAL_IS_SORTED(SEXP x);
+
+SEXP api_LOGICAL_NO_NA(SEXP x);
+
+SEXP api_STRING_IS_SORTED(SEXP x);
+
+SEXP api_STRING_NO_NA(SEXP x);
 
 SEXP api_STRING_ELT(SEXP x, SEXP i);
 
@@ -557,4 +577,6 @@ SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName
 SEXP api_Rf_isObject(SEXP x);
 
 SEXP api_R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env);
+
+SEXP api_OBJECT(SEXP x);
 
