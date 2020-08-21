@@ -72,14 +72,14 @@ R [polyglot options] [R options] [filename]
 Rscript [polyglot options] [R options] [filename]
 ```
 
-GraalVM R engine uses the same [polyglot options](https://www.graalvm.org/docs/reference-manual/polyglot-programming/#polyglot-options) as other GraalVM languages and the same R options as [GNU R](https://cran.r-project.org/doc/manuals/r-release/R-intro.html#Invoking-R-from-the-command-line), e.g., `bin/R --vanilla`.
+GraalVM R engine uses the same [polyglot options](https://www.graalvm.org/reference-manual/polyglot-programming/#polyglot-options) as other GraalVM languages and the same R options as [GNU R](https://cran.r-project.org/doc/manuals/r-release/R-intro.html#Invoking-R-from-the-command-line), e.g., `bin/R --vanilla`.
 Use `--help` to print the list of supported options. The most important options include:
   - `--jvm` to enable Java interoperability
   - `--polyglot` to enable interoperability with other GraalVM languages
   - `--vm.Djava.net.useSystemProxies=true` to pass any options to the JVM, this will be translated to `-Djava.net.useSystemProxies=true`.
 
 Note that unlike other GraalVM languages, R does not yet ship with a
-[Native Image](https://www.graalvm.org/docs/reference-manual/native-image/) of its runtime.
+[Native Image](https://www.graalvm.org/reference-manual/native-image/) of its runtime.
 Therefore the `--native` option, which is the default, will still start `Rscript` on top of JVM,
 but for the sake of future compatibility the Java interoperability will not be available in such case.
 
@@ -95,9 +95,9 @@ the `--jvm` flag to run FastR again in the JVM mode.
 
 The R language integration with the GraalVM ecosystem includes:
    - seamless interoperability with other GraalVM languages and with Java
-   - debugging with [Chrome DevTools](https://www.graalvm.org/docs/tools/chrome-debugger/)
-   - [CPU and memory profiling](https://www.graalvm.org/docs/tools/profiling/)
-   - [VisualVM integration](https://www.graalvm.org/docs/tools/visualvm/)
+   - debugging with [Chrome DevTools](https://www.graalvm.org/tools/chrome-debugger/)
+   - [CPU and memory profiling](https://www.graalvm.org/tools/profiling/)
+   - [VisualVM integration](https://www.graalvm.org/tools/visualvm/)
 
 To start debugging the code start the R script with `--inspect` option
 ```
