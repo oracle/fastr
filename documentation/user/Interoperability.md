@@ -111,6 +111,6 @@ For more information see the FastR help pages or try the examples.
 * `export`
 * `import`
 
-See the [Polyglot Programming](https://www.graalvm.org/docs/reference-manual/polyglot-programming/)
+See the [Polyglot Programming](https://www.graalvm.org/reference-manual/polyglot-programming/)
 reference for more information about interoperability with other programming
 languages.
