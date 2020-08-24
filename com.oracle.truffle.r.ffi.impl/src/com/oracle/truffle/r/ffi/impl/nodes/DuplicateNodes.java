@@ -67,7 +67,8 @@ public final class DuplicateNodes {
         }
 
         /**
-         * This specialization is currently only for {@link com.oracle.truffle.r.runtime.data.RS4Object} and
+         * This specialization is currently only for
+         * {@link com.oracle.truffle.r.runtime.data.RS4Object} and
          * {@link com.oracle.truffle.r.runtime.data.RFunction}.
          */
         @CompilerDirectives.TruffleBoundary

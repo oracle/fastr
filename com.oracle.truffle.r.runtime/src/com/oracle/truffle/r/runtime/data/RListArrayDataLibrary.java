@@ -74,7 +74,7 @@ public class RListArrayDataLibrary {
 
         @Specialization(guards = {"deep", "length(receiver) <= 3"})
         public static Object[] copyWithDispatchedLibrary(Object[] receiver, @SuppressWarnings("unused") boolean deep,
-                                                         @CachedLibrary(limit = "3") AbstractContainerLibrary containerLib) {
+                        @CachedLibrary(limit = "3") AbstractContainerLibrary containerLib) {
             Object[] result = new Object[receiver.length];
             for (int i = 0; i < receiver.length; i++) {
                 result[i] = deepCopyElement(receiver[i], containerLib);
