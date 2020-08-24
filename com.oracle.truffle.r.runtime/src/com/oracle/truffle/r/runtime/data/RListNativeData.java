@@ -89,13 +89,13 @@ public class RListNativeData implements TruffleObject {
     }
 
     @ExportMessage
-    public Object[] copy(@SuppressWarnings("unused") boolean deep) {
-        return NativeDataAccess.copyListNativeData(vec.getNativeMirror());
+    public Object[] copy(boolean deep) {
+        return NativeDataAccess.copyListNativeData(vec.getNativeMirror(), deep);
     }
 
     @ExportMessage
     public Object[] getListDataCopy() {
-        return NativeDataAccess.copyListNativeData(vec.getNativeMirror());
+        return NativeDataAccess.copyListNativeData(vec.getNativeMirror(), false);
     }
 
     // Read access to the elements:

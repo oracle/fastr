@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
@@ -678,18 +679,33 @@ public final class NativeDataAccess {
         return data;
     }
 
-    public static Object[] copyListNativeData(NativeMirror mirror) {
+    public static Object[] copyListNativeData(NativeMirror mirror, boolean deep) {
         assert mirror.getDataAddress() != 0;
         Object[] data = new Object[(int) mirror.length];
+        AbstractContainerLibrary containerLib = AbstractContainerLibrary.getFactory().getUncached();
         for (int i = 0; i < mirror.length; i++) {
             long elemAddr = NativeMemory.getLong(mirror.dataAddress, i);
             assert elemAddr != 0L;
             Object elem = lookup(elemAddr);
-            data[i] = elem;
+            if (deep) {
+                data[i] = deepCopy(elem, containerLib);
+            } else {
+                data[i] = elem;
+            }
         }
         return data;
     }
 
+    private static Object deepCopy(Object element, AbstractContainerLibrary containerLib) {
+        if (element instanceof RAbstractContainer) {
+            return containerLib.duplicate(element, true);
+        } else if (element instanceof RSharingAttributeStorage) {
+            // Handle more general and slower case for RS4Object or RFunction.
+            return ((RSharingAttributeStorage) element).deepCopy();
+        } else {
+            return element;
+        }
+    }
     // methods operating on vectors that may have a native mirror assigned:
 
     private static final Assumption noIntNative = Truffle.getRuntime().createAssumption("noIntNative");
