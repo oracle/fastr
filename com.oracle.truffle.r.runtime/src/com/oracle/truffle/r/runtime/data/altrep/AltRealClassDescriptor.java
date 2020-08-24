@@ -64,8 +64,8 @@ public class AltRealClassDescriptor extends AltVecClassDescriptor {
     private AltrepMethodDescriptor minMethodDescriptor;
     private AltrepMethodDescriptor maxMethodDescriptor;
 
-    public AltRealClassDescriptor(String className, String packageName, Object dllInfo) {
-        super(className, packageName, dllInfo);
+    public AltRealClassDescriptor(String className, String packageName) {
+        super(className, packageName);
     }
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {

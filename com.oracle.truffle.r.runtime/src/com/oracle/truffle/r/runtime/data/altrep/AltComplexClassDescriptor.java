@@ -39,8 +39,8 @@ public class AltComplexClassDescriptor extends AltVecClassDescriptor {
     private AltrepMethodDescriptor eltMethodDescriptor;
     private AltrepMethodDescriptor getRegionMethodDescriptor;
 
-    public AltComplexClassDescriptor(String className, String packageName, Object dllInfo) {
-        super(className, packageName, dllInfo);
+    public AltComplexClassDescriptor(String className, String packageName) {
+        super(className, packageName);
     }
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {

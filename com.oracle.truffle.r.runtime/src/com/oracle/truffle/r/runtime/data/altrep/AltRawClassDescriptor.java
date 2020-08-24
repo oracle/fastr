@@ -39,8 +39,8 @@ public class AltRawClassDescriptor extends AltVecClassDescriptor {
     private AltrepMethodDescriptor eltMethodDescriptor;
     private AltrepMethodDescriptor getRegionMethodDescriptor;
 
-    public AltRawClassDescriptor(String className, String packageName, Object dllInfo) {
-        super(className, packageName, dllInfo);
+    public AltRawClassDescriptor(String className, String packageName) {
+        super(className, packageName);
     }
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {

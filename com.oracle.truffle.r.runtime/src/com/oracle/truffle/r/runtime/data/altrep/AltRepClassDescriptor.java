@@ -77,7 +77,6 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     // Instance data
     private final String className;
     private final String packageName;
-    private final Object dllInfo;
     // Methods
     private AltrepMethodDescriptor unserializeMethodDescriptor;
     private AltrepMethodDescriptor unserializeEXMethodDescriptor;
@@ -89,10 +88,9 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     private AltrepMethodDescriptor lengthMethodDescriptor;
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
-    AltRepClassDescriptor(String className, String packageName, Object dllInfo) {
+    AltRepClassDescriptor(String className, String packageName) {
         this.className = className;
         this.packageName = packageName;
-        this.dllInfo = dllInfo;
     }
 
     @Override

@@ -64,8 +64,8 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     private AltrepMethodDescriptor minMethodDescriptor;
     private AltrepMethodDescriptor maxMethodDescriptor;
 
-    public AltIntegerClassDescriptor(String className, String packageName, Object dllInfo) {
-        super(className, packageName, dllInfo);
+    public AltIntegerClassDescriptor(String className, String packageName) {
+        super(className, packageName);
     }
 
     public AltrepMethodDescriptor getEltMethodDescriptor() {

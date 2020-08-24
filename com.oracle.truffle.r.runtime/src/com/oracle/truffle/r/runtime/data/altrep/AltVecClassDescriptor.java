@@ -44,8 +44,8 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     private AltrepMethodDescriptor dataptrOrNullMethodDescriptor;
     private AltrepMethodDescriptor extractSubsetMethodDescriptor;
 
-    AltVecClassDescriptor(String className, String packageName, Object dllInfo) {
-        super(className, packageName, dllInfo);
+    AltVecClassDescriptor(String className, String packageName) {
+        super(className, packageName);
     }
 
     public void registerDataptrMethod(AltrepMethodDescriptor dataptrMethod) {

@@ -58,8 +58,8 @@ public class AltLogicalClassDescriptor extends AltVecClassDescriptor {
     private AltrepMethodDescriptor noNAMethodDescriptor;
     private AltrepMethodDescriptor sumMethodDescriptor;
 
-    public AltLogicalClassDescriptor(String className, String packageName, Object dllInfo) {
-        super(className, packageName, dllInfo);
+    public AltLogicalClassDescriptor(String className, String packageName) {
+        super(className, packageName);
     }
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {

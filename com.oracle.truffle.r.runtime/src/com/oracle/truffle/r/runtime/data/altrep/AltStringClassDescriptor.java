@@ -49,8 +49,8 @@ public class AltStringClassDescriptor extends AltVecClassDescriptor {
     private AltrepMethodDescriptor isSortedMethodDescriptor;
     private AltrepMethodDescriptor noNAMethodDescriptor;
 
-    public AltStringClassDescriptor(String className, String packageName, Object dllInfo) {
-        super(className, packageName, dllInfo);
+    public AltStringClassDescriptor(String className, String packageName) {
+        super(className, packageName);
     }
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
