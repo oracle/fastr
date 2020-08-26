@@ -42,7 +42,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -242,9 +241,6 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         private Object lazyLoadDBFetchInternal(RContext context, MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook,
                         CallRFunctionCachedNode callCache) {
-            if (CompilerDirectives.inInterpreter()) {
-                LoopNode.reportLoopCount(this, -5);
-            }
             String dbPath = datafile.getDataAt(0);
             String packageName = context.getSafeTruffleFile(dbPath).getName();
             byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(context, dbPath);
