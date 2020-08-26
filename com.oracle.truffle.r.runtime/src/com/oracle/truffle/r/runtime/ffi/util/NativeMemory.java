@@ -110,6 +110,7 @@ public abstract class NativeMemory {
         traceFreeDone(address, debugInfo);
     }
 
+    @TruffleBoundary
     public static NativeMemoryWrapper wrapNativeMemory(long address, Object owner) {
         return new FreeingNativeMemoryWrapper(address, owner);
     }
