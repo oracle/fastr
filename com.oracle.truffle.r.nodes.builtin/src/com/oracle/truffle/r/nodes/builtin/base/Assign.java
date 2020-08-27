@@ -28,14 +28,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
@@ -131,9 +129,6 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
                 env = REnvironment.globalEnv();
             }
         } else {
-            if (CompilerDirectives.inInterpreter()) {
-                LoopNode.reportLoopCount(this, -1);
-            }
             if (env == REnvironment.emptyEnv()) {
                 throw error(RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
             }
