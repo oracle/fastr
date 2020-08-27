@@ -62,19 +62,19 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         return AltrepDownCallNodeImplNodeGen.getUncached();
     }
 
-    @Specialization(guards = "cachedLength == args.length", limit = "3")
+    @Specialization(limit = "3")
     public Object doIt(AltrepMethodDescriptor altrepDowncallIn, boolean unwrapResult, boolean[] wrapArguments, Object[] args,
-                    @Cached("args.length") int cachedLength,
                     @CachedLibrary("altrepDowncallIn.method") InteropLibrary methodInterop,
                     @Cached(value = "createUnwrapNode(unwrapResult)", uncached = "createUncachedUnwrapNode()") FFIUnwrapNode unwrapNode,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                    @Cached("createMaterialized(wrapArguments)") FFIMaterializeNode[] materializeNodes,
-                    @Cached("createToNatives(wrapArguments)") FFIToNativeMirrorNode[] toNativeNodes,
+                    @Cached(value = "createMaterialized(wrapArguments)", allowUncached = true) FFIMaterializeNode[] materializeNodes,
+                    @Cached(value = "createToNatives(wrapArguments)", allowUncached = true) FFIToNativeMirrorNode[] toNativeNodes,
                     @Cached("createBinaryProfile()") ConditionProfile isLLVMProfile,
                     @Cached BranchProfile unwrapResultProfile,
                     @Cached("createIdentityProfile()") ValueProfile identityProfile,
                     @Cached AfterDownCallProfiles afterDownCallProfiles) {
         CompilerAsserts.partialEvaluationConstant(unwrapResult);
+        CompilerAsserts.partialEvaluationConstant(args.length);
         AltrepMethodDescriptor altrepMethodDescriptor = identityProfile.profile(altrepDowncallIn);
 
         assert methodInterop.isExecutable(altrepMethodDescriptor.method);
@@ -88,7 +88,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         }
 
         Object ret;
-        try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(cachedLength)) {
+        try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
             Object[] wrappedArgs = ffiWrap.wrapSome(args, materializeNodes, toNativeNodes, wrapArguments);
             ret = methodInterop.execute(altrepMethodDescriptor.method, wrappedArgs);
             if (unwrapResult) {
@@ -107,26 +107,6 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
 
         return ret;
     }
-
-    @Specialization(guards = "cachedLength == args.length", replaces = "doIt")
-    public Object doItWithDispatchedMethodInterop(
-                    AltrepMethodDescriptor altrepDowncall, boolean unwrapResult, boolean[] wrapArguments, Object[] args,
-                    @Cached("args.length") int cachedLength,
-                    @CachedLibrary(limit = "3") InteropLibrary methodInterop,
-                    @Cached(value = "createUnwrapNode(unwrapResult)", uncached = "createUncachedUnwrapNode()") FFIUnwrapNode unwrapNode,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                    @Cached(value = "createMaterialized(wrapArguments)", allowUncached = true) FFIMaterializeNode[] materializeNodes,
-                    @Cached(value = "createToNatives(wrapArguments)", allowUncached = true) FFIToNativeMirrorNode[] toNativeNodes,
-                    @Cached("createBinaryProfile()") ConditionProfile isLLVMProfile,
-                    @Cached BranchProfile unwrapResultProfile,
-                    @Cached("createIdentityProfile()") ValueProfile identityProfile,
-                    @Cached AfterDownCallProfiles afterDownCallProfiles) {
-        return doIt(altrepDowncall, unwrapResult, wrapArguments, args, cachedLength, methodInterop, unwrapNode,
-                        ctxRef, materializeNodes, toNativeNodes, isLLVMProfile, unwrapResultProfile, identityProfile,
-                        afterDownCallProfiles);
-    }
-
-    // TODO: Implement some uncached specialization?
 
     protected static FFIUnwrapNode createUnwrapNode(boolean unwrapFlag) {
         if (unwrapFlag) {
