@@ -45,12 +45,12 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import java.util.Arrays;
 
 @ExportLibrary(VectorDataLibrary.class)
-class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
+public class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     private final double[] data;
     private boolean complete;
     private RDoubleVector owner;
 
-    RDoubleArrayVectorData(double[] data, boolean complete) {
+    public RDoubleArrayVectorData(double[] data, boolean complete) {
         this.data = data;
         this.complete = complete && ENABLE_COMPLETE;
     }

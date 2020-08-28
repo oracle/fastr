@@ -36,6 +36,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.altrep.AltComplexClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
@@ -103,6 +106,16 @@ public final class RComplexVector extends RAbstractAtomicVector implements RMate
         NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         return result;
+    }
+
+    public static RComplexVector createAltComplex(AltComplexClassDescriptor descriptor, RAltRepData altRepData) {
+        RAltComplexVectorData altComplexVectorData = new RAltComplexVectorData(descriptor, altRepData);
+        RComplexVector altComplexVec = new RComplexVector();
+        altComplexVec.setAltRep();
+        altComplexVec.data = altComplexVectorData;
+        int length = AltrepUtilities.getLengthUncached(altComplexVec);
+        altComplexVec.setData(altComplexVectorData, length);
+        return altComplexVec;
     }
 
     @ExportMessage

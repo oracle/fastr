@@ -128,10 +128,7 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public VectorDataClosure copy(boolean deep) {
-        if (deep) {
-            throw RInternalError.unimplemented("TODO");
-        }
+    public VectorDataClosure copy(@SuppressWarnings("unused") boolean deep) {
         return copyDataClosure();
     }
 

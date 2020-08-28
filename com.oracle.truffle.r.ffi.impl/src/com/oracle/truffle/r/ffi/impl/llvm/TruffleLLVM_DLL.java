@@ -22,10 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -42,12 +38,17 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TruffleLLVM_DLL implements DLLRFFI {
     // TODO: these dependencies were ignored for some reason, will it be a problem???
@@ -107,7 +108,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             throw e;
         } finally {
             if (!isInitialization) {
-                stateRFFI.afterDowncall(before, Type.LLVM);
+                stateRFFI.afterDowncall(before, Type.LLVM, AfterDownCallProfiles.getUncached());
             }
         }
     }

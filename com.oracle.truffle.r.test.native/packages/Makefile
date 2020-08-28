@@ -23,7 +23,7 @@
 
 .PHONY: all clean repo clean_repo clean_recommended
 
-SUBDIRS = testrffi vanilla tests4 gnurtests
+SUBDIRS = testrffi vanilla tests4 gnurtests altreprffitests
 NATIVE_RECOMMENDED_PROJECT = $(subst test.native,native.recommended,$(TOPDIR))
 R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
 export GNUR_HOME_BINARY_UNPACKED = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)

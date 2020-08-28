@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.TruffleLogger;
+
 import static com.oracle.truffle.r.runtime.RRuntime.R_LANGUAGE_ID;
 
 /**
@@ -71,6 +72,16 @@ public class RLogger {
      * file e.g. mx r --log.R.com.oracle.truffle.r.rffi.level=FINE --log.file=&lt;yourfile&gt;
      */
     public static final String LOGGER_RFFI = "com.oracle.truffle.r.rffi";
+
+    /**
+     * Log ALTREP framework functionality:<br>
+     * <ul>
+     * <li>Creation of altrep classes descriptors, or altrep instances</li>
+     * <li>Calls to altrep native methods</li>
+     * <li>etc...</li>
+     * </ul>
+     */
+    public static final String LOGGER_ALTREP = "com.oracle.truffle.r.altrep";
 
     /**
      * Log a message for each non-trivial variable lookup.

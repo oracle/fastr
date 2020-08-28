@@ -1,0 +1,25 @@
+## package has a dynamic library
+useDynLib(altreprffitests, .registration = TRUE, .fixes = "CXX_")
+
+## and exported functions
+export(
+    is.altrep,
+    altrep.get_data1,
+    altrep.get_data2,
+    no_na,
+    is_sorted,
+    trivial_class.create_instance,
+    simple_vec_wrapper.create_instance,
+    logging_vec_wrapper.create_instance,
+    logging_vec_wrapper.was_Duplicate_called,
+    logging_vec_wrapper.was_Coerce_called,
+    logging_vec_wrapper.was_Elt_called,
+    logging_vec_wrapper.was_Sum_called,
+    logging_vec_wrapper.was_Min_called,
+    logging_vec_wrapper.was_Max_called,
+    logging_vec_wrapper.was_Get_region_called,
+    logging_vec_wrapper.was_Is_sorted_called,
+    logging_vec_wrapper.clear_called_methods,
+    generator_class.new,
+    first_char_changer_class.new
+)

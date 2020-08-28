@@ -33,6 +33,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DownCallNodeFactoryFactory.NFIDownCallNodeGen;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -112,7 +113,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
         @Override
         @ExplodeLoop
         protected void afterCall(Frame frame, Object before, NativeFunction fn, TruffleObject target, Object[] args) {
-            (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI);
+            (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI, AfterDownCallProfiles.getUncached());
             for (Object obj : args) {
                 // TODO: can this ever happen in NFI?
                 if (obj instanceof NativeArray) {

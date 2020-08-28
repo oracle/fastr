@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.mixed;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Context;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DownCallNodeFactory;
@@ -33,6 +34,8 @@ import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
@@ -54,6 +57,7 @@ public final class TruffleMixed_Context extends RFFIContext {
     TruffleMixed_Context(RFFIContextState rffiContextState) {
         super(rffiContextState, new TruffleMixed_C(),
                         createBaseDowncallNode(),
+                        new AltrepRFFI(AltrepDownCallNodeFactoryImpl.INSTANCE),
                         new TruffleMixed_Call(),
                         new TruffleMixed_DLL(),
                         new TruffleLLVM_UserRng(),
@@ -169,14 +173,14 @@ public final class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public void afterDowncall(Object before, Type rffiType) {
+    public void afterDowncall(Object before, Type rffiType, AfterDownCallProfiles profiles) {
         switch (rffiType) {
             case LLVM:
-                llvmContext.afterDowncall(before, rffiType);
+                llvmContext.afterDowncall(before, rffiType, AfterDownCallProfiles.getUncached());
                 break;
 
             case NFI:
-                nfiContext.afterDowncall(before, rffiType);
+                nfiContext.afterDowncall(before, rffiType, AfterDownCallProfiles.getUncached());
                 break;
 
             default:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,10 @@ package com.oracle.truffle.r.ffi.impl.managed;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
@@ -57,52 +59,54 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                 public InvokeCNode createInvokeCNode() {
                     throw unsupported("invoke");
                 }
-            }, new BaseRFFI(Managed_DownCallNodeFactory.INSTANCE, Managed_DownCallNodeFactory.INSTANCE), new CallRFFI() {
-                @Override
-                public InvokeCallNode createInvokeCallNode() {
-                    throw unsupported("native code invocation");
-                }
+            }, new BaseRFFI(Managed_DownCallNodeFactory.INSTANCE, Managed_DownCallNodeFactory.INSTANCE),
+                            new AltrepRFFI(AltrepDownCallNodeFactoryImpl.INSTANCE),
+                            new CallRFFI() {
+                                @Override
+                                public InvokeCallNode createInvokeCallNode() {
+                                    throw unsupported("native code invocation");
+                                }
 
-                @Override
-                public InvokeVoidCallNode createInvokeVoidCallNode() {
-                    throw unsupported("native code invocation");
-                }
-            }, new DLLRFFI() {
-                @Override
-                public DLOpenNode createDLOpenNode() {
-                    throw unsupported("DLL open");
-                }
+                                @Override
+                                public InvokeVoidCallNode createInvokeVoidCallNode() {
+                                    throw unsupported("native code invocation");
+                                }
+                            }, new DLLRFFI() {
+                                @Override
+                                public DLOpenNode createDLOpenNode() {
+                                    throw unsupported("DLL open");
+                                }
 
-                @Override
-                public DLSymNode createDLSymNode() {
-                    throw unsupported("createDLSym");
-                }
+                                @Override
+                                public DLSymNode createDLSymNode() {
+                                    throw unsupported("createDLSym");
+                                }
 
-                @Override
-                public DLCloseNode createDLCloseNode() {
-                    throw unsupported("createDLClose");
-                }
-            }, new UserRngRFFI() {
-                @Override
-                public InitNode createInitNode() {
-                    throw unsupported("user defined RNG");
-                }
+                                @Override
+                                public DLCloseNode createDLCloseNode() {
+                                    throw unsupported("createDLClose");
+                                }
+                            }, new UserRngRFFI() {
+                                @Override
+                                public InitNode createInitNode() {
+                                    throw unsupported("user defined RNG");
+                                }
 
-                @Override
-                public RandNode createRandNode() {
-                    throw unsupported("user defined RNG");
-                }
+                                @Override
+                                public RandNode createRandNode() {
+                                    throw unsupported("user defined RNG");
+                                }
 
-                @Override
-                public NSeedNode createNSeedNode() {
-                    throw unsupported("user defined RNG");
-                }
+                                @Override
+                                public NSeedNode createNSeedNode() {
+                                    throw unsupported("user defined RNG");
+                                }
 
-                @Override
-                public SeedsNode createSeedsNode() {
-                    throw unsupported("user defined RNG");
-                }
-            }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
+                                @Override
+                                public SeedsNode createSeedsNode() {
+                                    throw unsupported("user defined RNG");
+                                }
+                            }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
                             new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(Managed_DownCallNodeFactory.INSTANCE),
                             new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
 

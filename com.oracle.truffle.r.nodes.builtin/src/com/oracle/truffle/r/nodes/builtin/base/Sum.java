@@ -22,13 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -38,21 +34,29 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen;
-import static com.oracle.truffle.r.runtime.context.FastROptions.FullPrecisionSum;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.FullPrecisionSum;
 
 /**
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
  */
 @RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
+@ImportStatic(AltrepUtilities.class)
 public abstract class Sum extends RBuiltinNode.Arg2 {
 
     private static final ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, true, false, false);
@@ -114,12 +118,32 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
         }
     }
 
-    @Specialization(replaces = "sumLengthOneRDoubleVector", guards = "args.getLength() == 1")
+    /**
+     * The behavior of this specialization for altrep instances is currently copied from GNU-R
+     * (summary.c) and is as follows:
+     * <ol>
+     * <li>If sum gets one altrep instance argument, it dispatches to Sum altrep method.</li>
+     * <li>If sum gets more instances (both altrep instances and "normal" instances) it processess
+     * them with <code>ITERATE_BY_REGION</code> and does not dispatch to Sum altrep method at all.
+     * </li>
+     * </ol>
+     *
+     * Note that this behavior is same for S4 instances - when there is just one S4 instance
+     * argument, sum dispatches to corresponding method, if there are more S4 instances, no
+     * dispatching is done.
+     */
+    @Specialization(replaces = "sumLengthOneRDoubleVector", guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasSumMethodRegistered(args.getArgument(0))"})
+    protected Object sumLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
+                    @Cached AltrepRFFI.SumNode sumNode) {
+        return sumNode.execute(args.getArgument(0), naRm);
+    }
+
+    @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOneAltrep"}, guards = "args.getLength() == 1")
     protected Object sumLengthOne(RArgsValuesAndNames args, boolean naRm) {
         return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
-    @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOne"})
+    @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOneAltrep", "sumLengthOne"})
     protected Object sum(RArgsValuesAndNames args, boolean naRm,
                     @Cached("create()") Combine combine) {
         return reduce.executeReduce(combine.executeCombine(args, false), naRm, false);

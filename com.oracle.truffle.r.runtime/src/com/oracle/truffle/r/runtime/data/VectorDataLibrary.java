@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.GenerateLibrary;
 import com.oracle.truffle.api.library.GenerateLibrary.DefaultExport;
@@ -447,6 +449,55 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     /**
+     * Gets a region of integers from the data. It is a Java equivalent for INTEGER_GET_REGION C
+     * function.
+     *
+     * @param startIndex Starting index of the region.
+     * @param size Size of the required region
+     * @param buffer Buffer into which the data will be copied, in C equivalent it is pointer to
+     *            integer.
+     * @param bufferInterop InteropLibrary for the buffer through which the elements will be set
+     *            into the buffer.
+     * @return count of elements that were actually copied.
+     */
+    public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Integer);
+    }
+
+    private int getRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop, RType bufferType) {
+        RandomAccessIterator it = randomAccessIterator(receiver);
+        int bufferIdx = 0;
+        for (int idx = startIndex; idx < startIndex + size; idx++) {
+            try {
+                switch (bufferType) {
+                    case Integer:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getInt(receiver, it, idx));
+                        break;
+                    case Double:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getDouble(receiver, it, idx));
+                        break;
+                    case Logical:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getLogical(receiver, it, idx));
+                        break;
+                    case Raw:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getRaw(receiver, it, idx));
+                        break;
+                    case Complex:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getComplex(receiver, it, idx));
+                        break;
+                    default:
+                        CompilerDirectives.transferToInterpreter();
+                        throw RInternalError.shouldNotReachHere(bufferType.toString());
+                }
+                bufferIdx++;
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+        return bufferIdx;
+    }
+
+    /**
      * Returns the value at given position. See the documentation of {@link #iterator(Object)} for
      * details.
      */
@@ -575,6 +626,13 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
+    /**
+     * See {@link #getIntRegion}.
+     */
+    public int getDoubleRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Double);
+    }
+
     public double getDoubleAt(Object receiver, @SuppressWarnings("unused") int index) {
         RType type = getType(receiver);
         switch (type) {
@@ -667,6 +725,13 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
+    /**
+     * See {@link #getIntRegion}.
+     */
+    public int getLogicalRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Logical);
+    }
+
     public byte getLogicalAt(Object receiver, @SuppressWarnings("unused") int index) {
         RType type = getType(receiver);
         switch (type) {
@@ -757,6 +822,13 @@ public abstract class VectorDataLibrary extends Library {
 
     public byte[] getRawDataCopy(Object receiver) {
         throw notImplemented(receiver);
+    }
+
+    /**
+     * See {@link #getIntRegion}.
+     */
+    public int getRawRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Raw);
     }
 
     public byte getRawAt(Object receiver, @SuppressWarnings("unused") int index) {
@@ -948,6 +1020,13 @@ public abstract class VectorDataLibrary extends Library {
 
     public double[] getComplexDataCopy(Object receiver) {
         throw notImplemented(receiver);
+    }
+
+    /**
+     * See {@link #getIntRegion}.
+     */
+    public int getComplexRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Complex);
     }
 
     /**
@@ -1717,6 +1796,20 @@ public abstract class VectorDataLibrary extends Library {
             return true;
         }
 
+        private void verifyBufferSize(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            assert buffer != null;
+            assert bufferInterop.hasArrayElements(buffer);
+            assert 0 <= startIndex && startIndex < delegate.getLength(receiver);
+            long bufSize = 0;
+            try {
+                bufSize = bufferInterop.getArraySize(buffer);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            assert bufSize >= size;
+            verifyIfSlowAssertsEnabled(receiver);
+        }
+
         // TODO: there methods simply delegate, but may be enhanced with assertions
 
         @Override
@@ -1777,6 +1870,12 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
+        public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getIntRegion(receiver, startIndex, size, buffer, bufferInterop);
+        }
+
+        @Override
         public Object getDataAtAsObject(Object data, int index) {
             return delegate.getDataAtAsObject(data, index);
         }
@@ -1834,6 +1933,12 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
+        public int getDoubleRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getDoubleRegion(receiver, startIndex, size, buffer, bufferInterop);
+        }
+
+        @Override
         public double getDoubleAt(Object receiver, int index) {
             return delegate.getDoubleAt(receiver, index);
         }
@@ -1871,6 +1976,12 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
+        public int getLogicalRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getLogicalRegion(receiver, startIndex, size, buffer, bufferInterop);
+        }
+
+        @Override
         public byte getLogicalAt(Object receiver, int index) {
             return delegate.getLogicalAt(receiver, index);
         }
@@ -1903,6 +2014,12 @@ public abstract class VectorDataLibrary extends Library {
         @Override
         public byte[] getRawDataCopy(Object receiver) {
             return delegate.getRawDataCopy(receiver);
+        }
+
+        @Override
+        public int getRawRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getRawRegion(receiver, startIndex, size, buffer, bufferInterop);
         }
 
         @Override
@@ -1987,6 +2104,12 @@ public abstract class VectorDataLibrary extends Library {
         public double[] getComplexDataCopy(Object receiver) {
             verifyIfSlowAssertsEnabled(receiver);
             return delegate.getComplexDataCopy(receiver);
+        }
+
+        @Override
+        public int getComplexRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getComplexRegion(receiver, startIndex, size, buffer, bufferInterop);
         }
 
         @Override

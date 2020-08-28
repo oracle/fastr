@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -33,6 +31,9 @@ import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
+
+import java.util.Arrays;
 
 public final class Collections {
 
@@ -581,9 +582,11 @@ public final class Collections {
             return Arrays.copyOf((T[]) data, size);
         }
 
-        public void clear() {
-            Arrays.fill(data, 0, size, null);
-            size = 0;
+        public void clear(AfterDownCallProfiles profiles) {
+            if (!profiles.getNativeReferencesNotEmptyProfile().profile(size == 0)) {
+                Arrays.fill(data, 0, size, null);
+                size = 0;
+            }
         }
 
         private void checkIndex(int index) {

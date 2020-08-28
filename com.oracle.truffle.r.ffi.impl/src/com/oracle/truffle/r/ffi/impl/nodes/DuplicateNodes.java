@@ -22,17 +22,19 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.DuplicateNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfAnyDuplicated3NodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfAnyDuplicatedNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfDuplicatedNodeGen;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -42,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
@@ -51,11 +54,32 @@ public final class DuplicateNodes {
     @GenerateUncached
     public abstract static class DuplicateNode extends FFIUpCallNode.Arg2 {
 
-        @Specialization(guards = "!isSequence(x)")
-        @TruffleBoundary
-        public Object duplicateShareable(RSharingAttributeStorage x, int deep) {
+        @Specialization(guards = "!isSequence(container)", limit = "getGenericDataLibraryCacheSize()")
+        public Object duplicateContainer(RAbstractContainer container, int deep,
+                        @CachedLibrary("container") AbstractContainerLibrary containerLibrary) {
+            return containerLibrary.duplicate(container, deep == 1);
+        }
+
+        @Specialization(replaces = "duplicateContainer")
+        public Object duplicateContainerUncached(RAbstractContainer container, int deep,
+                        @CachedLibrary(limit = "1") AbstractContainerLibrary containerLibrary) {
+            return containerLibrary.duplicate(container, deep == 1);
+        }
+
+        /**
+         * This specialization is currently only for
+         * {@link com.oracle.truffle.r.runtime.data.RS4Object} and
+         * {@link com.oracle.truffle.r.runtime.data.RFunction}.
+         */
+        @CompilerDirectives.TruffleBoundary
+        @Specialization(guards = "!isAbstractContainer(x)")
+        public Object duplicateOtherShareable(RSharingAttributeStorage x, int deep) {
             assert !isReusableForDuplicate(x);
             return deep == 1 ? x.deepCopy() : x.copy();
+        }
+
+        protected static boolean isAbstractContainer(RSharingAttributeStorage x) {
+            return x instanceof RAbstractContainer;
         }
 
         @Specialization

@@ -102,7 +102,7 @@ public abstract class InvokeCNode extends RBaseNode {
             execute(nativeCallInfo, preparedArgs);
             return RDataFactory.createList(argsUnwrapperNode.execute(preparedArgs), validateArgNames(preparedArgs.length, args.getSignature()));
         } finally {
-            stateRFFI.afterDowncall(before, rffiType);
+            stateRFFI.afterDowncall(before, rffiType, AfterDownCallProfiles.getUncached());
         }
     }
 

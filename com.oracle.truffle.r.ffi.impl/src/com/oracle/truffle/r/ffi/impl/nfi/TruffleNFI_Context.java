@@ -22,15 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,6 +32,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLL;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
@@ -51,6 +43,8 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -68,8 +62,16 @@ import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
-
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 public class TruffleNFI_Context extends RFFIContext {
 
@@ -80,7 +82,10 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     public TruffleNFI_Context(RFFIContextState rffiContextState) {
-        super(rffiContextState, new TruffleNFI_C(), new BaseRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE, TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleNFI_Call(), new TruffleNFI_DLL(),
+        super(rffiContextState, new TruffleNFI_C(), new BaseRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE, TruffleNFI_DownCallNodeFactory.INSTANCE),
+                        new AltrepRFFI(AltrepDownCallNodeFactoryImpl.INSTANCE),
+                        new TruffleNFI_Call(),
+                        new TruffleNFI_DLL(),
                         new TruffleNFI_UserRng(),
                         new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
                         new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
@@ -392,9 +397,9 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
-    public void afterDowncall(Object beforeValue, RFFIFactory.Type rffiType) {
+    public void afterDowncall(Object beforeValue, Type rffiType, AfterDownCallProfiles profiles) {
         Object[] tokens = (Object[]) beforeValue;
-        super.afterDowncall(tokens[0], rffiType);
+        super.afterDowncall(tokens[0], rffiType, profiles);
         popCallbacks((long) tokens[1]);
         for (Long ptr : transientAllocations.pop()) {
             NativeMemory.free(ptr, "Rf_alloc");

@@ -34,19 +34,28 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.RfSetAttribNode
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.SetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.COMPLEXNode;
+import com.oracle.truffle.r.ffi.impl.nodes.COMPLEX_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.AsCharacterFactor;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ComplexGetRegionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.DATAPTR_OR_NULLNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DispatchPrimFunNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DoMakeClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
-import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfDuplicated;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated3;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfDuplicated;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
 import com.oracle.truffle.r.ffi.impl.nodes.INTEGERNode;
+import com.oracle.truffle.r.ffi.impl.nodes.INTEGER_ELTNode;
+import com.oracle.truffle.r.ffi.impl.nodes.IntegerGetRegionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.IsSortedNode;
+import com.oracle.truffle.r.ffi.impl.nodes.LOGICAL_ELTNode;
+import com.oracle.truffle.r.ffi.impl.nodes.LogicalGetRegionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.NoNANode;
 import com.oracle.truffle.r.ffi.impl.nodes.IsObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.LOGICALNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
@@ -74,16 +83,22 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RAWNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RAW_ELTNode;
+import com.oracle.truffle.r.ffi.impl.nodes.REAL_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RForceAndCallNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RNCharNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RSetExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.R_CHARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.RawGetRegionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RealGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfAllocVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfFindFun;
+import com.oracle.truffle.r.ffi.impl.nodes.SetStringEltNode;
 import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
+import com.oracle.truffle.r.ffi.impl.nodes.StringEltNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TYPEOFNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.VectorElementGetterNode;
@@ -284,6 +299,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(LENGTHNode.class)
     int LENGTH(Object x);
 
+    @RFFIUpCallNode(SetStringEltNode.class)
     void SET_STRING_ELT(Object x, long i, Object v);
 
     void SETLENGTH(Object x, int l);
@@ -304,25 +320,84 @@ public interface StdUpCallsRFFI {
     void SET_ATTRIB(Object target, Object attributes);
 
     @RFFICpointer
+    @RFFIUpCallNode(DATAPTR_OR_NULLNode.class)
+    Object DATAPTR_OR_NULL(Object x);
+
+    @RFFICpointer
     @RFFIUpCallNode(RAWNode.class)
     Object RAW(Object x);
+
+    @RFFIUpCallNode(RAW_ELTNode.class)
+    int RAW_ELT(Object x, long index);
 
     @RFFICpointer
     @RFFIUpCallNode(LOGICALNode.class)
     Object LOGICAL(Object x);
 
+    @RFFIUpCallNode(LOGICAL_ELTNode.class)
+    int LOGICAL_ELT(Object x, long index);
+
     @RFFICpointer
     @RFFIUpCallNode(INTEGERNode.class)
     Object INTEGER(Object x);
+
+    @RFFIUpCallNode(INTEGER_ELTNode.class)
+    int INTEGER_ELT(Object x, long index);
 
     @RFFICpointer
     @RFFIUpCallNode(INTEGERNode.class)
     Object REAL(Object x);
 
+    @RFFIUpCallNode(REAL_ELTNode.class)
+    double REAL_ELT(Object x, long index);
+
     @RFFICpointer
     @RFFIUpCallNode(COMPLEXNode.class)
     Object COMPLEX(Object x);
 
+    @RFFIUpCallNode(COMPLEX_ELTNode.class)
+    Object COMPLEX_ELT(Object x, long index);
+
+    @RFFIUpCallNode(IntegerGetRegionNode.class)
+    long INTEGER_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    @RFFIUpCallNode(RealGetRegionNode.class)
+    long REAL_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    @RFFIUpCallNode(LogicalGetRegionNode.class)
+    long LOGICAL_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    @RFFIUpCallNode(ComplexGetRegionNode.class)
+    long COMPLEX_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    @RFFIUpCallNode(RawGetRegionNode.class)
+    long RAW_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    @RFFIUpCallNode(IsSortedNode.class)
+    int INTEGER_IS_SORTED(Object x);
+
+    @RFFIUpCallNode(NoNANode.class)
+    int INTEGER_NO_NA(Object x);
+
+    @RFFIUpCallNode(IsSortedNode.class)
+    int REAL_IS_SORTED(Object x);
+
+    @RFFIUpCallNode(NoNANode.class)
+    int REAL_NO_NA(Object x);
+
+    @RFFIUpCallNode(IsSortedNode.class)
+    int LOGICAL_IS_SORTED(Object x);
+
+    @RFFIUpCallNode(NoNANode.class)
+    int LOGICAL_NO_NA(Object x);
+
+    @RFFIUpCallNode(IsSortedNode.class)
+    int STRING_IS_SORTED(Object x);
+
+    @RFFIUpCallNode(NoNANode.class)
+    int STRING_NO_NA(Object x);
+
+    @RFFIUpCallNode(StringEltNode.class)
     Object STRING_ELT(@RFFIResultOwner Object x, long i);
 
     @RFFIUpCallNode(value = VectorElementGetterNode.class)

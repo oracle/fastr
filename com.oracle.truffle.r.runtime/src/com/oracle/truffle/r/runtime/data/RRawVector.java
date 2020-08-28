@@ -22,26 +22,30 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
-
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.altrep.AltRawClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromRawAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromRawAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
-import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
@@ -85,6 +89,17 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
         NativeDataAccess.setNativeContents(result, address, length);
         result.setData(new RRawNativeVectorData(result), length);
         return result;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    public static RRawVector createAltRaw(AltRawClassDescriptor descriptor, RAltRepData altRepData) {
+        RAltRawVectorData altRawVectorData = new RAltRawVectorData(descriptor, altRepData);
+        RRawVector rawVector = new RRawVector();
+        rawVector.setAltRep();
+        rawVector.data = altRawVectorData;
+        int length = AltrepUtilities.getLengthUncached(rawVector);
+        rawVector.setData(altRawVectorData, length);
+        return rawVector;
     }
 
     @Override
@@ -252,9 +267,10 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
         setData(new RRawNativeVectorData(this), getLength());
     }
 
-    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
-    RRawVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        RRawVector result = new RRawVector(dataLib.copy(data, false), dataLib.getLength(data));
+    @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
+    RRawVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RRawVector result = new RRawVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

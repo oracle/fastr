@@ -1194,6 +1194,13 @@ int *FASTR_DATAPTR(SEXP x) {
     return result;
 }
 
+const void *DATAPTR_OR_NULL(SEXP x) {
+    TRACE1(x);
+    const void *result = ((call_DATAPTR_OR_NULL) callbacks[DATAPTR_OR_NULL_x])(x);
+    checkExitCall();
+    return result;
+}
+
 int *FASTR_INTEGER(SEXP x) {
     TRACE(TARGp, x);
     int *result = ((call_INTEGER) callbacks[INTEGER_x])(x);
@@ -1203,7 +1210,9 @@ int *FASTR_INTEGER(SEXP x) {
 
 int INTEGER_ELT(SEXP x, R_xlen_t i) {
     TRACE0();
-    return FASTR_INTEGER(x)[i];
+    int result = ((call_INTEGER_ELT) callbacks[INTEGER_ELT_x])(x, i);
+    checkExitCall();
+    return result;
 }
 
 void SET_INTEGER_ELT(SEXP x, R_xlen_t i, int v) {
@@ -1217,9 +1226,27 @@ double *FASTR_REAL(SEXP x){
     return result;
 }
 
+double REAL_ELT(SEXP x, R_xlen_t i) {
+    TRACE0();
+    double result = ((call_REAL_ELT) callbacks[REAL_ELT_x])(x, i);
+    checkExitCall();
+    return result;
+}
+
+void SET_REAL_ELT(SEXP x, R_xlen_t i, double v) {
+    FASTR_REAL(x)[i] = v;
+}
+
 Rcomplex *COMPLEX(SEXP x) {
     TRACE0();
     Rcomplex *result = ((call_COMPLEX) callbacks[COMPLEX_x])(x);
+    checkExitCall();
+    return result;
+}
+
+Rcomplex COMPLEX_ELT(SEXP x, R_xlen_t i) {
+    TRACE0();
+    Rcomplex result = ((call_COMPLEX_ELT) callbacks[COMPLEX_ELT_x])(x, i);
     checkExitCall();
     return result;
 }
@@ -1231,9 +1258,23 @@ int *LOGICAL(SEXP x){
     return result;
 }
 
+int LOGICAL_ELT(SEXP x, R_xlen_t i) {
+    TRACE0();
+    double result = ((call_LOGICAL_ELT) callbacks[LOGICAL_ELT_x])(x, i);
+    checkExitCall();
+    return result;
+}
+
 Rbyte *RAW(SEXP x) {
     TRACE0();
     Rbyte *result = ((call_RAW) callbacks[RAW_x])(x);
+    checkExitCall();
+    return result;
+}
+
+Rbyte RAW_ELT(SEXP x, R_xlen_t i) {
+    TRACE0();
+    double result = ((call_RAW_ELT) callbacks[RAW_ELT_x])(x, i);
     checkExitCall();
     return result;
 }
@@ -1971,83 +2012,31 @@ const SEXP *(STRING_PTR_RO)(SEXP x) {
 // The ALTREP framework is not implemented on FastR yet
 // Dummy implementations:
 
-int (ALTREP)(SEXP x) {
-    // there can be no ALTREP objects on FastR
-    return 0;
-}
-
-int STRING_NO_NA(SEXP x) {
-    return 0;
-}
-
-int REAL_NO_NA(SEXP x) {
-    return 0;
-}
-
-int INTEGER_NO_NA(SEXP x) {
-    return 0;
-}
-
-int INTEGER_IS_SORTED(SEXP x) {
-    return UNKNOWN_SORTEDNESS;
-}
-
-int REAL_IS_SORTED(SEXP x) {
-    return UNKNOWN_SORTEDNESS;
-}
-
-int STRING_IS_SORTED(SEXP x) {
-    return UNKNOWN_SORTEDNESS;
-}
-
-// Looks like there are not implemented even in GNU-R:
 #define ALTREP_UNIMPLEMENTED { UNIMPLEMENTED; }
-SEXP REAL_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
-SEXP INTEGER_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
 
-// Functions that we cannot implement without ALTREP support:
-SEXP R_altrep_data1(SEXP x) ALTREP_UNIMPLEMENTED
-SEXP R_altrep_data2(SEXP x) ALTREP_UNIMPLEMENTED
-void R_set_altrep_data1(SEXP x, SEXP v) ALTREP_UNIMPLEMENTED
-void R_set_altrep_data2(SEXP x, SEXP v) ALTREP_UNIMPLEMENTED
+int (ALTREP)(SEXP x);
 SEXP ALTREP_CLASS(SEXP x) ALTREP_UNIMPLEMENTED
 
-void *(STDVEC_DATAPTR)(SEXP x) ALTREP_UNIMPLEMENTED
-int (IS_SCALAR)(SEXP x, int type) ALTREP_UNIMPLEMENTED
-SEXP ALTREP_DUPLICATE_EX(SEXP x, Rboolean deep) ALTREP_UNIMPLEMENTED
-SEXP ALTREP_COERCE(SEXP x, int type) ALTREP_UNIMPLEMENTED
-Rboolean ALTREP_INSPECT(SEXP x, int a, int b, int c, void (*inspect_subtree)(SEXP, int, int, int)) ALTREP_UNIMPLEMENTED
-SEXP ALTREP_SERIALIZED_CLASS(SEXP x) ALTREP_UNIMPLEMENTED
-SEXP ALTREP_SERIALIZED_STATE(SEXP x) ALTREP_UNIMPLEMENTED
-SEXP ALTREP_UNSERIALIZE_EX(SEXP a, SEXP b, SEXP c, int d, int e) ALTREP_UNIMPLEMENTED
-R_xlen_t ALTREP_LENGTH(SEXP x) ALTREP_UNIMPLEMENTED
-R_xlen_t ALTREP_TRUELENGTH(SEXP x) ALTREP_UNIMPLEMENTED
-void *ALTVEC_DATAPTR(SEXP x) ALTREP_UNIMPLEMENTED
-const void *ALTVEC_DATAPTR_RO(SEXP x) ALTREP_UNIMPLEMENTED
-const void *ALTVEC_DATAPTR_OR_NULL(SEXP x) ALTREP_UNIMPLEMENTED
-SEXP ALTVEC_EXTRACT_SUBSET(SEXP x, SEXP indx, SEXP call) ALTREP_UNIMPLEMENTED
-int ALTINTEGER_ELT(SEXP x, R_xlen_t i) ALTREP_UNIMPLEMENTED
-void ALTINTEGER_SET_ELT(SEXP x, R_xlen_t i, int v) ALTREP_UNIMPLEMENTED
-int ALTLOGICAL_ELT(SEXP x, R_xlen_t i) ALTREP_UNIMPLEMENTED
-void ALTLOGICAL_SET_ELT(SEXP x, R_xlen_t i, int v) ALTREP_UNIMPLEMENTED
-double ALTREAL_ELT(SEXP x, R_xlen_t i) ALTREP_UNIMPLEMENTED
-void ALTREAL_SET_ELT(SEXP x, R_xlen_t i, double v) ALTREP_UNIMPLEMENTED
-SEXP ALTSTRING_ELT(SEXP x, R_xlen_t len) ALTREP_UNIMPLEMENTED
-void ALTSTRING_SET_ELT(SEXP x, R_xlen_t len, SEXP elt) ALTREP_UNIMPLEMENTED
-Rcomplex ALTCOMPLEX_ELT(SEXP x, R_xlen_t i) ALTREP_UNIMPLEMENTED
-void ALTCOMPLEX_SET_ELT(SEXP x, R_xlen_t i, Rcomplex v) ALTREP_UNIMPLEMENTED
-Rbyte ALTRAW_ELT(SEXP x, R_xlen_t i) ALTREP_UNIMPLEMENTED
-void ALTRAW_SET_ELT(SEXP x, R_xlen_t i, Rbyte v) ALTREP_UNIMPLEMENTED
-R_xlen_t INTEGER_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, int *buf) ALTREP_UNIMPLEMENTED
+SEXP R_altrep_data1(SEXP x);
+SEXP R_altrep_data2(SEXP x);
+void R_set_altrep_data1(SEXP x, SEXP v);
+void R_set_altrep_data2(SEXP x, SEXP v);
+
+// These two functions should be hidden, although in GNU-R they are not hidden.
 SEXP ALTINTEGER_SUM(SEXP x, Rboolean narm) ALTREP_UNIMPLEMENTED
 SEXP ALTREAL_SUM(SEXP x, Rboolean narm) ALTREP_UNIMPLEMENTED
-SEXP ALTINTEGER_MIN(SEXP x, Rboolean narm) ALTREP_UNIMPLEMENTED
-SEXP ALTINTEGER_MAX(SEXP x, Rboolean narm) ALTREP_UNIMPLEMENTED
-SEXP ALTREAL_MIN(SEXP x, Rboolean narm) ALTREP_UNIMPLEMENTED
-SEXP ALTREAL_MAX(SEXP x, Rboolean narm) ALTREP_UNIMPLEMENTED
+
+// TODO: Remove IS_SCALAR?
+int (IS_SCALAR)(SEXP x, int type) ALTREP_UNIMPLEMENTED
+R_xlen_t INTEGER_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, int *buf);
+int INTEGER_IS_SORTED(SEXP x);
+int INTEGER_NO_NA(SEXP x);
 SEXP INTEGER_MATCH(SEXP a, SEXP b, int c, SEXP d, SEXP e, Rboolean f) ALTREP_UNIMPLEMENTED
+SEXP INTEGER_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
 SEXP REAL_MATCH(SEXP a, SEXP b, int c, SEXP d, SEXP e, Rboolean f) ALTREP_UNIMPLEMENTED
-R_xlen_t REAL_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, double *buf) ALTREP_UNIMPLEMENTED
-SEXP R_compact_intrange(R_xlen_t n1, R_xlen_t n2) ALTREP_UNIMPLEMENTED
-SEXP R_deferred_coerceToString(SEXP v, SEXP sp) ALTREP_UNIMPLEMENTED
-SEXP R_virtrep_vec(SEXP x, SEXP y) ALTREP_UNIMPLEMENTED
+R_xlen_t REAL_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, double *buf);
+int REAL_IS_SORTED(SEXP x);
+int REAL_NO_NA(SEXP x);
+SEXP REAL_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
+int STRING_IS_SORTED(SEXP x);
+int STRING_NO_NA(SEXP x);

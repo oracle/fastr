@@ -23,16 +23,24 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -42,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
@@ -68,7 +77,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     private RIntVector() {
-        super(false);
+        super(RDataFactory.INCOMPLETE_VECTOR);
     }
 
     private void setData(Object data, int newLen) {
@@ -89,6 +98,17 @@ public final class RIntVector extends RAbstractNumericVector {
 
     public static RIntVector createSequence(int start, int stride, int length) {
         return new RIntVector(new RIntSeqVectorData(start, stride, length), length);
+    }
+
+    @TruffleBoundary
+    public static RIntVector createAltInt(AltIntegerClassDescriptor descriptor, RAltRepData altrepData) {
+        RAltIntVectorData altIntVectorData = new RAltIntVectorData(descriptor, altrepData);
+        RIntVector vector = new RIntVector();
+        vector.setAltRep();
+        vector.data = altIntVectorData;
+        int length = AltrepUtilities.getLengthUncached(vector);
+        vector.setData(altIntVectorData, length);
+        return vector;
     }
 
     public static RIntVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
@@ -286,20 +306,40 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
-    public void containerLibToNative(
-                    @Cached("createBinaryProfile()") ConditionProfile alreadyNativeProfile,
-                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        if (alreadyNativeProfile.profile(data instanceof RIntNativeVectorData)) {
-            return;
+    @ImportStatic(AltrepUtilities.class)
+    protected static class ToNative {
+        @Specialization(guards = "!isAltrep(vector)")
+        protected static void nativizeVector(RIntVector vector,
+                        @Cached ConditionProfile alreadyNativeProfile,
+                        @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+            if (alreadyNativeProfile.profile(vector.data instanceof RIntNativeVectorData)) {
+                return;
+            }
+            int[] arr = dataLib.getReadonlyIntData(vector.data);
+            NativeDataAccess.allocateNativeContents(vector, arr, vector.getLength());
+            vector.setData(new RIntNativeVectorData(vector), vector.getLength());
         }
-        int[] arr = dataLib.getReadonlyIntData(this.data);
-        NativeDataAccess.allocateNativeContents(this, arr, getLength());
-        setData(new RIntNativeVectorData(this), getLength());
+
+        @Specialization(guards = "isAltrep(altIntVec)")
+        protected static void nativizeAltrep(RIntVector altIntVec,
+                        @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+            Object vectorData = altIntVec.getData();
+            int length = dataLib.getLength(vectorData);
+            long address;
+            try {
+                // Invoke Dataptr method
+                address = dataLib.asPointer(vectorData);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            NativeDataAccess.initializeAltrep(altIntVec, length, address);
+        }
     }
 
-    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
-    RIntVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        RIntVector result = new RIntVector(dataLib.copy(data, false), dataLib.getLength(data));
+    @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
+    RIntVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RIntVector result = new RIntVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

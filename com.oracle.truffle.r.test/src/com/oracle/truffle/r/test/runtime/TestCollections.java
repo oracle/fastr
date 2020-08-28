@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.test.runtime;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.oracle.truffle.r.runtime.Collections.ArrayListInt;
 import com.oracle.truffle.r.runtime.Collections.ArrayListObj;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.test.TestBase;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TestCollections extends TestBase {
     @Test
@@ -118,7 +118,7 @@ public class TestCollections extends TestBase {
         list.add(33);
         list.add(44);
         list.add(55);
-        list.clear();
+        list.clear(AfterDownCallProfiles.getUncached());
         Assert.assertEquals(0, list.size());
     }
 

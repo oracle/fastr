@@ -37,6 +37,9 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
@@ -47,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
@@ -108,6 +112,24 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
             RClosures.initRegAttributes(result, factor);
         }
         return result;
+    }
+
+    private RStringVector() {
+        super(RDataFactory.INCOMPLETE_VECTOR);
+    }
+
+    public static RStringVector createAltString(AltStringClassDescriptor descriptor, RAltRepData altRepData) {
+        RAltStringVectorData altStringVecData = new RAltStringVectorData(descriptor, altRepData);
+        RStringVector altStringVector = new RStringVector();
+        altStringVector.setAltRep();
+        altStringVector.data = altStringVecData;
+        // This is a workaround, because we already have to invoke some altrep methods in
+        // getLengthMethodUncached
+        // and for that we need non-null owner.
+        altStringVecData.setOwner(altStringVector);
+        int length = AltrepUtilities.getLengthUncached(altStringVector);
+        altStringVector.setData(altStringVecData, length);
+        return altStringVector;
     }
 
     private void setData(Object data, int newLen) {
@@ -351,9 +373,10 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
         verifyData();
     }
 
-    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
-    RStringVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        RStringVector result = new RStringVector(dataLib.copy(data, false), dataLib.getLength(data));
+    @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
+    RStringVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RStringVector result = new RStringVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

@@ -90,15 +90,24 @@ public class FFIWrap {
             return FFIToNativeMirrorNode.getUncached().execute(materialized[0]);
         }
 
+        public Object[] wrapAll(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
+            return wrapSome(args, ffiMateralizeNodes, ffiToNativeMirrorNodes, null);
+        }
+
         @ExplodeLoop
-        public Object[] wrap(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
-            assert ffiMateralizeNodes.length == ffiToNativeMirrorNodes.length;
-            assert ffiMateralizeNodes.length == materialized.length;
-            CompilerAsserts.compilationConstant(ffiMateralizeNodes.length);
+        public Object[] wrapSome(Object[] args, FFIMaterializeNode[] ffiMaterializeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes, boolean[] whichArgToWrap) {
+            assert ffiMaterializeNodes.length == ffiToNativeMirrorNodes.length;
+            assert ffiMaterializeNodes.length == materialized.length;
+            CompilerAsserts.compilationConstant(ffiMaterializeNodes.length);
             Object[] wrappedArgs = new Object[args.length];
-            for (int i = 0; i < ffiMateralizeNodes.length; i++) {
-                materialized[i] = ffiMateralizeNodes[i].materialize(args[i]);
-                wrappedArgs[i] = ffiToNativeMirrorNodes[i].execute(materialized[i]);
+            for (int i = 0; i < ffiMaterializeNodes.length; i++) {
+                if (whichArgToWrap == null || whichArgToWrap[i]) {
+                    materialized[i] = ffiMaterializeNodes[i].materialize(args[i]);
+                    wrappedArgs[i] = ffiToNativeMirrorNodes[i].execute(materialized[i]);
+                } else {
+                    materialized[i] = null;
+                    wrappedArgs[i] = args[i];
+                }
             }
             return wrappedArgs;
         }

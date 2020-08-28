@@ -33,17 +33,21 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
-import com.oracle.truffle.r.runtime.data.closures.RClosure;
-import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
-import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
@@ -98,6 +102,16 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
             RClosures.initRegAttributes(result, delegate);
         }
         return result;
+    }
+
+    public static RDoubleVector createAltReal(AltRealClassDescriptor descriptor, RAltRepData altRepData) {
+        RAltRealVectorData altRealVectorData = new RAltRealVectorData(descriptor, altRepData);
+        RDoubleVector vector = new RDoubleVector();
+        vector.setAltRep();
+        vector.data = altRealVectorData;
+        int length = AltrepUtilities.getLengthUncached(vector);
+        vector.setData(altRealVectorData, length);
+        return vector;
     }
 
     static RDoubleVector fromNative(long address, int length) {
@@ -290,9 +304,10 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
         setData(new RDoubleNativeVectorData(this), getLength());
     }
 
-    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
-    RDoubleVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        RDoubleVector result = new RDoubleVector(dataLib.copy(data, false), dataLib.getLength(data));
+    @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
+    RDoubleVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RDoubleVector result = new RDoubleVector(dataLib.copy(data, deep), dataLib.getLength(data));
+        setAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

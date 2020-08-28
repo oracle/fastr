@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -46,6 +43,9 @@ import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 public class TruffleNFI_Call implements CallRFFI {
 
@@ -109,7 +109,7 @@ public class TruffleNFI_Call implements CallRFFI {
             Object result = null;
             try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
                 logCall(nativeCallInfo.name, args);
-                Object[] wrappedArgs = ffiWrap.wrap(args, ffiMaterializeNode, ffiToNativeMirrorNodes);
+                Object[] wrappedArgs = ffiWrap.wrapAll(args, ffiMaterializeNode, ffiToNativeMirrorNodes);
                 Object[] realArgs = new Object[cachedArgsLength + 1];
                 realArgs[0] = address;
                 System.arraycopy(wrappedArgs, 0, realArgs, 1, cachedArgsLength);
@@ -152,7 +152,7 @@ public class TruffleNFI_Call implements CallRFFI {
                         break;
                     case 1:
                         logCall(nativeCallInfo.name, args);
-                        wrappedArgs = ffiWrap.wrap(args, ffiMaterialize1, ffiWrapper1);
+                        wrappedArgs = ffiWrap.wrapAll(args, ffiMaterialize1, ffiWrapper1);
                         TruffleObject callVoid1Function = getFunction("dot_call_void1", CallVoid1Sig);
                         execute1Interop.execute(callVoid1Function, nativeCallInfo.address.asTruffleObject(), wrappedArgs[0]);
                         break;

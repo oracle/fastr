@@ -95,6 +95,10 @@ public abstract class AbstractContainerLibrary extends Library {
     /**
      * Creates a copy of the container. Note that attributes are not copied, use dedicated node
      * {@link com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes} in such case.
+     * 
+     * @param deep We do not really need this argument in FastR - it is only forwarded to the
+     *            corresponding ALTREP methods in order to be compatible with GNU-R. In GNU-R this
+     *            argument is used only for some internal GC procedures, with no visible effects.
      */
-    public abstract RAbstractContainer copy(Object container);
+    public abstract RAbstractContainer duplicate(Object container, boolean deep);
 }

@@ -47,10 +47,6 @@ SEXP api_OBJECT(SEXP x) {
     return ScalarInteger(OBJECT(x));
 }
 
-SEXP api_Rf_cons(SEXP car, SEXP cdr) {
-    return Rf_cons(car, cdr);
-}
-
 SEXP api_Rf_ScalarInteger(SEXP value) {
     return Rf_ScalarInteger(INTEGER_VALUE(value));
 }
@@ -87,8 +83,8 @@ SEXP api_Rf_coerceVector(SEXP x, SEXP mode) {
     return Rf_coerceVector(x, INTEGER_VALUE(mode));
 }
 
-SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding) {
-    return Rf_mkCharLenCE(R_CHAR(STRING_ELT(bytes, 0)), INTEGER_VALUE(len), INTEGER_VALUE(encoding));
+SEXP api_Rf_cons(SEXP car, SEXP cdr) {
+    return Rf_cons(car, cdr);
 }
 
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg) {
@@ -241,6 +237,54 @@ SEXP api_SET_VECTOR_ELT(SEXP x, SEXP i, SEXP v) {
 SEXP api_SET_ATTRIB(SEXP target, SEXP attributes) {
     SET_ATTRIB(target, attributes);
     return R_NilValue;
+}
+
+SEXP api_RAW_ELT(SEXP x, SEXP index) {
+    return ScalarInteger(RAW_ELT(x, INTEGER_VALUE(index)));
+}
+
+SEXP api_LOGICAL_ELT(SEXP x, SEXP index) {
+    return ScalarInteger(LOGICAL_ELT(x, INTEGER_VALUE(index)));
+}
+
+SEXP api_INTEGER_ELT(SEXP x, SEXP index) {
+    return ScalarInteger(INTEGER_ELT(x, INTEGER_VALUE(index)));
+}
+
+SEXP api_REAL_ELT(SEXP x, SEXP index) {
+    return ScalarReal(REAL_ELT(x, INTEGER_VALUE(index)));
+}
+
+SEXP api_INTEGER_IS_SORTED(SEXP x) {
+    return ScalarInteger(INTEGER_IS_SORTED(x));
+}
+
+SEXP api_INTEGER_NO_NA(SEXP x) {
+    return ScalarInteger(INTEGER_NO_NA(x));
+}
+
+SEXP api_REAL_IS_SORTED(SEXP x) {
+    return ScalarInteger(REAL_IS_SORTED(x));
+}
+
+SEXP api_REAL_NO_NA(SEXP x) {
+    return ScalarInteger(REAL_NO_NA(x));
+}
+
+SEXP api_LOGICAL_IS_SORTED(SEXP x) {
+    return ScalarInteger(LOGICAL_IS_SORTED(x));
+}
+
+SEXP api_LOGICAL_NO_NA(SEXP x) {
+    return ScalarInteger(LOGICAL_NO_NA(x));
+}
+
+SEXP api_STRING_IS_SORTED(SEXP x) {
+    return ScalarInteger(STRING_IS_SORTED(x));
+}
+
+SEXP api_STRING_NO_NA(SEXP x) {
+    return ScalarInteger(STRING_NO_NA(x));
 }
 
 SEXP api_STRING_ELT(SEXP x, SEXP i) {
