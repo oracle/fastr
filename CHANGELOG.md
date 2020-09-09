@@ -1,3 +1,16 @@
+# 20.3.0
+
+Bug fixes:
+
+* Set internal generic dispatch for the lengths builtin, #164
+
+New features:
+
+* preliminary implementation of the ALTREP framework
+  * support for registering custom ALTREP classes
+  * ALTREP specific C API, e.g., `INTEGER_IS_SORTED`
+  * serialization and deserialization of custom ALTREP objects is not supported yet
+
 # 20.2.0
 
 Bug fixes:
