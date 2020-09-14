@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -62,6 +63,6 @@ public abstract class HasFixedPropertyNode extends PropertyAccessNode {
     @Specialization(replaces = "hasAttrCached")
     @TruffleBoundary
     protected boolean hasAttrFallback(DynamicObject attrs) {
-        return attrs.containsKey(name);
+        return DynamicObjectLibrary.getUncached().containsKey(attrs, name);
     }
 }

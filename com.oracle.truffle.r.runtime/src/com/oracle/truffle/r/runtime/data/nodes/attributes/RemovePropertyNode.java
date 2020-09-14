@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -59,6 +60,6 @@ public abstract class RemovePropertyNode extends PropertyAccessNode {
     @Specialization
     @TruffleBoundary
     protected static void removeAttrFallback(DynamicObject attrs, String name) {
-        attrs.delete(name);
+        DynamicObjectLibrary.getUncached().removeKey(attrs, name);
     }
 }

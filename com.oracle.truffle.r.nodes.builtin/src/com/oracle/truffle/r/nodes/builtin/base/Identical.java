@@ -38,13 +38,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.IdenticalFactory.IdenticalInternalNodeGen;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -63,8 +59,13 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -155,7 +156,7 @@ public final class Identical extends RBuiltinNode.Arg8 {
                 Iterator<RAttributesLayout.RAttribute> xIter = attrIterNodeX.execute(xAttributes).iterator();
                 while (xIter.hasNext()) {
                     RAttributesLayout.RAttribute xAttr = xIter.next();
-                    Object yValue = yAttributes.get(xAttr.getName());
+                    Object yValue = DynamicObjectLibrary.getUncached().getOrDefault(yAttributes, xAttr.getName(), null);
                     if (yValue == null) {
                         return RRuntime.LOGICAL_FALSE;
                     }
@@ -168,7 +169,7 @@ public final class Identical extends RBuiltinNode.Arg8 {
                 Iterator<RAttributesLayout.RAttribute> yIter = attrIterNodeY.execute(yAttributes).iterator();
                 while (xIter.hasNext()) {
                     RAttributesLayout.RAttribute yAttr = yIter.next();
-                    if (!xAttributes.containsKey(yAttr.getName())) {
+                    if (!DynamicObjectLibrary.getUncached().containsKey(xAttributes, yAttr.getName())) {
                         return RRuntime.LOGICAL_FALSE;
                     }
                 }

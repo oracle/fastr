@@ -35,6 +35,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -251,7 +252,7 @@ public abstract class Inspect extends RBuiltinNode.Arg2 {
                 sb.append("ATTRIB:\n");
                 for (Object key : attrs.getShape().getKeys()) {
                     inspectTree(sb, indent + 2, "KEY: ", key, deep - 1, pvec);
-                    inspectTree(sb, indent + 2, "VALUE: ", attrs.get(key), deep - 1, pvec);
+                    inspectTree(sb, indent + 2, "VALUE: ", DynamicObjectLibrary.getUncached().getOrDefault(attrs, key, null), deep - 1, pvec);
                 }
             }
         }

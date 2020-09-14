@@ -28,6 +28,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -77,7 +78,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected static final boolean onlyDimAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode dimAttrGetter) {
+    protected static boolean onlyDimAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode dimAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && dimAttrGetter.execute(source) != null;
     }
@@ -89,7 +90,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected static final boolean onlyNamesAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode namesAttrGetter) {
+    protected static boolean onlyNamesAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode namesAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && namesAttrGetter.execute(source) != null;
     }
@@ -101,7 +102,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected static final boolean onlyClassAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode classAttrGetter) {
+    protected static boolean onlyClassAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode classAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && classAttrGetter.execute(source) != null;
     }
@@ -131,7 +132,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
                 if (!Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY) && !Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY) && !Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
                     Object val = p.get(orgAttributes, shape);
                     updateRefCountNode.execute(updateChildRefCountNode.updateState(source, val));
-                    target.initAttributes().define(name, val);
+                    DynamicObjectLibrary.getUncached().put(target.initAttributes(), name, val);
                 }
             }
         }

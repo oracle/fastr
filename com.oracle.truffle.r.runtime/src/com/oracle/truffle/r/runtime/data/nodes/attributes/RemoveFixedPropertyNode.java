@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedPropertyNodeGen.RemoveClassPropertyAccessNodeGen;
@@ -96,7 +97,7 @@ public abstract class RemoveFixedPropertyNode extends PropertyAccessNode {
     @Specialization(replaces = "removeNonExistantAttr")
     @TruffleBoundary
     protected void removeAttrFallback(DynamicObject attrs) {
-        attrs.delete(getPropertyName());
+        DynamicObjectLibrary.getUncached().removeKey(attrs, getPropertyName());
     }
 
     public abstract static class RemoveGenericPropertyAccessNode extends RemoveFixedPropertyNode {

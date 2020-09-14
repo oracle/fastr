@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectFactory;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Layout;
 import com.oracle.truffle.api.object.ObjectType;
 import com.oracle.truffle.api.object.Property;
@@ -148,20 +149,17 @@ public final class RAttributesLayout {
     @TruffleBoundary
     public static DynamicObject copy(DynamicObject attrs) {
         assert isRAttributes(attrs);
-
-        DynamicObject result = attrs.copy(attrs.getShape());
+        DynamicObject result = attrs.getShape().newInstance();
         Shape shape = result.getShape();
-        Property prop = shape.getLastProperty();
-        while (prop != null) {
-            Object value = result.get(prop.getKey());
+        for (Object key : shape.getKeys()) {
+            Object value = DynamicObjectLibrary.getUncached().getOrDefault(attrs, key, null);
+            DynamicObjectLibrary.getUncached().put(result, key, value);
             if (RSharingAttributeStorage.isShareable(value)) {
                 // There is no simple way to determine the correct reference count here and since
                 // the value will end up in two attributes collections, it will end up being shared
                 // most likely anyway.
                 ((RSharingAttributeStorage) value).makeSharedPermanent();
             }
-            shape = shape.getParent();
-            prop = shape.getLastProperty();
         }
         return result;
     }
@@ -171,7 +169,7 @@ public final class RAttributesLayout {
         assert isRAttributes(attrs);
 
         for (Property p : attrs.getShape().getProperties()) {
-            attrs.delete(p.getKey());
+            DynamicObjectLibrary.getUncached().removeKey(attrs, p.getKey());
         }
     }
 
