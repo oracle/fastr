@@ -31,14 +31,11 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -56,13 +53,17 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
 import com.oracle.truffle.r.runtime.data.nodes.MaterializeNode;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
@@ -930,7 +931,7 @@ public final class SpecialAttributesFunctions {
                     if (dimNames != null) {
                         attrs = RAttributesLayout.createDimAndDimNames(dimensionsVector, dimNames);
                         if (names != null) {
-                            attrs.define(RRuntime.NAMES_ATTR_KEY, names);
+                            DynamicObjectLibrary.getUncached().put(attrs, RRuntime.NAMES_ATTR_KEY, names);
                         }
                     } else {
                         if (names != null) {
@@ -943,7 +944,7 @@ public final class SpecialAttributesFunctions {
                     if (dimNames != null) {
                         attrs = RAttributesLayout.createDimNames(dimNames);
                         if (names != null) {
-                            attrs.define(RRuntime.NAMES_ATTR_KEY, names);
+                            DynamicObjectLibrary.getUncached().put(attrs, RRuntime.NAMES_ATTR_KEY, names);
                         }
                     } else {
                         assert (names != null); // only called with at least one attr != null

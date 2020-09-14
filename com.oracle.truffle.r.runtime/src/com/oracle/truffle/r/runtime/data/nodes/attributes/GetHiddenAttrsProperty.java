@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.HiddenKey;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
@@ -55,8 +57,9 @@ public abstract class GetHiddenAttrsProperty extends PropertyAccessNode {
         return (RPairList) location.get(attrs);
     }
 
+    @TruffleBoundary
     @Specialization(replaces = "getCached")
     protected static RPairList getGeneric(DynamicObject attrs) {
-        return attrs.containsKey(KEY) ? (RPairList) attrs.get(KEY) : null;
+        return (RPairList) DynamicObjectLibrary.getUncached().getOrDefault(attrs, KEY, null);
     }
 }

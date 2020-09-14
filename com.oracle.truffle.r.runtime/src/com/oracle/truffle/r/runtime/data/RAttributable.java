@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.Iterator;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.HiddenKey;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import java.util.Iterator;
 
 /**
  * Denotes an R type that can have associated attributes, e.g. {@link REnvironment}
@@ -77,7 +79,7 @@ public abstract class RAttributable extends RBaseObject {
     public final Object getAttr(String name) {
         CompilerAsserts.neverPartOfCompilation();
         DynamicObject attr = getAttributes();
-        return attr == null ? null : attr.get(name);
+        return attr == null ? null : DynamicObjectLibrary.getUncached().getOrDefault(attr, name, null);
     }
 
     /**
@@ -94,14 +96,14 @@ public abstract class RAttributable extends RBaseObject {
      * attribute, can't be overridden.
      */
     protected final void putAttribute(String name, Object value) {
-        initAttributes().define(name, value);
+        DynamicObjectLibrary.getUncached().put(initAttributes(), name, value);
     }
 
     public void removeAttr(String name) {
         CompilerAsserts.neverPartOfCompilation();
         DynamicObject attrs = getAttributes();
         if (attrs != null) {
-            attrs.delete(name);
+            DynamicObjectLibrary.getUncached().removeKey(attrs, name);
             if (attrs.getShape().getPropertyCount() == 0) {
                 initAttributes(null);
             }
@@ -139,7 +141,7 @@ public abstract class RAttributable extends RBaseObject {
         return setClassAttrInternal(this, classAttr);
     }
 
-    protected static final RAttributable setClassAttrInternal(RAttributable attributable, RStringVector classAttr) {
+    protected static RAttributable setClassAttrInternal(RAttributable attributable, RStringVector classAttr) {
         if (attributable.attributes == null && classAttr != null && classAttr.getLength() != 0) {
             attributable.initAttributes();
         }
@@ -154,16 +156,16 @@ public abstract class RAttributable extends RBaseObject {
                     }
                 }
             }
-            attributable.initAttributes().define(RRuntime.CLASS_ATTR_KEY, classAttr);
+            DynamicObjectLibrary.getUncached().put(attributable.initAttributes(), RRuntime.CLASS_ATTR_KEY, classAttr);
         }
         return attributable;
     }
 
     protected final void removeAttributeMapping(String key) {
-        if (this.attributes != null) {
-            this.attributes.delete(key);
-            if (this.attributes.getShape().getPropertyCount() == 0) {
-                this.attributes = null;
+        if (attributes != null) {
+            DynamicObjectLibrary.getUncached().removeKey(attributes, key);
+            if (attributes.getShape().getPropertyCount() == 0) {
+                attributes = null;
             }
         }
     }

@@ -45,6 +45,7 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
@@ -913,8 +914,7 @@ public abstract class REnvironment extends RAttributable {
      * {@code environmentName} function.
      */
     public String getName() {
-        String attrName = attributes == null ? null : RRuntime.asString(attributes.get(NAME_ATTR_KEY));
-        return attrName != null ? attrName : name;
+        return attributes == null ? name : RRuntime.asString(DynamicObjectLibrary.getUncached().getOrDefault(attributes, NAME_ATTR_KEY, name));
     }
 
     /**

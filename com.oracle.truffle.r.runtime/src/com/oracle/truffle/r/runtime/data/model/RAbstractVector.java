@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -33,9 +35,9 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
-import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -160,7 +162,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         if (attributes == null) {
             return null;
         } else {
-            RIntVector dims = (RIntVector) attributes.get(RRuntime.DIM_ATTR_KEY);
+            RIntVector dims = (RIntVector) DynamicObjectLibrary.getUncached().getOrDefault(attributes, RRuntime.DIM_ATTR_KEY, null);
             return dims == null ? null : dims.getReadonlyData();
         }
     }
@@ -169,7 +171,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         if (attributes == null) {
             return null;
         } else {
-            return (RStringVector) attributes.get(RRuntime.NAMES_ATTR_KEY);
+            return (RStringVector) DynamicObjectLibrary.getUncached().getOrDefault(attributes, RRuntime.NAMES_ATTR_KEY, null);
         }
     }
 
@@ -296,7 +298,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
             throw RInternalError.unimplemented("The \"class\" attribute should be set using a separate method");
         } else {
-            attributes.define(name, value);
+            DynamicObjectLibrary.getUncached().put(attributes, name, value);
         }
     }
 
@@ -312,7 +314,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         } else if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
             throw RInternalError.unimplemented("The \"class\" attribute should be reset using a separate method");
         } else {
-            attributes.delete(name);
+            DynamicObjectLibrary.getUncached().removeKey(attributes, name);
             // nullify only here because other methods invoke removeAttributeMapping which does
             // it already
             if (attributes.getShape().getPropertyCount() == 0) {
@@ -369,7 +371,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         if (attributes == null) {
             return null;
         } else {
-            return (RList) attributes.get(RRuntime.DIMNAMES_ATTR_KEY);
+            return (RList) DynamicObjectLibrary.getUncached().getOrDefault(attributes, RRuntime.DIMNAMES_ATTR_KEY, null);
         }
     }
 
@@ -450,7 +452,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         if (attributes == null) {
             return RNull.instance;
         } else {
-            return attributes.get(RRuntime.ROWNAMES_ATTR_KEY);
+            return DynamicObjectLibrary.getUncached().getOrDefault(attributes, RRuntime.ROWNAMES_ATTR_KEY, null);
         }
     }
 
@@ -495,28 +497,28 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             return false;
         }
-        return attributes == null ? false : attributes.containsKey(RRuntime.DIM_ATTR_KEY);
+        return attributes != null && DynamicObjectLibrary.getUncached().containsKey(attributes, RRuntime.DIM_ATTR_KEY);
     }
 
     private boolean hasDimNames() {
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             return false;
         }
-        return attributes == null ? false : attributes.containsKey(RRuntime.DIMNAMES_ATTR_KEY);
+        return attributes != null && DynamicObjectLibrary.getUncached().containsKey(attributes, RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     private boolean hasRowNames() {
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             return false;
         }
-        return attributes == null ? false : attributes.containsKey(RRuntime.ROWNAMES_ATTR_KEY);
+        return attributes != null && DynamicObjectLibrary.getUncached().containsKey(attributes, RRuntime.ROWNAMES_ATTR_KEY);
     }
 
     private boolean hasNames() {
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             return false;
         }
-        return attributes == null ? false : attributes.containsKey(RRuntime.NAMES_ATTR_KEY);
+        return attributes != null && DynamicObjectLibrary.getUncached().containsKey(attributes, RRuntime.NAMES_ATTR_KEY);
     }
 
     @InternalDeprecation("Use dedicated node for attributes manipulation")
@@ -700,7 +702,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @CompilerDirectives.TruffleBoundary
     private RAbstractContainer copyClassAttr(DynamicObject vecAttributes) {
-        return (RAbstractContainer) setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
+        return (RAbstractContainer) setClassAttr((RStringVector) DynamicObjectLibrary.getUncached().getOrDefault(vecAttributes, RRuntime.CLASS_ATTR_KEY, null));
     }
 
     /*

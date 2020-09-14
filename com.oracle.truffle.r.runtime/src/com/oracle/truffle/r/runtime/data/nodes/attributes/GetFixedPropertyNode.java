@@ -28,8 +28,12 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNodeGen.GetClassPropertyNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNodeGen.GetCommentPropertyNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNodeGen.GetDimNamesPropertyNodeGen;
@@ -38,9 +42,6 @@ import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNodeGe
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNodeGen.GetNamesPropertyNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNodeGen.GetRowNamesPropertyNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNodeGen.GetTspPropertyNodeGen;
-import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
  * Retrieves fixed property (passed in constructor) from dynamic object.
@@ -103,7 +104,7 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
     @Specialization(replaces = "getAttrCached")
     @TruffleBoundary
     protected Object getAttrFallback(DynamicObject attrs) {
-        return attrs.get(getPropertyName());
+        return DynamicObjectLibrary.getUncached().getOrDefault(attrs, getPropertyName(), null);
     }
 
     @GenerateUncached

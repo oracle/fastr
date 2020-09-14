@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -102,8 +103,8 @@ public final class IdenticalVisitor extends RSyntaxArgVisitor<Boolean, RSyntaxEl
         if (attributes != null) {
             DynamicObject otherAttributes = otherAttributable.getAttributes();
             for (Object key : attributes.getShape().getKeys()) {
-                Object attributeValue = attributes.get(key);
-                Object otherAttributeValue = otherAttributes == null ? null : otherAttributes.get(key);
+                Object attributeValue = DynamicObjectLibrary.getUncached().getOrDefault(attributes, key, null);
+                Object otherAttributeValue = otherAttributes == null ? null : DynamicObjectLibrary.getUncached().getOrDefault(otherAttributes, key, null);
                 if ((attributeValue == null) != (otherAttributeValue == null) || !identicalValue(attributeValue, otherAttributeValue)) {
                     return false;
                 }

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.FinalLocationException;
 import com.oracle.truffle.api.object.HiddenKey;
 import com.oracle.truffle.api.object.IncompatibleLocationException;
@@ -92,7 +93,7 @@ public abstract class SetHiddenAttrsProperty extends PropertyAccessNode {
 
     @Specialization(replaces = {"setExistingCached", "setNewCached"})
     protected static RPairList setGeneric(RAttributable attrs, RPairList value) {
-        attrs.getAttributes().define(KEY, value);
+        DynamicObjectLibrary.getUncached().put(attrs.getAttributes(), KEY, value);
         return value;
     }
 
@@ -103,7 +104,7 @@ public abstract class SetHiddenAttrsProperty extends PropertyAccessNode {
                     @Cached("lookupLocation(shape, KEY)") Location location) {
         if (location != null) {
             existsProfile.enter();
-            attrs.getAttributes().delete(KEY);
+            DynamicObjectLibrary.getUncached().removeKey(attrs.getAttributes(), KEY);
         }
         return RNull.instance;
     }
@@ -111,8 +112,9 @@ public abstract class SetHiddenAttrsProperty extends PropertyAccessNode {
     @Specialization(replaces = "removeCached")
     protected static RNull removeGeneric(RAttributable attrs, @SuppressWarnings("unused") RNull value) {
         DynamicObject attrObj = attrs.getAttributes();
-        if (attrObj.containsKey(KEY)) {
-            attrObj.delete(KEY);
+        DynamicObjectLibrary uncached = DynamicObjectLibrary.getUncached();
+        if (uncached.containsKey(attrObj, KEY)) {
+            DynamicObjectLibrary.getUncached().removeKey(attrObj, KEY);
         }
         return RNull.instance;
     }

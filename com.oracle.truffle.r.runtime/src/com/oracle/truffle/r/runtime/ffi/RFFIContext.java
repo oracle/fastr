@@ -22,12 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import java.util.WeakHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+
+import org.graalvm.collections.EconomicMap;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.Collections;
@@ -46,11 +53,6 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import org.graalvm.collections.EconomicMap;
-
-import java.util.WeakHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 /**
  * Holds per RContext specific state of the RFFI. RFFI implementation agnostic data and methods are
@@ -340,7 +342,7 @@ public abstract class RFFIContext extends RFFI {
             DynamicObject attrs = ((RAttributable) child).getAttributes();
             if (attrs != null) {
                 for (Object key : attrs.getShape().getKeys()) {
-                    if (attrs.get(key, null) == parent) {
+                    if (DynamicObjectLibrary.getUncached().getOrDefault(attrs, key, null) == parent) {
                         return true;
                     }
                 }

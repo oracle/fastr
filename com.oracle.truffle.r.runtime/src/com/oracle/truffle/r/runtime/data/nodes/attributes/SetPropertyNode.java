@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.FinalLocationException;
 import com.oracle.truffle.api.object.IncompatibleLocationException;
 import com.oracle.truffle.api.object.Location;
@@ -98,7 +99,7 @@ public abstract class SetPropertyNode extends PropertyAccessNode {
     @TruffleBoundary
     @Specialization(replaces = {"setExistingAttrCached", "setNewAttrCached"})
     protected static void setAttrFallback(DynamicObject receiver, String name, Object value) {
-        receiver.define(name, value);
+        DynamicObjectLibrary.getUncached().put(receiver, name, value);
     }
 
     /**
