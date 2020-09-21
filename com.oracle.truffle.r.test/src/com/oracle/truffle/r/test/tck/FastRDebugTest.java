@@ -384,8 +384,6 @@ public class FastRDebugTest {
             debuggerSession.suspendNextExecution();
         });
 
-        assertArguments(1, "main(1, 2, 3, 4)");
-
         stepInto(1);
         assertArguments(2, "x <- 10L", "a", 1, "b", 2, "c", 3, "d", 4);
         continueExecution();
