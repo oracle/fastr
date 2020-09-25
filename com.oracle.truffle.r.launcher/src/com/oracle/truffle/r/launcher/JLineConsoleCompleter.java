@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,17 @@
  */
 package com.oracle.truffle.r.launcher;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import org.graalvm.shadowed.org.jline.reader.Candidate;
 
-import jline.console.completer.Completer;
+import org.graalvm.shadowed.org.jline.reader.Completer;
+import org.graalvm.shadowed.org.jline.reader.LineReader;
+import org.graalvm.shadowed.org.jline.reader.ParsedLine;
 
 public class JLineConsoleCompleter implements Completer {
 
@@ -46,9 +48,28 @@ public class JLineConsoleCompleter implements Completer {
     }
 
     @Override
-    public int complete(String buffer, int cursor, List<CharSequence> candidates) {
+    public void complete(LineReader reader, ParsedLine pl, List<Candidate> candidates) {
         try {
-            return completeImpl(buffer, cursor, candidates);
+            // need the cursor pos in whole line for R completion func
+            int cursor = 0;
+            String line = pl.line();
+            String word = pl.word();
+            int wordCursor = pl.wordCursor();
+            if (!word.isEmpty()) {
+                // there might be 'gaps' of more the 1 delimiter,
+                // so do not simply count words length + delimiter size
+                for (int i = 0; i < pl.wordIndex(); i++) {
+                    String w = pl.words().get(i);
+                    cursor = line.indexOf(w, cursor);
+                    cursor += w.length();
+                }
+                cursor = line.indexOf(word, cursor);
+                cursor += wordCursor;
+            } else {
+                cursor = line.length();
+            }
+
+            complete(line, cursor, word, wordCursor, candidates);
         } catch (Throwable e) {
             if (isTesting) {
                 throw e;
@@ -61,9 +82,10 @@ public class JLineConsoleCompleter implements Completer {
     private static final Source GET_COMPLETION_ENV = Source.newBuilder("R", "utils:::.CompletionEnv", "<completion>").internal(true).buildLiteral();
     private static final Source SET_FUNCTION = Source.newBuilder("R", "`$<-`", "<completion>").internal(true).buildLiteral();
 
-    private int completeImpl(String buffer, int cursor, List<CharSequence> candidates) {
+    // public for testing purposes
+    public void complete(String buffer, int cursor, String word, int wordCursor, List<Candidate> candidates) {
         if (buffer.isEmpty()) {
-            return cursor;
+            return;
         }
         Value completionFunction = context.eval(GET_COMPLETION_FUNCTION);
         Value completionEnv = context.eval(GET_COMPLETION_ENV);
@@ -79,21 +101,71 @@ public class JLineConsoleCompleter implements Completer {
 
         if (completionEnv.hasMember("comps")) {
             Value completions = completionEnv.getMember("comps");
+            int bracketIdx = buffer.lastIndexOf('(', cursor);
+            int quoteIdx = isInQuotes(buffer, cursor);
             if (completions.isString()) {
-                candidates.add(completions.asString());
-                return start;
+                String res = completions.asString();
+                String value = getValue(res, bracketIdx, quoteIdx, word, wordCursor);
+                candidates.add(new Candidate(value, res, null, null, null, null, false));
             } else if (completions.hasArrayElements()) {
                 long length = completions.getArraySize();
-                List<String> result = new ArrayList<>((int) length);
+                String[] result = new String[(int) length];
                 for (int i = 0; i < length; i++) {
-                    result.add(completions.getArrayElement(i).asString());
+                    result[i] = completions.getArrayElement(i).asString();
                 }
-                Collections.sort(result, String.CASE_INSENSITIVE_ORDER);
-                candidates.addAll(result);
-                return start;
+                Arrays.sort(result, String.CASE_INSENSITIVE_ORDER);
+                for (int i = 0; i < length; i++) {
+                    String res = result[i];
+                    String value = getValue(res, bracketIdx, quoteIdx, word, wordCursor);
+                    candidates.add(new Candidate(value, res, null, null, null, null, false));
+                }
             }
         }
-        return cursor;
+    }
+
+    private String getValue(String res, int leftBracketIdx, int quoteIdx, String word, int wordCursor) {
+        if (quoteIdx > leftBracketIdx) {
+            return merge(word, res, wordCursor, true);
+        }
+        if (leftBracketIdx > -1) {
+            return merge(word, res, wordCursor, false);
+        }
+        return res;
+    }
+
+    private String merge(String word, String result, int wordCursor, boolean isPaths) {
+        if (result.startsWith(word)) {
+            return result;
+        }
+
+        if (word.endsWith(result)) {
+            return word;
+        }
+
+        int idx = 1;
+        boolean wasMatch = false;
+        String match = null;
+        if (wordCursor == word.length()) {
+            while (idx <= word.length() && idx <= result.length()) {
+                String wordEnd = word.substring(word.length() - idx);
+                String resBeg = result.substring(0, idx);
+                if (wordEnd.equals(resBeg)) {
+                    match = word.substring(0, word.length() - idx) + result;
+                } else if (wasMatch) {
+                    break;
+                }
+                idx++;
+            }
+            if (match != null) {
+                return match;
+            }
+            return word + result;
+        } else {
+            if (isPaths) {
+                return merge(word.substring(0, wordCursor), result, wordCursor, isPaths) + word.substring(wordCursor);
+            }
+            return merge(word.substring(0, wordCursor), result, wordCursor, isPaths);
+        }
     }
 
     private static int getStart(String buffer, Value env, int cursor) {

@@ -36,8 +36,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
-
-import jline.console.UserInterruptException;
+import org.graalvm.shadowed.org.jline.reader.UserInterruptException;
 
 /**
  * Implements the read-eval-print loop.
