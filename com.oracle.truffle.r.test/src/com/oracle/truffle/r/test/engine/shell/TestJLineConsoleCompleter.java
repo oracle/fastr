@@ -40,6 +40,8 @@ import org.junit.Test;
 import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import java.util.List;
+import org.graalvm.shadowed.org.jline.reader.Candidate;
 
 public class TestJLineConsoleCompleter {
 
@@ -85,103 +87,104 @@ public class TestJLineConsoleCompleter {
     // disabled because it uses Engine, which clashes with other tests that use PolyglotEngine
     @Test
     public void testCompl() {
-        assertCompl("", 0);
-        assertCompl("", 1);
-        assertCompl(" ", 1);
+        assertCompl("", 0, "", 0);
+        assertCompl("", 1, "", 0);
+        assertCompl(" ", 1, "", 0);
 
-        assertCompl("(", 0);
-        assertCompl("(", 1);
-        assertCompl("=", 1);
-        assertCompl("$", 1);
+        assertCompl("(", 0, "", 0);
+        assertCompl("(", 1, "", 0);
+        assertCompl("=", 1, "=", 1);
+        assertCompl("$", 1, "$", 1);
 
-        assertCompl("strt", 4, "strtoi", "strtrim");
-        assertCompl("strt", 5);
-        assertCompl("strt", 6);
+        assertCompl("strt", 4, "strt", 4, "strtoi", "strtrim");
+        assertCompl("strt", 5, "", 0);
+        assertCompl("strt", 6, "", 0);
 
-        assertCompl("strto", 5, "strtoi");
-        assertCompl("strtoi", 5, "strtoi");
-        assertCompl("strtoi", 4, "strtoi", "strtrim");
-        assertCompl("strto ", 6);
-        assertCompl("strto,", 6);
-        assertCompl("strt blabla", 4, "strtoi", "strtrim");
-        assertCompl("strt  blabla", 4, "strtoi", "strtrim");
-        assertCompl("strt,,blabla", 4, "strtoi", "strtrim");
-        assertCompl("strt, blabla", 4, "strtoi", "strtrim");
-        assertCompl("strto blabla", 4, "strtoi", "strtrim");
-        assertCompl("blabla,strt", 11, "strtoi", "strtrim");
-        assertCompl("blabla strt", 11, "strtoi", "strtrim");
-        assertCompl("blabla,,strt", 12, "strtoi", "strtrim");
-        assertCompl("blabla  strt", 12, "strtoi", "strtrim");
-        assertCompl("blabla, strt", 12, "strtoi", "strtrim");
+        assertCompl("strto", 5, "strto", 5, "strtoi");
+        assertCompl("strtoi", 5, "strto", 5, "strtoi");
+        assertCompl("strtoi", 4, "strto", 4, "strtoi", "strtrim");
+        assertCompl("strto ", 6, "", 0);
+        assertCompl("strt blabla", 4, "strt", 4, "strtoi", "strtrim");
+        assertCompl("strt  blabla", 4, "strt", 4, "strtoi", "strtrim");
+        assertCompl("strt,,blabla", 4, "strt", 4, "strtoi", "strtrim");
+        assertCompl("strt, blabla", 4, "strt", 4, "strtoi", "strtrim");
+        assertCompl("strto blabla", 4, "strto", 4, "strtoi", "strtrim");
+        assertCompl("blabla,strt", 11, "strt", 4, "strtoi", "strtrim");
+        assertCompl("blabla strt", 11, "strt", 4, "strtoi", "strtrim");
+        assertCompl("blabla,,strt", 12, "strt", 4, "strtoi", "strtrim");
+        assertCompl("blabla  strt", 12, "strt", 4, "strtoi", "strtrim");
+        assertCompl("blabla, strt", 12, "strt", 4, "strtoi", "strtrim");
         // Checkstyle: stop
-        assertCompl("blabla ,strt", 12, "strtoi", "strtrim");
+        assertCompl("blabla ,strt", 12, "strt", 4, "strtoi", "strtrim");
         // Checkstyle: resume
 
-        assertCompl("source('a')", 10);
-        assertCompl("source('a')", 11);
-        assertCompl("source('a') ", 12);
-        assertCompl("source('a') ", 13);
+        assertCompl("source('a')", 10, "a", 1);
+        assertCompl("source('a')", 11, "", 0);
+        assertCompl("source('a') ", 12, "", 0);
+        assertCompl("source('a') ", 13, "", 0);
 
-        assertCompl("base::strt", 10, "base::strtoi", "base::strtrim");
-        assertCompl("base:::strt", 11, "base:::strtoi", "base:::strtrim");
-        assertCompl("base:::strttrt", 14, "base:::");
+        assertCompl("base::strt", 10, "base::strt", 10, "base::strtoi", "base::strtrim");
+        assertCompl("base:::strt", 11, "base:::strt", 11, "base:::strtoi", "base:::strtrim");
+        assertCompl("base:::strttrt", 14, "base:::strttrt", 14, "base:::");
 
-        assertCompl("strt(", 4, "strtoi", "strtrim");
-        assertCompl("strt(", 5);
-        assertCompl("f(strt", 6, "strtoi", "strtrim");
-        assertCompl("f(base::strt", 12, "base::strtoi", "base::strtrim");
-        assertCompl("f(strt(trt", 6, "strtoi", "strtrim");
-        assertCompl("f(strt(trt", 10);
-        assertCompl("f(strt(strto", 11, "strtoi", "strtrim");
-        assertCompl("f(strt(strto", 12, "strtoi");
+        assertCompl("strt(", 4, "strt", 4, "strtoi", "strtrim");
+        assertCompl("strt(", 5, "", 5);
+        assertCompl("f(strt", 6, "strt", 4, "strtoi", "strtrim");
+        assertCompl("f(base::strt", 12, "base::strt", 10, "base::strtoi", "base::strtrim");
+        assertCompl("f(strt(trt", 6, "strt", 4, "strtoi", "strtrim");
+        assertCompl("f(strt(trt", 10, "trt", 3);
+        assertCompl("f(strt(strto", 11, "strto", 4, "strtoi", "strtrim");
+        assertCompl("f(strt(strto", 12, "strto", 5, "strtoi");
 
-        assertCompl("grep(", 5, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
-        assertCompl("grep(pattern=\"a\",", 17, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
-        assertCompl("grep(pattern=\"a\"", 16);
-        assertCompl("grep(pattern=\"a\", fixe", 22, "fixed=");
+        assertCompl("grep(", 5, "", 5, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        assertCompl("grep(pattern=\"a\",", 17, "", 0, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        assertCompl("grep(pattern=\"a\"", 16, "pattern=\"a\"", 11);
+        assertCompl("grep(pattern=\"a\", fixe", 22, "fixe", 4, "fixed=");
 
-        assertCompl("grep (patt", 10, "pattern=");
-        assertCompl("grep,(patt", 10, "pattern=");
-        assertCompl("grep  (patt", 11, "pattern=");
-        assertCompl("grep,,(patt", 11, "pattern=");
+        assertCompl("grep (patt", 10, "patt", 4, "pattern=");
+        assertCompl("grep,(patt", 10, "patt", 4, "pattern=");
+        assertCompl("grep  (patt", 11, "patt", 4, "pattern=");
+        assertCompl("grep,,(patt", 11, "patt", 4, "pattern=");
         // Checkstyle: stop
-        assertCompl("grep ,(patt", 11, "pattern=");
+        assertCompl("grep ,(patt", 11, "patt", 4, "pattern=");
         // Checkstyle: resume
-        assertCompl("grep, (patt", 11, "pattern=");
+        assertCompl("grep, (patt", 11, "patt", 4, "pattern=");
 
-        assertCompl("grep(patt ", 10, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
-        assertCompl("grep (patt ", 11, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
-        assertCompl("grep (patt  ", 12, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        // this are ridiculos, but still, lets see if we feed R completion properly
+        assertCompl("grep(patt ", 10, "", 4, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        assertCompl("grep (patt ", 11, "", 4, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
+        assertCompl("grep (patt  ", 12, "", 4, "fixed=", "ignore.case=", "invert=", "pattern=", "perl=", "useBytes=", "value=", "x=");
 
         // show only arguments for 'cor', and not also those for 'cor.test', 'cor.test.name' etc.
-        assertCompl("cor(", 3, "cor", "cor.test");
-        assertCompl("cor(", 4, "method=", "use=", "x=", "y=");
-        assertCompl("cor(", 5, "method=", "use=", "x=", "y=");
-        assertCompl("cor( ", 5, "method=", "use=", "x=", "y=");
+        assertCompl("cor(", 3, "cor", 3, "cor", "cor.test");
+        assertCompl("cor(", 4, "", 0, "method=", "use=", "x=", "y=");
+        assertCompl("cor(", 5, "", 0, "method=", "use=", "x=", "y=");
+        assertCompl("cor( ", 5, "", 0, "method=", "use=", "x=", "y=");
 
         String noName = "_f_f_f_";
-        assertCompl(noName + ".", 7);
-        assertCompl(noName + ".", 8);
-        assertCompl(noName + "." + File.separator, 9);
-        assertCompl(noName + "'", 7);
-        assertCompl(noName + "'", 8, NOT_EMPTY);
-        assertCompl(noName + "'." + File.separator, 8, NOT_EMPTY);
-        assertCompl(noName + "'." + File.separator, 9, NOT_EMPTY);
-        assertCompl(noName + "'." + File.separator, 10, NOT_EMPTY);
-        assertCompl(noName + "\"." + File.separator, 8, NOT_EMPTY);
+        assertCompl(noName + ".", 7, noName + ".", 7);
+        assertCompl(noName + ".", 8, noName + ".", 8);
+        assertCompl(noName + "." + File.separator, 9, noName + "." + File.separator, 9);
+        assertCompl(noName + "'", 7, noName + "'", 7);
+        assertCompl(noName + "'", 8, noName + "'", 8, NOT_EMPTY);
+        // assertCompl(noName + "'." + File.separator, 8, noName + "'." + File.separator, 8,
+        // NOT_EMPTY);
+        // assertCompl(noName + "'." + File.separator, 9, NOT_EMPTY);
+        assertCompl(noName + "'." + File.separator, 10, noName + "'." + File.separator, 10, NOT_EMPTY);
+        // assertCompl(noName + "\"." + File.separator, 8, NOT_EMPTY);
 
         // named list
-        assertCompl("l$", 2, "l$bar", "l$foo");
-        assertCompl("l$b", 3, "l$bar");
+        assertCompl("l$", 2, "l$", 2, "l$bar", "l$foo");
+        assertCompl("l$b", 3, "l$b", 3, "l$bar");
         // s4 object
-        assertCompl("tc@", 3, "tc@bar", "tc@foo");
-        assertCompl("tc@b", 4, "tc@bar");
+        assertCompl("tc@", 3, "tc@", 3, "tc@bar", "tc@foo");
+        assertCompl("tc@b", 4, "tc@b", 4, "tc@bar");
 
         // java object
-        assertCompl("tjo$", 4, "tjo$class", "tjo$name");
-        assertCompl("tjo$n", 5, "tjo$name");
-        assertCompl("tjo@", 4, "tjo@class", "tjo@name");
-        assertCompl("tjo@n", 5, "tjo@name");
+        assertCompl("tjo$", 4, "tjo$", 4, "tjo$class", "tjo$name");
+        assertCompl("tjo$n", 5, "tjo$n", 5, "tjo$name");
+        assertCompl("tjo@", 4, "tjo@", 4, "tjo@class", "tjo@name");
+        assertCompl("tjo@n", 5, "tjo@n", 5, "tjo@name");
     }
 
     @Test
@@ -242,15 +245,23 @@ public class TestJLineConsoleCompleter {
     private static final String NOT_EMPTY = "_@_Only.Check.If.Result.Not.Empty_@_";
 
     private void assertCompl(String buffer, int cursor, String... expected) {
-        LinkedList<CharSequence> l = new LinkedList<>();
-        consoleCompleter.complete(buffer, cursor, l);
+        assertCompl(buffer, cursor, "", 0, expected);
+    }
+
+    private void assertCompl(String buffer, int cursor, String word, int wordCursor, String... expected) {
+        List<Candidate> l = new LinkedList<>();
+        consoleCompleter.complete(buffer, cursor, word, wordCursor, l);
 
         if (expected == null || expected.length == 0) {
             assertTrue(l.isEmpty());
         } else if (expected.length == 1 && NOT_EMPTY.equals(expected[0])) {
             assertFalse(l.isEmpty());
         } else {
-            Assert.assertArrayEquals(expected, l.toArray(new CharSequence[l.size()]));
+            String[] result = new String[l.size()];
+            for (int i = 0; i < l.size(); i++) {
+                result[i] = l.get(i).value();
+            }
+            Assert.assertArrayEquals(expected, result);
         }
     }
 

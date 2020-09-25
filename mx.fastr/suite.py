@@ -198,7 +198,7 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.nodes.builtin",
         "com.oracle.truffle.r.parser",
-        "truffle:JLINE",
+        "sdk:JLINE3",
         "truffle:TRUFFLE_NFI",
       ],
      "generatedDependencies" : [
@@ -237,7 +237,7 @@ suite = {
       "dependencies" : [
         "sdk:GRAAL_SDK",
         "sdk:LAUNCHER_COMMON",
-        "truffle:JLINE",
+        "sdk:JLINE3",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
@@ -410,7 +410,7 @@ suite = {
       ],
       "mainClass" : "com.oracle.truffle.r.launcher.RCommand",
       "exclude" : [
-        "truffle:JLINE",
+        "sdk:JLINE3",
         "truffle:ANTLR4",
         "GNUR",
         "XZ-1.8",
@@ -432,7 +432,7 @@ suite = {
       ],
       "mainClass" : "com.oracle.truffle.r.library.fastrGrid.server.RemoteDeviceServer",
       "exclude" : [
-        "truffle:JLINE",
+        "sdk:JLINE3",
         "truffle:ANTLR4",
         "GNUR",
         "XZ-1.8",
