@@ -790,14 +790,14 @@ public class FileFunctions {
                 if (f.isDirectory() && !includeDirs) {
                     return false;
                 }
-                if (!allFiles && f.getName().charAt(0) == '.') {
+                // Note: getName on "/" causes NPE
+                String name = f.getPath().equals("/") ? "" : f.getName();
+                if (!allFiles && !name.isEmpty() && name.charAt(0) == '.') {
                     return false;
                 }
                 if (pattern == null) {
                     return true;
                 }
-                // Note: getName on "/" causes NPE
-                String name = f.getPath().equals("/") ? "" : f.getName();
                 Matcher m = pattern.matcher(name);
                 boolean result = m.find();
                 return result;
