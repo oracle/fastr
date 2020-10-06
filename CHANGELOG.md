@@ -11,8 +11,6 @@ New features:
   * ALTREP specific C API, e.g., `INTEGER_IS_SORTED`
   * serialization and deserialization of custom ALTREP objects is not supported yet
 
-# 20.2.0
-
 Added missing R builtins and C APIs:
 
 * non-API C function match5, which is used by some packages
