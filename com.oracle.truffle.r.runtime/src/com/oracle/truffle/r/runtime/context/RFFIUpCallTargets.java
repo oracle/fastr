@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,10 +71,6 @@ public final class RFFIUpCallTargets {
 
     public RootCallTarget AsCharacterFactor;
 
-    public RootCallTarget MatchNode;
-
-    public RootCallTarget NonNullStringMatchNode;
-
     public RootCallTarget RHasSlotNode;
 
     public RootCallTarget OctSizeNode;
@@ -83,4 +79,5 @@ public final class RFFIUpCallTargets {
 
     public RootCallTarget AsS4;
 
+    public RootCallTarget Match5UpCallNode;
 }

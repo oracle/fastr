@@ -11,6 +11,15 @@ New features:
   * ALTREP specific C API, e.g., `INTEGER_IS_SORTED`
   * serialization and deserialization of custom ALTREP objects is not supported yet
 
+Added missing R builtins and C APIs:
+
+* non-API C function match5, which is used by some packages
+* non-API C function `match5`, which is used by some packages (#149)
+* define dummy `XLENGTH` macro if `USE_RINTERNALS` is defined
+  * non-existence of this macro is used by some packages to detect old R versions
+* `IS_LONG_VEC` C API function
+* when loading native symbol dynamically, FastR also checks the name with trailing underscode to be compatible with GNU-R
+
 # 20.2.0
 
 Bug fixes:

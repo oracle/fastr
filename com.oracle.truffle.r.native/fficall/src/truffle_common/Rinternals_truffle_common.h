@@ -1172,7 +1172,7 @@ R_xlen_t XTRUELENGTH(SEXP x) {
 
 int IS_LONG_VEC(SEXP x) {
     TRACE0();
-    unimplemented("IS_LONG_VEC");
+    // There is no long vectors support in FastR yet
     return 0;
 }
 

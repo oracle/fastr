@@ -214,7 +214,6 @@ com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/objects/NewObject.java
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/InheritsNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/IsFactorNode.java,purdue.copyright
 com.oracle.truffle.r.nodes/src/com/oracle/truffle/r/nodes/unary/SizeToOctalRawNode.java,gnu_r.core.copyright
-com.oracle.truffle.r.parser/src/com/oracle/truffle/r/parser/R.g,purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ffi/DLL.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SA_TYPE.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SEXPTYPE.java,gnu_r.copyright

@@ -24,31 +24,15 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalFalse;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.runtime.RError.Message.MATCH_VECTOR_ARGS;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.builtin.MatchInternalNode;
+import com.oracle.truffle.r.nodes.builtin.Match5Node;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
-import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.closures.RClosures;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /*
  * TODO: handle "incomparables" parameter.
@@ -60,97 +44,14 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
     static {
         Casts casts = new Casts(Match.class);
-        // TODO initially commented out because of use of scalars, the commented out version
-        // converted to new cast pipelines API
-
-        // casts.arg("x").allowNull().mustBe(abstractVectorValue(), SHOW_CALLER,
-        // MATCH_VECTOR_ARGS).asVectorPreserveAttrs(true);
-        // casts.arg("table").allowNull().mustBe(abstractVectorValue()).asVectorPreserveAttrs(true);
         casts.arg("nomatch").asIntegerVector().findFirst();
         casts.arg("incomparables").defaultError(Message.GENERIC, "usage of 'incomparables' in match not implemented").allowNull().mustBe(logicalValue()).asLogicalVector().findFirst().mustBe(
                         logicalFalse());
     }
 
-    protected boolean isCharSXP(RAbstractListVector list) {
-        for (int i = 0; i < list.getLength(); i++) {
-            if (!(RType.getRType(list.getDataAt(i)).equals(RType.Char))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     @Specialization
-    @SuppressWarnings("unused")
-    protected RIntVector match(RNull x, RNull table, int nomatch, Object incomparables) {
-        return RDataFactory.createIntVector(0);
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RIntVector match(RNull x, RAbstractVector table, int nomatch, Object incomparables) {
-        return RDataFactory.createIntVector(0);
-    }
-
-    @Specialization
-    @SuppressWarnings("unused")
-    protected RIntVector match(RAbstractVector x, RNull table, int nomatch, Object incomparables,
-                    @Cached("createBinaryProfile()") ConditionProfile na) {
-        int[] data = new int[x.getLength()];
-        Arrays.fill(data, nomatch);
-        return RDataFactory.createIntVector(data, na.profile(!RRuntime.isNA(nomatch)));
-    }
-
-    @Child private InheritsCheckNode factorInheritsCheck = InheritsCheckNode.create(RRuntime.CLASS_FACTOR);
-
-    protected boolean isFactor(Object o) {
-        return factorInheritsCheck.execute(o);
-    }
-
-    @Specialization(guards = {"isFactor(x)", "isFactor(table)"})
-    protected Object matchFactor(RIntVector x, RIntVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                    @Cached() MatchInternalNode match) {
-        return match.execute(RClosures.createFactorToVector(x, true, getLevelsNode.execute(x)),
-                        RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch);
-    }
-
-    @Specialization(guards = {"isFactor(x)", "!isFactor(table)"})
-    protected Object matchFactor(RIntVector x, RAbstractVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                    @Cached() MatchInternalNode match) {
-        return match.execute(RClosures.createFactorToVector(x, true, getLevelsNode.execute(x)), table, nomatch);
-    }
-
-    @Specialization(guards = {"!isFactor(x)", "isFactor(table)"})
-    protected Object matchFactor(RAbstractVector x, RIntVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                    @Cached() MatchInternalNode match) {
-        return match.execute(x, RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch);
-    }
-
-    @Specialization(guards = {"isCharSXP(x)", "isCharSXP(table)"})
-    protected Object matchDoubleList(RAbstractListVector x, RAbstractListVector table, int nomatchObj, @SuppressWarnings("unused") Object incomparables,
-                    @Cached() MatchInternalNode match) {
-        return match.execute(x, table, nomatchObj);
-    }
-
-    @Specialization(guards = {"!isRIntVector(table) || !isFactor(table)"})
-    protected Object matchList(RAbstractListVector x, RAbstractVector table, int nomatchObj, @SuppressWarnings("unused") Object incomparables,
-                    @Cached("create()") CastStringNode cast,
-                    @Cached() MatchInternalNode match) {
-        return match.execute((RAbstractVector) cast.doCast(x), table, nomatchObj);
-    }
-
-    @Specialization(guards = {"!isRAbstractListVector(x)", "!isRIntVector(x) || !isFactor(x)", "!isRIntVector(table) || !isFactor(table)"})
-    protected Object match(RAbstractVector x, RAbstractVector table, int noMatch, @SuppressWarnings("unused") Object incomparables,
-                    @Cached() MatchInternalNode match) {
-        return match.execute(x, table, noMatch);
-    }
-
-    @Fallback
-    @SuppressWarnings("unused")
-    protected RIntVector match(Object x, Object table, Object nomatch, Object incomparables) {
-        throw error(MATCH_VECTOR_ARGS);
+    Object doIt(Object x, Object table, int nomatch, Object incomparables,
+                    @Cached Match5Node match5Node) {
+        return match5Node.execute(x, table, nomatch, incomparables);
     }
 }

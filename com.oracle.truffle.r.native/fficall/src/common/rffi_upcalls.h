@@ -426,7 +426,7 @@ typedef double (*call_Rf_ftrunc)(double a);
 typedef double (*call_Rf_cospi)(double a);
 typedef double (*call_Rf_sinpi)(double a);
 typedef double (*call_Rf_tanpi)(double a);
-typedef SEXP (*call_Rf_match)(SEXP itable, SEXP ix, int nmatch);
+typedef SEXP (*call_match5)(SEXP itable, SEXP ix, int nmatch, SEXP incomparables, SEXP env);
 typedef Rboolean (*call_Rf_NonNullStringMatch)(SEXP s, SEXP t);
 typedef SEXP (*call_getvar)();
 typedef SEXP (*call_R_ParseVector)(SEXP text, int n, SEXP srcFile);

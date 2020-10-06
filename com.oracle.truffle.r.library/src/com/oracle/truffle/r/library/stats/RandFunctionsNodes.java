@@ -31,8 +31,12 @@ import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
@@ -47,11 +51,15 @@ import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -82,14 +90,17 @@ public final class RandFunctionsNodes {
      * argument must be cast using {@link #addLengthCast(Casts)}. Using this node allows us to avoid
      * casting of long vectors to integers if we only need to know their length.
      */
+    @ImportStatic(DSLConfig.class)
     protected abstract static class ConvertToLength extends Node {
         public abstract int execute(RAbstractVector value);
 
-        @Specialization(guards = "vector.getLength() == 1")
+        @Specialization(guards = "dataLib.getLength(vector.getData()) == 1")
         public int lengthOne(RAbstractVector vector,
                         @Cached("createNonPreserving()") CastIntegerNode castNode,
+                        @CachedLibrary(limit = "getCacheSize(2)") VectorDataLibrary dataLib,
                         @Cached("create()") BranchProfile seenNA) {
-            int result = ((RIntVector) castNode.doCast(vector)).getDataAt(0);
+            RIntVector vec = (RIntVector) castNode.doCast(vector);
+            int result = dataLib.getIntAt(vec.getData(), 0);
             if (RRuntime.isNA(result) || result < 0) {
                 seenNA.enter();
                 throw RError.error(SHOW_CALLER, INVALID_UNNAMED_ARGUMENTS);
@@ -97,9 +108,10 @@ public final class RandFunctionsNodes {
             return result;
         }
 
-        @Specialization(guards = "vector.getLength() != 1")
-        public int notSingle(RAbstractVector vector) {
-            return vector.getLength();
+        @Specialization(guards = "dataLib.getLength(vector.getData()) != 1", limit = "getVectorAccessCacheSize()")
+        public int notSingle(RAbstractVector vector,
+                        @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+            return dataLib.getLength(vector.getData());
         }
 
         private static void addLengthCast(Casts casts) {
@@ -312,9 +324,10 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractVector evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b, RDoubleVector c) {
+        protected RAbstractVector evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b, RDoubleVector c,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             RRNG.getRNGState();
-            return inner.execute(length, a, b, c, RandomNumberProvider.fromCurrentRNG());
+            return inner.execute(length, a, b, c, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
         }
     }
 
@@ -341,9 +354,10 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected Object evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b) {
+        protected Object evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             RRNG.getRNGState();
-            return inner.execute(length, a, b, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG());
+            return inner.execute(length, a, b, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
         }
     }
 
@@ -369,9 +383,10 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected Object evaluate(RAbstractVector length, RDoubleVector a) {
+        protected Object evaluate(RAbstractVector length, RDoubleVector a,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             RRNG.getRNGState();
-            return inner.execute(length, a, DUMMY_VECTOR, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG());
+            return inner.execute(length, a, DUMMY_VECTOR, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
         }
     }
 }

@@ -22,44 +22,31 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodesFactory.NonNullStringMatchNodeGen;
-import com.oracle.truffle.r.nodes.builtin.MatchInternalNode;
-import com.oracle.truffle.r.nodes.builtin.MatchInternalNodeGen;
-import com.oracle.truffle.r.runtime.RError;
-import static com.oracle.truffle.r.runtime.RError.Message.MATCH_VECTOR_ARGS;
+import com.oracle.truffle.r.nodes.builtin.Match5Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class MatchNodes {
 
     @TypeSystemReference(RTypes.class)
-    public abstract static class MatchNode extends FFIUpCallNode.Arg3 {
-
-        @Child MatchInternalNode match = MatchInternalNodeGen.create();
-
+    public abstract static class Match5UpCallNode extends FFIUpCallNode.Arg5 {
         @Specialization
-        Object match(RAbstractVector x, RAbstractVector table, int noMatch) {
-            return match.execute(x, table, noMatch);
+        Object match(Object x, Object table, int noMatch, Object incomparables, @SuppressWarnings("unused") Object env,
+                        @Cached Match5Node match5Node) {
+            return match5Node.execute(x, table, noMatch, incomparables);
         }
 
-        @SuppressWarnings("unused")
-        @Fallback
-        Object match(Object itables, Object ix, Object nmatch) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(this, MATCH_VECTOR_ARGS);
-        }
-
-        public static MatchNode create() {
-            return MatchNodesFactory.MatchNodeGen.create();
+        public static Match5UpCallNode create() {
+            return MatchNodesFactory.Match5UpCallNodeGen.create();
         }
     }
 

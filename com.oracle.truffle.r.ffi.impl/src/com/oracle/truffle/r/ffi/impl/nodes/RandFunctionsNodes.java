@@ -23,7 +23,9 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -34,10 +36,12 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
@@ -47,11 +51,11 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
+import com.oracle.truffle.r.runtime.nmath.RMultinom;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_DoubleBase;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
-import com.oracle.truffle.r.runtime.nmath.RMultinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
 
 public final class RandFunctionsNodes {
@@ -83,8 +87,9 @@ public final class RandFunctionsNodes {
     @GenerateUncached
     public abstract static class RandFunction3Node extends FFIUpCallNode.Arg4 {
         @Specialization
-        protected double evaluate(RandFunction3_DoubleBase delegate, double a, double b, double c) {
-            return delegate.execute(a, b, c, RandomNumberProvider.fromCurrentRNG());
+        protected double evaluate(RandFunction3_DoubleBase delegate, double a, double b, double c,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+            return delegate.execute(a, b, c, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
         }
 
         public static RandFunction3Node create() {
@@ -96,8 +101,9 @@ public final class RandFunctionsNodes {
     public abstract static class RandFunction2Node extends FFIUpCallNode.Arg3 {
 
         @Specialization
-        protected double evaluate(RandFunction2_Double delegate, double a, double b) {
-            return delegate.execute(a, b, RandomNumberProvider.fromCurrentRNG());
+        protected double evaluate(RandFunction2_Double delegate, double a, double b,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+            return delegate.execute(a, b, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
         }
 
         public static RandFunction2Node create() {
@@ -108,8 +114,9 @@ public final class RandFunctionsNodes {
     @GenerateUncached
     public abstract static class RandFunction1Node extends FFIUpCallNode.Arg2 {
         @Specialization
-        protected double evaluate(RandFunction1_Double delegate, double a) {
-            return delegate.execute(a, RandomNumberProvider.fromCurrentRNG());
+        protected double evaluate(RandFunction1_Double delegate, double a,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+            return delegate.execute(a, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
         }
 
         public static RandFunction1Node create() {
@@ -233,11 +240,12 @@ public final class RandFunctionsNodes {
 
         @Specialization(guards = {"probAccess.supports(prob)", "rNAccess.supports(rN)"})
         protected void doRMultinom(int n, RDoubleVector prob, int k, RIntVector rN,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                         @Cached("prob.access()") VectorAccess probAccess,
                         @Cached("rN.access()") VectorAccess rNAccess,
                         @Cached() Rbinom rbinom) {
             int[] rNArr = new int[k];
-            RMultinom.rmultinom(n, probAccess.access(prob), probAccess, 1d, rNArr, 0, RandomNumberProvider.fromCurrentRNG(), rbinom);
+            RMultinom.rmultinom(n, probAccess.access(prob), probAccess, 1d, rNArr, 0, RandomNumberProvider.fromCurrentRNG(ctxRef.get()), rbinom);
             int i = 0;
             for (SequentialIterator rNIter = rNAccess.access(rN); rNAccess.next(rNIter);) {
                 rNAccess.setInt(rNIter, rNArr[i++]);
@@ -246,8 +254,9 @@ public final class RandFunctionsNodes {
 
         @Specialization(replaces = "doRMultinom")
         protected void doGeneric(int n, RDoubleVector prob, int k, RIntVector rN,
-                        @Cached() Rbinom rbinom) {
-            doRMultinom(n, prob, k, rN, prob.slowPathAccess(), rN.slowPathAccess(), rbinom);
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
+                        @Cached Rbinom rbinom) {
+            doRMultinom(n, prob, k, rN, ctxRef, prob.slowPathAccess(), rN.slowPathAccess(), rbinom);
         }
 
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,3 +28,17 @@ Rboolean Rf_NonNullStringMatch(SEXP s, SEXP t)
 	return ((call_Rf_NonNullStringMatch) callbacks[Rf_NonNullStringMatch_x])(s, t);
 }
 
+SEXP Rf_matchE(SEXP itable, SEXP ix, int nmatch, SEXP env)
+{
+	return ((call_match5) callbacks[match5_x])(itable, ix, nmatch, NULL, env);
+}
+
+SEXP Rf_match(SEXP itable, SEXP ix, int nmatch)
+{
+	return ((call_match5) callbacks[match5_x])(itable, ix, nmatch, NULL, R_BaseEnv);
+}
+
+SEXP match5(SEXP itable, SEXP ix, int nmatch, SEXP incomparables, SEXP env)
+{
+	return ((call_match5) callbacks[match5_x])(itable, ix, nmatch, incomparables, env);
+}

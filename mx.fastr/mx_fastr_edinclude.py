@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,11 @@ Rboolean IS_LATIN1(SEXP x);
 Rboolean IS_ASCII(SEXP x);
 Rboolean IS_UTF8(SEXP x);
 Rboolean ENC_KNOWN(SEXP x);
+
+#ifdef USE_RINTERNALS
+// Some packages rely on this macro not being defined as an indication of old R versions
+#define XLENGTH XLENGTH
+#endif
 
 #endif
 '''

@@ -1034,8 +1034,12 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(value = AsCharacterFactor.class, needsCallTarget = true)
     Object Rf_asCharacterFactor(Object x);
 
-    @RFFIUpCallNode(value = MatchNodes.MatchNode.class, needsCallTarget = true)
-    Object Rf_match(Object itables, Object ix, int nmatch);
+    /**
+     * The {@code match5} function is internal to R, but nonetheless referenced by some R packages.
+     * Moreover, other {@code Rf_match} variants delegate to this function.
+     */
+    @RFFIUpCallNode(value = MatchNodes.Match5UpCallNode.class, needsCallTarget = true)
+    Object match5(Object itables, Object ix, int nmatch, Object incomparables, Object env);
 
     @RFFIUpCallNode(MatchNodes.NonNullStringMatchNode.class)
     boolean Rf_NonNullStringMatch(Object s, Object t);

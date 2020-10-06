@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -253,6 +253,10 @@ public class RRNG {
         return RContext.getInstance().stateRNG;
     }
 
+    private static ContextStateImpl getContextState(RContext ctx) {
+        return ctx.stateRNG;
+    }
+
     public static int currentKindAsInt() {
         return getContextState().currentGenerator.getKind().ordinal();
     }
@@ -273,8 +277,16 @@ public class RRNG {
         return getContextState().currentGenerator;
     }
 
+    public static RandomNumberGenerator currentGenerator(RContext ctx) {
+        return getContextState(ctx).currentGenerator;
+    }
+
     public static NormKind currentNormKind() {
         return getContextState().currentNormKind;
+    }
+
+    public static NormKind currentNormKind(RContext ctx) {
+        return getContextState(ctx).currentNormKind;
     }
 
     public static SampleKind currentSampleKind() {
