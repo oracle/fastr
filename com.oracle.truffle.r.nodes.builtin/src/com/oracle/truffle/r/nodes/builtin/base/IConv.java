@@ -132,7 +132,10 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
         String[] data = new String[length];
         for (int i = 0; i < length; i++) {
             String value = x.getDataAt(i);
-            if (!RRuntime.isNA(value)) {
+            if (RRuntime.isNA(value)) {
+                complete = false;
+                data[i] = RRuntime.STRING_NA;
+            } else {
                 try {
                     data[i] = toEncoder.canEncode(value) ? value : toDecoder.decode(fromEncoder.encode(CharBuffer.wrap(value))).toString();
                 } catch (CharacterCodingException e) {
