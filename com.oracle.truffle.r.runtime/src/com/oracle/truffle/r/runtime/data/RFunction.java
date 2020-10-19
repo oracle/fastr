@@ -203,7 +203,7 @@ public final class RFunction extends RSharingAttributeStorage implements Shareab
         }
     }
 
-    protected static class UncachedExplicitCall implements ExplicitCall {
+    protected static class UncachedExplicitCall extends Node implements ExplicitCall {
         private R2Foreign r2Foreign = R2ForeignNodeGen.getUncached();
         private Foreign2R foreign2R = Foreign2R.getUncached();
 
