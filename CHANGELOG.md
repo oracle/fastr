@@ -3,6 +3,7 @@
 Bug fixes:
 
 * Set internal generic dispatch for the lengths builtin, #164
+* iconv handles NA values properly
 
 New features:
 
