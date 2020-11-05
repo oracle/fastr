@@ -22,24 +22,49 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.TruffleException;
-import com.oracle.truffle.api.nodes.Node;
+import static com.oracle.truffle.r.launcher.REPL.CANCEL_QUITTING_MEMBER_NAME;
+
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 /**
  * Thrown whenever the system wants to return to the top level, e.g. "Q" in browser, "c" in the
  * {@code quit} builtin.
  */
-public class JumpToTopLevelException extends RuntimeException implements TruffleException {
+@ExportLibrary(InteropLibrary.class)
+public final class JumpToTopLevelException extends AbstractTruffleException {
 
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public Node getLocation() {
-        return null;
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    boolean hasMembers() {
+        return true;
     }
 
-    @Override
-    public boolean isCancelled() {
-        return true;
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        return new String[]{CANCEL_QUITTING_MEMBER_NAME};
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    boolean isMemberReadable(String name) {
+        return name.equals(CANCEL_QUITTING_MEMBER_NAME);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    Object readMember(String name) throws UnknownIdentifierException {
+        if (name.equals(CANCEL_QUITTING_MEMBER_NAME)) {
+            return true;
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        throw UnknownIdentifierException.create(name);
     }
 }

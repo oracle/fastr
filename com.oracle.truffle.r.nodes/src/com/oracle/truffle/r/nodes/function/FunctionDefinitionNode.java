@@ -30,12 +30,13 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -113,6 +114,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
+    @Child private InteropLibrary exceptionInterop;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile resetArgs = BranchProfile.create();
     private final BranchProfile normalExit = BranchProfile.create();
@@ -325,8 +327,13 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             } else if (e instanceof FastRInteropTryException) {
                 assert !RArguments.getCall(frame).evaluateOnlyEagerPromises();
                 throw e;
-            } else if (e instanceof TruffleException && !((TruffleException) e).isInternalError()) {
-                throw e;
+            } else if (getExceptionInterop().isException(e)) {
+                try {
+                    throw getExceptionInterop().throwException(e);
+                } catch (UnsupportedMessageException internalEx) {
+                    runOnExitHandlers = false;
+                    throw CompilerDirectives.shouldNotReachHere();
+                }
             } else {
                 runOnExitHandlers = false;
                 throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, e.toString());
@@ -491,6 +498,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             handlerStackSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.HandlerStack, FrameSlotKind.Object);
         }
         return handlerStackSlot;
+    }
+
+    public InteropLibrary getExceptionInterop() {
+        if (exceptionInterop == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            exceptionInterop = insert(InteropLibrary.getFactory().createDispatched(3));
+        }
+        return exceptionInterop;
     }
 
     @Override

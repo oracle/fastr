@@ -31,6 +31,8 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -38,11 +40,11 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleRuntime;
 import com.oracle.truffle.api.TruffleStackTrace;
 import com.oracle.truffle.api.TruffleStackTraceElement;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
@@ -71,8 +73,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import java.util.Iterator;
-import java.util.List;
 
 public final class Utils {
 
@@ -952,18 +952,8 @@ public final class Utils {
         return byteBuffer.array();
     }
 
-    private static final class DummyTracebackPolyglotException extends RuntimeException implements TruffleException {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-            return this;
-        }
-
-        @Override
-        public Node getLocation() {
-            return null;
-        }
+    private static final class DummyTracebackPolyglotException extends AbstractTruffleException {
+        private static final long serialVersionUID = -1529107348094772364L;
     }
 
 }

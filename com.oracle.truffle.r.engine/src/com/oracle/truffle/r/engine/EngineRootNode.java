@@ -26,13 +26,14 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -60,6 +61,7 @@ class EngineRootNode extends RootNode {
 
     @Child private EngineBodyNode bodyNode;
     @Child private R2Foreign r2Foreign = R2Foreign.create();
+    @Child private InteropLibrary exceptionInterop;
 
     EngineRootNode(EngineBodyNode bodyNode, RContext context, SourceSection sourceSection, MaterializedFrame executionFrame) {
         super(context.getLanguage());
@@ -91,8 +93,12 @@ class EngineRootNode extends RootNode {
             throw e;
         } catch (Throwable t) {
             CompilerDirectives.transferToInterpreter();
-            if (t instanceof TruffleException && !((TruffleException) t).isInternalError()) {
-                throw t;
+            if (getExceptionInterop().isException(t)) {
+                try {
+                    throw getExceptionInterop().throwException(t);
+                } catch (UnsupportedMessageException ex) {
+                    throw CompilerDirectives.shouldNotReachHere(ex);
+                }
             }
             // other errors didn't produce an output yet
             RInternalError.reportError(t);
@@ -112,6 +118,14 @@ class EngineRootNode extends RootNode {
     private static boolean getPrintResult(SourceSection sourceSection) {
         // can't print if initializing the system in embedded mode (no builtins yet)
         return !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string) && sourceSection.getSource().isInteractive();
+    }
+
+    public InteropLibrary getExceptionInterop() {
+        if (exceptionInterop == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            exceptionInterop = insert(InteropLibrary.getFactory().createDispatched(3));
+        }
+        return exceptionInterop;
     }
 
     private static final class EngineBodyNode extends Node implements InstrumentableNode {

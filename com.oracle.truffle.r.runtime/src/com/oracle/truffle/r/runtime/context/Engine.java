@@ -30,8 +30,13 @@ import java.util.List;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.ExceptionType;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
@@ -53,7 +58,8 @@ public interface Engine {
 
     Source GET_CONTEXT = RSource.fromTextInternal("<<<get_context>>>", RSource.Internal.GET_CONTEXT);
 
-    class ParseException extends RuntimeException implements TruffleException {
+    @ExportLibrary(InteropLibrary.class)
+    class ParseException extends AbstractTruffleException {
         private static final long serialVersionUID = 1L;
 
         private final Source source;
@@ -62,15 +68,45 @@ public interface Engine {
         private final int line;
 
         public ParseException(Throwable cause, Source source, String token, String substring, int line) {
-            super("parse exception", cause);
+            super("parse exception", cause, UNLIMITED_STACK_TRACE, getLocation(line, source));
             this.source = source;
             this.token = token;
             this.substring = substring;
             this.line = line;
         }
 
+        @ExportMessage
+        @SuppressWarnings("static-method")
+        final boolean isException() {
+            return true;
+        }
+
+        @ExportMessage
+        final RuntimeException throwException() {
+            throw this;
+        }
+
+        @ExportMessage
+        @SuppressWarnings("static-method")
+        final ExceptionType getExceptionType() {
+            return ExceptionType.PARSE_ERROR;
+        }
+
+        @ExportMessage
+        final boolean hasSourceLocation() {
+            return source != null;
+        }
+
+        @ExportMessage(name = "getSourceLocation")
+        final SourceSection getSourceSection() throws UnsupportedMessageException {
+            if (source == null) {
+                throw UnsupportedMessageException.create();
+            }
+            return source.createSection(line);
+        }
+
         @TruffleBoundary
-        public RError throwAsRError() {
+        public final RError throwAsRError() {
             if (source.getLineCount() == 1) {
                 throw RError.error(RError.NO_CALLER, RError.Message.UNEXPECTED, token, substring);
             } else {
@@ -79,7 +115,7 @@ public interface Engine {
         }
 
         @TruffleBoundary
-        public void report(OutputStream output) {
+        public final void report(OutputStream output) {
             try {
                 output.write(getErrorMessage().getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) {
@@ -88,11 +124,11 @@ public interface Engine {
         }
 
         @TruffleBoundary
-        public void report(ConsoleIO console) {
+        public final void report(ConsoleIO console) {
             console.println(getErrorMessage());
         }
 
-        public String getErrorMessage() {
+        public final String getErrorMessage() {
             String msg;
             if (source.getLineCount() == 1) {
                 msg = String.format(RError.Message.UNEXPECTED.message, token, substring);
@@ -102,8 +138,7 @@ public interface Engine {
             return "Error: " + msg;
         }
 
-        @Override
-        public Node getLocation() {
+        private static Node getLocation(int line, Source source) {
             if (line <= 0 || line > source.getLineCount()) {
                 return null;
             } else {
@@ -116,13 +151,9 @@ public interface Engine {
                 };
             }
         }
-
-        @Override
-        public boolean isSyntaxError() {
-            return true;
-        }
     }
 
+    @ExportLibrary(InteropLibrary.class)
     final class IncompleteSourceException extends ParseException {
         private static final long serialVersionUID = -6688699706193438722L;
 
@@ -130,8 +161,9 @@ public interface Engine {
             super(cause, source, token, substring, line);
         }
 
-        @Override
-        public boolean isIncompleteSource() {
+        @ExportMessage
+        @SuppressWarnings("static-method")
+        boolean isExceptionIncompleteSource() {
             return true;
         }
     }
