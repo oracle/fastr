@@ -98,7 +98,7 @@ public class EvalThread extends Thread {
         RList result = null;
         Object parent = null;
         try {
-            parent = truffleContext.enter();
+            parent = truffleContext.enter(null);
             // this is the engine for the new child context
             Engine rEngine = RContext.getEngine();
             // Object eval = rEngine.eval(rEngine.parse(source), rEngine.getGlobalFrame());
@@ -118,7 +118,7 @@ public class EvalThread extends Thread {
             RInternalError.reportErrorAndConsoleLog(t, info.getId());
             result = createErrorResult(t.getClass().getSimpleName());
         } finally {
-            truffleContext.leave(parent);
+            truffleContext.leave(null, parent);
             truffleContext.close();
         }
         return result;

@@ -125,16 +125,8 @@ public final class RAttributesLayout {
         return CLASS_AND_CONNID_ATTRS_LAYOUT.factory.newInstance(cls, connId);
     }
 
-    public static boolean isRAttributes(Object attrs) {
-        return (attrs instanceof DynamicObject) && isRAttributes((DynamicObject) attrs);
-    }
-
     public static boolean isRAttributes(DynamicObject attrs) {
-        return isRAttributes(attrs.getShape().getObjectType());
-    }
-
-    public static boolean isRAttributes(ObjectType objectType) {
-        return objectType instanceof RAttributesType;
+        return attrs.getShape().getDynamicType() instanceof RAttributesType;
     }
 
     public static RAttributeIterable asIterable(DynamicObject attrs) {
