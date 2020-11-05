@@ -248,7 +248,7 @@ public class REPL {
         void stopLoop() {
             try {
                 interrupt();
-                try (final FileOutputStream fis = new FileOutputStream(fifoInFile)) {
+                try (FileOutputStream fis = new FileOutputStream(fifoInFile)) {
                     fis.write(66);
                     fis.flush();
                 }
@@ -260,7 +260,7 @@ public class REPL {
 
         void releaseFifoOut() {
             try {
-                try (final FileOutputStream fis = new FileOutputStream(fifoOutFile)) {
+                try (FileOutputStream fis = new FileOutputStream(fifoOutFile)) {
                     fis.write(65);
                     fis.flush();
                 }
@@ -273,7 +273,7 @@ public class REPL {
         public void run() {
             while (!isInterrupted()) {
                 try {
-                    try (final FileInputStream fis = new FileInputStream(fifoInFile)) {
+                    try (FileInputStream fis = new FileInputStream(fifoInFile)) {
                         fis.read();
                         if (isInterrupted()) {
                             break;

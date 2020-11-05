@@ -48,10 +48,13 @@ public final class LBeta implements Function2_1 {
         p = q = a;
         if (b < p) {
             p = b;
-            /* := min(a,b) */ }
+            /* := min(a,b) */
+        }
+
         if (b > q) {
             q = b;
-            /* := max(a,b) */ }
+            /* := max(a,b) */
+        }
 
         /* both arguments must be >= 0 */
         if (p < 0) {
