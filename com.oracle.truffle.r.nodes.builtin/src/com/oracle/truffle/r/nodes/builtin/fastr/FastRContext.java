@@ -125,9 +125,9 @@ public class FastRContext {
             RContext context = RContext.getInstance();
             ChildContextInfo ctxInfo = (ChildContextInfo) context.getEnv().asHostObject(info);
             TruffleContext truffleCtx = ctxInfo.createTruffleContext();
-            Object prev = truffleCtx.enter();
+            Object prev = truffleCtx.enter(null);
             Context hostContext = Context.getCurrent();
-            truffleCtx.leave(prev);
+            truffleCtx.leave(null, prev);
             return context.getEnv().asGuestValue(new ContextData(truffleCtx, hostContext));
         }
     }

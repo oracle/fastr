@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ public class EvalThread extends Thread {
         RList result = null;
         Object parent = null;
         try {
-            parent = truffleContext.enter();
+            parent = truffleContext.enter(null);
             // this is the engine for the new child context
             Engine rEngine = RContext.getEngine();
             // Object eval = rEngine.eval(rEngine.parse(source), rEngine.getGlobalFrame());
@@ -118,7 +118,7 @@ public class EvalThread extends Thread {
             RInternalError.reportErrorAndConsoleLog(t, info.getId());
             result = createErrorResult(t.getClass().getSimpleName());
         } finally {
-            truffleContext.leave(parent);
+            truffleContext.leave(null, parent);
             truffleContext.close();
         }
         return result;

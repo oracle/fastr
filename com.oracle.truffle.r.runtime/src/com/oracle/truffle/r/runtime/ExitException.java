@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,19 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.TruffleException;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
+import com.oracle.truffle.api.interop.ExceptionType;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 /**
  * This exception is thrown when a Polyglot R engine wants to exit, usually via the {@code quit}
  * builtin. It allows systems using multiple contexts via {@code .fastr.context.op} to handle exits
  * gracefully.
  */
-public class ExitException extends RuntimeException implements TruffleException {
+@ExportLibrary(InteropLibrary.class)
+public class ExitException extends AbstractTruffleException {
     private static final long serialVersionUID = 1L;
     private final int status;
     private final boolean saveHistory;
@@ -40,22 +44,18 @@ public class ExitException extends RuntimeException implements TruffleException 
         this.saveHistory = saveHistory;
     }
 
-    public int getStatus() {
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    ExceptionType getExceptionType() {
+        return ExceptionType.EXIT;
+    }
+
+    @ExportMessage
+    int getExceptionExitStatus() {
         return status;
     }
 
-    @Override
-    public Node getLocation() {
-        return null;
-    }
-
-    @Override
-    public boolean isExit() {
-        return true;
-    }
-
-    @Override
-    public int getExitStatus() {
+    public int getStatus() {
         return status;
     }
 

@@ -23,14 +23,19 @@
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -40,7 +45,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
@@ -67,9 +71,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.SourceBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
@@ -80,16 +81,14 @@ import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
-
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
@@ -97,17 +96,16 @@ import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropLong;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
@@ -131,6 +129,15 @@ public class FastRInterop {
 
         @Child private SetVisibilityNode setVisibilityNode = SetVisibilityNode.create();
         @Child private Foreign2R foreign2rNode = Foreign2R.create();
+        @Child private InteropLibrary exceptionInterop;
+
+        public InteropLibrary getExceptionInterop() {
+            if (exceptionInterop == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                exceptionInterop = insert(InteropLibrary.getFactory().createDispatched(3));
+            }
+            return exceptionInterop;
+        }
 
         protected DirectCallNode createCall(RContext context, String languageId, String code) {
             return Truffle.getRuntime().createDirectCallNode(parse(context, languageId, code));
@@ -197,7 +204,7 @@ public class FastRInterop {
             try {
                 return foreign2rNode.convert(parseFileAndCall(ctxRef.get(), path, languageId));
             } catch (RuntimeException e) {
-                if (e instanceof TruffleException && !(e instanceof RError)) {
+                if (getExceptionInterop().isException(e) && !(e instanceof RError)) {
                     throw RErrorHandling.handleInteropException(this, e);
                 }
                 throw e;
@@ -1222,11 +1229,20 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.try", kind = PRIMITIVE, parameterNames = {"function", "check"}, behavior = COMPLEX)
     public abstract static class FastRInteropTry extends RBuiltinNode.Arg2 {
         @Node.Child private RExplicitCallNode call = RExplicitCallNode.create();
+        @Child private InteropLibrary exceptionInterop;
 
         static {
             Casts casts = new Casts(FastRInteropTry.class);
             casts.arg("function").mustBe(instanceOf(RFunction.class));
             casts.arg("check").mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst();
+        }
+
+        public InteropLibrary getExceptionInterop() {
+            if (exceptionInterop == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                exceptionInterop = insert(InteropLibrary.getFactory().createDispatched(3));
+            }
+            return exceptionInterop;
         }
 
         @Specialization
@@ -1240,8 +1256,9 @@ public class FastRInterop {
                 CompilerDirectives.transferToInterpreter();
                 Throwable cause = e.getCause();
                 // ClassNotFoundException might be raised internally in FastRInterop$JavaType
-                if (cause instanceof TruffleException || cause.getCause() instanceof ClassNotFoundException) {
-                    cause = cause instanceof TruffleException ? cause : cause.getCause();
+                boolean isTruffleEx = getExceptionInterop().isException(cause);
+                if (isTruffleEx || cause.getCause() instanceof ClassNotFoundException) {
+                    cause = isTruffleEx ? cause : cause.getCause();
                     if (RRuntime.fromLogical(check)) {
                         String causeName = cause.getClass().getName();
                         String msg = cause.getMessage();

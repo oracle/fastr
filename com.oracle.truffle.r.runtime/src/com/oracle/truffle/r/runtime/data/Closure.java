@@ -308,7 +308,7 @@ public final class Closure implements Cloneable {
 
         protected abstract RootCallTarget generateCallTarget(RNode n, String closureName);
 
-        protected abstract void log(final Supplier<String> messageSupplier);
+        protected abstract void log(Supplier<String> messageSupplier);
 
         // Used for tests
         public boolean check(FrameDescriptor desc, boolean present, int expectedLastUse) {

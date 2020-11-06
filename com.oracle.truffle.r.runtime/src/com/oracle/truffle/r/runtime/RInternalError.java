@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktraces;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
+
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,22 +35,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardOpenOption;
 import java.util.Date;
 
+import org.graalvm.options.OptionKey;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.context.FastROptions;
-import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktraces;
-import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
 import com.oracle.truffle.r.runtime.context.RContext;
-import org.graalvm.options.OptionKey;
 
 /**
  * This class is intended to be used for internal errors that do not correspond to R errors.
  */
-public final class RInternalError extends Error implements TruffleException {
+public final class RInternalError extends Error {
 
     private static final String FASTR_ERRORS_LOG = "fastr_errors";
 
@@ -260,15 +260,5 @@ public final class RInternalError extends Error implements TruffleException {
 
     private static String getLogFileName(int contextId) {
         return contextId == 0 ? FASTR_ERRORS_LOG : FASTR_ERRORS_LOG + "-" + contextId;
-    }
-
-    @Override
-    public Node getLocation() {
-        return null;
-    }
-
-    @Override
-    public boolean isInternalError() {
-        return true;
     }
 }

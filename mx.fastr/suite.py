@@ -223,6 +223,7 @@ suite = {
         "XZ-1.8",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
+      "checkstyleVersion": "8.8",
       "javaCompliance" : "8+",
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",

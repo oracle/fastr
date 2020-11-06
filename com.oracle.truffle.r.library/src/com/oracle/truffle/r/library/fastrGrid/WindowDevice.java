@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,9 +75,9 @@ public final class WindowDevice {
             return;
         }
         ctx.schedule(() -> {
-            Object prev = ctx.getEnv().getContext().enter();
+            Object prev = ctx.getEnv().getContext().enter(null);
             GridContext.getContext(ctx).evalInternalRFunction("redrawAll");
-            ctx.getEnv().getContext().leave(prev);
+            ctx.getEnv().getContext().leave(null, prev);
         });
     }
 
@@ -87,14 +87,14 @@ public final class WindowDevice {
             return;
         }
         ctx.schedule(() -> {
-            Object prev = ctx.getEnv().getContext().enter();
+            Object prev = ctx.getEnv().getContext().enter(null);
             RFunction devOffFun = getDevOffFunction(ctx);
             if (devOffFun != null) {
                 RContext.getEngine().evalFunction(devOffFun, REnvironment.baseEnv(ctx).getFrame(), RCaller.topLevel, true, null);
             } else {
                 RError.warning(RError.NO_CALLER, Message.GENERIC, "Could not locate grDevices::dev.off to close the window device.");
             }
-            ctx.getEnv().getContext().leave(prev);
+            ctx.getEnv().getContext().leave(null, prev);
         });
     }
 

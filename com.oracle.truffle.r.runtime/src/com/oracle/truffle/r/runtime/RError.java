@@ -19,26 +19,33 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static com.oracle.truffle.r.launcher.REPL.ERROR_PRINTED_MEMBER_NAME;
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_PERFORMANCE_WARNINGS;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PerformanceWarnings;
+
 import java.io.IOException;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
-import static com.oracle.truffle.r.runtime.context.FastROptions.PerformanceWarnings;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import java.util.logging.Level;
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_PERFORMANCE_WARNINGS;
 
 /**
  * A facade for handling errors. This class extends {@link RuntimeException} so that it can be
@@ -60,11 +67,17 @@ import static com.oracle.truffle.r.runtime.RLogger.LOGGER_PERFORMANCE_WARNINGS;
  * might require more information to disambiguate, one such example is {@link ShowCallerOf}.
  */
 @SuppressWarnings("serial")
-public final class RError extends RuntimeException implements TruffleException {
+@ExportLibrary(InteropLibrary.class)
+public final class RError extends AbstractTruffleException {
 
     private final String verboseStackTrace;
-    private final Node location;
 
+    /**
+     * Can be used by the embedders to find out if the error message was already printed by the
+     * engine. GNU-R prints the message immediately upon the error, which causes visible side
+     * effects. We avoid printing the message inside the engine as long as the side effects cannot
+     * be observed by the R code.
+     */
     private boolean printed = false;
 
     /**
@@ -169,14 +182,65 @@ public final class RError extends RuntimeException implements TruffleException {
      * contain the last new line that would otherwise be printed.
      */
     RError(String msg, Node location) {
-        super(msg);
-        this.location = location;
+        super(msg, location);
         this.verboseStackTrace = RInternalError.createVerboseStackTrace();
     }
 
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-        return this;
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    boolean isException() {
+        return true;
+    }
+
+    @ExportMessage
+    RuntimeException throwException() {
+        throw this;
+    }
+
+    @ExportMessage
+    boolean hasSourceLocation() {
+        return getLocation() != null;
+    }
+
+    @ExportMessage(name = "getSourceLocation")
+    SourceSection getSourceSection() throws UnsupportedMessageException {
+        Node location = getLocation();
+        if (location == null) {
+            throw UnsupportedMessageException.create();
+        }
+        SourceSection ss = location.getEncapsulatingSourceSection();
+        if (ss == null) {
+            throw UnsupportedMessageException.create();
+        }
+        return ss;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        return new String[]{ERROR_PRINTED_MEMBER_NAME};
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    boolean isMemberReadable(String name) {
+        return name.equals(ERROR_PRINTED_MEMBER_NAME);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    Object readMember(String name) throws UnknownIdentifierException {
+        if (name.equals(ERROR_PRINTED_MEMBER_NAME)) {
+            return printed;
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        throw UnknownIdentifierException.create(name);
     }
 
     @Override
@@ -190,28 +254,6 @@ public final class RError extends RuntimeException implements TruffleException {
 
     public void setPrinted(boolean bl) {
         this.printed = bl;
-    }
-
-    @Override
-    public Object getExceptionObject() {
-        return RContext.getInstance().getEnv().asGuestValue(getExceptionObjectInternal());
-    }
-
-    public class ExceptionObject {
-        public final boolean wasPrinted;
-
-        public ExceptionObject(boolean wasPrinted) {
-            this.wasPrinted = wasPrinted;
-        }
-    }
-
-    private ExceptionObject exceptionObject;
-
-    private Object getExceptionObjectInternal() {
-        if (exceptionObject == null) {
-            exceptionObject = new ExceptionObject(printed);
-        }
-        return exceptionObject;
     }
 
     public static RError error(ErrorContext node, Message msg) {
@@ -1064,10 +1106,5 @@ public final class RError extends RuntimeException implements TruffleException {
             this.message = message;
             hasArgs = message.indexOf('%') >= 0;
         }
-    }
-
-    @Override
-    public Node getLocation() {
-        return location;
     }
 }

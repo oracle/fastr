@@ -51,6 +51,8 @@ public class REPL {
         return input.replace("~+~", " ");
     }
 
+    public static final String CANCEL_QUITTING_MEMBER_NAME = "FastR_error_cancelQuitting";
+    public static final String ERROR_PRINTED_MEMBER_NAME = "FastR_error_printed";
     private static final Source GET_ECHO = Source.newBuilder("R", ".Internal(getOption('echo'))", "<echo>").internal(true).buildLiteral();
     private static final Source QUIT_EOF = Source.newBuilder("R", ".Internal(quit('default', 0L, TRUE))", "<quit-on-eof>").internal(true).buildLiteral();
     private static final Source GET_PROMPT = Source.newBuilder("R", ".Internal(getOption('prompt'))", "<prompt>").internal(true).buildLiteral();
@@ -161,8 +163,10 @@ public class REPL {
                         if (e2.isExit()) {
                             // don't use the exit code from the PolyglotException
                             return lastStatus;
-                        } else if (e2.isCancelled()) {
-                            continue;
+                        } else {
+                            if (isJumpToTopLevel(executor, e2)) {
+                                continue;
+                            }
                         }
                         throw RMain.fatal(e, "error while calling quit");
                     }
@@ -192,13 +196,24 @@ public class REPL {
         }
     }
 
+    private static boolean isJumpToTopLevel(ExecutorService executor, PolyglotException exception) {
+        return run(executor, () -> {
+            Value exObj = exception.getGuestObject();
+            if (exObj != null && exObj.hasMember(CANCEL_QUITTING_MEMBER_NAME)) {
+                Value val = exObj.getMember(CANCEL_QUITTING_MEMBER_NAME);
+                return val.isBoolean() && val.asBoolean();
+            }
+            return false;
+        }, false);
+    }
+
     /**
      * This is a temporary class facilitating catching an occasional hanging attributed to the
      * native event loop mechanism.
      */
     static class SimpleTraceEventLoopLogger {
         private FileWriter traceEventLoopLogWriter;
-        private long timestamp = System.currentTimeMillis();
+        private final long timestamp = System.currentTimeMillis();
 
         {
             try {
@@ -229,7 +244,7 @@ public class REPL {
         }
     }
 
-    private static SimpleTraceEventLoopLogger traceEventLoopLogger = new SimpleTraceEventLoopLogger();
+    private static final SimpleTraceEventLoopLogger traceEventLoopLogger = new SimpleTraceEventLoopLogger();
 
     static class EventLoopThread extends Thread {
 
@@ -248,7 +263,7 @@ public class REPL {
         void stopLoop() {
             try {
                 interrupt();
-                try (final FileOutputStream fis = new FileOutputStream(fifoInFile)) {
+                try (FileOutputStream fis = new FileOutputStream(fifoInFile)) {
                     fis.write(66);
                     fis.flush();
                 }
@@ -260,7 +275,7 @@ public class REPL {
 
         void releaseFifoOut() {
             try {
-                try (final FileOutputStream fis = new FileOutputStream(fifoOutFile)) {
+                try (FileOutputStream fis = new FileOutputStream(fifoOutFile)) {
                     fis.write(65);
                     fis.flush();
                 }
@@ -273,7 +288,7 @@ public class REPL {
         public void run() {
             while (!isInterrupted()) {
                 try {
-                    try (final FileInputStream fis = new FileInputStream(fifoInFile)) {
+                    try (FileInputStream fis = new FileInputStream(fifoInFile)) {
                         fis.read();
                         if (isInterrupted()) {
                             break;
@@ -321,18 +336,15 @@ public class REPL {
                 run(executor, () -> context.eval(PRINT_ERROR).execute(sb.toString()));
             }
         }
-
     }
 
     private static boolean wasPrinted(ExecutorService executor, PolyglotException e) {
         return run(executor, () -> {
             Value guestObject = e.getGuestObject();
-            // TODO ensure we are accessing only the FastR RError object and
-            // not some another guest object with a wasPrinted member
-            if (guestObject == null || !guestObject.hasMember("wasPrinted")) {
+            if (guestObject == null || !guestObject.hasMember(ERROR_PRINTED_MEMBER_NAME)) {
                 return false;
             }
-            Value wasPrinted = guestObject.getMember("wasPrinted");
+            Value wasPrinted = guestObject.getMember(ERROR_PRINTED_MEMBER_NAME);
             if (!wasPrinted.isBoolean()) {
                 return false;
             }
@@ -343,12 +355,7 @@ public class REPL {
     private static boolean isFastRRError(ExecutorService executor, PolyglotException e) {
         return run(executor, () -> {
             Value guestObject = e.getGuestObject();
-            // TODO ensure we are accessing only the FastR RError object and
-            // not some another guest object with a wasPrinted member
-            if (guestObject != null && guestObject.hasMember("wasPrinted")) {
-                return true;
-            }
-            return false;
+            return guestObject != null && guestObject.hasMember(ERROR_PRINTED_MEMBER_NAME);
         });
     }
 
@@ -401,6 +408,10 @@ public class REPL {
     }
 
     private static <T> T run(ExecutorService executor, Callable<T> run) {
+        return run(executor, run, true);
+    }
+
+    private static <T> T run(ExecutorService executor, Callable<T> run, boolean checkTopLevelJump) {
         try {
             if (executor != null) {
                 try {
@@ -418,7 +429,7 @@ public class REPL {
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
-            } else if (e.isCancelled()) {
+            } else if (checkTopLevelJump && isJumpToTopLevel(executor, e)) {
                 throw e;
             }
             throw RMain.fatal(e, "Unexpected error " + e.getMessage());

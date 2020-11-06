@@ -29,12 +29,12 @@ import java.util.Objects;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleStackTrace;
 import com.oracle.truffle.api.TruffleStackTraceElement;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -42,11 +42,11 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -648,9 +648,9 @@ public class RErrorHandling {
     @TruffleBoundary
     public static RError handleInteropException(Node callObj, RuntimeException e) {
         // ClassNotFoundException might be raised internaly by FastR in FastRInterop$JavaType
-        if (e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) {
+        if (InteropLibrary.getUncached().isException(e) || e.getCause() instanceof ClassNotFoundException) {
             if (RContext.getInstance().stateInteropTry.isInTry()) {
-                // will be catched and handled in .fastr.interop.try builtin
+                // will be caught and handled in .fastr.interop.try builtin
                 throw new FastRInteropTryException(e);
             } else {
                 if (e.getCause() instanceof ClassNotFoundException) {
