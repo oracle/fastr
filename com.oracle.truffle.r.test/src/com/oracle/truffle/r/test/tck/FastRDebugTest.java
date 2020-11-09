@@ -30,10 +30,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -385,7 +383,7 @@ public class FastRDebugTest {
         });
 
         stepInto(1);
-        assertArguments(2, "x <- 10L", "a", 1, "b", 2, "c", 3, "d", 4);
+        assertScope(2, "x <- 10L", false, true, "a", 1, "b", 2, "c", 3, "d", 4);
         continueExecution();
         performWork();
 
@@ -518,16 +516,12 @@ public class FastRDebugTest {
             debuggerSession.install(Breakpoint.newBuilder(DebuggerTester.getSourceImpl(source)).lineIs(6).build());
         });
 
-        assertArguments(6, "x <- n + m", "n", 11, "m", 20);
         assertScope(6, "x <- n + m", false, true, "n", 11, "m", 20);
         stepOver(4);
-        assertArguments(10, "x", "n", 9, "m", 10);
         assertScope(10, "x", false, true, "n", 9, "m", 10, "x", 121);
         run.addLast(() -> suspendedEvent.prepareUnwindFrame(suspendedEvent.getTopStackFrame()));
-        assertArguments(3, "return fnc(i <- i + 1, 20)");
         assertScope(3, "return fnc(i <- i + 1, 20)", false, true, "i", 11);
         continueExecution();
-        assertArguments(6, "x <- n + m", "n", 11, "m", 20);
         assertScope(6, "x <- n + m", false, true, "n", 11, "m", 20);
         continueExecution();
 
@@ -742,43 +736,6 @@ public class FastRDebugTest {
 
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
                 frame.getScope().getDeclaredValues().forEach(var -> {
-                    System.out.println(var);
-                });
-                trace.printStackTrace();
-                throw e;
-            }
-        });
-    }
-
-    private void assertArguments(final int line, final String code, final Object... expectedArgs) {
-        final RuntimeException trace = new RuntimeException();
-        run.addLast(() -> {
-            final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-            DebugScope scope = frame.getScope();
-            if (scope == null) {
-                scope = suspendedEvent.getSession().getTopScope("R");
-            }
-            try {
-                int n = expectedArgs.length / 2;
-                List<DebugValue> actualValues = new ArrayList<>(n);
-                scope.getArguments().forEach((x) -> actualValues.add(x));
-
-                assertEquals(line + ": " + code, n, actualValues.size());
-
-                for (int i = 0; i < n; i++) {
-                    int i2 = i << 1;
-                    assertEquals(expectedArgs[i2], actualValues.get(i).getName());
-                    Object expectedVal = expectedArgs[i2 + 1];
-                    expectedVal = expectedToString(expectedVal);
-                    assertEquals(expectedVal, actualValues.get(i).toDisplayString(true));
-                }
-
-                if (!run.isEmpty()) {
-                    run.removeFirst().run();
-                }
-            } catch (RuntimeException | Error e) {
-                e.printStackTrace(System.err);
-                scope.getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
                 trace.printStackTrace();
