@@ -96,7 +96,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
 
     dists = ['FASTR']
     if mx.suite("sulong", fatalIfMissing=False):
-        dists.append('SULONG')
+        dists.append('SULONG_NATIVE')
 
     vmArgs = mx.get_runtime_jvm_args(dists, jdk=jdk)
 
@@ -122,7 +122,7 @@ def run_grid_server(args, **kwargs):
     return mx.run_java(vmArgs + args, jdk=get_default_jdk(), **kwargs)
 
 def r_classpath(args):
-    print(mx.classpath('FASTR', jdk=mx.get_jdk()) + ":" + mx.classpath('SULONG', jdk=mx.get_jdk()))  # pylint: disable=superfluous-parens
+    print(mx.classpath('FASTR', jdk=mx.get_jdk()) + ":" + mx.classpath('SULONG_NATIVE', jdk=mx.get_jdk()))  # pylint: disable=superfluous-parens
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
@@ -764,9 +764,9 @@ def mx_post_parse_cmd_line(opts):
     mx_subst.results_substitutions.register_no_arg('graalvm_version', mx.suite('sdk').release_version())
     if mx.suite("sulong", fatalIfMissing=False) and not _fastr_suite.isBinarySuite():
         # native.recommended runs FastR, it already has a build dependency to the FASTR distribution
-        # if we are running with sulong we also need the SULONG distribution
+        # if we are running with sulong we also need the SULONG_NATIVE distribution
         rec = mx.project('com.oracle.truffle.r.native.recommended')
-        rec.buildDependencies += [mx.distribution('SULONG')]
+        rec.buildDependencies += [mx.distribution('SULONG_NATIVE')]
 
 
 # R package testing
