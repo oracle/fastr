@@ -41,8 +41,6 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
@@ -54,8 +52,8 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
@@ -515,7 +513,6 @@ public class ConnectionSupport {
      * it subsequently will throw an error. The latter will open/close the connection (internally)
      * and this can be repeated indefinitely.
      */
-    @ExportLibrary(InteropLibrary.class)
     public abstract static class BaseRConnection extends RBaseObject implements RConnection {
 
         /**

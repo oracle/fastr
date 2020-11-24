@@ -22,17 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-
-import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
-@ExportLibrary(InteropLibrary.class)
-@ExportLibrary(NativeTypeLibrary.class)
 public final class NativeDoubleArray extends NativeArray {
 
     private final double[] array;
