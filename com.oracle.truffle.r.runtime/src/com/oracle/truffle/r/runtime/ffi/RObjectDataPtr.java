@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import java.util.Objects;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
@@ -61,8 +63,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-
-import java.util.Objects;
 
 @ExportLibrary(NativeTypeLibrary.class)
 public abstract class RObjectDataPtr implements TruffleObject {
@@ -230,7 +230,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected abstract static class VectorDataPtrBase extends RObjectDataPtr {
         protected static final int DATA_LIB_LIMIT = 3;
 
@@ -339,8 +338,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
         }
     }
 
-    @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class IntVectorDataPtr extends VectorDataPtrBase {
         private IntVectorDataPtr(RIntVector vector) {
             super(vector);
@@ -352,8 +349,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
         }
     }
 
-    @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class DoubleVectorDataPtr extends VectorDataPtrBase {
         private DoubleVectorDataPtr(RDoubleVector vector) {
             super(vector);
@@ -365,8 +360,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
         }
     }
 
-    @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class RawVectorDataPtr extends VectorDataPtrBase {
         private RawVectorDataPtr(RRawVector vector) {
             super(vector);
@@ -379,7 +372,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class StringVectorDataPtr extends VectorDataPtrBase {
         private StringVectorDataPtr(RStringVector vector) {
             super(vector);
@@ -427,7 +419,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class LogicalVectorDataPtr extends VectorDataPtrBase {
         private LogicalVectorDataPtr(RLogicalVector vector) {
             super(vector);
@@ -459,7 +450,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class ComplexVectorDataPtr extends VectorDataPtrBase {
         private ComplexVectorDataPtr(RComplexVector vector) {
             super(vector);
@@ -501,7 +491,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class ListDataPtr extends VectorDataPtrBase {
         private ListDataPtr(RList vector) {
             super(vector);
@@ -548,7 +537,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class CharSXPDataPtr extends RObjectDataPtr {
         protected final CharSXPWrapper value;
         private long ptr;
@@ -624,7 +612,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    @ExportLibrary(NativeTypeLibrary.class)
     protected static final class RNullDataPtr extends RObjectDataPtr {
         private static final long EMPTY_DATA_ADDRESS = 0x1BAD;
 

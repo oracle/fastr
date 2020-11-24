@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.InternalDeprecation;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -73,7 +72,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * When implementing, make sure to invoke related {@link MemoryCopyTracer} methods.
  */
 @ExportLibrary(InteropLibrary.class)
-@ExportLibrary(AbstractContainerLibrary.class)
 public abstract class RAbstractVector extends RAbstractContainer implements RFFIAccess {
 
     /**

@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -44,13 +45,10 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import java.util.Arrays;
-
 /**
  * A note on the RList complete flag {@link RAbstractVector#isComplete() } - it is always
  * initialized with {@code false} and never expected to change.
  */
-@ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
 public final class RList extends RAbstractListVector implements RMaterializedVector, Shareable {
     private int length;

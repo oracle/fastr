@@ -401,7 +401,6 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
 
     // Subclasses that specialize on target type, so that getType message gives constant value
 
-    @ExportLibrary(VectorDataLibrary.class)
     static class IntClosure extends VectorDataClosure {
         IntClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
@@ -418,7 +417,6 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         }
     }
 
-    @ExportLibrary(VectorDataLibrary.class)
     static final class DoubleClosure extends VectorDataClosure {
         DoubleClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
@@ -435,7 +433,6 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         }
     }
 
-    @ExportLibrary(VectorDataLibrary.class)
     static final class LogicalClosure extends VectorDataClosure {
         LogicalClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
@@ -452,7 +449,6 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         }
     }
 
-    @ExportLibrary(VectorDataLibrary.class)
     static final class RawClosure extends VectorDataClosure {
         RawClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
@@ -469,7 +465,6 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         }
     }
 
-    @ExportLibrary(VectorDataLibrary.class)
     static final class ComplexClosure extends VectorDataClosure {
         ComplexClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
@@ -486,7 +481,6 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         }
     }
 
-    @ExportLibrary(VectorDataLibrary.class)
     static final class StringClosure extends VectorDataClosure {
         StringClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
@@ -503,7 +497,6 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         }
     }
 
-    @ExportLibrary(VectorDataLibrary.class)
     static final class ListClosure extends VectorDataClosure {
         ListClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);

@@ -29,14 +29,12 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 
 /**
  * A {@link TruffleObject} that represents an array of {@code unsigned char} values, that is
  * {@code NULL} terminated in the C domain.
  */
 @ExportLibrary(InteropLibrary.class)
-@ExportLibrary(NativeTypeLibrary.class)
 public final class NativeCharArray extends NativeUInt8Array {
 
     public NativeCharArray(byte[] bytes) {
