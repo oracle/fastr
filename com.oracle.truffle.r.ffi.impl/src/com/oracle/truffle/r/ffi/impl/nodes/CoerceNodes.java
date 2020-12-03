@@ -26,10 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
@@ -38,7 +35,6 @@ import com.oracle.truffle.r.nodes.unary.CastExpressionNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastSymbolNode;
@@ -49,14 +45,17 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 public final class CoerceNodes {
 
@@ -202,15 +201,10 @@ public final class CoerceNodes {
     /**
      * Implements Rf_coerceVector.
      */
-    @GenerateUncached
     public abstract static class CoerceVectorNode extends FFIUpCallNode.Arg2 {
 
         public static CoerceVectorNode create() {
             return CoerceNodesFactory.CoerceVectorNodeGen.create();
-        }
-
-        public static CoerceVectorNode getUncached() {
-            return CoerceNodesFactory.CoerceVectorNodeGen.getUncached();
         }
 
         @Specialization(guards = "value.isS4()")
@@ -234,14 +228,7 @@ public final class CoerceNodes {
             return castNode.doCast(value);
         }
 
-        @Specialization(replaces = {"doCachedNotList", "doCached"}, guards = {"!isS4Object(value)", "isValidMode(mode)"})
-        Object doGeneric(Object value, int mode) {
-            CompilerDirectives.transferToInterpreter();
-            String type = value != null ? value.getClass().getSimpleName() : "null";
-            throw RInternalError.unimplemented("Rf_coerceVector unimplemented for type %s or mode %s.", type, mode);
-        }
-
-        @Fallback
+        @Specialization(guards = {"!isS4Object(value)", "!isValidMode(mode)"})
         Object doFallback(Object value, Object mode) {
             CompilerDirectives.transferToInterpreter();
             String type = value != null ? value.getClass().getSimpleName() : "null";
@@ -258,6 +245,10 @@ public final class CoerceNodes {
 
         static boolean isValidMode(int mode) {
             return mode >= SEXPTYPE.NILSXP.code && mode <= SEXPTYPE.RAWSXP.code;
+        }
+
+        static boolean isValidMode(Object mode) {
+            return mode instanceof Number && isValidMode(((Number) mode).intValue());
         }
 
         static CastNode createCastNode(int mode) {
