@@ -28,9 +28,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.library.methods.SubstituteDirect;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
@@ -51,6 +53,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class Substitute extends RBuiltinNode.Arg2 {
 
     @Child private Quote quote;
+    private final BranchProfile createLanguageBranch = BranchProfile.create();
 
     static {
         Casts casts = new Casts(Substitute.class);
@@ -114,6 +117,12 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
 
         // The "expr" promise comes from the no-evalarg aspect of the builtin,
         // so get the actual expression (AST) from that
+        createLanguageBranch.enter();
+        return createLanguage(expr, env);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    private Object createLanguage(RPromise expr, REnvironment env) {
         return RASTUtils.createLanguageElement(RSubstitute.substitute(env, expr.getClosure().getSyntaxElement(), getRLanguage()));
     }
 

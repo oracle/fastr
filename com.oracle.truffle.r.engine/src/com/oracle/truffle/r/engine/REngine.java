@@ -650,6 +650,7 @@ final class REngine implements Engine, Engine.Timings {
         }
 
         @Override
+        @TruffleBoundary
         public boolean isInternal() {
             return RSyntaxNode.isInternal(getBody().getLazySourceSection());
         }
