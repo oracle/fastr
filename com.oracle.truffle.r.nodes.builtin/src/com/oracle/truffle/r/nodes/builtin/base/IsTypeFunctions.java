@@ -42,7 +42,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
@@ -88,7 +87,7 @@ public class IsTypeFunctions {
         }
 
         private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
-        @Child private GetDimAttributeNode getDim = GetDimAttributeNodeGen.create();
+        @Child private GetDimAttributeNode getDim = GetDimAttributeNode.create();
 
         public abstract byte execute(Object value);
 
@@ -393,7 +392,7 @@ public class IsTypeFunctions {
     public abstract static class IsMatrix extends RBuiltinNode.Arg1 {
 
         private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();
-        @Child private GetDimAttributeNode getDim = GetDimAttributeNodeGen.create();
+        @Child private GetDimAttributeNode getDim = GetDimAttributeNode.create();
 
         static {
             createCasts(IsMatrix.class);

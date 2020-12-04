@@ -70,7 +70,7 @@ public final class GetS4DataSlot extends Node {
             Object s3Class = null;
             if (s3ClassAttrAccess == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                s3ClassAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.DOT_S3_CLASS));
+                s3ClassAttrAccess = insert(GetFixedAttributeNode.createFor(RRuntime.DOT_S3_CLASS));
             }
             s3Class = s3ClassAttrAccess.execute(obj);
             if (s3Class == null && type == RType.S4Object) {
@@ -89,7 +89,7 @@ public final class GetS4DataSlot extends Node {
             if (s3Class != null) {
                 if (s3ClassAttrRemove == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    s3ClassAttrRemove = insert(RemoveFixedAttributeNode.create(RRuntime.DOT_S3_CLASS));
+                    s3ClassAttrRemove = insert(RemoveFixedAttributeNode.createFor(RRuntime.DOT_S3_CLASS));
                 }
                 if (castToVector == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -108,14 +108,14 @@ public final class GetS4DataSlot extends Node {
         } else {
             if (dotDataAttrAccess == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dotDataAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.DOT_DATA));
+                dotDataAttrAccess = insert(GetFixedAttributeNode.createFor(RRuntime.DOT_DATA));
             }
             value = dotDataAttrAccess.execute(obj);
         }
         if (value == null) {
             if (dotXDataAttrAccess == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                dotXDataAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.DOT_XDATA));
+                dotXDataAttrAccess = insert(GetFixedAttributeNode.createFor(RRuntime.DOT_XDATA));
             }
             value = dotXDataAttrAccess.execute(obj);
         }

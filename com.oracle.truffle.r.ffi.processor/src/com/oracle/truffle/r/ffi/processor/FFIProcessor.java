@@ -387,7 +387,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,\n");
         if (needsCallTarget) {
             w.append("                @Cached() com.oracle.truffle.r.ffi.impl.upcalls.UpCallBase.CallNode callNode,\n");
-            w.append("                @Cached(value = \"createCallTarget(ctxRef.get())\", allowUncached = true) CallTarget callTarget,\n");
+            w.append("                @Cached(value = \"createCallTarget(ctxRef)\", allowUncached = true) CallTarget callTarget,\n");
         } else if (needsNode) {
             if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
                 w.append("                @Cached() " + nodeClassName + " node,\n");
@@ -500,8 +500,8 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("\n");
 
         if (needsCallTarget) {
-            w.append("    protected static CallTarget createCallTarget(RContext ctx) {\n");
-            w.append("        RFFIUpCallTargets targets = ctx.getRFFIUpCallTargets();\n");
+            w.append("    protected static CallTarget createCallTarget(ContextReference<RContext> ctxRef) {\n");
+            w.append("        RFFIUpCallTargets targets = ctxRef.get().getRFFIUpCallTargets();\n");
             w.append("        if(targets.").append(nodeClassName).append(" == null) {\n");
             w.append("            targets.").append(nodeClassName).append(" =  Truffle.getRuntime().createCallTarget(new NodeRootNode());\n");
             w.append("        }\n");

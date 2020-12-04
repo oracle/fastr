@@ -25,59 +25,65 @@ package com.oracle.truffle.r.runtime.context;
 import com.oracle.truffle.api.RootCallTarget;
 
 // Checkstyle: stop field name check
+/**
+ * This is manually maintained class that must contain one field for each of the RFFI upcalls that
+ * need a CallTarget (see {@code RFFIUpCallNode.needsCallTarget}).
+ */
 public final class RFFIUpCallTargets {
 
     RFFIUpCallTargets() {
 
     }
 
-    public RootCallTarget AsIntegerNode;
+    public volatile RootCallTarget CoerceVectorNode;
 
-    public RootCallTarget AsRealNode;
+    public volatile RootCallTarget AsIntegerNode;
 
-    public RootCallTarget AsLogicalNode;
+    public volatile RootCallTarget AsRealNode;
 
-    public RootCallTarget AsCharNode;
+    public volatile RootCallTarget AsLogicalNode;
 
-    public RootCallTarget RDoNewObjectNode;
+    public volatile RootCallTarget AsCharNode;
 
-    public RootCallTarget ATTRIB;
+    public volatile RootCallTarget RDoNewObjectNode;
 
-    public RootCallTarget GetAttrib;
+    public volatile RootCallTarget ATTRIB;
 
-    public RootCallTarget RfSetAttribNode;
+    public volatile RootCallTarget GetAttrib;
 
-    public RootCallTarget RfEvalNode;
+    public volatile RootCallTarget RfSetAttribNode;
 
-    public RootCallTarget TryRfEvalNode;
+    public volatile RootCallTarget RfEvalNode;
 
-    public RootCallTarget RDoSlotNode;
+    public volatile RootCallTarget TryRfEvalNode;
 
-    public RootCallTarget RandFunction3Node;
+    public volatile RootCallTarget RDoSlotNode;
 
-    public RootCallTarget RfRMultinomNode;
+    public volatile RootCallTarget RandFunction3Node;
 
-    public RootCallTarget BesselIExNode;
+    public volatile RootCallTarget RfRMultinomNode;
 
-    public RootCallTarget BesselJExNode;
+    public volatile RootCallTarget BesselIExNode;
 
-    public RootCallTarget BesselKExNode;
+    public volatile RootCallTarget BesselJExNode;
 
-    public RootCallTarget BesselYExNode;
+    public volatile RootCallTarget BesselKExNode;
 
-    public RootCallTarget NamesGetsNode;
+    public volatile RootCallTarget BesselYExNode;
 
-    public RootCallTarget VectorToPairListNode;
+    public volatile RootCallTarget NamesGetsNode;
 
-    public RootCallTarget AsCharacterFactor;
+    public volatile RootCallTarget VectorToPairListNode;
 
-    public RootCallTarget RHasSlotNode;
+    public volatile RootCallTarget AsCharacterFactor;
 
-    public RootCallTarget OctSizeNode;
+    public volatile RootCallTarget RHasSlotNode;
 
-    public RootCallTarget RForceAndCallNode;
+    public volatile RootCallTarget OctSizeNode;
 
-    public RootCallTarget AsS4;
+    public volatile RootCallTarget RForceAndCallNode;
 
-    public RootCallTarget Match5UpCallNode;
+    public volatile RootCallTarget AsS4;
+
+    public volatile RootCallTarget Match5UpCallNode;
 }

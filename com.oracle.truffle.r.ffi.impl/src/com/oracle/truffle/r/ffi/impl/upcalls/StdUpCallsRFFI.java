@@ -218,7 +218,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(value = AsCharNode.class, needsCallTarget = true)
     Object Rf_asChar(Object x);
 
-    @RFFIUpCallNode(CoerceVectorNode.class)
+    @RFFIUpCallNode(value = CoerceVectorNode.class, needsCallTarget = true)
     Object Rf_coerceVector(Object x, int mode);
 
     Object Rf_mkCharLenCE(@RFFICpointer(isString = true) Object bytes, int len, int encoding);

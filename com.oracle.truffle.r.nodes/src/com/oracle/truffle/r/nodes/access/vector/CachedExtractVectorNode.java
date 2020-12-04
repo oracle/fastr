@@ -552,7 +552,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     public Object getSrcref(RAbstractContainer vector) {
         if (getSrcrefNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            getSrcrefNode = insert(GetFixedAttributeNode.create(RRuntime.R_SRCREF));
+            getSrcrefNode = insert(GetFixedAttributeNode.createFor(RRuntime.R_SRCREF));
         }
         return getSrcrefNode.execute(vector);
     }

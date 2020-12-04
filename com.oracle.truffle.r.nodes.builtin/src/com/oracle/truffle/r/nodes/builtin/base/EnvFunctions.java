@@ -178,7 +178,7 @@ public class EnvFunctions {
         }
 
         protected GetFixedAttributeNode createGetXDataAttrNode() {
-            return GetFixedAttributeNode.create(RRuntime.DOT_XDATA);
+            return GetFixedAttributeNode.createFor(RRuntime.DOT_XDATA);
         }
 
         @Specialization
@@ -364,7 +364,7 @@ public class EnvFunctions {
         }
 
         protected static GetFixedAttributeNode createDotEnv() {
-            return GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT);
+            return GetFixedAttributeNode.createFor(RRuntime.DOT_ENVIRONMENT);
         }
 
         @Specialization(guards = "!isRFunction(value)")

@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNodeGe
  * Retrieves fixed property (passed in constructor) from dynamic object.
  */
 @ImportStatic(DSLConfig.class)
-@GenerateUncached
 public abstract class GetFixedPropertyNode extends PropertyAccessNode {
 
     public abstract Object execute(DynamicObject obj);
@@ -86,10 +85,6 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
 
     public static GetCommentPropertyNode createComment() {
         return GetCommentPropertyNodeGen.create();
-    }
-
-    protected boolean hasProperty(Shape shape) {
-        return shape.hasProperty(getPropertyName());
     }
 
     @Specialization(limit = "getCacheSize(3)", //
