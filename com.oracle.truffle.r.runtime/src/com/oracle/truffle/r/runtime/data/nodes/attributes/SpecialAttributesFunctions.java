@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -62,7 +63,8 @@ import com.oracle.truffle.r.runtime.data.nodes.MaterializeNode;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimNamesAttributeNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetRawDimAttributeNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -255,7 +257,7 @@ public final class SpecialAttributesFunctions {
         if (Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
             return GetNamesAttributeNode.create();
         } else if (Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY)) {
-            return GetDimAttributeNode.create();
+            return GetRawDimAttributeNodeGen.create();
         } else if (Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY)) {
             return GetDimNamesAttributeNode.create();
         } else if (Utils.identityEquals(name, RRuntime.ROWNAMES_ATTR_KEY)) {
@@ -426,13 +428,13 @@ public final class SpecialAttributesFunctions {
 
         @Specialization(insertBefore = "getAttrFromAttributable")
         protected Object getVectorNames(RAbstractVector x,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createNames()") GetFixedPropertyNode getFixedPropertyNode,
-                        @Cached("create()") BranchProfile namesNullProfile,
-                        @Cached("create()") BranchProfile dimNamesAvlProfile,
-                        @Cached("create()") GetDimNamesAttributeNode getDimNames,
-                        @Cached("create()") ExtractListElement extractListElement) {
-            RStringVector names = (RStringVector) super.getAttrFromAttributable(x, attrNullProfile, getFixedPropertyNode);
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode,
+                        @Cached BranchProfile namesNullProfile,
+                        @Cached BranchProfile dimNamesAvlProfile,
+                        @Cached GetDimNamesAttributeNode getDimNames,
+                        @Cached ExtractListElement extractListElement) {
+            RStringVector names = (RStringVector) super.getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
             if (names == null) {
                 namesNullProfile.enter();
                 RList dimNames = getDimNames.getDimNames(x);
@@ -597,21 +599,66 @@ public final class SpecialAttributesFunctions {
         }
     }
 
-    public abstract static class GetDimAttributeNode extends GetFixedAttributeNode {
-
-        private final BranchProfile isPairListProfile = BranchProfile.create();
-        private final ConditionProfile nullDimsProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile nonEmptyDimsProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile twoDimsOrMoreProfile = ConditionProfile.createBinaryProfile();
-        @Child private VectorDataLibrary dimDataLib;
-
-        public static GetDimAttributeNode create() {
-            return GetDimAttributeNodeGen.create();
-        }
-
+    @GenerateUncached
+    abstract static class GetRawDimAttributeNode extends GetFixedAttributeNode {
         @Override
         protected String getAttributeName() {
             return RRuntime.DIM_ATTR_KEY;
+        }
+
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "isScalarOrSequence(x)")
+        protected Object getScalarVectorDims(@SuppressWarnings("unused") RAbstractContainer x) {
+            return null;
+        }
+
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isScalarOrSequence(x)")
+        protected Object getVectorDims(RAbstractVector x,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode) {
+            return super.getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
+        }
+
+        @Specialization(insertBefore = "getAttrFromAttributable")
+        protected Object getContainerDims(RAbstractContainer x,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile nullResultProfile) {
+            int[] res = xTypeProfile.profile(x).getDimensions();
+            return nullResultProfile.profile(res == null) ? null : RDataFactory.createIntVector(res, true);
+        }
+
+        protected static boolean isScalarOrSequence(RAbstractContainer x) {
+            return x instanceof RScalarVector || x instanceof RSequence;
+        }
+    }
+
+    public static final class GetDimAttributeNode extends Node {
+
+        private final BranchProfile isPairListProfile;
+        private final ConditionProfile nullDimsProfile;
+        private final ConditionProfile nonEmptyDimsProfile;
+        private final ConditionProfile twoDimsOrMoreProfile;
+        @Child private VectorDataLibrary dimDataLib;
+        @Child private GetRawDimAttributeNode getRawDimAttributeNode;
+
+        public GetDimAttributeNode(boolean cached) {
+            isPairListProfile = cached ? BranchProfile.create() : BranchProfile.getUncached();
+            nullDimsProfile = cached ? ConditionProfile.createBinaryProfile() : ConditionProfile.getUncached();
+            nonEmptyDimsProfile = cached ? ConditionProfile.createBinaryProfile() : ConditionProfile.getUncached();
+            twoDimsOrMoreProfile = cached ? ConditionProfile.createBinaryProfile() : ConditionProfile.getUncached();
+            getRawDimAttributeNode = cached ? GetRawDimAttributeNodeGen.create() : GetRawDimAttributeNodeGen.getUncached();
+            if (!cached) {
+                dimDataLib = VectorDataLibrary.getFactory().getUncached();
+            }
+        }
+
+        public static GetDimAttributeNode create() {
+            return new GetDimAttributeNode(false);
+        }
+
+        private static final GetDimAttributeNode UNCACHED = new GetDimAttributeNode(true);
+
+        public static GetDimAttributeNode getUncached() {
+            return UNCACHED;
         }
 
         // TODO: getDimensions returns a naked array, which is in many places used to create a fresh
@@ -620,7 +667,7 @@ public final class SpecialAttributesFunctions {
         // attributes/list/environment/... This way, we wouldn't need to call getReadonlyData, which
         // may copy the contents.
 
-        public final int[] getDimensions(RAttributable x) {
+        public int[] getDimensions(RAttributable x) {
             // Let's handle the following two types directly so as to avoid wrapping and unwrapping
             // RIntVector. The getContainerDims spec would be invoked otherwise.
             if (x instanceof RPairList) {
@@ -631,7 +678,7 @@ public final class SpecialAttributesFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 dimDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getTypedVectorDataLibraryCacheSize()));
             }
-            RIntVector dims = (RIntVector) execute(x);
+            RIntVector dims = (RIntVector) getRawDimAttributeNode.execute(x);
             return nullDimsProfile.profile(dims == null) ? null : dimDataLib.getReadonlyIntData(dims.getData());
         }
 
@@ -651,42 +698,22 @@ public final class SpecialAttributesFunctions {
             return dimensions != null && dimensions.getLength() == 2;
         }
 
-        public final boolean isArray(RAbstractVector vector) {
-            RIntVector dims = (RIntVector) execute(vector);
+        public boolean isArray(RAbstractVector vector) {
+            RIntVector dims = (RIntVector) getRawDimAttributeNode.execute(vector);
             return nullDimsProfile.profile(dims == null) ? false : dims.getLength() > 0;
         }
 
-        public final boolean isMatrix(RAbstractVector vector) {
-            RIntVector dims = (RIntVector) execute(vector);
+        public boolean isMatrix(RAbstractVector vector) {
+            RIntVector dims = (RIntVector) getRawDimAttributeNode.execute(vector);
             return nullDimsProfile.profile(dims == null) ? false : dims.getLength() == 2;
         }
 
-        public final boolean isSquareMatrix(RAbstractVector vector) {
-            RIntVector dims = (RIntVector) execute(vector);
+        public boolean isSquareMatrix(RAbstractVector vector) {
+            RIntVector dims = (RIntVector) getRawDimAttributeNode.execute(vector);
             if (nullDimsProfile.profile(dims == null) || dims.getLength() != 2) {
                 return false;
             }
             return dims.getDataAt(0) == dims.getDataAt(1);
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "isScalarOrSequence(x)")
-        protected Object getScalarVectorDims(@SuppressWarnings("unused") RAbstractContainer x) {
-            return null;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isScalarOrSequence(x)")
-        protected Object getVectorDims(RAbstractVector x,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createDim()") GetFixedPropertyNode getFixedPropertyNode) {
-            return super.getAttrFromAttributable(x, attrNullProfile, getFixedPropertyNode);
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getContainerDims(RAbstractContainer x,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile nullResultProfile) {
-            int[] res = xTypeProfile.profile(x).getDimensions();
-            return nullResultProfile.profile(res == null) ? null : RDataFactory.createIntVector(res, true);
         }
 
         public int nrows(Object x) {
@@ -699,7 +726,7 @@ public final class SpecialAttributesFunctions {
                     return xa.getLength();
                 }
             } else {
-                throw error(RError.Message.OBJECT_NOT_MATRIX);
+                throw getRawDimAttributeNode.error(RError.Message.OBJECT_NOT_MATRIX);
             }
         }
 
@@ -717,12 +744,8 @@ public final class SpecialAttributesFunctions {
                     return 1;
                 }
             } else {
-                throw error(RError.Message.OBJECT_NOT_MATRIX);
+                throw getRawDimAttributeNode.error(RError.Message.OBJECT_NOT_MATRIX);
             }
-        }
-
-        protected static boolean isScalarOrSequence(RAbstractContainer x) {
-            return x instanceof RScalarVector || x instanceof RSequence;
         }
     }
 
@@ -819,6 +842,10 @@ public final class SpecialAttributesFunctions {
             return SpecialAttributesFunctionsFactory.GetDimNamesAttributeNodeGen.create();
         }
 
+        public static GetDimNamesAttributeNode getUncached() {
+            return GetDimNamesAttributeNodeGen.getUncached();
+        }
+
         @Override
         protected String getAttributeName() {
             return RRuntime.DIMNAMES_ATTR_KEY;
@@ -827,13 +854,6 @@ public final class SpecialAttributesFunctions {
         public final RList getDimNames(RAttributable x) {
             Object result = execute(x);
             return result == RNull.instance ? null : (RList) result;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorDimNames(RAbstractContainer x,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createDimNames()") GetFixedPropertyNode getFixedPropertyNode) {
-            return super.getAttrFromAttributable(x, attrNullProfile, getFixedPropertyNode);
         }
     }
 
@@ -1031,9 +1051,9 @@ public final class SpecialAttributesFunctions {
 
         @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isScalarOrSequence(x)")
         protected Object getVectorRowNames(RAbstractContainer x,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createRowNames()") GetFixedPropertyNode getFixedPropertyNode) {
-            return super.getAttrFromAttributable(x, attrNullProfile, getFixedPropertyNode);
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode) {
+            return super.getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
         }
 
         /**
@@ -1272,10 +1292,10 @@ public final class SpecialAttributesFunctions {
 
         @Specialization(insertBefore = "getAttrFromAttributable")
         protected Object getVectorTsp(RAbstractContainer x,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createTsp()") GetFixedPropertyNode getFixedPropertyNode,
-                        @Cached("createBinaryProfile()") ConditionProfile nullTspProfile) {
-            Object res = super.getAttrFromAttributable(x, attrNullProfile, getFixedPropertyNode);
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode,
+                        @Cached ConditionProfile nullTspProfile) {
+            Object res = super.getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
             return nullTspProfile.profile(res == null) ? RNull.instance : res;
         }
 
@@ -1365,9 +1385,9 @@ public final class SpecialAttributesFunctions {
         @Specialization(insertBefore = "getAttrFromAttributable")
         protected Object getComment(RAbstractContainer x,
                         @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createComment()") GetFixedPropertyNode getFixedPropertyNode,
+                        @Cached GetPropertyNode getPropertyNode,
                         @Cached("createBinaryProfile()") ConditionProfile nullCommentProfile) {
-            Object res = super.getAttrFromAttributable(x, attrNullProfile, getFixedPropertyNode);
+            Object res = super.getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
             return nullCommentProfile.profile(res == null) ? RNull.instance : res;
         }
 

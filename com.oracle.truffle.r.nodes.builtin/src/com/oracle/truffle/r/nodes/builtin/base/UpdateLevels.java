@@ -45,7 +45,7 @@ public abstract class UpdateLevels extends RBuiltinNode.Arg2 {
     }
 
     protected RemoveFixedAttributeNode createRemoveAttrNode() {
-        return RemoveFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
+        return RemoveFixedAttributeNode.createFor(RRuntime.LEVELS_ATTR_KEY);
     }
 
     @Specialization

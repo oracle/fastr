@@ -164,7 +164,7 @@ public class MethodsListDispatch {
         }
 
         protected GetFixedAttributeNode createPckgAttrAccess() {
-            return GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
+            return GetFixedAttributeNode.createFor(RRuntime.PCKG_ATTR_KEY);
         }
 
         @Specialization
@@ -413,8 +413,8 @@ public class MethodsListDispatch {
 
         @Child private CastToVectorNode castToVector = CastToVectorNodeGen.create(false);
         @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
-        @Child private GetFixedAttributeNode getGenericAttrNode = GetFixedAttributeNode.create(RRuntime.GENERIC_ATTR_KEY);
-        @Child private GetFixedAttributeNode getPckgAttrNode = GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
+        @Child private GetFixedAttributeNode getGenericAttrNode = GetFixedAttributeNode.createFor(RRuntime.GENERIC_ATTR_KEY);
+        @Child private GetFixedAttributeNode getPckgAttrNode = GetFixedAttributeNode.createFor(RRuntime.PCKG_ATTR_KEY);
 
         @Specialization
         protected Object getGeneric(String name, REnvironment env, String pckg) {

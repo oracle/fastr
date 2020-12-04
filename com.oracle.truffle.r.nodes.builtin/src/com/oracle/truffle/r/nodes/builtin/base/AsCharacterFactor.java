@@ -45,7 +45,7 @@ public abstract class AsCharacterFactor extends RBuiltinNode.Arg1 {
 
     @Child private InheritsNode inheritsNode = InheritsNodeGen.create();
     @Child private CastToVectorNode castToVectorNode = CastToVectorNode.create();
-    @Child private GetFixedAttributeNode getLevelsAttrNode = GetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
+    @Child private GetFixedAttributeNode getLevelsAttrNode = GetFixedAttributeNode.createFor(RRuntime.LEVELS_ATTR_KEY);
 
     private final NACheck naCheck = NACheck.create();
 

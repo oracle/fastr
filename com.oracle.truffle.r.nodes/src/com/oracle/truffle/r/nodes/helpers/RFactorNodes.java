@@ -50,7 +50,7 @@ public final class RFactorNodes {
      * Encapsulates the operation of deciding whether a factor is ordered.
      */
     public static final class GetOrdered extends Node {
-        @Child private GetFixedAttributeNode isOrderedAccess = GetFixedAttributeNode.create(RRuntime.ORDERED_ATTR_KEY);
+        @Child private GetFixedAttributeNode isOrderedAccess = GetFixedAttributeNode.createFor(RRuntime.ORDERED_ATTR_KEY);
 
         public boolean execute(RIntVector factor) {
             Object value = isOrderedAccess.execute(factor);
@@ -68,7 +68,7 @@ public final class RFactorNodes {
      */
     public static final class GetLevels extends Node {
         @Child private CastStringNode castString;
-        @Child private GetFixedAttributeNode attrAccess = GetFixedAttributeNode.create(RRuntime.LEVELS_ATTR_KEY);
+        @Child private GetFixedAttributeNode attrAccess = GetFixedAttributeNode.createFor(RRuntime.LEVELS_ATTR_KEY);
         @Child private UpdateShareableChildValueNode updateAttrValue = UpdateShareableChildValueNode.create();
 
         private final BranchProfile notVectorBranch = BranchProfile.create();

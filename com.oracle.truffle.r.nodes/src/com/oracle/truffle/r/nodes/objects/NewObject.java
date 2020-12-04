@@ -43,7 +43,7 @@ public abstract class NewObject extends RExternalBuiltinNode.Arg1 {
     @Child private AccessSlotNode accessSlotClassName = AccessSlotNodeGen.create(true);
     @Child private AccessSlotNode accessSlotPrototypeName = AccessSlotNodeGen.create(true);
     @Child private DuplicateNode duplicate = DuplicateNodeGen.create(true);
-    @Child private GetFixedAttributeNode pckgAttrAccess = GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
+    @Child private GetFixedAttributeNode pckgAttrAccess = GetFixedAttributeNode.createFor(RRuntime.PCKG_ATTR_KEY);
     @Child private SetClassAttributeNode setClassAttrNode;
 
     @Child private CastNode castStringScalar = newCastBuilder().asStringVector().findFirst(RRuntime.STRING_NA).buildCastNode();

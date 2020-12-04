@@ -40,10 +40,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RPairList;
 
-@GenerateUncached
 public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
 
-    public static RemoveFixedAttributeNode create(String name) {
+    public static RemoveFixedAttributeNode createFor(String name) {
         return RemoveGenericAttributeAccessNodeGen.create(name);
     }
 
@@ -82,17 +81,17 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @Specialization
-    protected static void removeAttrFromAttributable(RAttributable x,
-                    @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("createRemoveFixedPropertyNode()") RemoveFixedPropertyNode removeFixedPropertyNode,
-                    @Cached("create()") BranchProfile emptyAttrProfile) {
+    protected void removeAttrFromAttributable(RAttributable x,
+                    @Cached BranchProfile attrNullProfile,
+                    @Cached RemovePropertyNode removePropertyNode,
+                    @Cached BranchProfile emptyAttrProfile) {
         DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();
             return;
         }
-        removeFixedPropertyNode.execute(attributes);
+        removePropertyNode.execute(attributes, getAttributeName());
 
         if (attributes.getShape().getPropertyCount() == 0) {
             emptyAttrProfile.enter();

@@ -36,8 +36,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetRawDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctionsFactory.GetRawDimAttributeNodeGen;
 
 /**
  * Remove all regular attributes. This node is in particular useful if we reuse containers with
@@ -48,7 +49,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
 
-    @Child private GetDimAttributeNode dimAttrGetter = GetFixedAttributeNode.createDim();
+    @Child private GetRawDimAttributeNode dimAttrGetter = GetRawDimAttributeNodeGen.create();
     @Child private GetNamesAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
     @Child private GetClassAttributeNode classAttrGetter = GetFixedAttributeNode.createClass();
     @Child private RemoveFixedAttributeNode removeClassAttributeNode;

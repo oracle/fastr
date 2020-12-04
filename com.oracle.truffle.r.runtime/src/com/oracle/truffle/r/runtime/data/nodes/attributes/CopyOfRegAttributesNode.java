@@ -22,23 +22,26 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
-import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetRawDimAttributeNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -78,41 +81,41 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected static boolean onlyDimAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode dimAttrGetter) {
+    protected static boolean onlyDimAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetRawDimAttributeNode dimAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && dimAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyDimAttribute(source, sizeOneProfile, dimAttrGetter)")
     protected void copyDimOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target,
-                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
-                    @SuppressWarnings("unused") @Cached("createDim()") GetFixedAttributeNode dimAttrGetter) {
+                    @SuppressWarnings("unused") @Cached ConditionProfile sizeOneProfile,
+                    @SuppressWarnings("unused") @Cached GetRawDimAttributeNode dimAttrGetter) {
         // nothing to do
     }
 
-    protected static boolean onlyNamesAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode namesAttrGetter) {
+    protected static boolean onlyNamesAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetNamesAttributeNode namesAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && namesAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyNamesAttribute(source, sizeOneProfile, namesAttrGetter)")
     protected void copyNamesOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target,
-                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
-                    @SuppressWarnings("unused") @Cached("createNames()") GetFixedAttributeNode namesAttrGetter) {
+                    @SuppressWarnings("unused") @Cached ConditionProfile sizeOneProfile,
+                    @SuppressWarnings("unused") @Cached GetNamesAttributeNode namesAttrGetter) {
         // nothing to do
     }
 
-    protected static boolean onlyClassAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode classAttrGetter) {
+    protected static boolean onlyClassAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetClassAttributeNode classAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && classAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source, sizeOneProfile, classAttrGetter)")
     protected void copyClassOnly(RAttributable source, RAbstractVector target,
-                    @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
-                    @Cached("create()") ShareObjectNode updateRefCountNode,
-                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
-                    @Cached("createClass()") GetFixedAttributeNode classAttrGetter) {
+                    @Cached UpdateShareableChildValueNode updateChildRefCountNode,
+                    @Cached ShareObjectNode updateRefCountNode,
+                    @SuppressWarnings("unused") @Cached ConditionProfile sizeOneProfile,
+                    @Cached GetClassAttributeNode classAttrGetter) {
         Object classAttr = classAttrGetter.execute(source);
         updateRefCountNode.execute(updateChildRefCountNode.updateState(source, classAttr));
         target.initAttributes(RAttributesLayout.createClass(classAttr));
@@ -120,8 +123,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @Specialization
     protected void copyGeneric(RAttributable source, RAttributable target,
-                    @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
-                    @Cached("create()") ShareObjectNode updateRefCountNode) {
+                    @Cached UpdateShareableChildValueNode updateChildRefCountNode,
+                    @Cached ShareObjectNode updateRefCountNode) {
         DynamicObject orgAttributes = source.getAttributes();
         if (orgAttributes != null) {
             Shape shape = orgAttributes.getShape();
