@@ -30,9 +30,8 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
@@ -47,6 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.builtin.RBuiltinBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 @TypeSystemReference(RTypes.class)
 public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithArgumentCasts {
@@ -87,7 +87,10 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
      * information as initially parsed. However, currently, builtins called via
      * {@code do.call("func", )} have a {@link RBuiltinRootNode} as a parent, which carries no
      * context about the original call, so we return {@code null}.
+     *
+     * Note: behind Truffle boundary, because it messes up with saturated type flows.
      */
+    @TruffleBoundary(allowInlining = true)
     public RSyntaxElement getOriginalCall() {
         Node p = getParent();
         while (p != null) {

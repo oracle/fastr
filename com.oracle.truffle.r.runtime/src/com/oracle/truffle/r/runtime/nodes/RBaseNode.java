@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.LoopNode;
@@ -143,6 +144,7 @@ public abstract class RBaseNode extends Node {
      * However, currently that is not always the case, so this method can be used by defensive code.
      * It returns {@code null} if the {@link RSyntaxNode} cannot be located.
      */
+    @TruffleBoundary
     private RSyntaxNode checkGetRSyntaxNode() {
         Node current = this;
         while (current != null) {
