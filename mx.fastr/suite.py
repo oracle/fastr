@@ -56,14 +56,14 @@ suite = {
 
     "F2C" : {
         "path" : "libdownloads/f2c/src.tgz",
-        "urls" : ["https://netlib.sandia.gov/f2c/src.tgz"],
+        "urls" : ["https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/f2c/20191129/src.tgz"],
         "sha1" : "8a26107bf9f82a2dcfa597f15549a412be75e0ee",
         "resource" : "true"
     },
 
     "LIBF2C" : {
         "path" : "libdownloads/f2c/libf2c.zip",
-        "urls" : ["https://netlib.sandia.gov/f2c/libf2c.zip"],
+        "urls" : ["https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/f2c/20191129/libf2c.zip"],
         "sha1" : "e39a00f425f8fc41dde434686080a94e94884f30",
         "resource" : "true"
     },
