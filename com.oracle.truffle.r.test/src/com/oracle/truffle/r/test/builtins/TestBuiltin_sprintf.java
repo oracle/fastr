@@ -180,6 +180,12 @@ public class TestBuiltin_sprintf extends TestBase {
         assertEval("{ sprintf('% g', 4.33) }");
         assertEval("{ sprintf('%g', 4.3345423) }");
 
+        // If one of args is NULL or an empty vector, sprintf should produce character(0).
+        assertEval("{ sprintf('%s%d', 'Hello', c()) }");
+        assertEval("{ sprintf('%s%d', 'Hello', NULL) }");
+        assertEval("{ sprintf('%d%s', NULL, 'Hello') }");
+        assertEval("{ sprintf('%s%d', 'Hello', seq_along(c())) }");
+
         assertEval(Ignored.ImplementationError, "{ sprintf('%#g', 4.0) }");
     }
 
