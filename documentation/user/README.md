@@ -23,8 +23,7 @@ GraalVM's R runtime requires the [OpenMP runtime library](https://www.openmprtl.
 The following commands should install this dependency:
 
 * Ubuntu 18.04 and 19.10: `apt-get install libgomp1`
-* Oracle Linux 7: `yum install libgomp`
-* Oracle Linux 8: `libgomp` should be already installed
+* Oracle Linux 7 and 8: `yum install libgomp`
 * macOS: `libgomp` should be already installed
 
 As of version 20.1.0 and later, GraalVM's R runtime on Linux supports and bundles the GFortran version 3 runtime libraries.
