@@ -202,16 +202,11 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         for (int i = 0; i < values.length; i++) {
             if (values[i] instanceof RAbstractVector) {
                 int vecLength = ((RAbstractVector) values[i]).getLength();
-                if (vecLength == 0) {
-                    // result will be empty character vector in this case, as in:
-                    // sprintf("%d %d", as.integer(c(7,42)), integer())
-                    return 0;
-                } else {
-                    if (vecLength == 1) {
-                        values[i] = ((RAbstractVector) values[i]).getDataAtAsObject(0);
-                    }
-                    length = Math.max(vecLength, length);
+                assert vecLength != 0;
+                if (vecLength == 1) {
+                    values[i] = ((RAbstractVector) values[i]).getDataAtAsObject(0);
                 }
+                length = Math.max(vecLength, length);
             } else {
                 length = Math.max(1, length);
             }
@@ -231,12 +226,12 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         return sprintfArgs;
     }
 
-    @Specialization(guards = {"!oneElement(args)", "hasNull(args)"})
+    @Specialization(guards = {"!oneElement(args)", "hasNullOrEmptyVec(args)"})
     protected RStringVector sprintf(@SuppressWarnings("unused") Object fmt, @SuppressWarnings("unused") RArgsValuesAndNames args) {
         return RDataFactory.createEmptyStringVector();
     }
 
-    @Specialization(guards = {"!oneElement(args)", "!hasNull(args)"})
+    @Specialization(guards = {"!oneElement(args)", "!hasNullOrEmptyVec(args)"})
     @TruffleBoundary
     protected RStringVector sprintf(String fmt, RArgsValuesAndNames args) {
         Object[] values = args.getArguments();
@@ -267,7 +262,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         return sprintfRecursive.executeObject(fmt, args.getArgument(0));
     }
 
-    @Specialization(guards = {"!oneElement(args)", "!hasNull(args)"})
+    @Specialization(guards = {"!oneElement(args)", "!hasNullOrEmptyVec(args)"})
     @TruffleBoundary
     protected RStringVector sprintf(RStringVector fmt, RArgsValuesAndNames args) {
         if (fmt.getLength() == 0) {
@@ -276,8 +271,15 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
             String[] data = new String[fmt.getLength()];
             for (int i = 0; i < data.length; i++) {
                 RStringVector formatted = sprintf(fmt.getDataAt(i), args);
-                assert formatted.getLength() > 0;
-                data[i] = formatted.getDataAt(args.getLength() == 0 ? 0 : i % Math.min(args.getLength(), formatted.getLength()));
+                if (args.getLength() == 0) {
+                    if (formatted.getLength() == 0) {
+                        data[i] = null;
+                    } else {
+                        data[i] = formatted.getDataAt(0);
+                    }
+                } else {
+                    data[i] = formatted.getDataAt(i % Math.min(args.getLength(), formatted.getLength()));
+                }
             }
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         }
@@ -739,10 +741,15 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         return args.getLength() == 1;
     }
 
-    protected boolean hasNull(RArgsValuesAndNames args) {
+    protected boolean hasNullOrEmptyVec(RArgsValuesAndNames args) {
         for (int i = 0; i < args.getLength(); i++) {
             if (args.getArgument(i) == RNull.instance) {
                 return true;
+            } else if (args.getArgument(i) instanceof RAbstractVector) {
+                RAbstractVector vector = (RAbstractVector) args.getArgument(i);
+                if (vector.getLength() == 0) {
+                    return true;
+                }
             }
         }
 
