@@ -1,3 +1,9 @@
+# 21.0.0
+
+Bug fixes:
+
+* Fix `AssertionError` in `sprintf` (#169)
+
 # 20.3.0
 
 Bug fixes:
