@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -80,6 +80,13 @@ public class TestBuiltin_makenames extends TestBase {
     @Test
     public void testmakenames11() {
         assertEval("argv <- list(character(0), TRUE); .Internal(make.names(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testMakeNamesNonWriteableStringSeq() {
+        assertEval("make.names(seq_len(1))");
+        assertEval("make.names(seq(2))");
+        assertEval("make.names(1:10)");
     }
 
     @Test

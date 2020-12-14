@@ -116,7 +116,7 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
     private static NewNames updateNewNames(RStringVector names, VectorReuse reuse, int index, String newName, NewNames newNames) {
         NewNames nn = newNames;
         if (nn == null) {
-            RStringVector res = reuse.getResult(names);
+            RStringVector res = reuse.getMaterializedResult(names);
             VectorAccess access = res.slowPathAccess();
             VectorAccess.RandomIterator iter = access.randomAccess(res);
             nn = new NewNames(res, access, iter);
