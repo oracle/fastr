@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.DSLConfig.getGenericVectorAccessCache
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -421,12 +422,12 @@ public final class SpecialAttributesFunctions {
             return (RStringVector) execute(x);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization
         protected Object getPairListNames(RPairList x) {
             return x.getNames();
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization
         protected Object getVectorNames(RAbstractVector x,
                         @Cached BranchProfile attrNullProfile,
                         @Cached GetPropertyNode getPropertyNode,
@@ -449,11 +450,16 @@ public final class SpecialAttributesFunctions {
             return names;
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isRAbstractVector(x)")
+        @Specialization(guards = "!isRAbstractVector(x)")
         @TruffleBoundary
         protected Object getVectorNames(RAbstractContainer x,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             return xTypeProfile.profile(x).getNames();
+        }
+
+        @Fallback
+        protected Object getNamesFromAttributable(RAttributable x) {
+            return getAttrFromAttributable(x);
         }
     }
 
@@ -606,24 +612,29 @@ public final class SpecialAttributesFunctions {
             return RRuntime.DIM_ATTR_KEY;
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "isScalarOrSequence(x)")
+        @Specialization(guards = "isScalarOrSequence(x)")
         protected Object getScalarVectorDims(@SuppressWarnings("unused") RAbstractContainer x) {
             return null;
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isScalarOrSequence(x)")
+        @Specialization(guards = "!isScalarOrSequence(x)")
         protected Object getVectorDims(RAbstractVector x,
                         @Cached BranchProfile attrNullProfile,
                         @Cached GetPropertyNode getPropertyNode) {
             return super.getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization
         protected Object getContainerDims(RAbstractContainer x,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
                         @Cached("createBinaryProfile()") ConditionProfile nullResultProfile) {
             int[] res = xTypeProfile.profile(x).getDimensions();
             return nullResultProfile.profile(res == null) ? null : RDataFactory.createIntVector(res, true);
+        }
+
+        @Fallback
+        protected Object getDimsFromAttributable(RAttributable x) {
+            return getAttrFromAttributable(x);
         }
 
         protected static boolean isScalarOrSequence(RAbstractContainer x) {
@@ -851,6 +862,11 @@ public final class SpecialAttributesFunctions {
             return RRuntime.DIMNAMES_ATTR_KEY;
         }
 
+        @Specialization
+        protected Object getDimNamesFromAttributable(RAttributable x) {
+            return getAttrFromAttributable(x);
+        }
+
         public final RList getDimNames(RAttributable x) {
             Object result = execute(x);
             return result == RNull.instance ? null : (RList) result;
@@ -1044,16 +1060,21 @@ public final class SpecialAttributesFunctions {
             return execute(x);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "isScalarOrSequence(x)")
+        @Specialization(guards = "isScalarOrSequence(x)")
         protected Object getScalarVectorRowNames(@SuppressWarnings("unused") RAbstractContainer x) {
             return null;
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isScalarOrSequence(x)")
+        @Specialization(guards = "!isScalarOrSequence(x)")
         protected Object getVectorRowNames(RAbstractContainer x,
                         @Cached BranchProfile attrNullProfile,
                         @Cached GetPropertyNode getPropertyNode) {
             return super.getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
+        }
+
+        @Fallback
+        protected Object getRowNamesFromAttributable(RAttributable x) {
+            return getAttrFromAttributable(x);
         }
 
         /**
@@ -1185,6 +1206,11 @@ public final class SpecialAttributesFunctions {
             return RRuntime.CLASS_ATTR_KEY;
         }
 
+        @Specialization
+        protected Object getClassAttrFromAttributable(RAttributable x) {
+            return getAttrFromAttributable(x);
+        }
+
         public final RStringVector getClassAttr(RAttributable x) {
             return (RStringVector) execute(x);
         }
@@ -1290,7 +1316,7 @@ public final class SpecialAttributesFunctions {
             return (RDoubleVector) execute(x);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization
         protected Object getVectorTsp(RAbstractContainer x,
                         @Cached BranchProfile attrNullProfile,
                         @Cached GetPropertyNode getPropertyNode,
@@ -1299,6 +1325,10 @@ public final class SpecialAttributesFunctions {
             return nullTspProfile.profile(res == null) ? RNull.instance : res;
         }
 
+        @Fallback
+        protected Object getTspFromAttributable(RAttributable x) {
+            return getAttrFromAttributable(x);
+        }
     }
 
     public abstract static class SetCommentAttributeNode extends SetSpecialAttributeNode {
@@ -1382,7 +1412,7 @@ public final class SpecialAttributesFunctions {
             return (RStringVector) execute(x);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization
         protected Object getComment(RAbstractContainer x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached GetPropertyNode getPropertyNode,
@@ -1391,6 +1421,10 @@ public final class SpecialAttributesFunctions {
             return nullCommentProfile.profile(res == null) ? RNull.instance : res;
         }
 
+        @Fallback
+        protected Object getCommentFromAttributable(RAttributable x) {
+            return getAttrFromAttributable(x);
+        }
     }
 
 }
