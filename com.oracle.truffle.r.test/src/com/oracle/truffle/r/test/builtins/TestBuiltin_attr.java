@@ -264,4 +264,22 @@ public class TestBuiltin_attr extends TestBase {
     public void testSideEffect() {
         assertEval("{ a <- c(1, 2, 4); foo <- function() { attr(a,'mya') <<- 42; TRUE; }; attr(a, 'mya', foo()) }");
     }
+
+    /**
+     * Indirectly tests internal nodes responsible for getting the names attribute.
+     *
+     * This test was added to demonstrate the specialization-generalization problem in
+     * {@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode}
+     *
+     * Fixes GR-27948.
+     */
+    @Test
+    public void testNamesAttrSpecialization() {
+        assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); attr(l, 'myattr') <- 'myattr'; attr(l, 'names') <- 'a'; get_names_attr(f); get_names_attr(l) }");
+        assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); attr(l, 'myattr') <- 'myattr'; attr(l, 'names') <- 'a'; get_names_attr(l); get_names_attr(f) }");
+        assertEval(Ignored.ImplementationError,
+                        "{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(f); get_names_attr(l) }");
+        assertEval(Ignored.ImplementationError,
+                        "{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(l); get_names_attr(f) }");
+    }
 }
