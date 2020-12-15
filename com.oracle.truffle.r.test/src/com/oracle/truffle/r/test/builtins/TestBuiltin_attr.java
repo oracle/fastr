@@ -70,7 +70,7 @@ public class TestBuiltin_attr extends TestBase {
     @Test
     public void testattr10() {
         assertEval(Output.IgnoreWhitespace,
-                        "argv <- list(structure(list(Employed = c(60.323, 61.122, 60.171, 61.187, 63.221, 63.639, 64.989, 63.761, 66.019, 67.857, 68.169, 66.513, 68.655, 69.564, 69.331, 70.551), GNP.deflator = c(83, 88.5, 88.2, 89.5, 96.2, 98.1, 99, 100, 101.2, 104.6, 108.4, 110.8, 112.6, 114.2, 115.7, 116.9), GNP = c(234.289, 259.426, 258.054, 284.599, 328.975, 346.999, 365.385, 363.112, 397.469, 419.18, 442.769, 444.546, 482.704, 502.601, 518.173, 554.894), Unemployed = c(235.6, 232.5, 368.2, 335.1, 209.9, 193.2, 187, 357.8, 290.4, 282.2, 293.6, 468.1, 381.3, 393.1, 480.6, 400.7), Armed.Forces = c(159, 145.6, 161.6, 165, 309.9, 359.4, 354.7, 335, 304.8, 285.7, 279.8, 263.7, 255.2, 251.4, 257.2, 282.7), Population = c(107.608, 108.632, 109.773, 110.929, 112.075, 113.27, 115.094, 116.219, 117.388, 118.734, 120.445, 121.95, 123.366, 125.368, 127.852, 130.081), Year = 1947:1962), .Names = c('Employed', 'GNP.deflator', 'GNP', 'Unemployed', 'Armed.Forces', 'Population', 'Year'), terms = quote(Employed ~ GNP.deflator + GNP + Unemployed +     Armed.Forces + Population + Year), row.names = 1947:1962, class = 'data.frame'), 'terms');attr(argv[[1]],argv[[2]]);");
+                "argv <- list(structure(list(Employed = c(60.323, 61.122, 60.171, 61.187, 63.221, 63.639, 64.989, 63.761, 66.019, 67.857, 68.169, 66.513, 68.655, 69.564, 69.331, 70.551), GNP.deflator = c(83, 88.5, 88.2, 89.5, 96.2, 98.1, 99, 100, 101.2, 104.6, 108.4, 110.8, 112.6, 114.2, 115.7, 116.9), GNP = c(234.289, 259.426, 258.054, 284.599, 328.975, 346.999, 365.385, 363.112, 397.469, 419.18, 442.769, 444.546, 482.704, 502.601, 518.173, 554.894), Unemployed = c(235.6, 232.5, 368.2, 335.1, 209.9, 193.2, 187, 357.8, 290.4, 282.2, 293.6, 468.1, 381.3, 393.1, 480.6, 400.7), Armed.Forces = c(159, 145.6, 161.6, 165, 309.9, 359.4, 354.7, 335, 304.8, 285.7, 279.8, 263.7, 255.2, 251.4, 257.2, 282.7), Population = c(107.608, 108.632, 109.773, 110.929, 112.075, 113.27, 115.094, 116.219, 117.388, 118.734, 120.445, 121.95, 123.366, 125.368, 127.852, 130.081), Year = 1947:1962), .Names = c('Employed', 'GNP.deflator', 'GNP', 'Unemployed', 'Armed.Forces', 'Population', 'Year'), terms = quote(Employed ~ GNP.deflator + GNP + Unemployed +     Armed.Forces + Population + Year), row.names = 1947:1962, class = 'data.frame'), 'terms');attr(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -267,19 +267,31 @@ public class TestBuiltin_attr extends TestBase {
 
     /**
      * Indirectly tests internal nodes responsible for getting the names attribute.
-     *
+     * <p>
      * This test was added to demonstrate the specialization-generalization problem in
      * {@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode}
-     *
+     * <p>
      * Fixes GR-27948.
      */
     @Test
     public void testNamesAttrSpecialization() {
         assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); attr(l, 'myattr') <- 'myattr'; attr(l, 'names') <- 'a'; get_names_attr(f); get_names_attr(l) }");
         assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); attr(l, 'myattr') <- 'myattr'; attr(l, 'names') <- 'a'; get_names_attr(l); get_names_attr(f) }");
-        assertEval(Ignored.ImplementationError,
-                        "{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(f); get_names_attr(l) }");
-        assertEval(Ignored.ImplementationError,
-                        "{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(l); get_names_attr(f) }");
+        assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(f); get_names_attr(l) }");
+        assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(l); get_names_attr(f) }");
+    }
+
+    @Test
+    public void testPairListAttrNames() {
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'names') }");
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'names') <- 'a'; attr(l, 'names') }");
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'someAttribute') <- 'foo'; attr(l, 'names') }");
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'names'); attr(l, 'names') <- 'foo'; attr(l, 'names') }");
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'names'); attr(l, 'someAttribute') <- 'foo'; attr(l, 'names') }");
+        // Non-exact match.
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'name', exact=FALSE) }");
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'nam', exact=FALSE) }");
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'na', exact=FALSE) }");
+        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'n', exact=FALSE) }");
     }
 }
