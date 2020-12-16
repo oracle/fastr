@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -92,8 +93,10 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         }
 
         @Specialization
-        protected Object fallback(RAttributable x) {
-            return getAttrFromAttributable(x);
+        protected Object getFixedAttributeForAttributable(RAttributable x,
+                @Cached BranchProfile attrNullProfile,
+                @Cached GetPropertyNode getPropertyNode) {
+            return getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
         }
     }
 }

@@ -283,15 +283,14 @@ public final class SpecialAttributesFunctions {
             super(name);
         }
 
-        protected static boolean defaultImplGuard(Object value) {
+        protected static boolean notNullValue(Object value) {
             return value != RNull.instance;
         }
 
-        @Specialization(guards = "defaultImplGuard(value)")
         protected void setAttrInAttributable(RAttributable x, Object value,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("create(getAttributeName())") SetFixedPropertyNode setFixedPropertyNode,
-                        @Cached("create()") ShareObjectNode updateRefCountNode) {
+                        BranchProfile attrNullProfile,
+                        SetFixedPropertyNode setFixedPropertyNode,
+                        ShareObjectNode updateRefCountNode) {
             setAttrInAttributableInternal(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
     }
@@ -327,13 +326,13 @@ public final class SpecialAttributesFunctions {
             return materializeNode.execute(castValue.doCast(value));
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void resetDimNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createNames()") RemoveFixedAttributeNode removeNamesAttrNode) {
             removeNamesAttrNode.execute(x);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void setNamesInVector(RAbstractVector x, RStringVector newNamesIn,
                         @Cached("createBinaryProfile()") ConditionProfile useDimNamesProfile,
                         @Cached("create()") BranchProfile resizeNames,
@@ -372,7 +371,7 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
+        @Specialization(guards = "!isRAbstractVector(x)")
         @TruffleBoundary
         protected void setNamesInContainer(RAbstractContainer x, RStringVector newNamesIn,
                         @Cached("create()") BranchProfile resizeNames,
@@ -393,6 +392,14 @@ public final class SpecialAttributesFunctions {
 
             }
             xProfiled.setNames(newNames);
+        }
+
+        @Specialization(guards = "notNullValue(value)")
+        protected void setNamesInAttributable(RAttributable x, Object value,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached("createNames()") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached ShareObjectNode updateRefCountNode) {
+            setAttrInAttributable(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
         private void checkNamesLength(RAbstractContainer target, RStringVector names) {
@@ -515,7 +522,7 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void resetDims(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createDim()") RemoveFixedAttributeNode removeDimAttrNode,
                         @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
@@ -523,7 +530,7 @@ public final class SpecialAttributesFunctions {
             setDimNamesNode.setDimNames(x, null);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable", limit = "getGenericVectorAccessCacheSize()")
+        @Specialization(limit = "getGenericVectorAccessCacheSize()")
         protected void setOneDimInVector(RAbstractVector x, int dim,
                         @CachedLibrary("x") AbstractContainerLibrary vecLib,
                         @Cached("create()") BranchProfile attrNullProfile,
@@ -546,7 +553,7 @@ public final class SpecialAttributesFunctions {
             super.setAttrInAttributable(x, dimVec, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable", limit = "getGenericVectorAccessCacheSize()")
+        @Specialization(limit = "getGenericVectorAccessCacheSize()")
         protected void setDimsInVector(RAbstractVector x, RIntVector dims,
                         @CachedLibrary("x") AbstractContainerLibrary vecLib,
                         @Cached("create()") BranchProfile attrNullProfile,
@@ -566,11 +573,19 @@ public final class SpecialAttributesFunctions {
             super.setAttrInAttributable(x, dims, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
+        @Specialization(guards = "!isRAbstractVector(x)")
         protected void setDimsInContainerFallback(RAbstractContainer x, RIntVector dims,
                         @Cached("create()") SetDimAttributeNode setDimNode) {
             int[] dimsArr = dims.materialize().getDataCopy();
             setDimNode.setDimensions(x, dimsArr);
+        }
+
+        @Specialization(guards = "notNullValue(value)")
+        protected void setDimInAttributable(RAttributable x, Object value,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached("createDim()") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached ShareObjectNode updateRefCountNode) {
+            setAttrInAttributable(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
         private void verifyOneDimensions(int vectorLength, int dim) {
@@ -780,13 +795,13 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void resetDimNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNamesAttrNode) {
             removeDimNamesAttrNode.execute(x);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void setDimNamesInVector(RAbstractContainer x, RList newDimNames,
                         @Cached("create()") GetDimAttributeNode getDimNode,
                         @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
@@ -838,6 +853,14 @@ public final class SpecialAttributesFunctions {
             }
 
             super.setAttrInAttributable(x, resDimNames, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
+        }
+
+        @Specialization(guards = "notNullValue(value)")
+        protected void setDimNamesInAttributable(RAttributable x, Object value,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached("createDimNames()") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached ShareObjectNode updateRefCountNode) {
+            setAttrInAttributable(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
         private static boolean isValidDimLength(RStringVector x, int expectedDim) {
@@ -1023,13 +1046,13 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void resetRowNames(RAbstractVector x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createRowNames()") RemoveFixedAttributeNode removeRowNamesAttrNode) {
             removeRowNamesAttrNode.execute(x);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void setRowNamesInVector(RAbstractContainer x, RAbstractVector newRowNames,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createRowNames()") SetFixedPropertyNode setFixedPropertyNode,
@@ -1041,6 +1064,14 @@ public final class SpecialAttributesFunctions {
                 return;
             }
             setAttrInAttributable(x, newRowNames, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
+        }
+
+        @Specialization(guards = "notNullValue(value)")
+        protected void setRowNamesInAttributable(RAttributable x, Object value,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached("createRowNames()") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached ShareObjectNode updateRefCountNode) {
+            setAttrInAttributable(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
     }
 
@@ -1134,7 +1165,7 @@ public final class SpecialAttributesFunctions {
             execute(x, RNull.instance);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected <T> void handleVectorNullClass(RAbstractVector vector, @SuppressWarnings("unused") RNull classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassAttrNode,
                         @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
@@ -1146,7 +1177,7 @@ public final class SpecialAttributesFunctions {
             handleVector(vector, null, removeClassAttrNode, initAttrProfile, nullAttrProfile, nullClassProfile, setFixedPropertyNode, notNullClassProfile, updateRefCountNode);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected <T> void handleVector(RAbstractVector vector, RStringVector classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassAttrNode,
                         @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
@@ -1183,10 +1214,18 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
+        @Specialization(guards = "!isRAbstractVector(x)")
         protected void handleAttributable(RAttributable x, @SuppressWarnings("unused") RNull classAttr,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassNode) {
             removeClassNode.execute(x);
+        }
+
+        @Specialization(guards = "notNullValue(value)")
+        protected void setClassInAttributable(RAttributable x, Object value,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached("createClass()") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached ShareObjectNode updateRefCountNode) {
+            setAttrInAttributable(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
     }
 
@@ -1280,13 +1319,13 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void resetTsp(RAbstractVector x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createTsp()") RemoveFixedAttributeNode removeTspAttrNode) {
             removeTspAttrNode.execute(x);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void setTspInVector(RAttributable x, RDoubleVector newTsp,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createTsp()") SetFixedPropertyNode setFixedPropertyNode,
@@ -1298,6 +1337,14 @@ public final class SpecialAttributesFunctions {
                 return;
             }
             setAttrInAttributable(x, newTsp, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
+        }
+
+        @Specialization(guards = "notNullValue(value)")
+        protected void setTspInAttributable(RAttributable x, Object value,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached("createTsp()") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached ShareObjectNode updateRefCountNode) {
+            setAttrInAttributable(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
     }
 
@@ -1376,13 +1423,13 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void resetComment(RAbstractVector x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createComment()") RemoveFixedAttributeNode removeCommentAttrNode) {
             removeCommentAttrNode.execute(x);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization
         protected void setCommentInVector(RAttributable x, RAbstractVector newComment,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createComment()") SetFixedPropertyNode setFixedPropertyNode,
@@ -1394,6 +1441,14 @@ public final class SpecialAttributesFunctions {
                 return;
             }
             setAttrInAttributable(x, newComment, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
+        }
+
+        @Specialization(guards = "notNullValue(value)")
+        protected void setCommentInAttributable(RAttributable x, Object value,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached("createComment()") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached ShareObjectNode updateRefCountNode) {
+            setAttrInAttributable(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
     }
 
