@@ -28,44 +28,35 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode.AttributeAction;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode.Context;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.AttrNodeGen.PartialSearchCacheNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode.AttributeAction;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode.Context;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode;
 
 @RBuiltin(name = "attr", kind = PRIMITIVE, parameterNames = {"x", "which", "exact"}, behavior = PURE)
 public abstract class Attr extends RBuiltinNode.Arg3 {
-
-    private final ConditionProfile searchPartialProfile = ConditionProfile.createBinaryProfile();
-
-    @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
-    @Child private InternStringNode intern = InternStringNode.create();
-
-    @Child private GetAttributeNode attrAccess = GetAttributeNode.create();
-    @Child private PartialSearchCache partialSearchCache;
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -80,49 +71,87 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
         casts.arg("exact").asLogicalVector().findFirst().map(toBoolean());
     }
 
-    private Object searchKeyPartial(DynamicObject attributes, String name) {
-        if (partialSearchCache == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            partialSearchCache = insert(PartialSearchCacheNodeGen.create());
-        }
-        return partialSearchCache.execute(attributes, name);
+    protected static boolean isForeign(Object object) {
+        return RRuntime.isForeignObject(object);
     }
 
-    private Object attrRA(RAttributable attributable, String name, boolean exact) {
+    protected static boolean isNamesAttribute(String attributeName) {
+        return RRuntime.NAMES_ATTR_KEY.startsWith(attributeName);
+    }
+
+    private static Object searchKeyPartial(RAttributable attributable, String attributeName, PartialSearchCache partialSearchCache) {
         DynamicObject attributes = attributable.getAttributes();
         if (attributes == null) {
             return RNull.instance;
+        }
+        return partialSearchCache.execute(attributes, attributeName);
+    }
+
+    private static Object getAttrFromAttributable(RAttributable attributable, String attributeName, boolean exact,
+                    GetAttributeNode getAttributeNode,
+                    UpdateShareableChildValueNode updateShareableValueNode,
+                    PartialSearchCache partialSearchCache,
+                    InternStringNode internStringNode,
+                    ConditionProfile partialSearchProfile) {
+        String internedAttrName = internStringNode.execute(attributeName);
+        Object result = getAttributeNode.execute(attributable, internedAttrName);
+        if (partialSearchProfile.profile(result == null && !exact)) {
+            return searchKeyPartial(attributable, internStringNode.execute(attributeName), partialSearchCache);
         } else {
-            Object result = attrAccess.execute(attributable, name);
-            if (searchPartialProfile.profile(!exact && result == null)) {
-                return searchKeyPartial(attributes, name);
-            }
-            return result == null ? RNull.instance : sharedAttrUpdate.updateState(attributable, result);
+            return result == null ? RNull.instance : updateShareableValueNode.updateState(attributable, result);
         }
     }
 
     @Specialization
-    protected RNull attr(RNull container, @SuppressWarnings("unused") String name, @SuppressWarnings("unused") boolean exact) {
-        return container;
-    }
-
-    @Specialization
-    protected Object attr(RAbstractContainer container, String name, boolean exact) {
-        return attrRA(container, intern.execute(name), exact);
+    protected RNull attrForNull(@SuppressWarnings("unused") RNull rNull, @SuppressWarnings("unused") String name,
+                    @SuppressWarnings("unused") boolean exact) {
+        return RNull.instance;
     }
 
     /**
-     * All other, non-performance centric, {@link RAttributable} types.
+     * Pairlist needs special handling because it does not have "names" attribute internally.
      */
-    @Fallback
+    @Specialization(guards = {"isRAbstractContainer(pairList)", "isRPairList(pairList)"})
+    protected Object attrForPairList(RPairList pairList, String attributeName, boolean exact,
+                    @Cached PartialSearchCache partialSearchCache,
+                    @Cached InternStringNode internStringNode,
+                    @Cached GetAttributeNode getAttributeNode,
+                    @Cached UpdateShareableChildValueNode updateShareableValueNode,
+                    @Cached ConditionProfile partialSearchProfile) {
+        if (isNamesAttribute(attributeName)) {
+            return pairList.getNames();
+        } else {
+            return getAttrFromAttributable(pairList, attributeName, exact, getAttributeNode, updateShareableValueNode,
+                            partialSearchCache, internStringNode, partialSearchProfile);
+        }
+    }
+
+    @Specialization(guards = {"isRAbstractContainer(container)", "!isRPairList(container)"})
+    protected Object attrForContainer(RAbstractContainer container, String attributeName,
+                    boolean exact,
+                    @Cached GetAttributeNode getAttributeNode,
+                    @Cached UpdateShareableChildValueNode updateShareableValueNode,
+                    @Cached PartialSearchCache partialSearchCache,
+                    @Cached InternStringNode internStringNode,
+                    @Cached ConditionProfile partialSearchProfile) {
+        return getAttrFromAttributable(container, attributeName, exact, getAttributeNode, updateShareableValueNode, partialSearchCache, internStringNode, partialSearchProfile);
+    }
+
+    @Specialization(guards = {"!isRAbstractContainer(object)", "!isRPairList(object)"})
     @TruffleBoundary
-    protected Object attr(Object object, Object name, Object exact) {
+    protected Object attrForOtherObjects(Object object, String attributeName, boolean exact,
+                    @Cached GetAttributeNode getAttributeNode,
+                    @Cached UpdateShareableChildValueNode updateShareableValueNode,
+                    @Cached PartialSearchCache partialSearchCache,
+                    @Cached InternStringNode internStringNode,
+                    @Cached ConditionProfile partialSearchProfile) {
         if (object instanceof RAttributable) {
-            return attrRA((RAttributable) object, intern.execute((String) name), (boolean) exact);
+            return getAttrFromAttributable((RAttributable) object, attributeName, exact,
+                            getAttributeNode, updateShareableValueNode, partialSearchCache, internStringNode, partialSearchProfile);
         } else if (RRuntime.isForeignObject(object)) {
             throw RError.error(this, Message.OBJ_CANNOT_BE_ATTRIBUTED);
         } else {
-            throw RError.nyi(this, "object cannot be attributed");
+            throw RInternalError.unimplemented("object cannot be attributed");
         }
     }
 
