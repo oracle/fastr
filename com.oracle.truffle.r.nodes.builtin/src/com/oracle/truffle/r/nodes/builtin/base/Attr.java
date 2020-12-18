@@ -105,25 +105,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
         return RNull.instance;
     }
 
-    /**
-     * Pairlist needs special handling because it does not have "names" attribute internally.
-     */
-    @Specialization(guards = {"isRPairList(pairList)"})
-    protected Object attrForPairList(RPairList pairList, String attributeName, boolean exact,
-                    @Cached PartialSearchCache partialSearchCache,
-                    @Cached InternStringNode internStringNode,
-                    @Cached GetAttributeNode getAttributeNode,
-                    @Cached UpdateShareableChildValueNode updateShareableValueNode,
-                    @Cached ConditionProfile partialSearchProfile) {
-        if (isNamesAttribute(attributeName)) {
-            return pairList.getNames();
-        } else {
-            return getAttrFromAttributable(pairList, attributeName, exact, getAttributeNode, updateShareableValueNode,
-                            partialSearchCache, internStringNode, partialSearchProfile);
-        }
-    }
-
-    @Specialization(guards = {"!isRPairList(attributable)"})
+    @Specialization
     protected Object attrForAttributable(RAttributable attributable, String attributeName,
                     boolean exact,
                     @Cached GetAttributeNode getAttributeNode,
