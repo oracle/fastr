@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode.AttributeAction;
@@ -72,33 +71,6 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
         casts.arg("exact").asLogicalVector().findFirst().map(toBoolean());
     }
 
-    protected static boolean isForeign(Object object) {
-        return RRuntime.isForeignObject(object);
-    }
-
-    protected static boolean isNamesAttribute(String attributeName) {
-        return RRuntime.NAMES_ATTR_KEY.startsWith(attributeName);
-    }
-
-    private static Object searchKeyPartial(RAttributable attributable, String attributeName, PartialSearchCache partialSearchCache) {
-        return partialSearchCache.execute(attributable, attributeName);
-    }
-
-    private static Object getAttrFromAttributable(RAttributable attributable, String attributeName, boolean exact,
-                    GetAttributeNode getAttributeNode,
-                    UpdateShareableChildValueNode updateShareableValueNode,
-                    PartialSearchCache partialSearchCache,
-                    InternStringNode internStringNode,
-                    ConditionProfile partialSearchProfile) {
-        String internedAttrName = internStringNode.execute(attributeName);
-        Object result = getAttributeNode.execute(attributable, internedAttrName);
-        if (partialSearchProfile.profile(result == null && !exact)) {
-            return searchKeyPartial(attributable, internStringNode.execute(attributeName), partialSearchCache);
-        } else {
-            return result == null ? RNull.instance : updateShareableValueNode.updateState(attributable, result);
-        }
-    }
-
     @Specialization
     protected RNull attrForNull(@SuppressWarnings("unused") RNull rNull, @SuppressWarnings("unused") String name,
                     @SuppressWarnings("unused") boolean exact) {
@@ -113,7 +85,13 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
                     @Cached PartialSearchCache partialSearchCache,
                     @Cached InternStringNode internStringNode,
                     @Cached ConditionProfile partialSearchProfile) {
-        return getAttrFromAttributable(attributable, attributeName, exact, getAttributeNode, updateShareableValueNode, partialSearchCache, internStringNode, partialSearchProfile);
+        String internedAttrName = internStringNode.execute(attributeName);
+        Object result = getAttributeNode.execute(attributable, internedAttrName);
+        if (partialSearchProfile.profile(result == null && !exact)) {
+            return partialSearchCache.execute(attributable, internedAttrName);
+        } else {
+            return result == null ? RNull.instance : updateShareableValueNode.updateState(attributable, result);
+        }
     }
 
     @Fallback
@@ -147,7 +125,8 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
                         "getAttributes(attributable).getShape() == cachedShape",
                         "name.equals(cachedName)"
         }, limit = "getCacheSize(8)")
-        protected Object doCached(@SuppressWarnings("unused") RAttributable attributable, @SuppressWarnings("unused") String name,
+        protected Object doCached(@SuppressWarnings("unused") RAttributable attributable,
+                        @SuppressWarnings("unused") String name,
                         @SuppressWarnings("unused") @Cached("getAttributes(attributable)") DynamicObject attrs,
                         @SuppressWarnings("unused") @Cached("attrs.getShape()") Shape cachedShape,
                         @SuppressWarnings("unused") @Cached("name") String cachedName,

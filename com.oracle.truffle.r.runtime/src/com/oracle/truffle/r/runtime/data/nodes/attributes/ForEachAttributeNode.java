@@ -83,7 +83,8 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
                     "attrsLayout.shape.check(attrs)"
     })
     @ExplodeLoop
-    protected Object iterateConstLayout(@SuppressWarnings("unused") RAttributable attributable, String attributeName,
+    protected Object iterateConstLayout(@SuppressWarnings("unused") RAttributable attributable,
+                    String attributeName,
                     @Cached("getAttributes(attributable)") DynamicObject attrs,
                     @Cached("findLayout(attrs, createLoopProfiles())") AttrsLayout attrsLayout) {
         final Property[] props = attrsLayout.properties;
