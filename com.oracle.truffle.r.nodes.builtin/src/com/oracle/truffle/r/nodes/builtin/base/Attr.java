@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.ForEachAttributeNode.AttributeAction;
@@ -82,11 +81,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
     }
 
     private static Object searchKeyPartial(RAttributable attributable, String attributeName, PartialSearchCache partialSearchCache) {
-        DynamicObject attributes = attributable.getAttributes();
-        if (attributes == null) {
-            return RNull.instance;
-        }
-        return partialSearchCache.execute(attributes, attributeName);
+        return partialSearchCache.execute(attributable, attributeName);
     }
 
     private static Object getAttrFromAttributable(RAttributable attributable, String attributeName, boolean exact,
@@ -154,19 +149,33 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
     protected abstract static class PartialSearchCache extends Node {
         @Child protected ForEachAttributeNode iterAttrAccess = ForEachAttributeNode.create(new PartialAttrSearchAction());
 
-        public abstract Object execute(DynamicObject attributes, String name);
+        public abstract Object execute(RAttributable attributable, String name);
 
-        @Specialization(guards = {"attrs.getShape() == cachedShape", "name.equals(cachedName)"}, limit = "getCacheSize(8)")
-        protected Object doCached(@SuppressWarnings("unused") DynamicObject attrs, @SuppressWarnings("unused") String name,
+        protected static DynamicObject getAttributes(RAttributable attributable) {
+            return attributable.getAttributes();
+        }
+
+        protected static boolean hasNullAttributes(RAttributable attributable) {
+            return attributable.getAttributes() == null;
+        }
+
+        @Specialization(guards = {
+                        "!hasNullAttributes(attributable)",
+                        "attrs == getAttributes(attributable)",
+                        "getAttributes(attributable).getShape() == cachedShape",
+                        "name.equals(cachedName)"
+        }, limit = "getCacheSize(8)")
+        protected Object doCached(@SuppressWarnings("unused") RAttributable attributable, @SuppressWarnings("unused") String name,
+                        @SuppressWarnings("unused") @Cached("getAttributes(attributable)") DynamicObject attrs,
                         @SuppressWarnings("unused") @Cached("attrs.getShape()") Shape cachedShape,
                         @SuppressWarnings("unused") @Cached("name") String cachedName,
-                        @Cached("iterAttrAccess.execute(attrs,name)") Object result) {
+                        @Cached("iterAttrAccess.execute(attributable,name)") Object result) {
             return result;
         }
 
         @Specialization(replaces = "doCached")
-        protected Object doUncached(DynamicObject attrs, String name) {
-            return iterAttrAccess.execute(attrs, name);
+        protected Object doUncached(RAttributable attributable, String name) {
+            return iterAttrAccess.execute(attributable, name);
         }
     }
 
@@ -178,7 +187,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
 
         @Override
         public boolean action(String name, Object value, Context ctx) {
-            if (name.startsWith((String) ctx.param)) {
+            if (name.startsWith((String) ctx.attributeName)) {
                 if (ctx.result == RNull.instance) {
                     ctx.result = value;
                 } else {

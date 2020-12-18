@@ -32,7 +32,11 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 
 /**
  * Efficient iteration over the attributes without creating an array or iterator.
@@ -49,11 +53,11 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
         return ForEachAttributeNodeGen.create(action);
     }
 
-    public abstract Object execute(DynamicObject attrs, Object param);
+    public abstract Object execute(RAttributable attributable, String attributeName);
 
     /**
      * Return {@code false} to stop the attributes iteration prematurely. Context gives access to
-     * the parameter passed to {@link #execute(DynamicObject, Object)} and to the result, which
+     * the parameter passed to {@link #execute(RAttributable, String)} and to the result, which
      * should be set by this function.
      */
     public abstract static class AttributeAction extends Node {
@@ -64,12 +68,26 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
         public abstract boolean action(String name, Object value, Context context);
     }
 
-    @Specialization(limit = "getCacheLimit()", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
+    protected static boolean hasNullAttributes(RAttributable attributable) {
+        return attributable.getAttributes() == null;
+    }
+
+    protected static DynamicObject getAttributes(RAttributable attributable) {
+        return attributable.getAttributes();
+    }
+
+    @Specialization(limit = "getCacheLimit()", guards = {
+                    "!hasNullAttributes(attributable)",
+                    "attrs == getAttributes(attributable)",
+                    "attrsLayout != null",
+                    "attrsLayout.shape.check(attrs)"
+    })
     @ExplodeLoop
-    protected Object iterateConstLayout(DynamicObject attrs, Object param,
+    protected Object iterateConstLayout(@SuppressWarnings("unused") RAttributable attributable, String attributeName,
+                    @Cached("getAttributes(attributable)") DynamicObject attrs,
                     @Cached("findLayout(attrs, createLoopProfiles())") AttrsLayout attrsLayout) {
         final Property[] props = attrsLayout.properties;
-        Context ctx = new Context(param);
+        Context ctx = new Context(attributeName);
         actionNode.init(ctx);
         for (int i = 0; i < props.length; i++) {
             Object value = readProperty(attrs, attrsLayout.shape, props[i]);
@@ -80,11 +98,12 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
         return ctx.result;
     }
 
-    @Specialization(replaces = "iterateConstLayout")
-    protected Object iterateAnyLayout(DynamicObject attrs, Object param) {
+    @Specialization(replaces = "iterateConstLayout", guards = "!hasNullAttributes(attributable)")
+    protected Object iterateAnyLayout(RAttributable attributable, String attributeName) {
+        final DynamicObject attrs = attributable.getAttributes();
         Shape shape = attrs.getShape();
         List<Property> props = shape.getPropertyList();
-        Context ctx = new Context(param);
+        Context ctx = new Context(attributeName);
         actionNode.init(ctx);
         for (int i = 0; i < props.size(); i++) {
             Property p = props.get(i);
@@ -96,13 +115,23 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
         return ctx.result;
     }
 
+    @Specialization(guards = "hasNullAttributes(attributable)")
+    protected Object iterateNullAttributtes(RAttributable attributable, String attributeName) {
+        if (attributable instanceof RPairList) {
+            if (RRuntime.NAMES_ATTR_KEY.startsWith(attributeName)) {
+                return ((RPairList) attributable).getNames();
+            }
+        }
+        return RNull.instance;
+    }
+
     @ValueType
     public static final class Context {
-        public final Object param;
+        public final Object attributeName;
         public Object result;
 
-        private Context(Object param) {
-            this.param = param;
+        private Context(String attributeName) {
+            this.attributeName = attributeName;
         }
     }
 }
