@@ -94,8 +94,8 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
 
         @Specialization
         protected Object getFixedAttributeForAttributable(RAttributable x,
-                @Cached BranchProfile attrNullProfile,
-                @Cached GetPropertyNode getPropertyNode) {
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode) {
             return getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
         }
     }
