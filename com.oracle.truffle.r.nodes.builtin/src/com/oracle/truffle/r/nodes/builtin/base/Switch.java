@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.ArgumentMatchingMode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -59,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
  * {@link PromiseCheckHelperNode}.
  *
  */
-@RBuiltin(name = "switch", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1, behavior = COMPLEX)
+@RBuiltin(name = "switch", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"EXPR", "..."}, nonEvalArgs = 1, behavior = COMPLEX, argumentMatchingMode = ArgumentMatchingMode.NO_MATCH_BY_NAME)
 public abstract class Switch extends RBuiltinNode.Arg2 {
 
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
