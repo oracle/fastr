@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -77,5 +77,32 @@ public class TestBuiltin_switch extends TestBase {
         assertEval("{ x <- switch(expression(quote(1), quote(2)), 1, 2, 3); x }");
         assertEval("{ x <- switch(list(2), 1, 2, 3); x }");
         assertEval("{ x <- switch(list(1,2,3), 1, 2, 3); x }");
+    }
+
+    /**
+     * In GNU-R, switch is a primitive with specific argument matching - only the first argument is
+     * treated as EXPR, even if there is other argument tagged as EXPR.
+     */
+    @Test
+    public void testSwitchArgumentMatching() {
+        assertEval("switch(EXPR=1, c(0,0))");
+        assertEval("switch(EXP=1, c(0,0))");
+        assertEval("switch(EX=1, c(0,0))");
+        assertEval("switch(E=1, c(0,0))");
+        assertEval("switch(1, c(0,0))");
+        assertEval("switch(1, EXPR=c(0,0))");
+        assertEval("switch('EXPR'=1, c(0,0))");
+        assertEval("switch('EXP'=1, c(0,0))");
+        assertEval("switch('EX'=1, c(0,0))");
+        assertEval("switch('E'=1, c(0,0))");
+        assertEval("switch(1, 'E'=c(0,0))");
+        assertEval("switch(1, 'EX'=c(0,0))");
+        assertEval("switch(1, 'EXPR'=c(0,0))");
+        assertEval("switch('E'=1, 'E'=c(0,0))");
+        assertEval("switch('E'=1, E=c(0,0))");
+        assertEval("switch('EX'=1, 'EX'=c(0,0))");
+        assertEval("switch('EXPR'=1, 'EXPR'=c(0,0))");
+        assertEval("switch(EXPR=1, EXPR=c(0,0))");
+        assertEval("switch(EXPR=c(0,0), EXPR=1)");
     }
 }
