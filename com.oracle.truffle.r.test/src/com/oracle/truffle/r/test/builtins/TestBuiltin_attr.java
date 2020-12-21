@@ -282,16 +282,24 @@ public class TestBuiltin_attr extends TestBase {
     }
 
     @Test
-    public void testPairListAttrNames() {
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'names') }");
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'names') <- 'a'; attr(l, 'names') }");
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'someAttribute') <- 'foo'; attr(l, 'names') }");
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'names'); attr(l, 'names') <- 'foo'; attr(l, 'names') }");
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'names'); attr(l, 'someAttribute') <- 'foo'; attr(l, 'names') }");
+    public void testPairList() {
+        assertEval("{ l <- pairlist(a=1); attr(l, 'names') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'names') <- 'a'; attr(l, 'names') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'someAttribute') <- 'foo'; attr(l, 'names') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'names'); attr(l, 'names') <- 'foo'; attr(l, 'names') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'names'); attr(l, 'someAttribute') <- 'foo'; attr(l, 'names') }");
         // Non-exact match.
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'name', exact=FALSE) }");
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'nam', exact=FALSE) }");
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'na', exact=FALSE) }");
-        assertEval("{ l <- as.pairlist(list(a=1)); attr(l, 'n', exact=FALSE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'name', exact=FALSE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'nam', exact=FALSE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'na', exact=FALSE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'n', exact=FALSE) }");
+        // Non-exact match on pairlist with other attributes.
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- NA; attr(l, 'name', exact=FALSE) }");
+        // Test other attributes than names.
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'foo') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar'); attr(l, 'foo', exact=TRUE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar'); attr(l, 'foo', exact=FALSE) }");
     }
 }
