@@ -142,11 +142,6 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
 
     private static final class PartialAttrSearchAction extends AttributeAction {
         @Override
-        public void init(Context context) {
-            context.result = RNull.instance;
-        }
-
-        @Override
         public boolean action(String name, Object value, Context ctx) {
             if (name.startsWith((String) ctx.attributeName)) {
                 if (ctx.result == RNull.instance) {
