@@ -1,3 +1,9 @@
+# 21.1.0
+
+Bug fixes:
+
+* `switch` builtin handles arguments properly (#171)
+
 # 21.0.0
 
 Bug fixes:
