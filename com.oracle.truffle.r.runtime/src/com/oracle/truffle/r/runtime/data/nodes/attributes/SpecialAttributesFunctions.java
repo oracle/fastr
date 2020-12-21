@@ -394,7 +394,7 @@ public final class SpecialAttributesFunctions {
             xProfiled.setNames(newNames);
         }
 
-        @Specialization(guards = "notNullValue(value)")
+        @Specialization(guards = {"!isRAbstractContainer(x) || !isRStringVector(value)", "notNullValue(value)"})
         protected void setNamesInAttributable(RAttributable x, Object value,
                         @Cached BranchProfile attrNullProfile,
                         @Cached("createNames()") SetFixedPropertyNode setFixedPropertyNode,
@@ -455,13 +455,6 @@ public final class SpecialAttributesFunctions {
                 return null;
             }
             return names;
-        }
-
-        @Specialization(guards = "!isRAbstractVector(x)")
-        @TruffleBoundary
-        protected Object getVectorNames(RAbstractContainer x,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
-            return xTypeProfile.profile(x).getNames();
         }
 
         @Fallback
@@ -580,7 +573,7 @@ public final class SpecialAttributesFunctions {
             setDimNode.setDimensions(x, dimsArr);
         }
 
-        @Specialization(guards = "notNullValue(value)")
+        @Specialization(guards = {"!isRAbstractContainer(x)", "notNullValue(value)"})
         protected void setDimInAttributable(RAttributable x, Object value,
                         @Cached BranchProfile attrNullProfile,
                         @Cached("createDim()") SetFixedPropertyNode setFixedPropertyNode,
@@ -855,7 +848,7 @@ public final class SpecialAttributesFunctions {
             super.setAttrInAttributable(x, resDimNames, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
-        @Specialization(guards = "notNullValue(value)")
+        @Specialization(guards = {"!isRAbstractContainer(x) || !isRList(value)", "notNullValue(value)"})
         protected void setDimNamesInAttributable(RAttributable x, Object value,
                         @Cached BranchProfile attrNullProfile,
                         @Cached("createDimNames()") SetFixedPropertyNode setFixedPropertyNode,
@@ -1066,7 +1059,7 @@ public final class SpecialAttributesFunctions {
             setAttrInAttributable(x, newRowNames, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
-        @Specialization(guards = "notNullValue(value)")
+        @Specialization(guards = {"!isRAbstractContainer(x) || !isRAbstractVector(value)", "notNullValue(value)"})
         protected void setRowNamesInAttributable(RAttributable x, Object value,
                         @Cached BranchProfile attrNullProfile,
                         @Cached("createRowNames()") SetFixedPropertyNode setFixedPropertyNode,
@@ -1220,7 +1213,7 @@ public final class SpecialAttributesFunctions {
             removeClassNode.execute(x);
         }
 
-        @Specialization(guards = "notNullValue(value)")
+        @Specialization(guards = {"!isRAbstractVector(x)", "notNullValue(value)"})
         protected void setClassInAttributable(RAttributable x, Object value,
                         @Cached BranchProfile attrNullProfile,
                         @Cached("createClass()") SetFixedPropertyNode setFixedPropertyNode,
@@ -1339,7 +1332,7 @@ public final class SpecialAttributesFunctions {
             setAttrInAttributable(x, newTsp, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
-        @Specialization(guards = "notNullValue(value)")
+        @Specialization(guards = {"!isRDoubleVector(value)", "notNullValue(value)"})
         protected void setTspInAttributable(RAttributable x, Object value,
                         @Cached BranchProfile attrNullProfile,
                         @Cached("createTsp()") SetFixedPropertyNode setFixedPropertyNode,
@@ -1443,7 +1436,7 @@ public final class SpecialAttributesFunctions {
             setAttrInAttributable(x, newComment, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
-        @Specialization(guards = "notNullValue(value)")
+        @Specialization(guards = {"!isRAbstractVector(value)", "notNullValue(value)"})
         protected void setCommentInAttributable(RAttributable x, Object value,
                         @Cached BranchProfile attrNullProfile,
                         @Cached("createComment()") SetFixedPropertyNode setFixedPropertyNode,
