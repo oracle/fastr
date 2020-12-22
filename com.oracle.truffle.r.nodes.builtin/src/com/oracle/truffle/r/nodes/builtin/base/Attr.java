@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -115,19 +116,14 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
             return attributable.getAttributes();
         }
 
-        protected static boolean hasNullAttributes(RAttributable attributable) {
-            return attributable.getAttributes() == null;
-        }
-
         @Specialization(guards = {
-                        "!hasNullAttributes(attributable)",
-                        "attrs == getAttributes(attributable)",
-                        "getAttributes(attributable).getShape() == cachedShape",
+                        "attrs != null",
+                        "attrs.getShape() == cachedShape",
                         "name.equals(cachedName)"
         }, limit = "getCacheSize(8)")
         protected Object doCached(@SuppressWarnings("unused") RAttributable attributable,
                         @SuppressWarnings("unused") String name,
-                        @SuppressWarnings("unused") @Cached("getAttributes(attributable)") DynamicObject attrs,
+                        @SuppressWarnings("unused") @Bind("getAttributes(attributable)") DynamicObject attrs,
                         @SuppressWarnings("unused") @Cached("attrs.getShape()") Shape cachedShape,
                         @SuppressWarnings("unused") @Cached("name") String cachedName,
                         @Cached("iterAttrAccess.execute(attributable,name)") Object result) {
