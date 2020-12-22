@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data.nodes.attributes;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -76,14 +77,13 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
     @Specialization(limit = "getCacheLimit()", guards = {
                     "!hasNullAttributes(attributable)",
                     "!isRPairList(attributable)",
-                    "attrs == getAttributes(attributable)",
                     "attrsLayout != null",
                     "attrsLayout.shape.check(attrs)"
     })
     @ExplodeLoop
     protected Object iterateConstLayout(@SuppressWarnings("unused") RAttributable attributable,
                     String attributeName,
-                    @Cached("getAttributes(attributable)") DynamicObject attrs,
+                    @Bind("getAttributes(attributable)") DynamicObject attrs,
                     @Cached("findLayout(attrs, createLoopProfiles())") AttrsLayout attrsLayout) {
         final Property[] props = attrsLayout.properties;
         Context ctx = new Context(attributeName);
