@@ -108,8 +108,10 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
     @Specialization(guards = {"isRPairList(pairList)"})
     protected Object iteratePairList(RPairList pairList, String attributeName) {
         Context ctx = new Context(attributeName);
-        if (!actionNode.action(RRuntime.NAMES_ATTR_KEY, pairList.getNames(), ctx)) {
-            return ctx.result;
+        if (pairList.getNames() != null) {
+            if (!actionNode.action(RRuntime.NAMES_ATTR_KEY, pairList.getNames(), ctx)) {
+                return ctx.result;
+            }
         }
         DynamicObject attributes = pairList.getAttributes();
         if (attributes == null) {
