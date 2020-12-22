@@ -301,5 +301,14 @@ public class TestBuiltin_attr extends TestBase {
         assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar') }");
         assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar'); attr(l, 'foo', exact=TRUE) }");
         assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar'); attr(l, 'foo', exact=FALSE) }");
+        // Test pairlist without names.
+        assertEval("{ l <- pairlist(1); attr(l, 'names', exact=TRUE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'name', exact=FALSE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo', exact=TRUE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo', exact=FALSE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo') <- 'bar'; attr(l, 'names', exact=TRUE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo') <- 'bar'; attr(l, 'name', exact=FALSE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo') <- 'bar'; attr(l, 'foo', exact=TRUE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo') <- 'bar'; attr(l, 'fo', exact=FALSE) }");
     }
 }
