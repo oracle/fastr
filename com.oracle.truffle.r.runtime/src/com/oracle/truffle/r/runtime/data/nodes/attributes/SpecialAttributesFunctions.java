@@ -671,10 +671,10 @@ public final class SpecialAttributesFunctions {
         }
 
         public static GetDimAttributeNode create() {
-            return new GetDimAttributeNode(false);
+            return new GetDimAttributeNode(true);
         }
 
-        private static final GetDimAttributeNode UNCACHED = new GetDimAttributeNode(true);
+        private static final GetDimAttributeNode UNCACHED = new GetDimAttributeNode(false);
 
         public static GetDimAttributeNode getUncached() {
             return UNCACHED;
