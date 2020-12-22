@@ -26,7 +26,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNodeGen.GenericGetFixedAttributeAccessNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -43,7 +42,7 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
             return SpecialAttributesFunctions.createGetSpecialAttributeNode(name);
         } else {
-            return GenericGetFixedAttributeAccessNodeGen.create(name);
+            return GetFixedAttributeNodeFactory.GenericGetFixedAttributeAccessNodeGen.create(name);
         }
     }
 
@@ -64,10 +63,9 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
      */
     public abstract Object execute(RAttributable attr);
 
-    @Specialization
     protected Object getAttrFromAttributable(RAttributable x,
-                    @Cached BranchProfile attrNullProfile,
-                    @Cached GetPropertyNode getPropertyNode) {
+                    BranchProfile attrNullProfile,
+                    GetPropertyNode getPropertyNode) {
         DynamicObject attributes = x.getAttributes();
         if (attributes == null) {
             attrNullProfile.enter();
@@ -75,6 +73,10 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         }
 
         return getPropertyNode.execute(attributes, getAttributeName());
+    }
+
+    protected Object getAttrFromAttributable(RAttributable x) {
+        return getAttrFromAttributable(x, BranchProfile.getUncached(), GetPropertyNodeGen.getUncached());
     }
 
     public abstract static class GenericGetFixedAttributeAccessNode extends GetFixedAttributeNode {
@@ -89,6 +91,12 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         protected String getAttributeName() {
             return name;
         }
-    }
 
+        @Specialization
+        protected Object getFixedAttributeForAttributable(RAttributable x,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode) {
+            return getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
+        }
+    }
 }

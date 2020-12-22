@@ -26,11 +26,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.FixedAttributeAccessNode.GenericFixedAttributeAccessNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNodeFactory.SetGenericFixedAttributeNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.FixedAttributeAccessNode.GenericFixedAttributeAccessNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNodeFactory.SetGenericFixedAttributeNodeGen;
 
 /**
  * This node is responsible for setting a value to the predefined (fixed) attribute. Its
@@ -91,7 +91,7 @@ public abstract class SetFixedAttributeNode extends GenericFixedAttributeAccessN
         execute(attr, castValue(value));
     }
 
-    protected abstract void execute(Object attr, Object value);
+    protected abstract void execute(RAttributable attr, Object value);
 
     /**
      * This method can be used by the special attributes implementations to coerce the value.

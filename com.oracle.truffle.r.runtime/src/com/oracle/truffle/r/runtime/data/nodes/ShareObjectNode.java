@@ -55,6 +55,10 @@ public abstract class ShareObjectNode extends Node {
         return ShareObjectNodeGen.create();
     }
 
+    public static ShareObjectNode getUncached() {
+        return ShareObjectNodeGen.getUncached();
+    }
+
     @Specialization()
     protected Object doShareable(RSharingAttributeStorage obj,
                     @Cached("createBinaryProfile()") ConditionProfile sharedPermanent) {
