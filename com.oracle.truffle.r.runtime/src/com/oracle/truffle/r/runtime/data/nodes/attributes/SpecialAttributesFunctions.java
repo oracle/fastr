@@ -879,8 +879,10 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization
-        protected Object getDimNamesFromAttributable(RAttributable x) {
-            return getAttrFromAttributable(x);
+        protected Object getDimNamesFromAttributable(RAttributable x,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode) {
+            return getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
         }
 
         public final RList getDimNames(RAttributable x) {
@@ -1239,8 +1241,10 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization
-        protected Object getClassAttrFromAttributable(RAttributable x) {
-            return getAttrFromAttributable(x);
+        protected Object getClassAttrFromAttributable(RAttributable x,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode) {
+            return getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
         }
 
         public final RStringVector getClassAttr(RAttributable x) {
