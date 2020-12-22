@@ -33,8 +33,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,13 +41,15 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ImportStatic(DSLConfig.class)
@@ -68,17 +68,18 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return position;
     }
 
-    @Specialization(guards = {"isMultiplesOf(dimensionLength, positionLength)", "positionLength <= dimensionLength"})
+    @Specialization(limit = "getGenericVectorAccessCacheSize()", guards = {"isMultiplesOf(dimensionLength, positionLength)", "positionLength <= dimensionLength"})
     protected RAbstractVector doLogicalMultiplesInBounds(PositionProfile statistics, int dimensionLength, RLogicalVector position, int positionLength,
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile equalsProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile equalsProfile,
+                    @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
         assert positionLength > 0;
-        positionNACheck.enable(position);
+        Object positionData = position.getData();
+        positionNACheck.enable(positionLibrary, positionData);
         int elementCount = 0;
         boolean hasSeenNA = false;
-        lengthProfile.profileCounted(positionLength);
-        for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
-            byte positionValue = position.getDataAt(i);
+        SeqIterator it = positionLibrary.iterator(positionData);
+        while (positionLibrary.nextLoopCondition(positionData, it)) {
+            byte positionValue = positionLibrary.getNextLogical(positionData, it);
             if (positionNACheck.check(positionValue)) {
                 hasSeenNA = true;
                 elementCount++;
@@ -97,13 +98,15 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return b != 0 && (a == b || a % b == 0);
     }
 
-    @Specialization(replaces = "doLogicalMultiplesInBounds")
+    @Specialization(replaces = "doLogicalMultiplesInBounds", limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector doLogicalGenericInBounds(PositionProfile statistics,  //
                     int dimensionLength, RLogicalVector position, int positionLength,
                     @Cached("create()") BranchProfile outOfBoundsProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile incModProfile) {
-        positionNACheck.enable(position);
+                    @Cached("createBinaryProfile()") ConditionProfile incModProfile,
+                    @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
+        Object positionData = position.getData();
+        positionNACheck.enable(positionLibrary, positionData);
         int positionIndex = 0;
         int elementCount = 0;
         boolean hasSeenNA = false;
@@ -119,7 +122,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
             }
             lengthProfile.profileCounted(length);
             for (int i = 0; lengthProfile.inject(i < length); i++) {
-                byte positionValue = position.getDataAt(positionIndex);
+                byte positionValue = positionLibrary.getLogicalAt(positionData, positionIndex);
                 // boolean outOfBounds = outOfBoundsProfile.isVisited() && i >= dimensionLength;
                 if (positionNACheck.check(positionValue)) {
                     hasSeenNA = true;
