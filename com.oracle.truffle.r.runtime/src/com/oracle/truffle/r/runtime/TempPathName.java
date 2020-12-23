@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,9 +43,17 @@ public class TempPathName implements RContext.ContextState {
     private static final String RANDOM_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz";
     private static final int RANDOM_CHARACTERS_LENGTH = RANDOM_CHARACTERS.length();
     private static final int RANDOM_LENGTH = 12; // as per GnuR
-    private static final Random rand = new Random();
-
     private String tempDirPath;
+
+    private static Random rand;
+
+    private static Random getRandom() {
+        if (rand == null) {
+            /* We don't want random seeds in the image heap. */
+            rand = new Random();
+        }
+        return rand;
+    }
 
     @Override
     public RContext.ContextState initialize(RContext context) {
@@ -122,7 +130,7 @@ public class TempPathName implements RContext.ContextState {
 
     private static void appendRandomString(StringBuilder sb) {
         for (int i = 0; i < RANDOM_LENGTH; i++) {
-            sb.append(RANDOM_CHARACTERS.charAt(rand.nextInt(RANDOM_CHARACTERS_LENGTH)));
+            sb.append(RANDOM_CHARACTERS.charAt(getRandom().nextInt(RANDOM_CHARACTERS_LENGTH)));
         }
     }
 
