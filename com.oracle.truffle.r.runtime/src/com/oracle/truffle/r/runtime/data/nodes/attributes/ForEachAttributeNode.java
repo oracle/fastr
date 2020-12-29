@@ -34,6 +34,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
@@ -106,15 +108,18 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
      * Pairlists need special iteration, because they do not have names attribute internally.
      */
     @Specialization(guards = {"isRPairList(pairList)"})
-    protected Object iteratePairList(RPairList pairList, String attributeName) {
+    protected Object iteratePairList(RPairList pairList, String attributeName,
+                    @Cached ConditionProfile nullAttributesProfile,
+                    @Cached BranchProfile pairListHasNamesBranch) {
         Context ctx = new Context(attributeName);
         if (pairList.getNames() != null) {
+            pairListHasNamesBranch.enter();
             if (!actionNode.action(RRuntime.NAMES_ATTR_KEY, pairList.getNames(), ctx)) {
                 return ctx.result;
             }
         }
         DynamicObject attributes = pairList.getAttributes();
-        if (attributes == null) {
+        if (nullAttributesProfile.profile(attributes == null)) {
             return hasContextResult(ctx) ? ctx.result : RNull.instance;
         } else {
             return iterateAttributes(attributes, ctx);
