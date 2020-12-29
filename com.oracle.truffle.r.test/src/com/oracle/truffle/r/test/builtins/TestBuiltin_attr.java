@@ -267,19 +267,48 @@ public class TestBuiltin_attr extends TestBase {
 
     /**
      * Indirectly tests internal nodes responsible for getting the names attribute.
-     *
+     * <p>
      * This test was added to demonstrate the specialization-generalization problem in
      * {@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode}
-     *
+     * <p>
      * Fixes GR-27948.
      */
     @Test
     public void testNamesAttrSpecialization() {
         assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); attr(l, 'myattr') <- 'myattr'; attr(l, 'names') <- 'a'; get_names_attr(f); get_names_attr(l) }");
         assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); attr(l, 'myattr') <- 'myattr'; attr(l, 'names') <- 'a'; get_names_attr(l); get_names_attr(f) }");
-        assertEval(Ignored.ImplementationError,
-                        "{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(f); get_names_attr(l) }");
-        assertEval(Ignored.ImplementationError,
-                        "{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(l); get_names_attr(f) }");
+        assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(f); get_names_attr(l) }");
+        assertEval("{ get_names_attr <- function(x) attr(x, 'names'); f <- function() 42; attr(f, 'myattr') <- 'a'; l <- as.pairlist(list(a=1)); get_names_attr(l); get_names_attr(f) }");
+    }
+
+    @Test
+    public void testPairList() {
+        assertEval("{ l <- pairlist(a=1); attr(l, 'names') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'names') <- 'a'; attr(l, 'names') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'someAttribute') <- 'foo'; attr(l, 'names') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'names'); attr(l, 'names') <- 'foo'; attr(l, 'names') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'names'); attr(l, 'someAttribute') <- 'foo'; attr(l, 'names') }");
+        // Non-exact match.
+        assertEval("{ l <- pairlist(a=1); attr(l, 'name', exact=FALSE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'nam', exact=FALSE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'na', exact=FALSE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'n', exact=FALSE) }");
+        // Non-exact match on pairlist with other attributes.
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- NA; attr(l, 'name', exact=FALSE) }");
+        // Test other attributes than names.
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'foo') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar') }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar'); attr(l, 'foo', exact=TRUE) }");
+        assertEval("{ l <- pairlist(a=1); attr(l, 'foo') <- 42; attr(l, 'bar'); attr(l, 'foo', exact=FALSE) }");
+        // Test pairlist without names.
+        assertEval("{ l <- pairlist(1); attr(l, 'names', exact=TRUE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'name', exact=FALSE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo', exact=TRUE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo', exact=FALSE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo') <- 'bar'; attr(l, 'names', exact=TRUE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo') <- 'bar'; attr(l, 'name', exact=FALSE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo') <- 'bar'; attr(l, 'foo', exact=TRUE) }");
+        assertEval("{ l <- pairlist(1); attr(l, 'foo') <- 'bar'; attr(l, 'fo', exact=FALSE) }");
     }
 }
