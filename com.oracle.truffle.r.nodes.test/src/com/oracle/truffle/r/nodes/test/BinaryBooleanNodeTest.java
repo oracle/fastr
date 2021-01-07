@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyLogicalV
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyRawVector;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyStringVector;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createRawVector;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createRawVectorFromScalar;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createStringVector;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -39,6 +40,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -55,10 +57,7 @@ import com.oracle.truffle.r.nodes.binary.BinaryBooleanNode;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.FastROptions;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import static com.oracle.truffle.r.runtime.data.RDataFactory.createRawVectorFromScalar;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
@@ -244,9 +243,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
     @Theory
     public void testCompleteness(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
         execInContext(() -> {
-            if (RContext.getInstance().getOption(FastROptions.DSLCacheSizeFactor) == 0.0) {
-                return null;
-            }
+            assumeTrue(isCacheEnabled());
             RAbstractVector a = copy(aOrig);
             RAbstractVector b = copy(bOrig);
             assumeArithmeticCompatible(factory, a, b);
