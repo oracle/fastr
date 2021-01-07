@@ -19,26 +19,25 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asLogicalVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.returnIf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asInteger;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mapIf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.intNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.map;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mapIf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.mustBe;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.returnIf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -56,12 +55,13 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -134,7 +134,8 @@ public abstract class Format extends RBuiltinNode.Arg9 {
     }
 
     private static RStringVector createResult(RAbstractVector value, String[] array) {
-        RStringVector result = RDataFactory.createStringVector(array, value.isComplete(), value.getDimensions(), value.getNames());
+        boolean isValueComplete = VectorDataLibrary.getFactory().getUncached().isComplete(value.getData());
+        RStringVector result = RDataFactory.createStringVector(array, isValueComplete, value.getDimensions(), value.getNames());
         result.setDimNames(value.getDimNames());
         return result;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,8 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -145,9 +145,7 @@ public class TestUtilities {
         for (int i = 0; i < size; i++) {
             array[i] = !complete && i % (NA_INDEX + 1) == NA_INDEX ? RNull.instance : i;
         }
-        RAbstractVector list = RDataFactory.createList(array);
-        list.setComplete(complete || !complete && size < 3);
-        return list;
+        return RDataFactory.createList(array);
     }
 
     public static RAbstractVector copy(RAbstractVector orig) {

@@ -30,8 +30,8 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SplitNodeGen.GetSplitNamesNodeGen;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
@@ -39,12 +39,14 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -74,12 +76,14 @@ public abstract class Split extends RBuiltinNode.Arg2 {
     @Specialization(limit = "getCacheSize(4)", guards = {"xAccess.supports(x)", "fAccess.supports(f)"})
     protected RList split(RAbstractVector x, RIntVector f,
                     @Cached("x.access()") VectorAccess xAccess,
-                    @Cached("f.access()") VectorAccess fAccess) {
+                    @Cached("f.access()") VectorAccess fAccess,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
         try (SequentialIterator xIter = xAccess.access(x); SequentialIterator fIter = fAccess.access(f)) {
             RStringVector names = getLevelNode.execute(f);
             int nLevels = getNLevels(names);
             int[] collectResultSize = new int[nLevels];
             Object[] results = new Object[nLevels];
+            boolean isXComplete = xDataLib.isComplete(x.getData());
 
             switch (xAccess.getType()) {
                 case Character: {
@@ -102,7 +106,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
                     for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete(),
+                        results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
                                         (resultNames != null) ? resultNames[i] : null);
                     }
                     break;
@@ -129,7 +133,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
                     for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createComplexVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i] * 2), x.isComplete(),
+                        results[i] = RDataFactory.createComplexVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i] * 2), isXComplete,
                                         (resultNames != null) ? resultNames[i] : null);
                     }
                     break;
@@ -154,7 +158,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
                     for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete(),
+                        results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
                                         (resultNames != null) ? resultNames[i] : null);
                     }
                     break;
@@ -179,7 +183,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
                     for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete(),
+                        results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
                                         (resultNames != null) ? resultNames[i] : null);
                     }
                     break;
@@ -229,7 +233,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
                     for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), x.isComplete(),
+                        results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
                                         (resultNames != null) ? resultNames[i] : null);
                     }
                     break;
@@ -268,13 +272,14 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
     @Specialization(replaces = "split")
     protected RList splitGeneric(RAbstractVector x, RIntVector f) {
-        return split(x, f, x.slowPathAccess(), f.slowPathAccess());
+        return split(x, f, x.slowPathAccess(), f.slowPathAccess(), VectorDataLibrary.getFactory().getUncached());
     }
 
     protected abstract static class GetSplitNames extends RBaseNode {
 
         private final ConditionProfile namesProfile = ConditionProfile.createBinaryProfile();
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+        @Child private VectorDataLibrary namesDataLib = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize());
 
         private RStringVector[] getNames(RAbstractVector x, VectorAccess fAccess, SequentialIterator fIter, int nLevels, int[] collectResultSize) {
             RStringVector xNames = getNamesNode.getNames(x);
@@ -287,7 +292,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                 execute(fAccess, fIter, xNames, namesArr, resultNamesIdxs);
                 RStringVector[] resultNames = new RStringVector[nLevels];
                 for (int i = 0; i < nLevels; i++) {
-                    resultNames[i] = RDataFactory.createStringVector(namesArr[i], xNames.isComplete());
+                    resultNames[i] = RDataFactory.createStringVector(namesArr[i], namesDataLib.isComplete(xNames.getData()));
                 }
                 return resultNames;
             }

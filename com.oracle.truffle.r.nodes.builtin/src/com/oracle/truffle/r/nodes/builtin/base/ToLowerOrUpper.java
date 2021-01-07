@@ -30,17 +30,19 @@ import java.util.function.BiFunction;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -73,16 +75,16 @@ public abstract class ToLowerOrUpper {
             return elementFunction(value, 0, function);
         }
 
-        public RStringVector apply(RStringVector vector, BiFunction<String, Integer, String> function) {
+        public RStringVector apply(RStringVector vector, VectorDataLibrary vectorDataLib, BiFunction<String, Integer, String> function) {
             na.enable(vector);
-            int length = lengthProfile.profile(vector.getLength());
+            int length = lengthProfile.profile(vectorDataLib.getLength(vector.getData()));
             String[] stringVector = new String[length];
             loopProfile.profileCounted(length);
             for (int i = 0; loopProfile.inject(i < length); i++) {
-                String value = vector.getDataAt(i);
+                String value = vectorDataLib.getStringAt(vector.getData(), i);
                 stringVector[i] = elementFunction(value, i, function);
             }
-            RStringVector result = RDataFactory.createStringVector(stringVector, vector.isComplete(), getDimNode.getDimensions(vector), extractNames.execute(vector));
+            RStringVector result = RDataFactory.createStringVector(stringVector, vectorDataLib.isComplete(vector.getData()), getDimNode.getDimensions(vector), extractNames.execute(vector));
             copyAttributes.execute(vector, result);
             return result;
         }
@@ -108,9 +110,10 @@ public abstract class ToLowerOrUpper {
             return mapNode.apply(value, ToLower::processElement);
         }
 
-        @Specialization
-        protected RStringVector toLower(RStringVector vector) {
-            return mapNode.apply(vector, ToLower::processElement);
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        protected RStringVector toLower(RStringVector vector,
+                        @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib) {
+            return mapNode.apply(vector, vectorDataLib, ToLower::processElement);
         }
     }
 
@@ -134,9 +137,10 @@ public abstract class ToLowerOrUpper {
             return mapNode.apply(value, ToUpper::processElement);
         }
 
-        @Specialization
-        protected RStringVector toLower(RStringVector vector) {
-            return mapNode.apply(vector, ToUpper::processElement);
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        protected RStringVector toLower(RStringVector vector,
+                        @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib) {
+            return mapNode.apply(vector, vectorDataLib, ToUpper::processElement);
         }
     }
 }

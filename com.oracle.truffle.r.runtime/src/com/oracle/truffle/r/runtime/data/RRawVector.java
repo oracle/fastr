@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,6 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
     private int length;
 
     RRawVector(byte[] data) {
-        super(true);
         setData(new RRawArrayVectorData(data), data.length);
         assert RAbstractVector.verifyVector(this);
     }
@@ -64,13 +63,11 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
     }
 
     RRawVector(Object data, int newLen) {
-        super(true);
         setData(data, newLen);
         assert RAbstractVector.verifyVector(this);
     }
 
     private RRawVector() {
-        super(true);
     }
 
     private void setData(Object data, int newLen) {
@@ -310,14 +307,10 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
     }
 
     public long allocateNativeContents() {
-        try {
-            setData(VectorDataLibrary.getFactory().getUncached().materialize(data));
-            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
-            setData(new RRawNativeVectorData(this), getLength());
-            return result;
-        } finally {
-            setComplete(false);
-        }
+        setData(VectorDataLibrary.getFactory().getUncached().materialize(data));
+        long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+        setData(new RRawNativeVectorData(this), getLength());
+        return result;
     }
 
     private static final class FastPathAccess extends FastPathFromRawAccess {

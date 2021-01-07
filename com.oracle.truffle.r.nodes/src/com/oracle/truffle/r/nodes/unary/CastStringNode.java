@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -40,11 +41,12 @@ import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
@@ -74,8 +76,9 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     public abstract Object executeString(Object o);
 
-    private RStringVector vectorCopy(RAbstractContainer operand, String[] data) {
-        RStringVector ret = factory().createStringVector(data, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
+    private RStringVector vectorCopy(RAbstractContainer operand, VectorDataLibrary operandDataLib, String[] data) {
+        RStringVector ret = factory().createStringVector(data, operandDataLib.isComplete(operand.getData()),
+                        getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -96,7 +99,8 @@ public abstract class CastStringNode extends CastStringBaseNode {
     @Specialization(guards = {"uAccess.supports(operandIn)", "handleAsAtomic(operandIn)", "!isForeignVector(operandIn)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RStringVector doAbstractAtomicVector(RAbstractAtomicVector operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
-                    @Cached("operandIn.access()") VectorAccess uAccess) {
+                    @Cached("operandIn.access()") VectorAccess uAccess,
+                    @CachedLibrary("operandIn.getData()") VectorDataLibrary operandDataLib) {
         RAbstractContainer operand = operandProfile.profile(operandIn);
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs,
@@ -107,20 +111,22 @@ public abstract class CastStringNode extends CastStringBaseNode {
                 sdata[i] = uAccess.getString(sIter);
             }
         }
-        return vectorCopy(operand, sdata);
+        return vectorCopy(operand, operandDataLib, sdata);
     }
 
-    @Specialization(replaces = "doAbstractAtomicVector", guards = {"handleAsAtomic(operandIn)", "!isForeignVector(operandIn)"})
+    @Specialization(replaces = "doAbstractAtomicVector", guards = {"handleAsAtomic(operandIn)", "!isForeignVector(operandIn)"}, limit = "getGenericDataLibraryCacheSize()")
     protected RStringVector doAbstractAtomicVectorGeneric(RAbstractAtomicVector operandIn,
-                    @Cached("createClassProfile()") ValueProfile operandProfile) {
-        return doAbstractAtomicVector(operandIn, operandProfile, operandIn.slowPathAccess());
+                    @Cached("createClassProfile()") ValueProfile operandProfile,
+                    @CachedLibrary("operandIn.getData()") VectorDataLibrary operandDataLib) {
+        return doAbstractAtomicVector(operandIn, operandProfile, operandIn.slowPathAccess(), operandDataLib);
     }
 
     @Specialization(guards = {"uAccess.supports(x)", "handleAsNonAtomic(x)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RStringVector doNonAtomic(RAbstractContainer x,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile,
-                    @Cached("x.access()") VectorAccess uAccess) {
+                    @Cached("x.access()") VectorAccess uAccess,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
         RAbstractContainer operand = operandProfile.profile(x);
         String[] sdata = new String[operand.getLength()];
         try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
@@ -134,14 +140,15 @@ public abstract class CastStringNode extends CastStringBaseNode {
                 }
             }
         }
-        return vectorCopy(operand, sdata);
+        return vectorCopy(operand, xDataLib, sdata);
     }
 
-    @Specialization(replaces = "doNonAtomic", guards = "handleAsNonAtomic(list)")
+    @Specialization(replaces = "doNonAtomic", guards = "handleAsNonAtomic(list)", limit = "getGenericDataLibraryCacheSize()")
     protected RStringVector doNonAtomicGeneric(RAbstractContainer list,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
-        return doNonAtomic(list, operandProfile, isLanguageProfile, list.slowPathAccess());
+                    @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile,
+                    @CachedLibrary("list.getData()") VectorDataLibrary listDataLib) {
+        return doNonAtomic(list, operandProfile, isLanguageProfile, list.slowPathAccess(), listDataLib);
     }
 
     @Specialization(guards = "isForeignObject(obj)")

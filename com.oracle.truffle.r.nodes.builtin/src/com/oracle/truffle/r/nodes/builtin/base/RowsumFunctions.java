@@ -35,6 +35,7 @@ import java.util.HashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,10 +44,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -74,9 +76,10 @@ public class RowsumFunctions {
             casts.arg("rn").mustBe(stringValue(), RError.Message.ROWSUM_NAMES_NOT_CHAR).asStringVector();
         }
 
-        @Specialization
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         @TruffleBoundary
-        protected Object rowsum(RAbstractVector xv, RAbstractVector g, RAbstractVector uniqueg, boolean narm, RStringVector rn) {
+        protected Object rowsum(RAbstractVector xv, RAbstractVector g, RAbstractVector uniqueg, boolean narm, RStringVector rn,
+                        @CachedLibrary("xv.getData()") VectorDataLibrary xvDataLib) {
             int p = xv.isMatrix() ? xv.getDimensions()[1] : 1;
             int n = g.getLength();
             int ng = uniqueg.getLength();
@@ -96,7 +99,7 @@ public class RowsumFunctions {
             boolean isInt = xv instanceof RIntVector;
             RAbstractVector result;
             na.enable(xv);
-            boolean complete = xv.isComplete();
+            boolean complete = xvDataLib.isComplete(xv.getData());
 
             if (typeProfile.profile(isInt)) {
                 RIntVector xi = (RIntVector) xv;

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (C) 1998--2012  The R Core Team
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 
 /**
@@ -61,33 +63,43 @@ public class SplineFunctions {
             casts.arg(2).mustNotBeMissing().asDoubleVector();
         }
 
-        @Specialization
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         @TruffleBoundary
-        protected Object splineCoef(int method, RDoubleVector x, RDoubleVector y) {
-            return splineCoefImpl(method, x.materialize(), y.materialize());
+        protected Object splineCoef(int method, RDoubleVector x, RDoubleVector y,
+                        @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                        @CachedLibrary("y.getData()") VectorDataLibrary yDataLib) {
+            return splineCoefImpl(method, x.materialize(), xDataLib, y.materialize(), yDataLib);
         }
 
-        @Specialization
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         @TruffleBoundary
-        protected Object splineCoef(int method, RDoubleVector x, @SuppressWarnings("unused") RNull y) {
-            return splineCoefImpl(method, x.materialize(), RDataFactory.createDoubleVector(0));
+        protected Object splineCoef(int method, RDoubleVector x, @SuppressWarnings("unused") RNull y,
+                        @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+            return splineCoefImpl(method, x.materialize(), xDataLib, RDataFactory.createDoubleVector(0),
+                            VectorDataLibrary.getFactory().getUncached());
         }
 
-        @Specialization
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         @TruffleBoundary
-        protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, RDoubleVector y) {
-            return splineCoefImpl(method, RDataFactory.createDoubleVector(0), y.materialize());
+        protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, RDoubleVector y,
+                        @CachedLibrary("y.getData()") VectorDataLibrary yDataLib) {
+            return splineCoefImpl(method, RDataFactory.createDoubleVector(0),
+                            VectorDataLibrary.getFactory().getUncached(), y.materialize(), yDataLib);
         }
 
         @Specialization
         @TruffleBoundary
         protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") RNull y) {
-            return splineCoefImpl(method, RDataFactory.createDoubleVector(0), RDataFactory.createDoubleVector(0));
+            VectorDataLibrary uncachedDataLib = VectorDataLibrary.getFactory().getUncached();
+            return splineCoefImpl(method, RDataFactory.createDoubleVector(0), uncachedDataLib,
+                            RDataFactory.createDoubleVector(0), uncachedDataLib);
         }
 
-        private RList splineCoefImpl(int method, RDoubleVector x, RDoubleVector y) {
-            int n = x.getLength();
-            if (y.getLength() != n) {
+        private RList splineCoefImpl(int method, RDoubleVector x, VectorDataLibrary xDataLib, RDoubleVector y, VectorDataLibrary yDataLib) {
+            Object xData = x.getData();
+            Object yData = y.getData();
+            int n = xDataLib.getLength(xData);
+            if (yDataLib.getLength(yData) != n) {
                 throw error(RError.Message.INPUTS_DIFFERENT_LENGTHS);
             }
 
@@ -97,7 +109,7 @@ public class SplineFunctions {
 
             SplineFunctions.splineCoef(method, n, x.getReadonlyData(), y.getReadonlyData(), b, c, d);
 
-            final boolean complete = x.isComplete() && y.isComplete();
+            final boolean complete = xDataLib.isComplete(xData) && yDataLib.isComplete(yData);
             RDoubleVector bv = RDataFactory.createDoubleVector(b, complete);
             RDoubleVector cv = RDataFactory.createDoubleVector(c, complete);
             RDoubleVector dv = RDataFactory.createDoubleVector(d, complete);
@@ -430,7 +442,12 @@ public class SplineFunctions {
 
         splineEval(method, nu, xout.getReadonlyData(), yout, nx, x.getReadonlyData(), y.getReadonlyData(), b.getReadonlyData(), c.getReadonlyData(),
                         d.getReadonlyData());
-        return RDataFactory.createDoubleVector(yout, xout.isComplete() && x.isComplete() && y.isComplete());
+
+        VectorDataLibrary uncachedDataLib = VectorDataLibrary.getFactory().getUncached();
+        boolean isXoutComplete = uncachedDataLib.isComplete(xout.getData());
+        boolean isXComplete = uncachedDataLib.isComplete(x.getData());
+        boolean isYComplete = uncachedDataLib.isComplete(y.getData());
+        return RDataFactory.createDoubleVector(yout, isXoutComplete && isXComplete && isYComplete);
     }
 
     private static void splineEval(int method, int nu, double[] u, double[] v, int n, double[] x, double[] y, double[] b, double[] c, double[] d) {

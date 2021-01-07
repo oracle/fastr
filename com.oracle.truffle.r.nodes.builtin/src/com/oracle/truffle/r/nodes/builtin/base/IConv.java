@@ -42,7 +42,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -53,7 +53,9 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 
 @RBuiltin(name = "iconv", kind = INTERNAL, parameterNames = {"x", "from", "to", "sub", "mark", "toRaw"}, behavior = PURE)
 public abstract class IConv extends RBuiltinNode.Arg6 {
@@ -82,14 +84,15 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
         return RNull.instance;
     }
 
-    @Specialization
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
     @TruffleBoundary
     protected Object doIConv(RStringVector x, String from, String to, String sub, @SuppressWarnings("unused") boolean mark, boolean toRaw,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
                     @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
 
         Charset fromCharset = getCharset(from, from, to);
         Charset toCharset = getCharset(to, from, to);
-        boolean complete = x.isComplete();
+        boolean complete = xDataLib.isComplete(x.getData());
         // simulate the results of charset conversion
         CharsetEncoder fromEncoder = fromCharset.newEncoder();
         CharsetEncoder toEncoder = toCharset.newEncoder();
@@ -128,10 +131,10 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
             toDecoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
             toDecoder.onMalformedInput(CodingErrorAction.REPLACE);
         }
-        int length = x.getLength();
+        int length = xDataLib.getLength(x.getData());
         String[] data = new String[length];
         for (int i = 0; i < length; i++) {
-            String value = x.getDataAt(i);
+            String value = xDataLib.getStringAt(x.getData(), i);
             if (RRuntime.isNA(value)) {
                 complete = false;
                 data[i] = RRuntime.STRING_NA;

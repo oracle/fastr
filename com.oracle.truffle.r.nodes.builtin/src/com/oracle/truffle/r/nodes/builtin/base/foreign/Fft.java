@@ -23,13 +23,15 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public abstract class Fft extends RExternalBuiltinNode.Arg2 {
@@ -47,17 +49,19 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
     @Child private StatsRFFI.SetupWorkNode setupWorkNode = StatsRFFI.SetupWorkNode.create();
 
     // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
-    @Specialization
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     public Object execute(RComplexVector zVec, boolean inverse,
-                    @Cached("create()") GetDimAttributeNode getDimNode) {
+                    @Cached("create()") GetDimAttributeNode getDimNode,
+                    @CachedLibrary("zVec.getData()") VectorDataLibrary zVecDataLib) {
         double[] z = zVec.getDataTemp();
         int inv = inverse ? 2 : -2;
         int[] d = getDimNode.getDimensions(zVec);
-        if (zVecLgt1.profile(zVec.getLength() > 1)) {
+        int zVecLength = zVecDataLib.getLength(zVec.getData());
+        if (zVecLgt1.profile(zVecLength > 1)) {
             int[] maxf = new int[1];
             int[] maxp = new int[1];
             if (noDims.profile(d == null)) {
-                int n = zVec.getLength();
+                int n = zVecLength;
                 factorNode.execute(n, maxf, maxp);
                 if (maxf[0] == 0) {
                     throw error(RError.Message.FFT_FACTORIZATION);
@@ -86,7 +90,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                 }
                 double[] work = new double[4 * maxmaxf];
                 int[] iwork = new int[maxmaxp];
-                int nseg = zVec.getLength();
+                int nseg = zVecLength;
                 int n = 1;
                 int nspn = 1;
                 for (int i = 0; i < ndims; i++) {
@@ -100,6 +104,6 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                 }
             }
         }
-        return RDataFactory.createComplexVector(z, zVec.isComplete(), d);
+        return RDataFactory.createComplexVector(z, zVecDataLib.isComplete(zVec.getData()), d);
     }
 }

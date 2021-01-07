@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,9 +28,10 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -38,10 +39,10 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 
 public final class ChooseFunctions {
 
@@ -59,33 +60,41 @@ public final class ChooseFunctions {
 
         @Child private UnaryCopyAttributesNode copyAttrs = UnaryCopyAttributesNode.create();
 
-        @Specialization(guards = {"nAccess.supports(n)", "kAccess.supports(k)"})
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         protected RDoubleVector doVectors(RAbstractVector n, RAbstractVector k,
-                        @Cached("n.access()") VectorAccess nAccess,
-                        @Cached("k.access()") VectorAccess kAccess,
+                        @CachedLibrary("n.getData()") VectorDataLibrary nDataLib,
+                        @CachedLibrary("k.getData()") VectorDataLibrary kDataLib,
                         @Cached("create()") VectorFactory factory) {
-            try (SequentialIterator nIter = nAccess.access(n); SequentialIterator kIter = kAccess.access(k)) {
-                int resultLen = Math.max(nAccess.getLength(nIter), kAccess.getLength(kIter));
-                double[] result = new double[resultLen];
-                for (int i = 0; i < resultLen; i++) {
-                    nAccess.nextWithWrap(nIter);
-                    kAccess.nextWithWrap(kIter);
-                    result[i] = choose(nAccess.getDouble(nIter), (kAccess.getType() == RType.Integer) ? kAccess.getInt(kIter) : castToInt(kAccess.getDouble(kIter)));
-                }
-                RDoubleVector resultVector = factory.createDoubleVector(result, n.isComplete() && k.isComplete());
-                if (resultLen == nAccess.getLength(nIter)) {
-                    copyAttrs.execute(resultVector, n);
-                } else {
-                    copyAttrs.execute(resultVector, k);
-                }
-                return resultVector;
+            Object nData = n.getData();
+            Object kData = k.getData();
+            SeqIterator nIter = nDataLib.iterator(nData);
+            SeqIterator kIter = kDataLib.iterator(kData);
+            int nLength = nDataLib.getLength(nData);
+            int kLength = kDataLib.getLength(kData);
+            int resultLen = Math.max(nLength, kLength);
+            double[] result = new double[resultLen];
+            for (int i = 0; i < resultLen; i++) {
+                nDataLib.nextWithWrap(nData, nIter);
+                kDataLib.nextWithWrap(kData, kIter);
+                double nScalar = nDataLib.getNextDouble(nData, nIter);
+                int kScalar = (kDataLib.getType(kData) == RType.Integer) ? kDataLib.getNextInt(kData, kIter) : castToInt(kDataLib.getNextDouble(kData, kIter));
+                result[i] = choose(nScalar, kScalar);
             }
+            RDoubleVector resultVector = factory.createDoubleVector(result, nDataLib.isComplete(nData) && kDataLib.isComplete(kData));
+            if (resultLen == nLength) {
+                copyAttrs.execute(resultVector, n);
+            } else {
+                copyAttrs.execute(resultVector, k);
+            }
+            return resultVector;
         }
 
+        @TruffleBoundary
         @Specialization(replaces = "doVectors")
-        protected RDoubleVector doVectorsGeneric(RIntVector n, RIntVector k,
+        protected RDoubleVector doVectorsGeneric(RAbstractVector n, RAbstractVector k,
                         @Cached("create()") VectorFactory factory) {
-            return doVectors(n, k, n.slowPathAccess(), k.slowPathAccess(), factory);
+            VectorDataLibrary uncachedDataLib = VectorDataLibrary.getFactory().getUncached();
+            return doVectors(n, k, uncachedDataLib, uncachedDataLib, factory);
         }
 
         private int castToInt(double data) {

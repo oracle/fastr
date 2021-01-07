@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -33,14 +33,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -53,10 +45,21 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -186,43 +189,48 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         return transposeSquare(x, xReuse);
     }
 
-    @Specialization(guards = {"isMatrix(x)", "!isSquare(x)", "!isRExpression(x)", "xAccess.supports(x)"})
+    @Specialization(guards = {"isMatrix(x)", "!isSquare(x)", "!isRExpression(x)"}, limit = "getGenericDataLibraryCacheSize()")
     protected RAbstractVector transpose(RAbstractVector x,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
                     @Cached("create()") VectorFactory factory,
-                    @Cached("x.access()") VectorAccess xAccess,
-                    @Cached("createNew(xAccess.getType())") VectorAccess resultAccess) {
-        try (RandomIterator xIter = xAccess.randomAccess(x)) {
-            RAbstractVector result = factory.createVector(xAccess.getType(), xAccess.getLength(xIter), false);
-            try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
-                int length = lengthProfile.profile(xAccess.getLength(xIter));
-                assert isMatrix(x);
-                int[] dims = getDimNode.getDimensions(x);
-                int firstDim = dims[0];
-                int secondDim = dims[1];
-                RBaseNode.reportWork(this, length);
+                    @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary resultDataLib) {
+        Object xData = x.getData();
+        int xLen = xDataLib.getLength(xData);
+        RandomAccessIterator xIter = xDataLib.randomAccessIterator(xData);
+        RAbstractVector result = factory.createVector(xDataLib.getType(xData), xLen, false);
+        Object resultData = result.getData();
+        try (RandomAccessWriteIterator resultIter = resultDataLib.randomAccessWriteIterator(resultData)) {
+            int length = lengthProfile.profile(xLen);
+            assert isMatrix(x);
+            int[] dims = getDimNode.getDimensions(x);
+            int firstDim = dims[0];
+            int secondDim = dims[1];
+            RBaseNode.reportWork(this, length);
 
-                int j = 0;
-                loopProfile.profileCounted(length);
-                for (int i = 0; loopProfile.inject(i < length); i++, j += firstDim) {
-                    if (j > (length - 1)) {
-                        j -= (length - 1);
-                    }
-                    resultAccess.setFromSameType(resultIter, i, xAccess, xIter, j);
+            int j = 0;
+            loopProfile.profileCounted(length);
+            for (int i = 0; loopProfile.inject(i < length); i++, j += firstDim) {
+                if (j > (length - 1)) {
+                    j -= (length - 1);
                 }
-                // copy attributes
-                copyRegAttributes.execute(x, result);
-                // set new dimensions
-                putNewDimsFromDimnames(x, result, new int[]{secondDim, firstDim});
+                Object value = xDataLib.getElement(xData, xIter, j);
+                resultDataLib.setElement(resultData, resultIter, i, value);
             }
-            result.setComplete(x.isComplete());
-            return result;
+            // copy attributes
+            copyRegAttributes.execute(x, result);
+            // set new dimensions
+            putNewDimsFromDimnames(x, result, new int[]{secondDim, firstDim});
+            resultDataLib.commitRandomAccessWriteIterator(resultData, resultIter, xDataLib.getNACheck(xData).neverSeenNA());
         }
+        return result;
     }
 
     @Specialization(replaces = "transpose", guards = {"isMatrix(x)", "!isSquare(x)", "!isRExpression(x)"})
     protected RAbstractVector transposeGeneric(RAbstractVector x,
-                    @Cached("create()") VectorFactory factory) {
-        return transpose(x, factory, x.slowPathAccess(), VectorAccess.createSlowPathNew(x.getRType()));
+                    @Cached("create()") VectorFactory factory,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary xDataLib,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary resultDataLib) {
+        return transpose(x, xDataLib, factory, resultDataLib);
     }
 
     @Specialization(guards = {"!isMatrix(x)", "!isRExpression(x)", "reuseNonSharedNode.supports(x)"}, limit = "getVectorAccessCacheSize()")

@@ -86,10 +86,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      */
     protected static volatile int fence;
 
-    private boolean complete; // "complete" means: does not contain NAs
-
-    protected RAbstractVector(boolean complete) {
-        this.complete = complete && ENABLE_COMPLETE;
+    protected RAbstractVector() {
     }
 
     public final void setData(Object data) {
@@ -100,8 +97,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         }
         // temporary solution to keep isShareable() fast
         shareable = VectorDataLibrary.getFactory().getUncached().isWriteable(data);
-        // temporary solution to keep isComplete() fast
-        complete = VectorDataLibrary.getFactory().getUncached().isComplete(data);
         verifyData();
     }
 
@@ -228,15 +223,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      */
     public Object getDataTemp() {
         return isTemporary() ? getReadonlyData() : getDataCopy();
-    }
-
-    @InternalDeprecation("Some data strategies do not maintain completeness flag, " +
-                    "it should be the sole responsibility of the VectorDataLibrary implementation to keep the flag up-to-date." +
-                    "There should be no need to set completeness manually if one uses the write operations of VectorDataLibrary." +
-                    "See how the Diag builtin was rewritten to avoid calling setComplete.")
-    public void setComplete(boolean complete) {
-        this.complete = complete && ENABLE_COMPLETE;
-        assert RAbstractVector.verifyVector(this);
     }
 
     /*
@@ -470,7 +456,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     @Override
     @Ignore // AbstractContainerLibrary
     public final boolean isComplete() {
-        return complete && ENABLE_COMPLETE;
+        return VectorDataLibrary.getFactory().getUncached().isComplete(getData());
     }
 
     // Tagging interface for vectors with array based data. Make sure that an implementation also is
