@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
@@ -39,10 +40,18 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  * Note: for raw vectors, the {@code fillWithNA} implies filling with {@code 0x00}.
  */
-// @GenerateUncached: causes unhandled exception in Truffle DSL, not needed for now
+@GenerateUncached
 public abstract class CopyResized extends RBaseNode {
 
     public abstract RAbstractVector execute(RAbstractContainer container, int newSize, boolean fillWithNA);
+
+    public static CopyResized create() {
+        return CopyResizedNodeGen.create();
+    }
+
+    public static CopyResized getUncached() {
+        return CopyResizedNodeGen.getUncached();
+    }
 
     @Specialization(guards = "fillWithNA == fillWithNAIn", limit = "getGenericVectorAccessCacheSize()")
     RAbstractVector doIt(RAbstractVector x, int newSize, boolean fillWithNAIn,

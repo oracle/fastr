@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -42,8 +44,6 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(AbstractContainerLibrary.class)
 public abstract class RAbstractContainer extends RSharingAttributeStorage {
@@ -76,8 +76,6 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
     public abstract int getTrueLength();
 
     public abstract void setTrueLength(int l);
-
-    public abstract RAbstractContainer resize(int size);
 
     public abstract boolean hasDimensions();
 

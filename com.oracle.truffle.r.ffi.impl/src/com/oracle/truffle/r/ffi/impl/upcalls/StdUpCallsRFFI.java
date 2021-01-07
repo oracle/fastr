@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,12 +52,11 @@ import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
 import com.oracle.truffle.r.ffi.impl.nodes.INTEGERNode;
 import com.oracle.truffle.r.ffi.impl.nodes.INTEGER_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IntegerGetRegionNode;
-import com.oracle.truffle.r.ffi.impl.nodes.IsSortedNode;
-import com.oracle.truffle.r.ffi.impl.nodes.LOGICAL_ELTNode;
-import com.oracle.truffle.r.ffi.impl.nodes.LogicalGetRegionNode;
-import com.oracle.truffle.r.ffi.impl.nodes.NoNANode;
 import com.oracle.truffle.r.ffi.impl.nodes.IsObjectNode;
+import com.oracle.truffle.r.ffi.impl.nodes.IsSortedNode;
 import com.oracle.truffle.r.ffi.impl.nodes.LOGICALNode;
+import com.oracle.truffle.r.ffi.impl.nodes.LOGICAL_ELTNode;
+import com.oracle.truffle.r.ffi.impl.nodes.LengthGetsNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAD4RNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDDRNode;
@@ -73,6 +72,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCARNode;
+import com.oracle.truffle.r.ffi.impl.nodes.LogicalGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MakeActiveBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MathFunctionsNodes;
@@ -82,6 +82,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SET_TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.NoNANode;
 import com.oracle.truffle.r.ffi.impl.nodes.RAWNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RAW_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.REAL_ELTNode;
@@ -260,6 +261,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_installChar(Object name);
 
+    @RFFIUpCallNode(LengthGetsNode.class)
     Object Rf_lengthgets(Object x, int newSize);
 
     int Rf_isString(Object x);

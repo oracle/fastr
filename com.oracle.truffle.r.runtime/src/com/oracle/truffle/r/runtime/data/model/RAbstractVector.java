@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,11 +56,9 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataWithOwner;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
-import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -689,20 +687,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return (RAbstractContainer) setClassAttr((RStringVector) DynamicObjectLibrary.getUncached().getOrDefault(vecAttributes, RRuntime.CLASS_ATTR_KEY, null));
     }
 
-    /*
-     * Internal version without profiles used in a rare (and already slow) case of double-to-int
-     * vector conversion when setting class attribute
-     */
-    private RAttributable copyAttributesFromVector(RAbstractVector vector) {
-        DynamicObject vecAttributes = vector.getAttributes();
-        if (vecAttributes != null) {
-            initAttributes(RAttributesLayout.copy(vecAttributes));
-            return copyClassAttr(vecAttributes);
-        } else {
-            return this;
-        }
-    }
-
     @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final void copyNamesDimsDimNamesFrom(RAbstractVector vector, RBaseNode invokingNode) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
@@ -823,35 +807,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     private RBaseObject getNonSharedSuper() {
         return super.getNonShared();
-    }
-
-    @Override
-    public RAbstractVector resize(int size) {
-        RAbstractVector materialized = materialize();
-        assert materialized.isMaterialized();
-        return materialized.resize(size, true);
-    }
-
-    private RAbstractVector resize(int size, boolean resetAll) {
-        setComplete(this.complete && getLength() >= size);
-        RStringVector oldNames = UpdateShareableChildValue.update(this, this.getNamesFromAttrs());
-        RAbstractVector res = copyResized(size, true);
-        if (this.isShared()) {
-            assert res.isTemporary();
-            res.incRefCount();
-        }
-        if (resetAll) {
-            res.resetAllAttributes(oldNames == null);
-        } else {
-            res.copyAttributesFromVector(this);
-            res.setDimensionsNoCheck(null);
-            res.setDimNamesNoCheck(null);
-        }
-        if (oldNames != null) {
-            oldNames = CopyResizedWithEmpty.executeSlowPath(oldNames, size);
-            res.putAttribute(RRuntime.NAMES_ATTR_KEY, oldNames);
-        }
-        return res;
     }
 
     @CompilerDirectives.TruffleBoundary

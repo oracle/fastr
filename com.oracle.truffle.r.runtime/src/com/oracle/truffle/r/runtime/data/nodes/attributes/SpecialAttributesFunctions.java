@@ -422,6 +422,10 @@ public final class SpecialAttributesFunctions {
             return SpecialAttributesFunctionsFactory.GetNamesAttributeNodeGen.create();
         }
 
+        public static GetNamesAttributeNode getUncached() {
+            return SpecialAttributesFunctionsFactory.GetNamesAttributeNodeGen.getUncached();
+        }
+
         @Override
         public abstract Object execute(RAttributable attr);
 
