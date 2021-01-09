@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
@@ -38,13 +39,14 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -95,7 +97,8 @@ public abstract class Round extends RBuiltinNode.Arg2 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected RDoubleVector round(RLogicalVector x, @SuppressWarnings("unused") double digits,
-                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                    @Cached UnaryCopyAttributesNode copyAttributesNode) {
         double[] result = new double[x.getLength()];
         Object xData = x.getData();
         VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
@@ -105,13 +108,14 @@ public abstract class Round extends RBuiltinNode.Arg2 {
             result[xIt.getIndex()] = xnaCheck.check(val) ? RRuntime.DOUBLE_NA : val;
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, xnaCheck.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        copyAttributesNode.execute(ret, x);
         return ret;
     }
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected RDoubleVector round(RIntVector x, @SuppressWarnings("unused") double digits,
-                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                    @Cached UnaryCopyAttributesNode copyAttributesNode) {
         double[] data = new double[x.getLength()];
         Object xData = x.getData();
         VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
@@ -120,13 +124,14 @@ public abstract class Round extends RBuiltinNode.Arg2 {
             data[xIt.getIndex()] = xDataLib.getNextDouble(xData, xIt);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(data, xDataLib.getNACheck(xData).neverSeenNA());
-        ret.copyAttributesFrom(x);
+        copyAttributesNode.execute(ret, x);
         return ret;
     }
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected RDoubleVector round(RDoubleVector x, double digits,
-                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                    @Cached UnaryCopyAttributesNode copyAttributesNode) {
         double[] result = new double[x.getLength()];
         Object xData = x.getData();
         VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
@@ -137,7 +142,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
             result[xIt.getIndex()] = xnaCheck.check(value) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digitsInt == 0) ? roundOp.op(value) : roundOp.opd(value, digitsInt);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, xnaCheck.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        copyAttributesNode.execute(ret, x);
         return ret;
     }
 
@@ -158,7 +163,8 @@ public abstract class Round extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "isZero(digits)")
-    protected RComplexVector round(RComplexVector x, double digits) {
+    protected RComplexVector round(RComplexVector x, double digits,
+                    @Cached UnaryCopyAttributesNode copyAttributesNode) {
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
@@ -169,12 +175,13 @@ public abstract class Round extends RBuiltinNode.Arg2 {
             check.check(r);
         }
         RComplexVector ret = RDataFactory.createComplexVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        copyAttributesNode.execute(ret, x);
         return ret;
     }
 
     @Specialization(guards = "!isZero(dDigits)")
-    protected RComplexVector roundDigits(RComplexVector x, double dDigits) {
+    protected RComplexVector roundDigits(RComplexVector x, double dDigits,
+                    @Cached UnaryCopyAttributesNode copyAttributesNode) {
         int digits = (int) Math.round(dDigits);
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
@@ -186,7 +193,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
             check.check(r);
         }
         RComplexVector ret = RDataFactory.createComplexVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
+        copyAttributesNode.execute(ret, x);
         return ret;
     }
 
