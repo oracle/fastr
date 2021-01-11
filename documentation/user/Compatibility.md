@@ -1,7 +1,7 @@
 # GraalVM R Runtime Compatibility
 
 The GraalVM R runtime is based on GNU R and reuses the base packages.
-It is currently based on GNU R 3.6.1, and moves to new major versions of R as they become available and stable.
+It is currently based on GNU R 4.0.3, and moves to new major versions of R as they become available and stable.
 GraalVM's R runtime developers maintain an extensive set of unit tests for all aspects of the R language and the builtin functionality, and these tests are available as part of the [R source code](https://github.com/oracle/fastr).
 
 GraalVM's R runtime aims to be fully compatible with GNU R, including its native interface as used by [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html).

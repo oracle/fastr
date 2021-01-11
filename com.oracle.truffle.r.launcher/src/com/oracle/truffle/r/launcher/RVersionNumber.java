@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,20 +31,20 @@ package com.oracle.truffle.r.launcher;
  * for consistency, we set the date to that of the corresponding GnuR release.
  */
 public class RVersionNumber {
-    public static final String MAJOR = "3";
-    public static final String MINOR = "6";
-    public static final String PATCH = "1";
+    public static final String MAJOR = "4";
+    public static final String MINOR = "0";
+    public static final String PATCH = "3";
 
-    public static final int R_VERSION = (3 << 16) + (6 << 8) + 1;
+    public static final int R_VERSION = (4 << 16) + (0 << 8) + 3;
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String MINOR_PATCH = MINOR + "." + PATCH;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
     public static final String R_HYPHEN_FULL = "R-" + FULL;
 
-    public static final String RELEASE_YEAR = "2019";
-    public static final String RELEASE_MONTH = "07";
-    public static final String RELEASE_DAY = "05";
+    public static final String RELEASE_YEAR = "2020";
+    public static final String RELEASE_MONTH = "10";
+    public static final String RELEASE_DAY = "10";
 
     public static final String RELEASE_DATE = " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 
