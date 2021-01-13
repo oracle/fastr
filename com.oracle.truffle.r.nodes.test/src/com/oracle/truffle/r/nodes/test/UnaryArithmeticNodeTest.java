@@ -137,8 +137,10 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
     @Theory
     public void testCompleteness(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
         execInContext(() -> {
-            // Cache has to be enabled for this test, because when it is not enabled, all the vectors are
-            // marked as incomplete. More specifically, we use VectorDataLibrary, and in it's uncached
+            // Cache has to be enabled for this test, because when it is not enabled, all the
+            // vectors are
+            // marked as incomplete. More specifically, we use VectorDataLibrary, and in it's
+            // uncached
             // version all the NAChecks are disabled.
             Assume.assumeTrue(isCacheEnabled());
 

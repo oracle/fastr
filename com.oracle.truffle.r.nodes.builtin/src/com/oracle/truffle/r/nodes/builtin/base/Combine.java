@@ -378,16 +378,16 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     private int processContentElement(RAbstractVector result, int pos, Object element, int elementIndex) {
         if (isAbstractVectorProfile.profile(element instanceof RAbstractVector)) {
             RAbstractVector v = (RAbstractVector) element;
-            VectorDataLibrary resultDataLib = getResultDataLibrary();
+            VectorDataLibrary resultDataLibrary = getResultDataLibrary();
             VectorDataLibrary vDataLib = getElemDataLib(elementIndex);
             Object resultData = result.getData();
             Object vData = v.getData();
-            try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+            try (RandomAccessWriteIterator resultIt = resultDataLibrary.randomAccessWriteIterator(resultData)) {
                 RandomAccessIterator vIt = vDataLib.randomAccessIterator(vData);
                 for (int i = 0; i < v.getLength(); i++) {
-                    resultDataLib.transfer(resultData, resultIt, pos + i, vDataLib, vIt, vData, i);
+                    resultDataLibrary.transfer(resultData, resultIt, pos + i, vDataLib, vIt, vData, i);
                 }
-                resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, vDataLib.getNACheck(vData).neverSeenNA());
+                resultDataLibrary.commitRandomAccessWriteIterator(resultData, resultIt, vDataLib.getNACheck(vData).neverSeenNA());
             }
             return vDataLib.getLength(vData);
         } else if (element instanceof RNull) {

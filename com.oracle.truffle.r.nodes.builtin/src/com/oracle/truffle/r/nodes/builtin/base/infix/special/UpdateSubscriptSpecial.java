@@ -75,8 +75,7 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         return vector;
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"},
-                    limit = "getTypedVectorDataLibraryCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected RStringVector setString(RStringVector vector, int index, String value,
                     @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib) {
         try (RandomAccessWriteIterator iter = vectorDataLib.randomAccessWriteIterator(vector.getData())) {
