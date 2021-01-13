@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2014   The R Core Team.
+ *  Copyright (C) 1997-2019   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@
 
 #define formatRaw           Rf_formatRaw
 #define formatString        Rf_formatString
+#define formatRawS          Rf_formatRawS
+#define formatStringS       Rf_formatStringS
 #define EncodeElement       Rf_EncodeElement
 #define EncodeElement0      Rf_EncodeElement0
 #define EncodeEnvironment   Rf_EncodeEnvironment
@@ -37,29 +39,19 @@
 #define printNamedVector    Rf_printNamedVector
 #define printVector         Rf_printVector
 
-typedef struct {
-    int width;
-    int na_width;
-    int na_width_noquote;
-    int digits;
-    int scipen;
-    int gap;
-    int quote;
-    int right;
-    int max;
-    SEXP na_string;
-    SEXP na_string_noquote;
-    int useSource;
-    int cutoff; // for deparsed language objects
-} R_print_par_t;
+/* For backward compatibility */
+#define R_print_par_t R_PrintData
+
 extern R_print_par_t R_print;
 
 /* Computation of printing formats */
 void formatRaw(const Rbyte *, R_xlen_t, int *);
-void formatString(const SEXP*, R_xlen_t, int*, int);
+void formatString(const SEXP *, R_xlen_t, int *, int);
+void formatRawS(SEXP, R_xlen_t, int *);
+void formatStringS(SEXP, R_xlen_t, int*, int);
 
 /* Formating of values */
-const char *EncodeElement0(SEXP, int, int, const char *);
+const char *EncodeElement0(SEXP, R_xlen_t, int, const char *);
 const char *EncodeEnvironment(SEXP);
 /* Legacy, for R.app */
 const char *EncodeElement(SEXP, int, int, char);
@@ -75,9 +67,6 @@ void printVector(SEXP, int, int);
 // void PrintLanguage(SEXP, Rboolean);
 
 /* Utilities for S compatibility and debuggging */
-int F77_SYMBOL(dblepr0)(const char *, int *, double *, int *);
-int F77_SYMBOL(intpr0) (const char *, int *, int *, int *);
-int F77_SYMBOL(realpr0)(const char *, int *, float *, int *);
 void R_PV(SEXP s);
 
 /* Offset for rowlabels if there are named dimnames */

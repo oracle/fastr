@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997--2015  R Core Team
+ *  Copyright (C) 1997--2018  R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,7 +52,20 @@ typedef enum {
 # endif
 #ifdef HAVE_CAIRO_PS
 #  include <cairo-ps.h>
-# endif
+#endif
+
+#ifdef R_CAIRO_UTF8_FILENAMES
+#  undef R_CAIRO_UTF8_FILENAMES
+#endif
+
+#if defined(Win32) && (CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1,15,10))
+ /* on Windows with cairo >= 1.15.10, we need filename in
+    both UTF-8 and native encoding */
+#  define R_CAIRO_UTF8_FILENAMES
+#  define R_CAIRO_FN(x) ((x)->filenameUTF8)
+#else
+#  define R_CAIRO_FN(x) ((x)->filename)
+#endif
 
 typedef struct {
     /* Graphics Parameters */
@@ -76,6 +89,8 @@ typedef struct {
     int fontsize;			/* Size in points */
     double pointsize;			/* Size in points */
     char basefontfamily[500];           /* Initial font family */
+    char symbolfamily[500];             /* Symbol font family */
+    Rboolean usePUA;
 
     int windowWidth;			/* Window width (pixels) */
     int windowHeight;			/* Window height (pixels) */
@@ -83,6 +98,9 @@ typedef struct {
     int npages;				/* counter for a pixmap */
     FILE *fp;				/* file for a bitmap device */
     char filename[PATH_MAX];		/* filename for a bitmap device */
+#ifdef R_CAIRO_UTF8_FILENAMES 
+    char filenameUTF8[PATH_MAX];
+#endif
     int quality;			/* JPEG quality/TIFF compression */
 
     int res_dpi;			/* used for png/jpeg */

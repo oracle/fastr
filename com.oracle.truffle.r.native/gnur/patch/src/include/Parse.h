@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998-2005 R Core Team
+ *  Copyright (C) 1998-2018 R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +22,14 @@
 #ifndef R_PARSE_H
 #define R_PARSE_H
 
-#include <R_ext/Parse.h>
-#include <IOStuff.h>
+#define R_USE_SIGNALS 1
+#include <IOStuff.h>	/*-> Defn.h */
 
 /* Public interface */
-/* SEXP R_ParseVector(SEXP, int, ParseStatus *, SEXP); in R_ext/Parse.h */
+
+#include <R_ext/Parse.h>
+// which includes SEXP R_ParseVector(SEXP, int, ParseStatus *, SEXP);
+
 
 /* Private interface */
 
@@ -35,27 +38,30 @@ typedef struct SrcRefState SrcRefState;
 struct SrcRefState {
 
     Rboolean keepSrcRefs;	/* Whether to attach srcrefs to objects as they are parsed */
+    Rboolean keepParseData;	/* Whether to attach also parse data to srcrefs */
     Rboolean didAttach;		/* Record of whether a srcref was attached */
-    SEXP SrcFile;		/* The srcfile object currently being parsed */
-    SEXP Original;		/* The underlying srcfile object */
-    PROTECT_INDEX SrcFileProt;	/* The SrcFile may change */
-    PROTECT_INDEX OriginalProt; /* ditto */
-    SEXP data;			/* Detailed info on parse */
-    SEXP text;
-    SEXP ids;
+    SEXP data;			/* Parse data as in sexps, also here for performance */
+    SEXP sexps;
+	/* SrcRefs */
+	/* SrcFile		The srcfile object currently being parsed */
+	/* Original		The underlying srcfile object */
+	/* data	(INTSXP)	Detailed info on parse */
+	/* text (STRSXP)*/
+	/* ids  (INTSXP)*/
+	/* svs  (VECSEXP)	Precious multi-set of semantic values */
     int data_count;
     				/* Position information about the current parse */
     int xxlineno;		/* Line number according to #line directives */
     int xxcolno;		/* Character number on line */
     int xxbyteno;		/* Byte number on line */
     int xxparseno;              /* Line number ignoring #line directives */
-    
+
     SrcRefState* prevState;
 };
 
 void InitParser(void);
 
-void R_InitSrcRefState(void);
+void R_InitSrcRefState(RCNTXT *cntxt);
 void R_FinalizeSrcRefState(void);
 
 SEXP R_Parse1Buffer(IoBuffer*, int, ParseStatus *); /* in ReplIteration,
@@ -70,8 +76,9 @@ typedef struct Rconn  *Rconnection;
 #endif
 SEXP R_ParseConn(Rconnection con, int n, ParseStatus *status, SEXP srcfile);
 
+
 	/* Report a parse error */
-	
+
 void NORET parseError(SEXP call, int linenum);
 
 #endif /* not R_PARSE_H */

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997--2017  The R Core Team
+ *  Copyright (C) 1997--2020  The R Core Team
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -42,12 +42,14 @@ SEXP do_X11(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abbrev(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abs(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addCondHands(SEXP, SEXP, SEXP, SEXP);
+SEXP do_addGlobHands(SEXP, SEXP, SEXP, SEXP);
 SEXP do_address(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addRestart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addTryHandlers(SEXP, SEXP, SEXP, SEXP);
 SEXP do_adist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_agrep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_allnames(SEXP, SEXP, SEXP, SEXP);
+SEXP do_altrep_class(SEXP, SEXP, SEXP, SEXP);
 SEXP do_anyNA(SEXP, SEXP, SEXP, SEXP);
 SEXP do_aperm(SEXP, SEXP, SEXP, SEXP);
 SEXP do_aregexec(SEXP, SEXP, SEXP, SEXP);
@@ -89,6 +91,7 @@ SEXP do_builtins(SEXP, SEXP, SEXP, SEXP);
 SEXP do_c(SEXP, SEXP, SEXP, SEXP);
 SEXP do_c_dflt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_call(SEXP, SEXP, SEXP, SEXP);
+SEXP do_str2lang(SEXP, SEXP, SEXP, SEXP);
 SEXP do_capabilities(SEXP, SEXP, SEXP, SEXP);
 SEXP do_capabilitiesX11(SEXP, SEXP, SEXP, SEXP);
 SEXP do_cat(SEXP, SEXP, SEXP, SEXP);
@@ -263,6 +266,8 @@ SEXP do_matprod(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Math2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_matrix(SEXP, SEXP, SEXP, SEXP);
 SEXP do_maxcol(SEXP, SEXP, SEXP, SEXP);
+SEXP do_maxVSize(SEXP, SEXP, SEXP, SEXP);
+SEXP do_maxNSize(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memlimits(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memoryprofile(SEXP, SEXP, SEXP, SEXP);
 SEXP do_merge(SEXP, SEXP, SEXP, SEXP);
@@ -355,6 +360,7 @@ SEXP do_search(SEXP, SEXP, SEXP, SEXP);
 SEXP do_seq(SEXP, SEXP, SEXP, SEXP);
 SEXP do_seq_along(SEXP, SEXP, SEXP, SEXP);
 SEXP do_seq_len(SEXP, SEXP, SEXP, SEXP);
+SEXP do_sequence(SEXP, SEXP, SEXP, SEXP);
 SEXP do_serialize(SEXP, SEXP, SEXP, SEXP);
 SEXP do_serializeToConn(SEXP, SEXP, SEXP, SEXP);
 SEXP do_serializeInfoFromConn(SEXP, SEXP, SEXP, SEXP);
@@ -424,6 +430,7 @@ SEXP do_traceback(SEXP, SEXP, SEXP, SEXP);
 SEXP do_transpose(SEXP, SEXP, SEXP, SEXP);
 SEXP do_trunc(SEXP, SEXP, SEXP, SEXP);
 SEXP do_tryCatchHelper(SEXP, SEXP, SEXP, SEXP);
+SEXP do_tryWrap(SEXP, SEXP, SEXP, SEXP);
 SEXP do_typeof(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unclass(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unlink(SEXP, SEXP, SEXP, SEXP);
@@ -496,6 +503,8 @@ SEXP do_getconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getallconnections(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sumconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sockconn(SEXP, SEXP, SEXP, SEXP);
+SEXP do_serversocket(SEXP, SEXP, SEXP, SEXP);
+SEXP do_socktimeout(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sockselect(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gzcon(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memCompress(SEXP, SEXP, SEXP, SEXP);
@@ -507,6 +516,7 @@ SEXP do_lockBnd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bndIsLocked(SEXP, SEXP, SEXP, SEXP);
 SEXP do_mkActiveBnd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bndIsActive(SEXP, SEXP, SEXP, SEXP);
+SEXP do_activeBndFun(SEXP, SEXP, SEXP, SEXP);
 SEXP do_mkUnbound(SEXP, SEXP, SEXP, SEXP);
 SEXP do_isNSEnv(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_regNS(SEXP call, SEXP op, SEXP args, SEXP rho);

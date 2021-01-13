@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998--2014  The R Core Team
+ *  Copyright (C) 1998--2018  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -601,7 +601,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 		    newcol = R_RGB(r, g, b);
 		    GPolygon(nv, xx, yy, USER, newcol, border, dd);
 		}
-	    } else 
+	    } else
 		GPolygon(nv, xx, yy, USER, newcol, border, dd);
 	}
     }
@@ -663,7 +663,7 @@ static int LimitCheck(double *lim, double *c, double *s)
    their outside toward the eye are drawn.  This lets us carry
    out hidden line removal by drawing any faces which will be
    obscured before the surface, and those which will not be
-   obscured after the surface. 
+   obscured after the surface.
 
    Unfortunately as PR#202 showed, this is simplistic as the surface
    can go outside the box.
@@ -702,14 +702,14 @@ static short int Edge[6][4] = {
 };
 
 
-static void PerspBox(int front, double *x, double *y, double *z, 
+static void PerspBox(int front, double *x, double *y, double *z,
 		     char *EdgeDone, pGEDevDesc dd)
 {
     Vector3d u0, v0, u1, v1, u2, v2, u3, v3;
     double d[3], e[3];
     int f, i, p0, p1, p2, p3, nearby;
     int ltysave = gpptr(dd)->lty;
-    
+
     gpptr(dd)->lty = front ? LTY_DOTTED : LTY_SOLID;
 
     for (f = 0; f < 6; f++) {
@@ -1406,22 +1406,12 @@ int findGapDown(double *xxx, double *yyy, int ns, double labelDistance,
 	return n;
 }
 
-/* labelList, label1, and label2 are all SEXPs rather than being allocated
-   using R_alloc because they need to persist across calls to contour().
-   In do_contour() there is a vmaxget() ... vmaxset() around each call to
-   contour() to release all of the memory used in the drawing of the
-   contour _lines_ at each contour level.  We need to keep track of the
-   contour _labels_ for _all_ contour levels, hence we have to use a
-   different memory allocation mechanism.
-*/
-
 static
 double distFromEdge(double *xxx, double *yyy, int iii, pGEDevDesc dd) {
     return fmin2(fmin2(xxx[iii]-gpptr(dd)->usr[0], gpptr(dd)->usr[1]-xxx[iii]),
 		 fmin2(yyy[iii]-gpptr(dd)->usr[2], gpptr(dd)->usr[3]-yyy[iii]));
 }
 
-static SEXP labelList;
 static SEGP *ctr_SegDB;
 
 static
@@ -1433,11 +1423,12 @@ Rboolean useStart(double *xxx, double *yyy, int ns, pGEDevDesc dd) {
 }
 
 
-static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
+static SEXP contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 		    double zc,
 		    SEXP labels, int cnum,
 		    Rboolean drawLabels, int method,
-		    double atom, pGEDevDesc dd)
+		    double atom, pGEDevDesc dd,
+		    SEXP labelList)
 {
 /* draw a contour for one given contour level 'zc' */
 
@@ -1467,15 +1458,21 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
     Rboolean gotLabel = FALSE;
     Rboolean ddl;/* Don't draw label -- currently unused, i.e. always FALSE*/
 
+    PROTECT(labelList);
 #ifdef DEBUG_contour
     Rprintf("contour(lev = %g):\n", zc);
 #endif
 
     vmax = vmaxget();
-    /* This R-allocs ctr_SegDB */
+    /* This R-allocs ctr_SegDB :
+     * contourLines() in ../../grDevices/src/stubs.c
+     *    --> do_contourLines() --> GEcontourLines() in ../../../main/plot3d.c */
     ctr_SegDB = contourLines(REAL(x), nx, REAL(y), ny, REAL(z), zc, atom);
 
     /* The segment database is now assembled. */
+
+/// NB: The following code is very much the same as in addContourLines() in ...main/plot3d.c
+
     /* Begin following contours. */
     /* 1. Grab a segment */
     /* 2. Follow its tail */
@@ -1526,7 +1523,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 		s = s->next;
 	    }
 	    if(ns == max_contour_segments)
-		warning(_("contour(): circular/long seglist -- set %s > %d?"), 
+		warning(_("contour(): circular/long seglist -- set %s > %d?"),
 		        "options(\"max.contour.segments\")", max_contour_segments);
 
 	    /* contour midpoint : use for labelling sometime (not yet!)
@@ -1575,7 +1572,7 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 		    REAL(lab)[0] = zc;
 		    lab = labelformat(lab);
 		    strcpy(&buffer[1], CHAR(STRING_ELT(lab, 0))); /* ASCII */
-		    UNPROTECT(1);
+		    UNPROTECT(1); /* lab */
 		}
 		buffer[strlen(buffer)+1] = '\0';
 		buffer[strlen(buffer)] = ' ';
@@ -1753,8 +1750,9 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 			    FindCorners(labelDistance, labelHeight, label2,
 					xxx[indx], yyy[indx],
 					xxx[indx+range], yyy[indx+range], dd);
-			    UNPROTECT_PTR(labelList);
-			    labelList = PROTECT(CONS(label2, labelList));
+			    labelList = CONS(label2, labelList);
+			    UNPROTECT(1); /* labelList */
+			    PROTECT(labelList);
 
 			    ddl = FALSE;
 			    /* draw an extra bit of segment if the label
@@ -1835,10 +1833,11 @@ static void contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
 	    vmaxset(vmax);
 	} /* while */
       } /* for(i .. )  for(j ..) */
+    /* FIXME?  Instead of returning labelList which is not really used,
+     * -----   return  lengths() info on ctr_SegDB[] ?  */
     vmaxset(vmax); /* now we are done with ctr_SegDB */
-    UNPROTECT_PTR(label1); /* pwwwargh! This is messy, but last thing
-			      protected is likely labelList, and that needs
-			      to be preserved across calls */
+    UNPROTECT(2);  /* label1, labelList */
+    return labelList;
 }
 
 
@@ -1864,7 +1863,8 @@ SEXP C_contour(SEXP args)
     Rboolean drawLabels;
     double labcex;
     pGEDevDesc dd = GEcurrentDevice();
-    SEXP result = R_NilValue;
+    SEXP result = R_NilValue; // FIXME? return info about contourlines drawn
+    SEXP labelList;
 
     GCheckState(dd);
 
@@ -1932,7 +1932,7 @@ SEXP C_contour(SEXP args)
 	error(_("dimension mismatch"));
 
     if (nc < 1)
-	error(_("no contour values"));
+	error(_("no 'levels'"));
 
     for (i = 0; i < nx; i++) {
 	if (!R_FINITE(REAL(x)[i]))
@@ -1950,7 +1950,8 @@ SEXP C_contour(SEXP args)
 
     for (i = 0; i < nc; i++)
 	if (!R_FINITE(REAL(c)[i]))
-	    error(_("invalid NA contour values"));
+	    error(_("non-finite level values: levels[%d] = %g"),
+		  i+1, REAL(c)[i]);
 
     zmin = DBL_MAX;
     zmax = DBL_MIN;
@@ -2012,8 +2013,10 @@ SEXP C_contour(SEXP args)
 	if (!R_FINITE(gpptr(dd)->lwd))
 	    gpptr(dd)->lwd = lwdsave;
 	gpptr(dd)->cex = labcex;
-	contour(x, nx, y, ny, z, REAL(c)[i], labels, i,
-		drawLabels, method - 1, atom, dd);
+	labelList = contour(x, nx, y, ny, z, REAL(c)[i], labels, i,
+			    drawLabels, method - 1, atom, dd, labelList);
+	UNPROTECT(1); /* labelList */
+	PROTECT(labelList);
 	vmaxset(vmax);
     }
     GMode(0, dd);
@@ -2026,6 +2029,6 @@ SEXP C_contour(SEXP args)
 	strncpy(gpptr(dd)->family, familysave, 201);
 	gpptr(dd)->font = fontsave;
     }
-    UNPROTECT(9); /* x y z c vfont col lty lwd labellist */
+    UNPROTECT(9); /* x y z c vfont col lty lwd labelList */
     return result;
 }

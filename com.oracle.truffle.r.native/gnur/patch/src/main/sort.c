@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1998-2020   The R Core Team
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2014   The R Core Team
  *  Copyright (C) 2004        The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,8 @@
 #include <Internal.h>
 #include <Rmath.h>
 #include <R_ext/RS.h>  /* for Calloc/Free */
+#include <float.h> /* for DBL_MAX */
+#include <R_ext/Itermacros.h> /* for ITERATE_BY_REGION */
 
 			/*--- Part I: Comparison Utilities ---*/
 
@@ -80,10 +82,15 @@ static int scmp(SEXP x, SEXP y, Rboolean nalast)
     return Scollate(x, y);
 }
 
+#define R_INT_MIN 1 + INT_MIN //INT_MIN is NA_INTEGER
 Rboolean isUnsorted(SEXP x, Rboolean strictly)
 {
     R_xlen_t n, i;
-
+    int itmp = INT_MIN; /* this is NA_INTEGER, < all valid nonNA R integer
+			   values */
+    double dtmp = R_NegInf; /*  R_NegInf is min possible double	"value",
+			        ***this is <= all nonNA R numeric values but
+				NOT < all nonNA	values*** */
     if (!isVectorAtomic(x))
 	error(_("only atomic vectors can be tested to be sorted"));
     n = XLENGTH(x);
@@ -95,28 +102,71 @@ Rboolean isUnsorted(SEXP x, Rboolean strictly)
 
 	    /* The only difference between strictly and not is '>' vs '>='
 	       but we want the if() outside the loop */
+
+	    /* x can be an ALTREP here provided that its sortedness is unknown, 
+	       so we use ITERATE_BY_REGION to get the multiple INTEGER calls
+	       outside of the tight loop and be ALTREP safe. */
 	case LGLSXP:
 	case INTSXP:
 	    if(strictly) {
-		for(i = 0; i+1 < n ; i++)
-		    if(INTEGER(x)[i] >= INTEGER(x)[i+1])
-			return TRUE;
+		ITERATE_BY_REGION(x, xptr, i, nbatch, int, INTEGER, {
+			/* itmp initialized to INT_MIN which is < all
+			   valid nonNA R int values so no need to
+			   exclude first iteration
 
+			   After first iteration itmp is value at end
+			   of last batch */
+			if(itmp >= xptr[0]) 
+			    return TRUE;
+			for(R_xlen_t k = 0; k < nbatch - 1; k++) {
+			    if(xptr[k] >= xptr[k+1])
+				return TRUE;
+			}
+			itmp = xptr[nbatch - 1];
+		    });
 	    } else {
-		for(i = 0; i+1 < n ; i++)
-		    if(INTEGER(x)[i] > INTEGER(x)[i+1])
-			return TRUE;
+		ITERATE_BY_REGION(x, xptr, i, nbatch, int, INTEGER, {
+			if(itmp > xptr[0]) //deal with batch barriers
+			    return TRUE;
+			for(R_xlen_t k = 0; k < nbatch - 1; k++) {
+			    if(xptr[k] > xptr[k+1])
+				return TRUE;
+			}
+			itmp = xptr[nbatch - 1];
+		    });
 	    }
 	    break;
 	case REALSXP:
 	    if(strictly) {
-		for(i = 0; i+1 < n ; i++)
-		    if(REAL(x)[i] >= REAL(x)[i+1])
-			return TRUE;
+		ITERATE_BY_REGION(x, xptr, i, nbatch, double, REAL, {
+			/* first element could be R_NegInf which is
+			   initialization value of dtmp so don't do
+			   the barrier check at i == 0 since its >=
+			   here
+
+			   After first iteration dtmp is value at end
+			   of last batch */
+			if(i > 0 && dtmp >= xptr[0]) //deal with batch barriers
+			    return TRUE;
+			for(R_xlen_t k = 0; k < nbatch - 1; k++) {
+			    if(xptr[k] >= xptr[k+1])
+				return TRUE;
+			}
+			dtmp = xptr[nbatch - 1];
+		    });
 	    } else {
-		for(i = 0; i+1 < n ; i++)
-		    if(REAL(x)[i] > REAL(x)[i+1])
-			return TRUE;
+		/* nonstrict, first element can never be < dtmp (== R_NegInf),
+		   so no need to exclude first iteration in barrier check */
+		ITERATE_BY_REGION(x, xptr, i, nbatch, double, REAL, {
+			if(dtmp > xptr[0]) /* deal with batch barriers, dtmp
+					      is end of last batch */
+			    return TRUE;
+			for(R_xlen_t k = 0; k < nbatch - 1; k++) {
+			    if(xptr[k] > xptr[k+1])
+				return TRUE;
+			}
+			dtmp = xptr[nbatch - 1];
+		    });
 	    }
 	    break;
 	case CPLXSXP:
@@ -166,6 +216,7 @@ SEXP attribute_hidden do_isunsorted(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 
     SEXP ans, x = CAR(args);
+    /* DispatchOrEval internal generic: is.unsorted */
     if(DispatchOrEval(call, op, "is.unsorted", args, rho, &ans, 0, 1))
 	return ans;
     PROTECT(args = ans); // args evaluated now
@@ -224,52 +275,44 @@ SEXP attribute_hidden do_isunsorted(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 /* SHELLsort -- corrected from R. Sedgewick `Algorithms in C'
  *		(version of BDR's lqs():*/
-#define sort_body					\
+#define sort_body(TYPE_CMP, TYPE_PROT, TYPE_UNPROT)	\
     Rboolean nalast=TRUE;				\
     int i, j, h;					\
 							\
     for (h = 1; h <= n / 9; h = 3 * h + 1);		\
     for (; h > 0; h /= 3)				\
 	for (i = h; i < n; i++) {			\
-	    v = x[i];					\
+	    v = TYPE_PROT(x[i]);			\
 	    j = i;					\
 	    while (j >= h && TYPE_CMP(x[j - h], v, nalast) > 0)	\
 		 { x[j] = x[j - h]; j -= h; }		\
 	    x[j] = v;					\
+	    TYPE_UNPROT;				\
 	}
 
 void R_isort(int *x, int n)
 {
     int v;
-#define TYPE_CMP icmp
-    sort_body
-#undef TYPE_CMP
+    sort_body(icmp,,)
 }
 
 void R_rsort(double *x, int n)
 {
     double v;
-#define TYPE_CMP rcmp
-    sort_body
-#undef TYPE_CMP
+    sort_body(rcmp,,)
 }
 
 void R_csort(Rcomplex *x, int n)
 {
     Rcomplex v;
-#define TYPE_CMP ccmp
-    sort_body
-#undef TYPE_CMP
+    sort_body(ccmp,,)
 }
-
 
 /* used in platform.c */
 void attribute_hidden ssort(SEXP *x, int n)
 {
     SEXP v;
-#define TYPE_CMP scmp
-    sort_body
-#undef TYPE_CMP
+    sort_body(scmp,PROTECT,UNPROTECT(1))
 }
 
 void rsort_with_index(double *x, int *indx, int n)
@@ -372,7 +415,7 @@ Rboolean fastpass_sortcheck(SEXP x, int wanted) {
 	return FALSE;
 
     int sorted = UNKNOWN_SORTEDNESS;
-    Rboolean noNA, done = FALSE;
+    Rboolean noNA = FALSE, done = FALSE;
 
     switch(TYPEOF(x)) {
     case INTSXP:
@@ -387,6 +430,7 @@ Rboolean fastpass_sortcheck(SEXP x, int wanted) {
 	/* keep sorted == UNKNOWN_SORTEDNESS */
 	break;
     }
+
     /* we know wanted is not NA_INTEGER or 0 at this point because
        of the immediate return at the beginning for that case */
     if(!KNOWN_SORTED(sorted)) {
@@ -394,9 +438,31 @@ Rboolean fastpass_sortcheck(SEXP x, int wanted) {
     } else if(sorted == wanted) {   
 	done = TRUE;
 	/* if there are no NAs, na.last can be ignored */
-    } else if(noNA && sorted * wanted > 0) { /* same sign, thus same direction of sort */
+    } else if(noNA && sorted * wanted > 0) {
+	/* same sign, thus same direction of sort */
 	done = TRUE;
     }
+
+    /* Increasing, usually fairly short, sequences of integers often
+       arise as levels in as.factor.  A quick check here allows a fast
+       return in sort.int. */
+    if (! done && TYPEOF(x) == INTSXP && wanted > 0 && ! ALTREP(x)) {
+	R_xlen_t len = XLENGTH(x);
+	if (len > 0) {
+	    int *px = INTEGER(x);
+	    int last = px[0];
+	    if (last != NA_INTEGER) {
+		for (R_xlen_t i = 1; i < len; i++) {
+		    int next = px[i];
+		    if (next < last || next == NA_INTEGER)
+			return FALSE;
+		    else last = next;
+		}
+		return TRUE;
+	    }
+	}
+    }
+
     return done;
 }
 
@@ -527,6 +593,7 @@ static void ssort2(SEXP *x, R_xlen_t n, Rboolean decreasing)
 	for (i = h; i < n; i++) {
 	    v = x[i];
 	    j = i;
+	    PROTECT(v);
 	    if(decreasing)
 		while (j >= h && scmp(x[j - h], v, TRUE) < 0)
 		{ x[j] = x[j - h]; j -= h; }
@@ -534,6 +601,7 @@ static void ssort2(SEXP *x, R_xlen_t n, Rboolean decreasing)
 		while (j >= h && scmp(x[j - h], v, TRUE) > 0)
 		{ x[j] = x[j - h]; j -= h; }
 	    x[j] = v;
+	    UNPROTECT(1); /* v */
 	}
 }
 
@@ -1405,8 +1473,9 @@ SEXP attribute_hidden do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     x = CAR(args);
-    if(TYPEOF(x) == RAWSXP)
+    if(TYPEOF(x) == RAWSXP && !isObject(x))
 	error(_("raw vectors cannot be sorted"));
+    // n := sn := length(x) :
 #ifdef LONG_VECTOR_SUPPORT
     SEXP sn = CADR(args);
     R_xlen_t n;
@@ -1500,6 +1569,7 @@ SEXP attribute_hidden do_xtfrm(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
     check1arg(args, call, "x");
 
+    /* DispatchOrEval internal generic: xtfrm */
     if(DispatchOrEval(call, op, "xtfrm", args, rho, &ans, 0, 1)) return ans;
     /* otherwise dispatch the default method */
     PROTECT(fn = findFun(install("xtfrm.default"), rho));

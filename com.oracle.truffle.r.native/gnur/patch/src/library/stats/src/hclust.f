@@ -27,9 +27,11 @@ C                                                            C
 c- R Bug PR#4195 fixed "along" qclust.c, given in the report C
 C- Testing: --> "hclust" in ../../../../tests/reg-tests-1b.R C
 C  "ward.D2" (iOpt = 8): Martin Maechler, Mar 2014           C
+C                                                            C
+C  FLAG not passed as arg to avoid possible                  C
+C     C/Fortran inconsistency, May 2019                      C
 C------------------------------------------------------------C
-      SUBROUTINE HCLUST(N,LEN,IOPT,IA,IB,CRIT,MEMBR,NN,DISNN,
-     X                  FLAG,DISS)
+      SUBROUTINE HCLUST(N,LEN,IOPT,IA,IB,CRIT,MEMBR,NN,DISNN, DISS)
 c Args
       INTEGER N, LEN, IOPT
       INTEGER IA(N),IB(N), NN(N)
@@ -217,7 +219,15 @@ C
 C  Map row I and column J of upper half diagonal symmetric matrix
 C  onto vector.
       INTEGER N,I,J
-      IOFFST=J+(I-1)*N-(I*(I+1))/2
+C  Use 64-bit integers for temporaries to avoid integer overflow
+C  This could use SELECTED_INT_KIND(R=18), instead
+      INTEGER(KIND=8) N8,I8,J8
+      N8=N
+      I8=I
+      J8=J
+C  Result is known to fit in 31 bits, so INT() is safe
+C  and supresses compiler warning.
+      IOFFST=INT(J8+(I8-1)*N8-(I8*(I8+1))/2)
       RETURN
       END
 

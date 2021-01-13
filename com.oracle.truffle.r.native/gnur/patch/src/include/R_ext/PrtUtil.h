@@ -30,6 +30,9 @@
 #include <Rinternals.h> // for R_xlen_t
 #include <R_ext/Complex.h>
 
+// for backcompatibility but not to stay (MM) :
+#define formatComplex_USING_signif
+
 #define formatLogical      Rf_formatLogical
 #define formatInteger      Rf_formatInteger
 #define formatReal         Rf_formatReal
@@ -53,6 +56,10 @@ void formatLogical(const int *, R_xlen_t, int *);
 void formatInteger(const int *, R_xlen_t, int *);
 void formatReal(const double *, R_xlen_t, int *, int *, int *, int);
 void formatComplex(const Rcomplex *, R_xlen_t, int *, int *, int *, int *, int *, int *, int);
+void formatLogicalS(SEXP, R_xlen_t, int *);
+void formatIntegerS(SEXP, R_xlen_t, int *);
+void formatRealS(SEXP, R_xlen_t, int *, int *, int *, int);
+void formatComplexS(SEXP, R_xlen_t, int *, int *, int *, int *, int *, int *, int);
 
 /* Formating of values */
 const char *EncodeLogical(int, int);
@@ -72,6 +79,9 @@ void VectorIndex(R_xlen_t, int);
 void printIntegerVector(const int *, R_xlen_t, int);
 void printRealVector   (const double *, R_xlen_t, int);
 void printComplexVector(const Rcomplex *, R_xlen_t, int);
+void printIntegerVectorS(SEXP, R_xlen_t, int);
+void printRealVectorS   (SEXP, R_xlen_t, int);
+void printComplexVectorS(SEXP, R_xlen_t, int);
 
 #ifdef  __cplusplus
 }

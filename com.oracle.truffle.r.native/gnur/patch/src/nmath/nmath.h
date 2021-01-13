@@ -1,6 +1,6 @@
 /*
  *  Mathlib : A C Library of Special Functions
- *  Copyright (C) 1998-2016  The R Core Team
+ *  Copyright (C) 1998-2020  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,8 +53,8 @@ double	Rf_gamma_cody(double);
 #include <R_ext/Print.h>
 
 /* moved from dpq.h */
-#ifdef HAVE_NEARYINT
-# define R_forceint(x)   nearbyint()
+#ifdef HAVE_NEARBYINT
+# define R_forceint(x)   nearbyint(x)
 #else
 # define R_forceint(x)   round(x)
 #endif
@@ -142,13 +142,14 @@ int R_finite(double);
 #define ME_UNDERFLOW	16
 /*	and underflow occured (important for IEEE)*/
 
-#define ML_ERR_return_NAN { ML_ERROR(ME_DOMAIN, ""); return ML_NAN; }
 
-/* For a long time prior to R 2.3.0 ML_ERROR did nothing.
+#define ML_WARN_return_NAN { ML_WARNING(ME_DOMAIN, ""); return ML_NAN; }
+
+/* For a long time prior to R 2.3.0 ML_WARNING did nothing.
    We don't report ME_DOMAIN errors as the callers collect ML_NANs into
    a single warning.
  */
-#define ML_ERROR(x, s) { \
+#define ML_WARNING(x, s) { \
    if(x > ME_DOMAIN) { \
        char *msg = ""; \
        switch(x) { \

@@ -1,8 +1,8 @@
 c-----------------------------------------------------------------------
 c
 c  R : A Computer Language for Statistical Data Analysis
+c  Copyright (C) 2003--2019  The R Foundation
 c  Copyright (C) 1996, 1997  Robert Gentleman and Ross Ihaka
-c  Copyright (C) 2003-5      The R Foundation
 c
 c  This program is free software; you can redistribute it and/or modify
 c  it under the terms of the GNU General Public License as published by
@@ -35,102 +35,82 @@ c       n       integer
 c               the number of rows of the matrix x.
 c
 c       k       integer
-c               the number of columns in the matrix k.
+c               the number of columns in the matrix x.
 c
-c       docoef  integer (logical) indicating if  coef(*,*) should be computed
-c               Computation of coef(.) is O(n^2 * k) which may be too much.
-c
+c       q       integer
+c               the number of columns of the (multivariate) y[]
+c      
 c       qraux   double precision(k)
 c               auxiliary information about the qr decomposition.
 c
-c       resid   double precision(k)
-c               the residuals from the regression.
+c       resid   double precision(n, q)
+c               the residuals from the (possibly multivariate) regression.
 c
 c   on return
 c
 c       hat     double precision(n)
 c               the diagonal of the hat matrix.
 c
-c       coef    double precision(n,p)
-c               a matrix which has as i-th row the estimated
-c               regression coefficients when the i-th case is omitted
-c               from the regression.
-c
-c       sigma   double precision(n)
-c               the i-th element of sigma contains an estimate
-c               of the residual standard deviation for the model with
+c       sigma   double precision(n, q)
+c               the (i,j)-th element of sigma contains an estimate
+c               of the residual standard deviation for the y[,j]-model with
 c               the i-th case omitted.
 c
-c   This version dated Aug 24, 1996.
+c   Initial version dated Aug 24, 1996.
 c   Ross Ihaka, University of Auckland.
-c   `docoef' option added Feb 17, 2003;  Martin Maechler ETH Zurich.
+c   'docoef' option added Feb 17, 2003;  Martin Maechler ETH Zurich.
 c   Handle hat == 1 case, Nov 2005.
 c   Argument 'tol' was real not double precision, Aug 2007
-
-      subroutine lminfl(x, ldx, n, k, docoef, qraux, resid,
-     +     hat, coef, sigma, tol)
-      integer ldx, n, k, docoef
-      double precision x(ldx,k), qraux(k), resid(n),
-     +     hat(n), coef(n,k), sigma(n), tol
-c   coef(.,.) can be dummy(1) when docoef is 0(false)
+c   'q' for multivariate (mlm) models added Sep, 2018;  Martin Maechler.
+c    docoef replaced by R code and removed Nov 2019.
+      
+      subroutine lminfl(x, ldx, n, k, q, qraux, resid,
+     +     hat, sigma, tol)
+      integer ldx, n, k, q
+      double precision x(ldx,k), qraux(k), resid(n,q),
+     +     hat(n), sigma(n,q), tol
 
       integer i, j, info
-      double precision sum, denom, dummy
+      double precision sum, denom, dummy(1)
 c
-c     hat matrix diagonal
+c     hat matrix diagonal h_ii = hat(i)    [sigma(i,1) as auxiliary] :
 c
-      do 10 i = 1,n
+      do i = 1,n
         hat(i) = 0.0d0
-   10 continue
+      end do
 
-      do 40 j = 1,k
-        do 20 i = 1,n
-          sigma(i) = 0.0d0
-   20   continue
-        sigma(j) = 1.0d0
+      do j = 1,k
+        do i = 1,n
+          sigma(i,1) = 0.0d0
+        end do
+        sigma(j,1) = 1.0d0
         call dqrsl(x, ldx, n, k, qraux, sigma, sigma, dummy,
-     .       dummy, dummy, dummy, 10000, info)
-        do 30 i = 1, n
-          hat(i) = hat(i)+sigma(i)*sigma(i)
-   30   continue
-   40 continue
-      do 45 i = 1, n
+     .             dummy, dummy, dummy, 10000, info)
+        do i = 1, n
+          hat(i) = hat(i) + sigma(i,1)*sigma(i,1)
+        end do
+      end do
+      do i = 1, n
         if(hat(i) .ge. 1.0d0 - tol) hat(i) = 1.0d0
-   45 continue
+      end do
 c
-c     changes in the estimated coefficients
-c
-      if(docoef .ne. 0) then
-         do 70 i = 1,n
-            do 50 j = 1,n
-               sigma(j) = 0.0d0
-   50       continue
-c           if hat is effectively 1, change is zero
-            if(hat(i) .lt. 1.0d0) then
-               sigma(i) = resid(i)/(1.0d0 - hat(i))
-               call dqrsl(x, ldx, n, k, qraux, sigma, dummy, sigma,
-     .                    dummy, dummy, dummy, 1000, info)
-               call dtrsl(x, ldx, k, sigma, 1, info)
-            endif
-            do 60 j = 1,k
-               coef(i,j) = sigma(j)
-   60       continue
-   70    continue
-      endif
-c
-c     estimated residual standard deviation
+c     estimated residual standard deviation  sigma(j,c)
 c
       denom = (n - k - 1)
-      sum = 0.0d0
-      do 80 i = 1,n
-        sum = sum + resid(i)*resid(i)
-   80 continue
-      do 90 i = 1,n
-        if(hat(i) .lt. 1.0d0) then
-           sigma(i) = sqrt((sum-resid(i)*resid(i)/(1.0d0-hat(i)))/denom)
-        else
-           sigma(i) = sqrt(sum/denom)
-        endif
-   90 continue
+      do j = 1,q
+         sum = 0.0d0
+         do i = 1,n
+            sum = sum + resid(i,j)*resid(i,j)
+         end do
+         do i = 1,n
+            if(hat(i) .lt. 1.0d0) then
+               sigma(i,j) = sqrt((sum -
+     +              resid(i,j)*resid(i,j)/(1.0d0-hat(i))) / denom)
+            else
+               sigma(i,j) = sqrt(sum/denom)
+            endif
+         end do
+      end do
+
       return
       end

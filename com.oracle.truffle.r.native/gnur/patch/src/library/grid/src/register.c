@@ -74,6 +74,8 @@ static const R_CallMethodDef callMethods[] = {
     LCALLDEF(pretty, 1),
     LCALLDEF(locator, 0),
     LCALLDEF(convert, 4),
+    LCALLDEF(devLoc, 2),
+    LCALLDEF(devDim, 2),
     LCALLDEF(layoutRegion, 2),
     LCALLDEF(getGPar, 0),
     LCALLDEF(setGPar, 1),
@@ -85,6 +87,15 @@ static const R_CallMethodDef callMethods[] = {
     LCALLDEF(xsplinePoints, 8),
     LCALLDEF(stringMetric, 1),
     {"validUnits", (DL_FUNC) &validUnits, 1},
+    {"constructUnits", (DL_FUNC) &constructUnits, 3},
+    {"asUnit", (DL_FUNC) &asUnit, 1},
+    {"conformingUnits", (DL_FUNC) &conformingUnits, 1},
+    {"matchUnit", (DL_FUNC) &matchUnit, 2},
+    {"addUnits", (DL_FUNC) &addUnits, 2},
+    {"multUnits", (DL_FUNC) &multUnits, 2},
+    {"flipUnits", (DL_FUNC) &flipUnits, 1},
+    {"absoluteUnits", (DL_FUNC) &absoluteUnits, 1},
+    {"summaryUnits", (DL_FUNC) &summaryUnits, 2},
     { NULL, NULL, 0 }
 };
 

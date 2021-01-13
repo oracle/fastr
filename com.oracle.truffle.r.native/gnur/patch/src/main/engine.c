@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-2017  The R Core Team.
+ *  Copyright (C) 2001-2020  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1797,7 +1797,7 @@ void GEText(double x, double y, const char * const str, cetype_t enc,
 					wchar_t wc;
 					mbstate_t mb_st;
 					mbs_init(&mb_st);
-					while ((used = mbrtowc(&wc, ss, n, &mb_st)) > 0) {
+					while ((int)(used = mbrtowc(&wc, ss, n, &mb_st)) > 0) {
 #ifdef DEBUG_MI
 					    printf(" centring %s aka %d in MBCS\n", ss, wc);
 #endif
@@ -1815,9 +1815,9 @@ void GEText(double x, double y, const char * const str, cetype_t enc,
 					}
 					done = TRUE;
 				    } else if (enc2 == CE_UTF8) {
-					size_t used;
+					int used;
 					wchar_t wc;
-					while ((used = utf8toucs(&wc, ss)) > 0) {
+					while ((used = (int) utf8toucs(&wc, ss)) > 0) {
 					    if (IS_HIGH_SURROGATE(wc))
 					    	GEMetricInfo(-(int)utf8toucs32(wc, ss), gc, &h, &d, &w, dd);
 					    else
@@ -2357,11 +2357,10 @@ void GEPretty(double *lo, double *up, int *ndiv)
     // The following is ugly since it kind of happens already in R_pretty(..):
 #define rounding_eps 1e-10 /* <- compatible to seq*(); was 1e-7 till 2017-08-14 */
     if(nu >= ns + 1) {
-	if(               ns * unit < *lo - rounding_eps*unit)
-	    ns++;
-	if(nu > ns + 1 && nu * unit > *up + rounding_eps*unit)
-	    nu--;
-	*ndiv = (int)(nu - ns);
+	int mod = 0;
+	if(               ns * unit < *lo - rounding_eps*unit) { ns++; mod++; }
+	if(nu > ns + 1 && nu * unit > *up + rounding_eps*unit) { nu--; mod++; }
+	if(mod) *ndiv = (int)(nu - ns);
     }
     *lo = ns * unit;
     *up = nu * unit;
@@ -2628,16 +2627,16 @@ void GEStrMetric(const char *str, cetype_t enc, const pGEcontext gc,
                     wchar_t wc;
                     mbstate_t mb_st;
                     mbs_init(&mb_st);
-                    while ((used = mbrtowc(&wc, s, n, &mb_st)) > 0) {
+                    while ((int)(used = mbrtowc(&wc, s, n, &mb_st)) > 0) {
                         GEMetricInfo((int) wc, gc, &asc, &dsc, &wid, dd);
                         if (asc > *ascent)
                             *ascent = asc;
                         s += used; n -=used;
                     }
                 } else if (enc2 == CE_UTF8) {
-                    size_t used;
+                    int used;
                     wchar_t wc;
-                    while ((used = utf8toucs(&wc, s)) > 0) {
+                    while ((used = (int)utf8toucs(&wc, s)) > 0) {
                     	if (IS_HIGH_SURROGATE(wc))
                     	    GEMetricInfo(-utf8toucs32(wc, s), gc, &asc, &dsc, &wid, dd);
                     	else
@@ -2689,16 +2688,16 @@ void GEStrMetric(const char *str, cetype_t enc, const pGEcontext gc,
                     wchar_t wc;
                     mbstate_t mb_st;
                     mbs_init(&mb_st);
-                    while ((used = mbrtowc(&wc, s, n, &mb_st)) > 0) {
+                    while ((int)(used = mbrtowc(&wc, s, n, &mb_st)) > 0) {
                         GEMetricInfo((int) wc, gc, &asc, &dsc, &wid, dd);
                         if (dsc > *descent)
                             *descent = dsc;
                         s += used; n -=used;
                     }
                 } else if (enc2 == CE_UTF8) {
-                    size_t used;
+                    int used;
                     wchar_t wc;
-                    while ((used = utf8toucs(&wc, s)) > 0) {
+                    while ((used = (int)utf8toucs(&wc, s)) > 0) {
                         if (IS_HIGH_SURROGATE(wc))
                             GEMetricInfo(-utf8toucs32(wc, s), gc, &asc, &dsc, &wid, dd);
                         else

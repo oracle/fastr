@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2017   The R Core Team.
+ *  Copyright (C) 2000-2020   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ typedef enum {HTTPsh, FTPsh, HTTPSsh, FTPSsh} UrlScheme;
 typedef struct urlconn {
     void *ctxt;
     UrlScheme type;
+    char *headers;
 } *Rurlconn;
 
 /* used in internet module */
@@ -46,7 +47,13 @@ typedef struct sockconn {
     int timeout;
     char *host;
     char inbuf[4096], *pstart, *pend;
+    int serverfd;
 } *Rsockconn;
+
+typedef struct servsockconn {
+    int fd;
+    int port;
+} *Rservsockconn;
 
 /* used in X11 module */
 typedef struct clpconn {
@@ -67,9 +74,13 @@ Rconnection getConnection_no_err(int n);
 Rboolean switch_stdout(int icon, int closeOnExit);
 void init_con(Rconnection new, const char *description, int enc,
 	      const char * const mode);
-Rconnection R_newurl(const char *description, const char * const mode, int type);
-Rconnection R_newsock(const char *host, int port, int server, const char * const mode, int timeout);
-Rconnection in_R_newsock(const char *host, int port, int server, const char *const mode, int timeout);
+Rconnection R_newurl(const char *description, const char * const mode,
+		     SEXP headers, int type);
+Rconnection R_newsock(const char *host, int port, int server, int serverfd, const char * const mode, int timeout);
+Rconnection in_R_newsock(const char *host, int port, int server, int serverfd, const char *const mode, int timeout);
+Rconnection R_newservsock(int port);
+Rconnection in_R_newservsock(int port);
+
 Rconnection R_newunz(const char *description, const char * const mode);
 int dummy_fgetc(Rconnection con);
 int dummy_vfprintf(Rconnection con, const char *format, va_list ap);

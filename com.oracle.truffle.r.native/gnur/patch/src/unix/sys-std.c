@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2017  The R Core Team
+ *  Copyright (C) 1997--2020  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@
 #include "Startup.h"
 #include <R_ext/Riconv.h>
 #include <R_ext/Print.h> // for REprintf
+#include <R_ext/RS.h> // for Calloc
 
 #define __SYSTEM__
 /* includes <sys/select.h> and <sys/time.h> */
@@ -91,10 +92,12 @@ void attribute_hidden Rstd_Suicide(const char *s)
 /*
   The following provides a version of select() that catches interrupts
   and handles them using the supplied interrupt handler or the default
-  one if NULL is supplied.  The interrupt handler must exit using a
-  longjmp.  If the supplied timout value os zero, select is called
-  without setting up an error handler since it should return
-  immediately.
+  one if NULL is supplied.  The interrupt handler can return,
+  e.g. after invoking a resume restart. If the interrupt handler
+  returns then the select call is retried. If the timeout is not NULL
+  then the timeout is adjusted for the elapsed time before the retry.
+  If the supplied timeout value is zero, select is called without
+  setting up an error handler since it should return immediately.
  */
 
 static SIGJMP_BUF seljmpbuf;
@@ -113,19 +116,44 @@ int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
 	       fd_set *exceptfds, struct timeval *timeout,
 	       void (*intr)(void))
 {
+    /* FD_SETSIZE should be at least 1024 on all supported
+       platforms. If this still turns out to be limiting we will
+       probably need to rewrite internals to use poll() instead of
+       select().  LT */
+    if (n > FD_SETSIZE)
+	error("file descriptor is too large for select()");
+
     if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)
-	/* Is it right for select calls with a timeout to be
-	   non-interruptable? LT */
 	return select(n, readfds, writefds, exceptfds, timeout);
     else {
 	volatile sel_intr_handler_t myintr = intr != NULL ?
-	    intr : onintrNoResume;
+	    intr : onintr;
 	volatile int old_interrupts_suspended = R_interrupts_suspended;
+	volatile double base_time = currentTime();
+	struct timeval tm;
+	if (timeout != NULL)
+	    tm = *timeout;
+    retry:
 	if (SIGSETJMP(seljmpbuf, 1)) {
 	    myintr();
-	    R_interrupts_suspended = old_interrupts_suspended;
-	    error(_("interrupt handler must not return"));
-	    return 0; /* not reached */
+
+	    if (timeout != NULL) {
+		/* Ajdust timeout for elapsed complete seconds; ignore
+		   microseconde for now. This modifies the data pointed to
+		   by timeval, which is what select() on Linux does as
+		   well. */
+		double new_time = currentTime();
+		double elapsed = new_time - base_time;
+		base_time = new_time;
+		time_t elapsed_sec = (time_t) elapsed;
+		if (tm.tv_sec > elapsed_sec)
+		    tm.tv_sec -= elapsed_sec;
+		else
+		    tm.tv_sec = 0;
+		*timeout = tm;
+	    }
+
+	    goto retry;
 	}
 	else {
 	    int val;
@@ -198,7 +226,8 @@ addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
 		int activity)
 {
     InputHandler *input, *tmp;
-    input = (InputHandler*) calloc(1, sizeof(InputHandler));
+//    input = (InputHandler*) calloc(1, sizeof(InputHandler));
+    input = Calloc(1, InputHandler);
 
     input->activity = activity;
     input->fileDescriptor = fd;
@@ -239,7 +268,7 @@ removeInputHandler(InputHandler **handlers, InputHandler *it)
 
     if(*handlers == it) {
 	*handlers = (*handlers)->next;
-	free(it);
+	Free(it); // use Free to match allocation with Calloc
 	return(1);
     }
 
@@ -248,7 +277,7 @@ removeInputHandler(InputHandler **handlers, InputHandler *it)
     while(tmp) {
 	if(tmp->next == it) {
 	    tmp->next = it->next;
-	    free(it);
+	    Free(it); // use Free to match allocation with Calloc
 	    return(1);
 	}
 	tmp = tmp->next;
@@ -463,13 +492,14 @@ typedef void rl_vcpfunc_t (char *);
 #  define NEED_INT_HANDLER
 # endif
 
+#if defined(HAVE_LIBREADLINE) && defined(HAVE_TILDE_EXPAND_WORD)
 attribute_hidden
 char *R_ExpandFileName_readline(const char *s, char *buff)
 {
 #if defined(__APPLE__)
-    char *s2 = tilde_expand((char *)s);
+    char *s2 = tilde_expand_word((char *)s);
 #else
-    char *s2 = tilde_expand(s);
+    char *s2 = tilde_expand_word(s);
 #endif
 
     strncpy(buff, s2, PATH_MAX);
@@ -477,7 +507,7 @@ char *R_ExpandFileName_readline(const char *s, char *buff)
     free(s2);
     return buff;
 }
-
+#endif
 
 # ifdef HAVE_READLINE_HISTORY_H
 #  include <readline/history.h>
@@ -922,7 +952,7 @@ Rstd_ReadConsole(const char *prompt, unsigned char *buf, int len,
     if(!R_Interactive) {
 	size_t ll;
 	int err = 0;
-	if (!R_Slave) {
+	if (!R_NoEcho) {
 	    fputs(prompt, stdout);
 	    fflush(stdout); /* make sure prompt is output */
 	}
@@ -951,9 +981,13 @@ Rstd_ReadConsole(const char *prompt, unsigned char *buf, int len,
 	    *ob = '\0';
 	    err = res == (size_t)(-1);
 	    /* errors lead to part of the input line being ignored */
-	    if(err) printf(_("<ERROR: re-encoding failure from encoding '%s'>\n"),
-			   R_StdinEnc);
-	    strncpy((char *)buf, obuf, len);
+	    if(err) {
+		printf(_("<ERROR: re-encoding failure from encoding '%s'>\n"),
+		       R_StdinEnc);
+		strncpy((char *)buf, obuf, len);
+		strcat((char *)buf, "...\n");
+	    } else
+		strncpy((char *)buf, obuf, len);
 	}
 /* according to system.txt, should be terminated in \n, so check this
    at eof and error */
@@ -961,7 +995,7 @@ Rstd_ReadConsole(const char *prompt, unsigned char *buf, int len,
 	    && (ll == 0 || buf[ll - 1] != '\n') && ll < (size_t)len) {
 	    buf[ll++] = '\n'; buf[ll] = '\0';
 	}
-	if (!R_Slave) {
+	if (!R_NoEcho) {
 	    fputs((char *)buf, stdout);
 	    fflush(stdout);
 	}
@@ -1324,7 +1358,7 @@ void attribute_hidden Rstd_loadhistory(SEXP call, SEXP op, SEXP args, SEXP env)
     sfile = CAR(args);
     if (!isString(sfile) || LENGTH(sfile) < 1)
 	errorcall(call, _("invalid '%s' argument"), "file");
-    p = R_ExpandFileName(translateChar(STRING_ELT(sfile, 0)));
+    p = R_ExpandFileName(translateCharFP(STRING_ELT(sfile, 0)));
     if(strlen(p) > PATH_MAX - 1)
 	errorcall(call, _("'file' argument is too long"));
     strcpy(file, p);
@@ -1347,7 +1381,7 @@ void attribute_hidden Rstd_savehistory(SEXP call, SEXP op, SEXP args, SEXP env)
     sfile = CAR(args);
     if (!isString(sfile) || LENGTH(sfile) < 1)
 	errorcall(call, _("invalid '%s' argument"), "file");
-    p = R_ExpandFileName(translateChar(STRING_ELT(sfile, 0)));
+    p = R_ExpandFileName(translateCharFP(STRING_ELT(sfile, 0)));
     if(strlen(p) > PATH_MAX - 1)
 	errorcall(call, _("'file' argument is too long"));
     strcpy(file, p);
