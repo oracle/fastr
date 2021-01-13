@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1998-2020   The R Core Team
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2018   The R Core Team
  *  Copyright (C) 2004        The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -216,6 +216,7 @@ SEXP attribute_hidden do_isunsorted(SEXP call, SEXP op, SEXP args, SEXP rho)
     checkArity(op, args);
 
     SEXP ans, x = CAR(args);
+    /* DispatchOrEval internal generic: is.unsorted */
     if(DispatchOrEval(call, op, "is.unsorted", args, rho, &ans, 0, 1))
 	return ans;
     PROTECT(args = ans); // args evaluated now
@@ -1472,8 +1473,9 @@ SEXP attribute_hidden do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
     x = CAR(args);
-    if(TYPEOF(x) == RAWSXP)
+    if(TYPEOF(x) == RAWSXP && !isObject(x))
 	error(_("raw vectors cannot be sorted"));
+    // n := sn := length(x) :
 #ifdef LONG_VECTOR_SUPPORT
     SEXP sn = CADR(args);
     R_xlen_t n;
@@ -1562,7 +1564,19 @@ SEXP attribute_hidden do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_xtfrm(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    printf("FATAL ERROR\n");
-    printf("UNIMPLEMENTED: do_xtfrm\n");
-    exit(1);
+    SEXP fn, prargs, ans;
+
+    checkArity(op, args);
+    check1arg(args, call, "x");
+
+    /* DispatchOrEval internal generic: xtfrm */
+    if(DispatchOrEval(call, op, "xtfrm", args, rho, &ans, 0, 1)) return ans;
+    /* otherwise dispatch the default method */
+    PROTECT(fn = findFun(install("xtfrm.default"), rho));
+    PROTECT(prargs = promiseArgs(args, R_GlobalEnv));
+    SET_PRVALUE(CAR(prargs), CAR(args));
+    ans = applyClosure(call, fn, prargs, rho, R_NilValue);
+    UNPROTECT(2);
+    return ans;
+
 }

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 2001-3 Paul Murrell
- *                2003-2013 The R Core Team
+ *                2003-2019 The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -170,7 +170,7 @@ SEXP doSetViewport(SEXP vp,
 	 * NOTE that we are deliberately using defineVar to
 	 * assign the vp SEXP itself, NOT a copy.
 	 */
-	defineVar(installChar(STRING_ELT(VECTOR_ELT(vp, VP_NAME), 0)),
+	defineVar(installTrChar(STRING_ELT(VECTOR_ELT(vp, VP_NAME), 0)),
 		  vp, 
 		  VECTOR_ELT(parent, PVP_CHILDREN));
     }
@@ -412,7 +412,7 @@ static SEXP findInChildren(SEXP name, SEXP strict, SEXP children, int depth)
     PROTECT(result);
     while (count < n && !found) {
 	result = findViewport(name, strict,
-			      PROTECT(findVar(installChar(STRING_ELT(childnames, count)),
+			      PROTECT(findVar(installTrChar(STRING_ELT(childnames, count)),
 				      children)),
 			      depth);
 	found = INTEGER(VECTOR_ELT(result, 0))[0] > 0;
@@ -466,7 +466,7 @@ static SEXP findViewport(SEXP name, SEXP strict, SEXP vp, int depth)
 		       /*
 			* Does this do inherits=FALSE?
 			*/
-		       findVar(installChar(STRING_ELT(name, 0)),
+		       findVar(installTrChar(STRING_ELT(name, 0)),
 			       viewportChildren(vp)));
     } else {
 	/*
@@ -568,7 +568,7 @@ static SEXP findvppathInChildren(SEXP path, SEXP name,
     PROTECT(result);
     while (count < n && !found) {
 	SEXP vp, newpathsofar;
-	PROTECT(vp = findVar(installChar(STRING_ELT(childnames, count)),
+	PROTECT(vp = findVar(installTrChar(STRING_ELT(childnames, count)),
 			     children));
 	PROTECT(newpathsofar = growPath(pathsofar,
 					VECTOR_ELT(vp, VP_NAME)));
@@ -619,7 +619,7 @@ static SEXP findvppath(SEXP path, SEXP name, SEXP strict,
 		       /*
 			* Does this do inherits=FALSE?
 			*/
-		       findVar(installChar(STRING_ELT(name, 0)),
+		       findVar(installTrChar(STRING_ELT(name, 0)),
 			       viewportChildren(vp)));
     } else {
 	result = findvppathInChildren(path, name, strict, pathsofar,
@@ -802,9 +802,11 @@ SEXP L_upviewport(SEXP n)
     if (deviceChanged(devWidthCM, devHeightCM, newvp))
 	calcViewportTransform(newvp, viewportParent(newvp), 1, dd);
     /* 
-     * Enforce the current viewport settings
+     * Enforce the stored parent gpar settings
+     * (not necessarily the parent viewport settings if this viewport
+     *  is a childrenvp of a gTree, where the gTree has gpar settings)
      */
-    setGridStateElement(dd, GSS_GPAR, viewportgpar(newvp));
+    setGridStateElement(dd, GSS_GPAR, VECTOR_ELT(gvp, PVP_PARENTGPAR));
     /* Set the clipping region to the parent's cur.clip
      */
     parentClip = viewportClipRect(newvp);
@@ -1137,8 +1139,7 @@ SEXP L_convert(SEXP x, SEXP whatfrom,
          * In these cases do NOT transform thru INCHES 
          * (to avoid divide-by-zero, but still do something useful)
          */
-        relConvert = (!isUnitArithmetic(x) && !isUnitList(x) &&
-                      (unitUnit(x, i) == L_NATIVE || unitUnit(x, i) == L_NPC) &&
+        relConvert = ((unitUnit(x, i) == L_NATIVE || unitUnit(x, i) == L_NPC) &&
                       (TOunit == L_NATIVE || TOunit == L_NPC) &&
                       ((FROMaxis == TOaxis) ||
                        (FROMaxis == 0 && TOaxis == 2) ||

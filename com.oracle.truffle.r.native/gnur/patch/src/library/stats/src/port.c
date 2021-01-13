@@ -299,11 +299,15 @@ void F77_NAME(i7pnvr)(int *n, int x[], const int y[])
     for (i = 0; i < nn; i++) x[y[i] - 1] = i + 1;
 }
 
+#if 0
 /* stopx.... returns .true. if the break key has been pressed. */
+/* should match Fortran LOGICAL, in gfortran int_least32_t but
+   compiler-specific: replace by Fortran dummy  */
 int F77_NAME(stopx)(void)
 {
     return 0;			/* interrupts are caught elsewhere */
 }
+#endif
 
 static
 double* check_gv(SEXP gr, SEXP hs, SEXP rho, int n, double *gv, double *hv)
@@ -358,12 +362,14 @@ nlminb_iterate(double b[], double d[], double fx, double g[], double h[],
     }
 }
 
+// setup working vectors 'iv' and 'v' - called from R's nlminb() :
 SEXP port_ivset(SEXP kind, SEXP iv, SEXP v)
 {
     Rf_divset(asInteger(kind), INTEGER(iv), LENGTH(iv), LENGTH(v), REAL(v));
     return R_NilValue;
 }
 
+// Main routines - called from R's nlminb()
 SEXP port_nlminb(SEXP fn, SEXP gr, SEXP hs, SEXP rho,
 		 SEXP lowerb, SEXP upperb, SEXP d, SEXP iv, SEXP v)
 {

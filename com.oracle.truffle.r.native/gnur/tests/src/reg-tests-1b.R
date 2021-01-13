@@ -3,12 +3,12 @@
 pdf("reg-tests-1b.pdf", encoding = "ISOLatin1.enc")
 
 ## force standard handling for data frames
-options(stringsAsFactors = TRUE)
+options(stringsAsFactors=FALSE) # R >= 4.0.0
 ## .Machine
 (Meps <- .Machine$double.eps)# and use it in this file
 
 assertWarning <- tools::assertWarning
-assertError <- tools::assertError
+assertError   <- tools::assertError
 
 ## str() for list-alikes :
 "[[.foo" <- function(x,i) x
@@ -16,12 +16,11 @@ x <- structure(list(2), class="foo")
 str(x)
 ## gave infinite recursion < 2.6.0
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
+
 curve(sin, -2*pi, 3*pi); pu1 <- par("usr")[1:2]
 curve(cos, add = NA) # add = NA new in 2.14.0
 stopifnot(all.equal(par("usr")[1:2], pu1))
 ## failed in R <= 2.6.0
-} # [FastR] END Test snippet disabled due to graphics package use
 
 
 ## tests of side-effects with CHARSXP caching
@@ -189,7 +188,8 @@ tapply(character(0), factor(letters)[FALSE], length)
 
 
 ## zero-length patterns in gregexpr
-expect <- structure(1:3, match.length=rep(0L, 3), useBytes = TRUE)
+expect <- structure(1:3, match.length=rep(0L, 3),
+                    index.type = "chars", useBytes = TRUE)
 stopifnot(identical(expect, gregexpr("", "abc")[[1]]))
 stopifnot(identical(expect, gregexpr("", "abc", fixed=TRUE)[[1]]))
 stopifnot(identical(expect, gregexpr("", "abc", perl=TRUE)[[1]]))
@@ -256,13 +256,11 @@ p2 <- predict(fit.log, log(nd))
 stopifnot(all.equal(p1, p2))
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since segments() uses graphics package
 ## wishlist PR#11192
 plot(1:10)
 segments(1, 1, 10, 10, col='green')
 segments(numeric(0), numeric(0), numeric(0), numeric(0), col='green')
 ## last was error in R < 2.8.0
-} # [FastR] END Test snippet disabled since segments() uses graphics package
 
 
 ## merging with a zero-row data frame
@@ -299,11 +297,14 @@ dimnames(n)[[1]] <- c("a", "b")
 ## glob2rx(pattern, .) with "(", "[" or "{" in pattern :
 nm <- "my(ugly[file{name"
 stopifnot(identical(regexpr(glob2rx("*[*"), nm),
-		    structure(1L, match.length = 8L, useBytes = TRUE)),
+		    structure(1L, match.length = 8L,
+                              index.type = "chars", useBytes = TRUE)),
 	  identical(regexpr(glob2rx("*{n*"), nm),
-		    structure(1L, match.length = 14L, useBytes = TRUE)),
+		    structure(1L, match.length = 14L,
+                              index.type = "chars", useBytes = TRUE)),
 	  identical(regexpr(glob2rx("*y(*{*"), nm),
-		    structure(1L, match.length = 13L, useBytes = TRUE))
+		    structure(1L, match.length = 13L,
+                              index.type = "chars", useBytes = TRUE))
 	  )
 ## gave 'Invalid regular expression' in R <= 2.7.0
 
@@ -415,13 +416,11 @@ nls(y ~ ((g1)*exp((log(g2/g1))*(1-exp(-k*(x-Ta)))/(1-exp(-k*(Tb-Ta))))),
 ## failed for find weights in R <= 2.7.1
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled due to graphics package use
 ## barplot(log = "y") with NAs (PR#11585)
 dat <- matrix(1:25, 5)
 dat[2,3] <- NA
 barplot(dat, beside = TRUE, log = "y")
 ## failed in 2.7.1
-} # [FastR] END Test snippet disabled due to graphics package use
 
 
 ## related to PR#12551
@@ -486,7 +485,6 @@ close(zz)
 ## was " .haha" (not according to DCF standard)
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since text() uses graphics package
 ## pdf() with CIDfonts active -- they need MBCS to be supported
 pdf(file = "testCID.pdf", family="Japan1") # << for CIDfonts, pd->fonts is NULL
 try({
@@ -504,7 +502,6 @@ plot(1,1,pch="", axes=FALSE)
 try(text(1,1,"A",family="Japan1"))
 unlink("testCID.ps")
 ## error instead of seg.fault
-} # [FastR] END Test snippet disabled since text() uses graphics package
 
 
 ## splinefun with derivatives evaluated to the left of first knot
@@ -575,17 +572,14 @@ stopifnot(length(deparse(quote(foo(1,2,3)), width.cutoff = 20, nlines=7)) ==1)
 ## was 7.
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since legend() uses graphics package
 ## legend did not reset xpd correctly (PR#12756)
 par(xpd = FALSE)
 plot(1)
 legend("top", legend="Tops", xpd=NA, inset=-0.1)
 stopifnot(identical(par("xpd"), FALSE))
 ## left xpd as NA
-} # [FastR] END Test snippet disabled since legend() uses graphics package
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since lines() uses graphics package
 ## lines.formula with 'subset' and no 'data' needed a tweak
 ## (R-help, John Field, 20008-11-14)
 x <- 1:5
@@ -593,7 +587,6 @@ y <- c(1,3,NA,2,5)
 plot(y ~ x, type="n")
 lines(y ~ x, subset = !is.na(y), col="red")
 ## error in 2.8.0
-} # [FastR] END Test snippet disabled since lines() uses graphics package
 
 
 ## prettyNum(*, drop0trailing) erronously dropped 0 in '1e10':
@@ -734,7 +727,7 @@ levs <- c("A","A")
 local({
     assertError(gl(2,3, labels = levs))
     assertError(factor(levs, levels=levs))
-    assertError(factor(1:2,  labels=levs))
+    ## now valid: factor(1:2,  labels=levs)
     })
 ## failed in R < 2.10.0
 L <- c("no", "yes")
@@ -1824,8 +1817,9 @@ d <- dist(matrix(round(rnorm(n*p), digits = 2), n,p), "manhattan")
 d[] <- d[] * sample(1 + (-4:4)/100, length(d), replace=TRUE)
 hc <- hclust(d, method = "median")
 stopifnot(all.equal(hc$height[5:11],
-                    c(1.69805, 1.75134375, 1.34036875, 1.47646406,
-                      3.21380039, 2.9653438476, 6.1418258), tolerance = 1e-9))
+		    c(1.70595, 1.657675, 1.8909, 1.619973438,
+                      1.548624609, 3.097474902, 6.097159351),
+                    tolerance = 1e-9))
 ## Also ensure that hclust() remains fast:
 set.seed(1); nn <- 2000
 tm0 <- system.time(dst <- as.dist(matrix(runif(n = nn^2, min = 0, max = 1)^1.1, nn, nn)))
@@ -2085,7 +2079,7 @@ stopifnot(!is.na(z$tension))
 p <- file.path(R.home("share"),"texmf") # always exists, readable
 lfri <- list.files(p, recursive=TRUE, include.dirs=TRUE)
 subdirs <- c("bibtex", "tex")
-lfnd <- setdiff(list.files(p, all.files=TRUE, no..=TRUE), ".svn")
+lfnd <- setdiff(list.files(p, all.files=TRUE, no..=TRUE), c(".svn", ".DS_Store"))
 stopifnot(!is.na(match(subdirs, lfri)), identical(subdirs, lfnd))
 ## the first failed for a few days, unnoticed, in the development version of R
 

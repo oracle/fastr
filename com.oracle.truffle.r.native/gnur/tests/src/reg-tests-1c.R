@@ -75,11 +75,9 @@ try ( k. <- kmeans(r., 3) ) # after rounding, have only two distinct points
       k. <- kmeans(r., 2)   # fine
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since stem() uses graphics package
 ## PR#15376
 stem(c(1, Inf))
 ## hung in 3.0.1
-} # [FastR] END Test snippet disabled since stem() uses graphics package
 
 
 ## PR#15377, very long variable names
@@ -205,13 +203,11 @@ agg <- aggregate.data.frame(x, by, mean)
 stopifnot(nrow(unique(by)) == nrow(agg))
 ## rounding caused groups to be falsely merged
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since contour() uses graphics package
 ## PR#15454
 set.seed(357)
 z <- matrix(c(runif(50, -1, 1), runif(50, -1e-190, 1e-190)), nrow = 10)
 contour(z)
 ## failed because rounding made crossing tests inconsistent
-} # [FastR] END Test snippet disabled since contour() uses graphics package
 
 ## Various cases where zero length vectors were not handled properly
 ## by functions in base and utils, including PR#15499
@@ -542,6 +538,38 @@ rd <- tools::parse_Rd(f)
 ## Gave syntax errors because the percent sign in Usage
 ## was taken as the start of a comment.
 
+## pass no arguments to 0-parameter macro
+cat("\\newcommand{\\mac0}{MAC0}\\mac0", file=f)
+rd <- tools::parse_Rd(f)
+stopifnot(identical(as.character(rd), "MAC0\n"))
+
+## pass empty argument to a 1-parameter macro (failed in 3.5.0 and earlier)
+cat("\\newcommand{\\mac1}{MAC1:#1}\\mac1{}", file=f)
+rd <- tools::parse_Rd(f)
+stopifnot(identical(as.character(rd), "MAC1:\n"))
+
+## pass empty argument to a 2-parameter macro (failed in 3.5.0 and earlier)
+cat("\\newcommand{\\mac2}{MAC2:#2}\\mac2{}{XX}", file=f)
+rd <- tools::parse_Rd(f)
+stopifnot(identical(as.character(rd), "MAC2:XX\n"))
+
+cat("\\newcommand{\\mac2}{MAC2:#2#1}\\mac2{YY}{}", file=f)
+rd <- tools::parse_Rd(f)
+stopifnot(identical(as.character(rd), "MAC2:YY\n"))
+
+## pass multi-line argument to a user macro (failed in 3.5.0 and earlier)
+cat("\\newcommand{\\mac1}{MAC1:#1}\\mac1{XXX\nYYY}", file=f)
+rd <- tools::parse_Rd(f)
+stopifnot(identical(as.character(rd), c("MAC1:XXX\n","YYY\n")))
+
+## comments are removed from macro arguments (not in 3.5.0 and earlier)
+cat("\\newcommand{\\mac1}{MAC1:#1}\\mac1{XXX%com\n}", file=f)
+rd <- tools::parse_Rd(f)
+stopifnot(identical(as.character(rd), c("MAC1:XXX\n","\n")))
+
+cat("\\newcommand{\\mac1}{MAC1:#1}\\mac1{XXX%com\nYYY}", file=f)
+rd <- tools::parse_Rd(f)
+stopifnot(identical(as.character(rd), c("MAC1:XXX\n","YYY\n")))
 
 ## power.t.test() failure for very large n (etc): PR#15792
 (ptt <- power.t.test(delta = 1e-4, sd = .35, power = .8))
@@ -611,18 +639,19 @@ stopifnot(identical(check2(one, , three), c(FALSE, TRUE, FALSE)))
 ### envRefClass check moved to methods package
 
 
-## takes too long with JIT enabled:
-.jit.lev <- compiler::enableJIT(0)
-Sys.getenv("_R_CHECK_LENGTH_1_CONDITION_") -> oldV
-Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = "false") # only *warn*
-## while did not protect its argument, which caused an error
-## under gctorture, PR#15990
-gctorture()
-suppressWarnings(while(c(FALSE, TRUE)) 1)
-gctorture(FALSE)
-## gave an error because the test got released when the warning was generated.
-compiler::enableJIT(.jit.lev)# revert
-Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = oldV)
+## commented out for 4.0.0, as not very important.
+## ## takes too long with JIT enabled:
+## .jit.lev <- compiler::enableJIT(0)
+## Sys.getenv("_R_CHECK_LENGTH_1_CONDITION_") -> oldV
+## Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = "false") # only *warn*
+## ## while did not protect its argument, which caused an error
+## ## under gctorture, PR#15990
+## gctorture()
+## suppressWarnings(while(c(FALSE, TRUE)) 1)
+## gctorture(FALSE)
+## ## gave an error because the test got released when the warning was generated.
+## compiler::enableJIT(.jit.lev)# revert
+## Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = oldV)
 
 
 ## hist(x, breaks =) with too large bins, PR#15988
@@ -736,13 +765,12 @@ stopifnot(diff(sort(y)) > 0)
 ## order() and hence sort() failed here badly for a while around 2015-04-16
 
 
-## NAs in data frame names:
-dn <- list(c("r1", NA), c("V", NA))
+## NAs in data frame names (but *not* in row.names; that's really wrong):
+dn <- list(c("r1", "r2"), c("V", NA))
 d11 <- as.data.frame(matrix(c(1, 1, 1, 1), ncol = 2, dimnames = dn))
 stopifnot(identical(names(d11), dn[[2]]),
           identical(row.names(d11), dn[[1]]))
 ## as.data.frame() failed in R-devel for a couple of hours ..
-## note that format(d11) does fail currently, and hence print(), too
 
 
 ## Ensure  R -e ..  works on Unix
@@ -785,7 +813,8 @@ tools::assertError(`&`(FALSE))
 tools::assertError(`|`(TRUE))
 ## Did not give errors in R <= 3.2.0
 E <- tryCatch(`!`(), error = function(e)e)
-stopifnot(grepl("0 arguments .*\\<1", conditionMessage(E)))
+stopifnot(grepl("0 argument.*\\<1", conditionMessage(E)))
+##            PR#17456 :   ^^ a version that also matches in a --disable-nls configuration
 ## Gave wrong error message in R <= 3.2.0
 stopifnot(identical(!matrix(TRUE), matrix(FALSE)),
 	  identical(!matrix(FALSE), matrix(TRUE)))
@@ -1008,7 +1037,7 @@ for(mat in mat.l) {
     n.set <- if(nrow(mat) < 999) -3:3 else 0:3
     stopifnot(
         vapply(n.set, function(n) identCO (head(mat, n), headI(mat, n)), NA),
-        vapply(n.set, function(n) identCO (tail (mat, n, addrownums=FALSE),
+        vapply(n.set, function(n) identCO (tail (mat, n, keepnums=FALSE),
                                            tailI(mat, n)), NA),
         vapply(n.set, function(n) all.equal(tail(mat, n), tailI(mat, n),
                                             check.attributes=FALSE), NA))
@@ -1040,7 +1069,7 @@ stopifnot(is.data.frame(d20), dim(d20) == c(2,2),
 stopifnot(identical(names(myD), names(format(head(myD)))),
 	  identical(names(myD), c("Variable.1", "", "stringsAsFactors")),
 	  identical(rbind.data.frame(2:1, 1:2), ## was wrong for some days
-		    data.frame(c.2L..1L. = c(2L, 1L), X1.2 = 1:2)))
+		    data.frame(X2.1 = 2:1, X1.2 = 1:2)))
 ## format.data.frame() did not show "stringsAsFactors" in R <= 3.2.2
 ## Follow up: the new as.data.frame.list() must be careful with 'AsIs' columns:
 desc <- structure( c("a", NA, "z"), .Names = c("A", NA, "Z"))
@@ -1061,8 +1090,8 @@ stopifnot(identical(format(dd),
 
 ## var(x) and hence sd(x)  with factor x, PR#16564
 tools::assertError(cov(1:6, f <- gl(2,3)))# was ok already
-tools::assertWarning(var(f))
-tools::assertWarning( sd(f))
+tools::assertError(var(f))# these two give an error now (R >= 3.6.0)
+tools::assertError( sd(f))
 ## var() "worked" in R <= 3.2.2  using the underlying integer codes
 proc.time() - .pt; .pt <- proc.time()
 
@@ -1248,7 +1277,8 @@ stopifnot( # depends on contrasts:
 ## a 'use.na=TRUE' example
 dd <- data.frame(x1 = rep(letters[1:2], each=3),
                  x2 = rep(LETTERS[1:3], 2),
-                 y = rnorm(6))
+                 y = rnorm(6),
+                 stringsAsFactors = TRUE)
 dd[6,2] <- "B" # => no (b,C) combination => that coef should be NA
 fm3 <- lm(y ~ x1*x2, dd)
 (d3F <- dummy.coef(fm3, use.na=FALSE))
@@ -1301,7 +1331,7 @@ identical(f1, rep(paste(f0, "CET"), 2))# often TRUE (but too platform dependent)
 d2$zone <- d1$zone[1] # length 1 instead of 2
 f2 <- format(d2, usetz=TRUE)## -> segfault
 f1.2 <- format(as.POSIXlt("2016-01-28 01:23:45"), format=c("%d", "%y"))# segfault
-stopifnot(identical(f2, rep(paste(f0,  tz0 ), 2)),
+stopifnot(identical(f2, format(as.POSIXct(d2), usetz=TRUE)),# not yet in R <= 3.5.x
 	  identical(f1.2, c("28", "16")))
 tims <- seq.POSIXt(as.POSIXct("2016-01-01"),
 		   as.POSIXct("2017-11-11"), by = as.difftime(pi, units="weeks"))
@@ -1535,19 +1565,22 @@ stopifnot(all.equal(Fn(t), t/5))
 
 
 ## tar() default (i.e. "no files") behaviour:
-dir.create(td <- tempfile("tar-experi"))
-setwd(td)
-dfil <- "base_Desc"
-file.copy(system.file("DESCRIPTION"), dfil)
-## tar w/o specified files
-tar("ex.tar")# all files, i.e. 'dfil'
-unlink(dfil)
-stopifnot(grepl(dfil, untar("ex.tar", list = TRUE)))
-untar("ex.tar")
-myF2 <- c(dfil, "ex.tar")
-stopifnot(identical(list.files(), myF2))
-unlink(myF2)
-## produced an empty tar file in R < 3.3.0, PR#16716
+doit <- function(...) {
+    dir.create(td <- tempfile("tar-experi"))
+    setwd(td)
+    dfil <- "base_Desc"
+    file.copy(system.file("DESCRIPTION"), dfil)
+    ## tar w/o specified files
+    tar("ex.tar", ... ) # all files, i.e. 'dfil'
+    unlink(dfil)
+    stopifnot(grepl(dfil, untar("ex.tar", list = TRUE)))
+    untar("ex.tar")
+    myF2 <- c(dfil, "ex.tar")
+    stopifnot(identical(list.files(), myF2))
+    unlink(myF2)
+}
+doit() # produced an empty tar file in R < 3.3.0, PR#16716
+if(nzchar(Sys.which("tar"))) doit(tar = "tar")
 
 
 ## format.POSIXlt() of Jan.1 if  1941 or '42 is involved:
@@ -1566,7 +1599,8 @@ stopifnot(identical(w8, 141:142),# exactly 1941:1942 had CEST on Jan.1
 ## tsp<- did not remove mts class
 z <- ts(cbind(1:5,1:5))
 tsp(z) <- NULL
-stopifnot(identical(class(z), "matrix"))
+stopifnot(identical(c(FALSE,  TRUE),
+                    c("mts","matrix") %in% class(z)))
 ## kept "mts" in 3.2.4, PR#16769
 
 

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999-2016  The R Core Team
+ *  Copyright (C) 1999-2020  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ typedef enum {
 typedef struct
 {
     Rboolean R_Quiet;
-    Rboolean R_Slave;
+    Rboolean R_NoEcho;
     Rboolean R_Interactive;
     Rboolean R_Verbose;
     Rboolean LoadSiteFile;
@@ -93,6 +93,12 @@ typedef struct
     blah6 Busy;
     UImode CharacterMode;
     blah7 WriteConsoleEx; /* used only if WriteConsole is NULL */
+    Rboolean EmitEmbeddedUTF8;
+	/* R may embed UTF-8 sections into strings otherwise in current native
+	   encoding, escaped by UTF8in and UTF8out (rgui_UTF8.h). The setting
+	   currently has no effect in Rgui (always enabled) and in Rterm (never
+	   enabled).
+	*/
 #endif
 } structRstart;
 

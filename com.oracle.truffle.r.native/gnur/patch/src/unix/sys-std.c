@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2018  The R Core Team
+ *  Copyright (C) 1997--2020  The R Core Team
  *  Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,7 @@
 #include "Fileio.h"
 #include <R_ext/Riconv.h>
 #include <R_ext/Print.h> // for REprintf
+#include <R_ext/RS.h> // for Calloc
 
 #define __SYSTEM__
 /* includes <sys/select.h> and <sys/time.h> */
@@ -60,10 +61,12 @@
 /*
   The following provides a version of select() that catches interrupts
   and handles them using the supplied interrupt handler or the default
-  one if NULL is supplied.  The interrupt handler must exit using a
-  longjmp.  If the supplied timout value os zero, select is called
-  without setting up an error handler since it should return
-  immediately.
+  one if NULL is supplied.  The interrupt handler can return,
+  e.g. after invoking a resume restart. If the interrupt handler
+  returns then the select call is retried. If the timeout is not NULL
+  then the timeout is adjusted for the elapsed time before the retry.
+  If the supplied timeout value is zero, select is called without
+  setting up an error handler since it should return immediately.
  */
 
 static SIGJMP_BUF seljmpbuf;
@@ -82,6 +85,13 @@ int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
 	       fd_set *exceptfds, struct timeval *timeout,
 	       void (*intr)(void))
 {
+    /* FD_SETSIZE should be at least 1024 on all supported
+       platforms. If this still turns out to be limiting we will
+       probably need to rewrite internals to use poll() instead of
+       select().  LT */
+    if (n > FD_SETSIZE)
+	error("file descriptor is too large for select()");
+
     if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)
         /* Is it right for select calls with a timeout to be
            non-interruptable? LT */
@@ -138,7 +148,8 @@ addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
 		int activity)
 {
     InputHandler *input, *tmp;
-    input = (InputHandler*) calloc(1, sizeof(InputHandler));
+//    input = (InputHandler*) calloc(1, sizeof(InputHandler));
+    input = Calloc(1, InputHandler);
 
     input->activity = activity;
     input->fileDescriptor = fd;
@@ -179,7 +190,7 @@ removeInputHandler(InputHandler **handlers, InputHandler *it)
 
     if(*handlers == it) {
 	*handlers = (*handlers)->next;
-	free(it);
+	Free(it); // use Free to match allocation with Calloc
 	return(1);
     }
 
@@ -188,7 +199,7 @@ removeInputHandler(InputHandler **handlers, InputHandler *it)
     while(tmp) {
 	if(tmp->next == it) {
 	    tmp->next = it->next;
-	    free(it);
+	    Free(it); // use Free to match allocation with Calloc
 	    return(1);
 	}
 	tmp = tmp->next;
@@ -475,11 +486,6 @@ int initEventLoop(char* fifoInPathParam, char* fifoOutPathParam) {
 	    return errno;
     }
 
-    res = mkfifo(fifoOutPath, 0666);
-    if (res != 0 && errno != EEXIST) {
-	    return errno;
-    }
-    
     pthread_t eventLoopThread;
 	if(pthread_create(&eventLoopThread, NULL, eventLoop, NULL)) {
 		fprintf(stderr, "Error creating dispatch thread\n");
@@ -487,3 +493,4 @@ int initEventLoop(char* fifoInPathParam, char* fifoOutPathParam) {
 
 	return 0;
 }
+

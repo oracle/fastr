@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2018  The R Core Team
+ *  Copyright (C) 1997--2020  The R Core Team
  *  Copyright (C) 2002--2009  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -151,8 +151,10 @@ SEXP CreateAtVector(double *axp, double *usr, int nint, Rboolean logflag)
 	    n = 0;
 	    if (0.5 * dn >= umin) REAL(at)[n++] = 0.5 * dn;
 	    for (;;) {
-		if (dn > umax) break;		REAL(at)[n++] = dn;
-		if (5 * dn > umax) break;	REAL(at)[n++] = 5 * dn;
+		if (dn > umax) break;
+		REAL(at)[n++] = dn;
+		if (5 * dn > umax) break;
+		REAL(at)[n++] = 5 * dn;
 		dn *= 10;
 	    }
 	    break;
@@ -181,9 +183,12 @@ SEXP CreateAtVector(double *axp, double *usr, int nint, Rboolean logflag)
 	    if (0.2 * dn >= umin) REAL(at)[n++] = 0.2 * dn;
 	    if (0.5 * dn >= umin) REAL(at)[n++] = 0.5 * dn;
 	    for (;;) {
-		if (dn > umax) break;		REAL(at)[n++] = dn;
-		if (2 * dn > umax) break;	REAL(at)[n++] = 2 * dn;
-		if (5 * dn > umax) break;	REAL(at)[n++] = 5 * dn;
+		if (dn > umax) break;
+		REAL(at)[n++] = dn;
+		if (2 * dn > umax) break;
+		REAL(at)[n++] = 2 * dn;
+		if (5 * dn > umax) break;
+		REAL(at)[n++] = 5 * dn;
 		dn *= 10;
 	    }
 	    break;
