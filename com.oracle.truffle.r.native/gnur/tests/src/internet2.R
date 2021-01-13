@@ -2,6 +2,8 @@
 ## a working Internet connection.
 ## We attempt to test for those.
 
+onWindows <- .Platform$OS.type == "windows"
+
 if(.Platform$OS.type == "unix" &&
    is.null(nsl("cran.r-project.org"))) q()
 
@@ -9,8 +11,17 @@ if(.Platform$OS.type == "unix" &&
 ## check graceful failure:
 try(url("http://foo.bar", "r"))
 
-if(.Platform$OS.type == "windows")
+if(onWindows)
     try(url("http://foo.bar", "r", method = "wininet"))
+
+## download.file(.. , headers = character()) - PR#17710
+tf <- tempfile()
+download.file("https://cloud.r-project.org/src/base/THANKS", destfile = tf,
+              method = if(onWindows) "wininet" else "libcurl",
+              headers = character()) -> err.code
+stopifnot(err.code == 0, file.size(tf) > 999)
+## had failed for the Windows case
+
 
 ## everything from here on is directly over sockets
 if(!capabilities("sockets")) stop("no socket capabilities")
@@ -40,8 +51,9 @@ httpget <- function (url, port = 80)
     if (length(b[[2]]) > nn)
         data <- paste(b[[2]][-(1:nn)], collapse = "\n")
     while (nchar(data) < len) {
-        data <- paste(data, read.socket(a, maxlen = len - nchar(data)),
-                      sep = "")
+        new_data <- read.socket(a, maxlen = len - nchar(data))
+        if (new_data == "") break
+        data <- paste(data, new_data, sep = "")
     }
     strsplit(data, "\n")[[1]]
 }
@@ -51,5 +63,5 @@ if(nzchar(Sys.getenv("http_proxy")) || nzchar(Sys.getenv("HTTP_PROXY"))) {
 } else {
     f <- httpget("http://www.stats.ox.ac.uk/pub/datasets/csb/ch11b.dat")
     str(f)
-    stopifnot(length(f) == 100L)
+    if (length(f) != 100L) stop("Data not fetched via socket")
 }
