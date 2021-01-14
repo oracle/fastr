@@ -101,7 +101,6 @@ void R_DefParams(Rstart rs) {
     // These are the GnuR defaults and correspond to the settings in RStartParams
     // None of the size params make any sense for FastR
     rs->R_Quiet = FALSE;
-    rs->R_Slave = FALSE;
     rs->R_Interactive = TRUE;
     rs->R_Verbose = FALSE;
     rs->RestoreAction = SA_RESTORE;
@@ -117,7 +116,7 @@ void R_DefParams(Rstart rs) {
 void R_SetParams(Rstart rs) {
     JNIEnv *jniEnv = getEnv();
     jmethodID setParamsMethodID = checkGetMethodID(jniEnv, rembeddedClass, "setParams", "(ZZZZZZZIIZ)V", 1);
-    (*jniEnv)->CallStaticVoidMethod(jniEnv, rStartParamsClass, setParamsMethodID, rs->R_Quiet, rs->R_Slave, rs->R_Interactive,
+    (*jniEnv)->CallStaticVoidMethod(jniEnv, rStartParamsClass, setParamsMethodID, rs->R_Quiet, rs->R_Interactive,
             rs->R_Verbose, rs->LoadSiteFile, rs->LoadInitFile, rs->DebugInitFile,
             rs->RestoreAction, rs->SaveAction, rs->NoRenviron);
 }
