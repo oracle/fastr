@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.launcher;
 
-import com.oracle.truffle.r.launcher.RMain.PrintHelp;
-import com.oracle.truffle.r.launcher.RMain.PrintVersion;
-
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+
+import com.oracle.truffle.r.launcher.RMain.PrintHelp;
+import com.oracle.truffle.r.launcher.RMain.PrintVersion;
 
 /**
  * (Abstract) definition of the standard R command line options. The setting of the values from the
@@ -139,7 +139,7 @@ public final class RCmdOptions {
         MAX_PPSIZE(RCmdOptionType.STRING, false, "max-ppsize", null, "Set max size of protect stack to N"),
         QUIET(RCmdOptionType.BOOLEAN, true, "q", "quiet", false, "Don't print startup message"),
         SILENT(RCmdOptionType.BOOLEAN, true, "silent", false, "Same as --quiet"),
-        SLAVE(RCmdOptionType.BOOLEAN, true, "slave", false, "Make R run as quietly as possible"),
+        NO_ECHO(RCmdOptionType.BOOLEAN, false, "s", "no-echo", false, "Make R run as quietly as possible"),
         INTERACTIVE(RCmdOptionType.BOOLEAN, true, "interactive", false, "Force an interactive session"),
         VERBOSE(RCmdOptionType.BOOLEAN, true, "verbose", false, "Print more information about progress"),
         ARGS(RCmdOptionType.BOOLEAN, true, "args", false, "Skip the rest of the command line"),
@@ -496,8 +496,8 @@ public final class RCmdOptions {
         // Now reformat the args, setting --slave and --no-restore as per the spec
         ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
         adjArgs.add(arguments[0]);
-        adjArgs.add("--slave");
-        options.setValue(RCmdOption.SLAVE, true);
+        adjArgs.add("--no-echo");
+        options.setValue(RCmdOption.NO_ECHO, true);
         adjArgs.add("--no-restore");
         options.setValue(RCmdOption.NO_RESTORE, true);
         // Either -e options are set or first non-option arg is a file

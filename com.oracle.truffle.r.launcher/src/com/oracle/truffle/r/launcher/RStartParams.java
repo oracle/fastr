@@ -25,6 +25,7 @@ package com.oracle.truffle.r.launcher;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.EXPR;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.FILE;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.INTERACTIVE;
+import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_ECHO;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_ENVIRON;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_INIT_FILE;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_READLINE;
@@ -36,7 +37,6 @@ import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.QUIET;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.RESTORE;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.SAVE;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.SILENT;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.SLAVE;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.VANILLA;
 import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.VERBOSE;
 
@@ -80,13 +80,13 @@ public class RStartParams {
     public RStartParams(RCmdOptions options, boolean embedded) {
         this.embedded = embedded;
         this.verbose = options.getBoolean(VERBOSE);
-        this.quiet = options.getBoolean(QUIET) || options.getBoolean(SILENT) || options.getBoolean(SLAVE);
+        this.quiet = options.getBoolean(QUIET) || options.getBoolean(SILENT) || options.getBoolean(NO_ECHO);
         this.loadSiteFile = options.getBoolean(NO_SITE_FILE);
         this.loadInitFile = !embedded && options.getBoolean(NO_INIT_FILE) && !options.getBoolean(VANILLA);
         this.noRenviron = embedded || options.getBoolean(NO_ENVIRON) || options.getBoolean(VANILLA);
         this.restoreAction = options.getBoolean(RESTORE) && !(options.getBoolean(NO_RESTORE) || options.getBoolean(NO_RESTORE_DATA) || options.getBoolean(VANILLA));
         this.noReadline = options.getBoolean(NO_READLINE);
-        this.slave = options.getBoolean(SLAVE);
+        this.slave = options.getBoolean(NO_ECHO);
 
         /*
          * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
