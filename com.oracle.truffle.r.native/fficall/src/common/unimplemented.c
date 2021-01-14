@@ -64,7 +64,7 @@ SEXP do_getGraphicsEventEnv(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
-void *Rf_AdobeSymbol2utf8(char *work, const char *c0, size_t nwork) {
+void *Rf_AdobeSymbol2utf8(char *out, const char *in, size_t nwork, Rboolean usePUA) {
     unimplemented("Rf_AdobeSymbol2utf8");
     return NULL;
 }
@@ -205,7 +205,7 @@ double LOG(double x) {
     return 0;
 }
 
-Rwchar_t Rf_utf8toucs32(wchar_t high, const char *s) {
+R_wchar_t Rf_utf8toucs32(wchar_t high, const char *s) {
     unimplemented("Rf_utf8toucs32");	
 	return 0;
 }
