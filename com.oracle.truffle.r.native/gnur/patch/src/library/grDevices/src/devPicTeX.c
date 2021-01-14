@@ -455,7 +455,7 @@ static double PicTeX_StrWidth(const char *str,
 	/* This version at least uses the state of the MBCS */
 	size_t i, ucslen = mbcsToUcs2(str, NULL, 0, CE_NATIVE);
 	if (ucslen != (size_t)-1) {
-	    R_ucs2_t ucs[ucslen];
+	    ucs2_t ucs[ucslen];
 	    int status = (int) mbcsToUcs2(str, ucs, (int)ucslen, CE_NATIVE);
 	    if (status >= 0) 
 		for (i = 0; i < ucslen; i++)
