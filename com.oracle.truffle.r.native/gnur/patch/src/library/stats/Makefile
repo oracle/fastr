@@ -31,6 +31,8 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
 
+# Trunmed.c is excluded because it is included by Srunmed.c
+C_SOURCES_EXCLUDED := src/Trunmed.c
 PKG_LIBS := $(LAPACK_LIBS) $(BLAS_LIBS) -L$(FASTR_LIB_DIR) $(FLIBS)
 PKG_INCLUDES = -I src
 include ../lib.mk
