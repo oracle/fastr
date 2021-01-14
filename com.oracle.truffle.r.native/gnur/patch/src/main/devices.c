@@ -130,9 +130,6 @@ int NumDevices(void)
     return R_NumDevices;
 }
 
-/** Explicitly declared as a workaround to a Sulong issue with the return type */
-SEXP installTrChar(const char* name);
-
 pGEDevDesc GEcurrentDevice(void)
 {
     /* If there are no active devices
