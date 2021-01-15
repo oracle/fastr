@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,6 +62,7 @@ CALLDEF(api_Rf_errorcall, 2),
 CALLDEF(api_Rf_allocVector, 2),
 CALLDEF(api_Rf_allocArray, 2),
 CALLDEF(api_Rf_allocMatrix, 3),
+CALLDEF(api_Rf_allocSExp, 1),
 CALLDEF(api_Rf_nrows, 1),
 CALLDEF(api_Rf_ncols, 1),
 CALLDEF(api_LENGTH, 1),
@@ -293,7 +294,6 @@ CALLDEF(api_Rf_namesgets, 2),
 CALLDEF(api_Rf_copyMostAttrib, 2),
 CALLDEF(api_Rf_VectorToPairList, 1),
 CALLDEF(api_Rf_asCharacterFactor, 1),
-CALLDEF(api_Rf_match, 3),
 CALLDEF(api_Rf_NonNullStringMatch, 2),
 CALLDEF(api_R_has_slot, 2),
 CALLDEF(api_Rf_PrintValue, 1),

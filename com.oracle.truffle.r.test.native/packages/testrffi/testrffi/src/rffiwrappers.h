@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,8 @@
 #include <R_ext/Parse.h>
 #include <R_ext/Connections.h>
 #include <Rmath.h>
+
+SEXP api_OBJECT(SEXP x);
 
 SEXP api_Rf_ScalarInteger(SEXP value);
 
@@ -101,6 +103,8 @@ SEXP api_Rf_allocVector(SEXP mode, SEXP n);
 SEXP api_Rf_allocArray(SEXP mode, SEXP dimsObj);
 
 SEXP api_Rf_allocMatrix(SEXP mode, SEXP nrow, SEXP ncol);
+
+SEXP api_Rf_allocSExp(SEXP type);
 
 SEXP api_Rf_nrows(SEXP x);
 
@@ -564,8 +568,6 @@ SEXP api_Rf_VectorToPairList(SEXP x);
 
 SEXP api_Rf_asCharacterFactor(SEXP x);
 
-SEXP api_Rf_match(SEXP itables, SEXP ix, SEXP nmatch);
-
 SEXP api_Rf_NonNullStringMatch(SEXP s, SEXP t);
 
 SEXP api_R_has_slot(SEXP container, SEXP name);
@@ -577,6 +579,4 @@ SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName
 SEXP api_Rf_isObject(SEXP x);
 
 SEXP api_R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env);
-
-SEXP api_OBJECT(SEXP x);
 

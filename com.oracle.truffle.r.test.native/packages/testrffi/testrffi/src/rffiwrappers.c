@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,6 +187,10 @@ SEXP api_Rf_allocArray(SEXP mode, SEXP dimsObj) {
 
 SEXP api_Rf_allocMatrix(SEXP mode, SEXP nrow, SEXP ncol) {
     return Rf_allocMatrix(INTEGER_VALUE(mode), INTEGER_VALUE(nrow), INTEGER_VALUE(ncol));
+}
+
+SEXP api_Rf_allocSExp(SEXP type) {
+    return Rf_allocSExp(INTEGER_VALUE(type));
 }
 
 SEXP api_Rf_nrows(SEXP x) {
@@ -1143,10 +1147,6 @@ SEXP api_Rf_VectorToPairList(SEXP x) {
 
 SEXP api_Rf_asCharacterFactor(SEXP x) {
     return Rf_asCharacterFactor(x);
-}
-
-SEXP api_Rf_match(SEXP itables, SEXP ix, SEXP nmatch) {
-    return Rf_match(itables, ix, INTEGER_VALUE(nmatch));
 }
 
 SEXP api_Rf_NonNullStringMatch(SEXP s, SEXP t) {
