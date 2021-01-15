@@ -6,12 +6,11 @@ GraalVM's R runtime developers maintain an extensive set of unit tests for all a
 
 GraalVM's R runtime aims to be fully compatible with GNU R, including its native interface as used by [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html).
 It can install and run unmodified, complex R packages like `ggplot2`, `Shiny`, or `Rcpp`.
-As some packages rely on unspecified behaviour or implementation details of GNU R, support for packages is a work in progress, and some packages might not install successfully or work as expected.
-
+As some packages rely on unspecified behaviour or implementation details of GNU R, support for packages is a work in progress, and **some packages might not install successfully or work as expected**.
 ## Installing Packages
 
 Packages can be installed using the `install.packages` function or the `R CMD INSTALL` shell command.
-By default, R uses a fixed snapshot of the CRAN repository<a href="#note-1"><sup>1</sup></a>.
+By default, **GraalVM's R runtime uses a fixed snapshot of the CRAN repository<a href="#note-1"><sup>1</sup></a>**.
 This behavior can be overridden by explicitly setting the `repos` argument of the `install.packages` function.
 This functionality does not interfere with the `checkpoint` package. If you are behind a proxy server, make sure to configure the proxy either with environment variables or using the JVM options, e.g., `--vm.Djava.net.useSystemProxies=true`.
 
@@ -25,7 +24,6 @@ There are some limitations of the GraalVM R runtime compared to GNU R:
    but do not execute any useful code. Character vectors are represented as Java Strings and therefore encoded in the UTF-16 format. GraalVM's R runtime will add support for encoding in future releases.
    - Some parts of the native API (e.g., `DATAPTR`) expose implementation details that are hard to emulate for alternative implementations of R. These are implemented as needed while testing the GraalVM R runtime with various CRAN packages.
 
-You can use the [Compatibility checker](https://www.graalvm.org/compatibility/) to find whether the CRAN packages you are interested in are tested on GraalVM and whether the tests pass successfully.
 <br/>
 <br/>
 <br/>

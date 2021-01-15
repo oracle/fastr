@@ -4,6 +4,8 @@ GraalVM provides a GNU-compatible R runtime to run R programs directly or in the
 It can run R code at [unparalleled performance](Performance.md), and seamlessly [integrates with the GraalVM ecosystem](#graalvm-integration).
 The project name behind GraalVM's R runtime development is [FastR](https://github.com/oracle/fastr).
 
+**The GraalVM R runtime is an experimental GraalVM component.**
+
 ## Installing R
 
 The R language runtime is not provided by default, and can be added to GraalVM with the [GraalVM Updater](https://www.graalvm.org/reference-manual/graalvm-updater), `gu`, tool:
