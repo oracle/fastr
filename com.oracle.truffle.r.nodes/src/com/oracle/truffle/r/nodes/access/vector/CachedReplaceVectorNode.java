@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.CopyResizedNamesWithEmpty;
+import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
 import com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
@@ -414,7 +414,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         res.setDimensionsNoCheck(null);
         res.setDimNamesNoCheck(null);
         if (oldNames != null) {
-            oldNames = CopyResizedNamesWithEmpty.executeSlowPath(oldNames, size);
+            oldNames = CopyResizedWithEmpty.executeSlowPath(oldNames, size);
             res.setNames(oldNames);
         }
         return res;
@@ -481,7 +481,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             String[] newNames = null;
             if (hasNames) {
                 newNames = new String[resultLength];
-                if (namesDataLib == null || !namesDataLib.accepts(names.getData())) {
+                if (namesDataLib == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     namesDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize()));
                 }

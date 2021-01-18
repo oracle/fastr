@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.nodes.VectorDataReuse;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
@@ -52,8 +53,9 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     public Object execute(RComplexVector zVec, boolean inverse,
                     @Cached("create()") GetDimAttributeNode getDimNode,
-                    @CachedLibrary("zVec.getData()") VectorDataLibrary zVecDataLib) {
-        double[] z = zVec.getDataTemp();
+                    @CachedLibrary("zVec.getData()") VectorDataLibrary zVecDataLib,
+                    @Cached VectorDataReuse.Complex vectorDataReuse) {
+        double[] z = vectorDataReuse.execute(zVec);
         int inv = inverse ? 2 : -2;
         int[] d = getDimNode.getDimensions(zVec);
         int zVecLength = zVecDataLib.getLength(zVec.getData());

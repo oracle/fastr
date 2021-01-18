@@ -221,14 +221,15 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
             }
             Object[] permData = new Object[dimNames.getLength()];
             RStringVector names = getNames.getNames(dimNames); // May be null for "list(NULL,NULL)"
+            Object namesData = names != null ? names.getData() : null;
             String[] permNames = (names != null) ? new String[permData.length] : null;
             for (int i = 0; i < permData.length; i++) {
                 permData[i] = extractListElement.execute(dimNames, perm[i]);
                 if (permNames != null) {
-                    permNames[i] = namesDataLib.getStringAt(names.getData(), perm[i]);
+                    permNames[i] = namesDataLib.getStringAt(namesData, perm[i]);
                 }
             }
-            RList permDimNames = RDataFactory.createList(permData, (names != null) ? RDataFactory.createStringVector(permNames, namesDataLib.isComplete(names.getData())) : null);
+            RList permDimNames = RDataFactory.createList(permData, (names != null) ? RDataFactory.createStringVector(permNames, namesDataLib.isComplete(namesData)) : null);
             setDimNames.setDimNames(result, permDimNames);
         }
 

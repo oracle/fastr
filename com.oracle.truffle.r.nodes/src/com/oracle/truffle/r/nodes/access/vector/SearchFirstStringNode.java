@@ -88,7 +88,7 @@ final class SearchFirstStringNode extends Node {
         targetNACheck.enable(target);
         elementsNACheck.enable(elements);
 
-        if (elementsDataLib == null || !elementsDataLib.accepts(elements.getData())) {
+        if (elementsDataLib == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             elementsDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize()));
         }

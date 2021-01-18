@@ -236,8 +236,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return extractedVectorDataLib;
     }
 
-    private VectorDataLibrary getOriginalDimNamesVectorDataLib(Object originalDimNamesData) {
-        if (originalDimNamesVectorDataLib == null || !originalDimNamesVectorDataLib.accepts(originalDimNamesData)) {
+    private VectorDataLibrary getOriginalDimNamesVectorDataLib() {
+        if (originalDimNamesVectorDataLib == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             originalDimNamesVectorDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize()));
         }
@@ -308,6 +308,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             newDimNamesNames = originalDimNamesNames == null ? null : new String[positionCount];
         }
 
+        Object originalDimNamesData = originalDimNames != null ? originalDimNames.getData() : null;
+        VectorDataLibrary originalDimNamesDataLib = originalDimNames != null ? getOriginalDimNamesVectorDataLib() : null;
+
         int dimIndex = -1;
         for (int i = 0; i < numberOfPositions; i++) {
             int selectedPositionsCount = positionProfile[i].selectedPositionsCount;
@@ -316,8 +319,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 newDimensions[dimIndex] = selectedPositionsCount;
                 if (newDimNames != null) {
                     assert originalDimNames != null;
-                    Object originalDimNamesData = originalDimNames.getData();
-                    VectorDataLibrary originalDimNamesDataLib = getOriginalDimNamesVectorDataLib(originalDimNamesData);
+                    assert originalDimNamesDataLib != null;
                     Object dataAt = originalDimNamesDataLib.getDataAtAsObject(originalDimNamesData, i);
                     Object result;
                     if (dataAt == RNull.instance) {
@@ -366,8 +368,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     setDimNamesNode = insert(SetDimNamesAttributeNode.create());
                 }
                 assert originalDimNames != null;
-                Object originalDimNamesData = originalDimNames.getData();
-                VectorDataLibrary originalDimNamesDataLib = getOriginalDimNamesVectorDataLib(originalDimNamesData);
+                assert originalDimNamesDataLib != null;
                 setDimNamesNode.setDimNames(extractedTarget,
                                 RDataFactory.createList(newDimNames,
                                                 newDimNamesNames == null ? null : RDataFactory.createStringVector(newDimNamesNames, originalDimNamesDataLib.isComplete(originalDimNamesData))));
