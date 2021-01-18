@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,7 @@ api.Rf_errorcall <- function(...) .Call(C_api_Rf_errorcall, ...)
 api.Rf_allocVector <- function(...) .Call(C_api_Rf_allocVector, ...)
 api.Rf_allocArray <- function(...) .Call(C_api_Rf_allocArray, ...)
 api.Rf_allocMatrix <- function(...) .Call(C_api_Rf_allocMatrix, ...)
+api.Rf_allocSExp <- function(...) .Call(C_api_Rf_allocSExp, ...)
 api.Rf_nrows <- function(...) .Call(C_api_Rf_nrows, ...)
 api.Rf_ncols <- function(...) .Call(C_api_Rf_ncols, ...)
 api.LENGTH <- function(...) .Call(C_api_LENGTH, ...)
@@ -288,7 +289,6 @@ api.Rf_namesgets <- function(...) .Call(C_api_Rf_namesgets, ...)
 api.Rf_copyMostAttrib <- function(...) .Call(C_api_Rf_copyMostAttrib, ...)
 api.Rf_VectorToPairList <- function(...) .Call(C_api_Rf_VectorToPairList, ...)
 api.Rf_asCharacterFactor <- function(...) .Call(C_api_Rf_asCharacterFactor, ...)
-api.Rf_match <- function(...) .Call(C_api_Rf_match, ...)
 api.Rf_NonNullStringMatch <- function(...) .Call(C_api_Rf_NonNullStringMatch, ...)
 api.R_has_slot <- function(...) .Call(C_api_R_has_slot, ...)
 api.Rf_PrintValue <- function(...) .Call(C_api_Rf_PrintValue, ...)

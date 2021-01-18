@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,16 @@
  * questions.
  */
 package com.oracle.truffle.r.ffi.impl.common;
+
+import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guarantee;
+import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
+import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -116,16 +126,6 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.function.Function;
-
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guarantee;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
 
 /**
  * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, where all the
@@ -477,6 +477,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 return RDataFactory.createPairList(RNull.instance, RNull.instance);
             case LANGSXP:
                 return RDataFactory.createPairList(1, type);
+            case CLOSXP:
+                return RDataFactory.createFunction("<unknown-from-Rf_allocSExp>", "RFFI", null, null, REnvironment.globalEnv().getFrame());
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }

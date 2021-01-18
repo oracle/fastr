@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,12 @@ public final class FFITestsCodeGen extends CodeGenBase {
     private static final String FUN_PREFIX = "api_";
     private static final HashSet<String> IGNORE_FUNS = new HashSet<>(
                     Arrays.asList("Rf_cospi", "Rf_sinpi", "Rf_tanpi", "R_forceAndCall", "Rf_duplicate", "R_ToplevelExec", "R_CleanUp", "R_ParseVector", "octsize", "R_NewHashedEnv", "Rf_ScalarComplex",
-                                    "Rf_ScalarRaw", "Rf_allocList", "Rf_allocSExp", "DispatchPRIMFUN", "COMPLEX_ELT"));
+                                    "Rf_ScalarRaw", "Rf_allocList", "DispatchPRIMFUN", "COMPLEX_ELT", "match5" /*
+                                                                                                                * match5
+                                                                                                                * is
+                                                                                                                * not
+                                                                                                                * public
+                                                                                                                */));
 
     public static void main(String[] args) {
         new FFITestsCodeGen().run(args);

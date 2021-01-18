@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,10 +44,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunctionFactory.CachedExplicitCallNodeGen;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -78,7 +78,7 @@ public final class RFunction extends RSharingAttributeStorage implements Shareab
         this.target = target;
         this.builtin = builtin;
         this.name = name;
-        if (!isBuiltin() && name != NO_NAME) {
+        if (!isBuiltin() && name != NO_NAME && target != null) {
             // If we have a name, propagate it to the rootnode
             RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
         }
@@ -139,7 +139,7 @@ public final class RFunction extends RSharingAttributeStorage implements Shareab
     }
 
     public RootNode getRootNode() {
-        return target.getRootNode();
+        return target != null ? target.getRootNode() : null;
     }
 
     public MaterializedFrame getEnclosingFrame() {

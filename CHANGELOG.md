@@ -4,6 +4,10 @@ Bug fixes:
 
 * `switch` builtin handles arguments properly (#171)
 
+Added missing R builtins and C APIs:
+
+* `Rf_allocSExp` supports `CLOSXP`
+
 # 21.0.0
 
 Bug fixes:
