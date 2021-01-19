@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,18 +33,20 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 @RBuiltin(name = "array", kind = INTERNAL, parameterNames = {"data", "dim", "dimnames"}, behavior = PURE)
 public abstract class Array extends RBuiltinNode.Arg3 {
@@ -67,28 +69,28 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         casts.arg("dimnames").defaultError(RError.Message.DIMNAMES_LIST).allowNull().mustBe(instanceOf(RList.class));
     }
 
-    @Specialization(guards = {"dataAccess.supports(data)", "dimAccess.supports(dim)"})
-    protected RAbstractVector arrayCached(RAbstractVector data, RIntVector dim, Object dimNames,
-                    @Cached("data.access()") VectorAccess dataAccess,
-                    @Cached("dim.access()") VectorAccess dimAccess,
-                    @Cached("createNew(dataAccess.getType())") VectorAccess resultAccess,
-                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
-                    @Cached("createBinaryProfile()") ConditionProfile isEmpty,
-                    @Cached("create()") VectorFactory factory) {
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
+    protected RAbstractVector arrayCached(RAbstractVector vector, RIntVector dim, Object dimNames,
+                    @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib,
+                    @CachedLibrary("dim.getData()") VectorDataLibrary dimDataLib,
+                    @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary resultDataLib,
+                    @Cached VectorFactory factory,
+                    @Cached ConditionProfile isEmpty,
+                    @Cached ConditionProfile hasDimNames) {
         // extract dimensions and compute total length
         int[] dimArray;
         int totalLength = 1;
         boolean negativeDims = false;
-        try (SequentialIterator dimIter = dimAccess.access(dim)) {
-            dimArray = new int[dimAccess.getLength(dimIter)];
-            while (dimAccess.next(dimIter)) {
-                int dimValue = dimAccess.getInt(dimIter);
-                if (dimValue < 0) {
-                    negativeDims = true;
-                }
-                totalLength *= dimValue;
-                dimArray[dimIter.getIndex()] = dimValue;
+        Object dimData = dim.getData();
+        dimArray = new int[dimDataLib.getLength(dimData)];
+        SeqIterator dimIter = dimDataLib.iterator(dimData);
+        while (dimDataLib.nextLoopCondition(dimData, dimIter)) {
+            int dimValue = dimDataLib.getNextInt(dimData, dimIter);
+            if (dimValue < 0) {
+                negativeDims = true;
             }
+            totalLength *= dimValue;
+            dimArray[dimIter.getIndex()] = dimValue;
         }
         if (totalLength < 0) {
             throw error(RError.Message.NEGATIVE_LENGTH_VECTORS_NOT_ALLOWED);
@@ -96,21 +98,23 @@ public abstract class Array extends RBuiltinNode.Arg3 {
             throw error(RError.Message.DIMS_CONTAIN_NEGATIVE_VALUES);
         }
 
-        RAbstractVector result = factory.createUninitializedVector(dataAccess.getType(), totalLength, dimArray, null, null);
-
-        try (SequentialIterator resultIter = resultAccess.access(result); SequentialIterator dataIter = dataAccess.access(data)) {
-            if (isEmpty.profile(dataAccess.getLength(dataIter) == 0)) {
-                while (resultAccess.next(resultIter)) {
-                    resultAccess.setNA(resultIter);
+        Object vectorData = vector.getData();
+        RAbstractVector result = factory.createUninitializedVector(vectorDataLib.getType(vectorData), totalLength, dimArray, null, null);
+        Object resultData = result.getData();
+        SeqIterator vectorIter = vectorDataLib.iterator(vectorData);
+        try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+            if (isEmpty.profile(vectorDataLib.getLength(vectorData) == 0)) {
+                while (resultDataLib.nextLoopCondition(resultData, resultIter)) {
+                    resultDataLib.setNextNA(resultData, resultIter);
                 }
-                result.setComplete(false);
             } else {
-                while (resultAccess.next(resultIter)) {
-                    dataAccess.nextWithWrap(dataIter);
-                    resultAccess.setFromSameType(resultIter, dataAccess, dataIter);
+                while (resultDataLib.nextLoopCondition(resultData, resultIter)) {
+                    vectorDataLib.nextWithWrap(vectorData, vectorIter);
+                    Object value = vectorDataLib.getNextElement(vectorData, vectorIter);
+                    resultDataLib.setNextElement(resultData, resultIter, value);
                 }
-                result.setComplete(!dataAccess.na.isEnabled());
             }
+            resultDataLib.commitWriteIterator(resultData, resultIter, vectorDataLib.getNACheck(vectorData).neverSeenNA());
         }
 
         // dimensions are set as a separate step so they are checked for validity
@@ -127,8 +131,8 @@ public abstract class Array extends RBuiltinNode.Arg3 {
     protected RAbstractVector arrayGeneric(RAbstractVector data, RIntVector dim, Object dimNames,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("createBinaryProfile()") ConditionProfile isEmpty,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary dispatchedDataLib,
                     @Cached("create()") VectorFactory factory) {
-        VectorAccess dataAccess = data.slowPathAccess();
-        return arrayCached(data, dim, dimNames, dataAccess, dim.slowPathAccess(), VectorAccess.createSlowPathNew(dataAccess.getType()), hasDimNames, isEmpty, factory);
+        return arrayCached(data, dim, dimNames, dispatchedDataLib, dispatchedDataLib, dispatchedDataLib, factory, isEmpty, hasDimNames);
     }
 }

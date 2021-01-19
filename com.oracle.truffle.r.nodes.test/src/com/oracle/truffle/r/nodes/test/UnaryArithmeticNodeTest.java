@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
@@ -136,6 +137,13 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
     @Theory
     public void testCompleteness(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
         execInContext(() -> {
+            // Cache has to be enabled for this test, because when it is not enabled, all the
+            // vectors are
+            // marked as incomplete. More specifically, we use VectorDataLibrary, and in it's
+            // uncached
+            // version all the NAChecks are disabled.
+            Assume.assumeTrue(isCacheEnabled());
+
             RAbstractVector operand = copy(originalOperand);
             Object result = executeArithmetic(factory, operand);
 

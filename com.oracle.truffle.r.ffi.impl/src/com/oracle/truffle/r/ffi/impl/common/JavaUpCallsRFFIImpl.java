@@ -381,13 +381,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_lengthgets(Object x, int newSize) {
-        if (x == RNull.instance) {
-            return RNull.instance;
-        }
-        RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
-        return vec.resize(newSize);
+        throw implementedAsNode();
     }
 
     @Override

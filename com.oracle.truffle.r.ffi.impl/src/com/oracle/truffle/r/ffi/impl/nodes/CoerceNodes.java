@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
@@ -51,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -162,8 +164,9 @@ public final class CoerceNodes {
         @Child private InheritsCheckNode inheritsFactorNode = InheritsCheckNode.createFactor();
         @Child private RFactorNodes.GetLevels getLevels = RFactorNodes.GetLevels.create();
 
-        @Specialization
-        protected Object doFactor(RIntVector o) {
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        protected Object doFactor(RIntVector o,
+                        @CachedLibrary("o.getData()") VectorDataLibrary oDataLib) {
             if (!inheritsFactorNode.execute(o)) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "attempting to coerce non-factor");
             }
@@ -173,12 +176,14 @@ public final class CoerceNodes {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "malformed factor");
             }
 
-            String[] data = new String[o.getLength()];
+            Object oData = o.getData();
+            int oLen = oDataLib.getLength(oData);
+            String[] data = new String[oLen];
             boolean isComplete = true;
             int nl = levels.getLength();
-            for (int i = 0; i < o.getLength(); i++) {
-                assert !o.isComplete() || o.getDataAt(i) != RRuntime.INT_NA;
-                int idx = o.getDataAt(i);
+            for (int i = 0; i < oLen; i++) {
+                assert !oDataLib.isComplete(oData) || oDataLib.getIntAt(oData, i) != RRuntime.INT_NA;
+                int idx = oDataLib.getIntAt(oData, i);
                 if (idx == RRuntime.INT_NA) {
                     data[i] = RRuntime.STRING_NA;
                     isComplete = false;

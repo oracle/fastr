@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,11 +37,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.nodes.ResizeContainer;
 
 @RBuiltin(name = "length<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateLength extends RBuiltinNode.Arg2 {
@@ -64,9 +64,8 @@ public abstract class UpdateLength extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RAbstractContainer updateLength(RAbstractContainer containerIn, int length,
-                    @Cached("createClassProfile()") ValueProfile containerClassProfile) {
-        RAbstractContainer container = containerClassProfile.profile(containerIn);
-        return container.getLength() == length ? container : container.resize(length);
+    protected RAbstractContainer updateLength(RAbstractContainer container, int newLength,
+                    @Cached ResizeContainer resizeContainer) {
+        return resizeContainer.execute(container, newLength);
     }
 }

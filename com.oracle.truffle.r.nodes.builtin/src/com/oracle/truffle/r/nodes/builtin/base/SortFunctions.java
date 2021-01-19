@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,18 +44,20 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 /**
  * The internal functions mandated by {@code base/sort.R}. N.B. We use the standard JDK sorting
@@ -125,24 +127,24 @@ public class SortFunctions {
         return data;
     }
 
-    protected static RDoubleVector jdkSort(RDoubleVector vec, boolean decreasing) {
+    protected static RDoubleVector jdkSort(RDoubleVector vec, boolean decreasing, VectorDataLibrary vecDataLib) {
         double[] data = vec.materialize().getDataCopy();
-        return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
+        return RDataFactory.createDoubleVector(sort(data, decreasing), vecDataLib.isComplete(vec.getData()));
     }
 
-    protected static RIntVector jdkSort(RIntVector vec, boolean decreasing) {
+    protected static RIntVector jdkSort(RIntVector vec, boolean decreasing, VectorDataLibrary vecDataLib) {
         int[] data = vec.materialize().getDataCopy();
-        return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
+        return RDataFactory.createIntVector(sort(data, decreasing), vecDataLib.isComplete(vec.getData()));
     }
 
-    protected static RStringVector jdkSort(RStringVector vec, boolean decreasing) {
+    protected static RStringVector jdkSort(RStringVector vec, boolean decreasing, VectorDataLibrary vecDataLib) {
         String[] data = vec.materialize().getDataCopy();
-        return RDataFactory.createStringVector(sort(data, decreasing), vec.isComplete());
+        return RDataFactory.createStringVector(sort(data, decreasing), vecDataLib.isComplete(vec.getData()));
     }
 
-    protected static RLogicalVector jdkSort(RLogicalVector vec, boolean decreasing) {
+    protected static RLogicalVector jdkSort(RLogicalVector vec, boolean decreasing, VectorDataLibrary vecDataLib) {
         byte[] data = vec.materialize().getDataCopy();
-        return RDataFactory.createLogicalVector(sort(data, decreasing), vec.isComplete());
+        return RDataFactory.createLogicalVector(sort(data, decreasing), vecDataLib.isComplete(vec.getData()));
     }
 
     /**
@@ -161,24 +163,26 @@ public class SortFunctions {
             addCastForDecreasing(casts);
         }
 
+        @Child private VectorDataLibrary vectorDataLib = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize());
+
         @Specialization
         protected RDoubleVector sort(RDoubleVector vec, boolean decreasing) {
-            return jdkSort(vec, decreasing);
+            return jdkSort(vec, decreasing, vectorDataLib);
         }
 
         @Specialization
         protected RIntVector sort(RIntVector vec, boolean decreasing) {
-            return jdkSort(vec, decreasing);
+            return jdkSort(vec, decreasing, vectorDataLib);
         }
 
         @Specialization
         protected RStringVector sort(RStringVector vec, boolean decreasing) {
-            return jdkSort(vec, decreasing);
+            return jdkSort(vec, decreasing, vectorDataLib);
         }
 
         @Specialization
         protected RLogicalVector sort(RLogicalVector vec, boolean decreasing) {
-            return jdkSort(vec, decreasing);
+            return jdkSort(vec, decreasing, vectorDataLib);
         }
 
         @Specialization
@@ -202,14 +206,16 @@ public class SortFunctions {
             casts.arg("decreasing").mapIf(numericValue().not(), constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst().map(toBoolean());
         }
 
+        @Child private VectorDataLibrary vectorDataLib = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize());
+
         @Specialization
         protected RDoubleVector qsort(RDoubleVector vec, boolean decreasing) {
-            return jdkSort(vec, decreasing);
+            return jdkSort(vec, decreasing, vectorDataLib);
         }
 
         @Specialization
         protected RIntVector qsort(RIntVector vec, boolean decreasing) {
-            return jdkSort(vec, decreasing);
+            return jdkSort(vec, decreasing, vectorDataLib);
         }
     }
 
@@ -221,28 +227,30 @@ public class SortFunctions {
             addCastForX(casts);
         }
 
+        @Child private VectorDataLibrary vectorDataLib = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize());
+
         @SuppressWarnings("unused")
         @Specialization
         protected RDoubleVector sort(RDoubleVector vec, Object partial) {
-            return jdkSort(vec, false);
+            return jdkSort(vec, false, vectorDataLib);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected RIntVector sort(RIntVector vec, Object partial) {
-            return jdkSort(vec, false);
+            return jdkSort(vec, false, vectorDataLib);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected RStringVector sort(RStringVector vec, Object partial) {
-            return jdkSort(vec, false);
+            return jdkSort(vec, false, vectorDataLib);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected RLogicalVector sort(RLogicalVector vec, Object partial) {
-            return jdkSort(vec, false);
+            return jdkSort(vec, false, vectorDataLib);
         }
 
         @SuppressWarnings("unused")

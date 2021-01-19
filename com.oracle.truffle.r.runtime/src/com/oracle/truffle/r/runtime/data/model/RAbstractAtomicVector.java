@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -43,10 +43,6 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
  * </ul>
  */
 public abstract class RAbstractAtomicVector extends RAbstractVector {
-
-    public RAbstractAtomicVector(boolean complete) {
-        super(complete);
-    }
 
     protected final boolean isScalar(VectorDataLibrary dataLib) {
         return dataLib.getLength(getData()) == 1;

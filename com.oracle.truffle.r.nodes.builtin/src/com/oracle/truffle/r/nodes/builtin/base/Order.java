@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -43,8 +44,6 @@ import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.IsAtomicNANodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.SortFunctions.RadixSort;
-import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -53,16 +52,19 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 
 @RBuiltin(name = "order", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "..."}, behavior = PURE)
 public abstract class Order extends RPrecedenceBuiltinNode {
@@ -84,12 +86,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     private static final int[] SINCS = {1073790977, 268460033, 67121153, 16783361, 4197377, 1050113, 262913, 65921, 16577, 4193, 1073, 281, 77, 23, 8, 1, 0};
 
-    private RIntVector executeOrderVector1(RAbstractVector vIn, byte naLast, boolean dec) {
+    private RIntVector executeOrderVector1(RAbstractVector vIn, VectorDataLibrary vecDataLib, byte naLast, boolean dec) {
         RAbstractVector v = vectorProfile.profile(vIn);
         int n = v.getLength();
         reportWork(n);
 
-        int[] indx = createIndexes(v, n, naLast);
+        int[] indx = createIndexes(v, vecDataLib, n, naLast);
         initOrderVector1().execute(indx, v, naLast, dec, true);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
@@ -103,12 +105,13 @@ public abstract class Order extends RPrecedenceBuiltinNode {
      * the value of the "complete" flag only, since this flag concerns the "pure" NA only and not
      * NaN in double or complex vectors that the order builtin regard as NA.
      */
-    private static boolean mayContainNAorNaN(RAbstractVector v) {
-        return !v.isComplete() || v instanceof RDoubleVector || v instanceof RComplexVector;
+    private static boolean mayContainNAorNaN(RAbstractVector v, VectorDataLibrary vecDataLib) {
+        boolean isVComplete = vecDataLib.isComplete(v.getData());
+        return !isVComplete || v instanceof RDoubleVector || v instanceof RComplexVector;
     }
 
-    private int[] createIndexes(RAbstractVector v, int len, byte naLast) {
-        if (notRemoveNAs.profile(!RRuntime.isNA(naLast) || !mayContainNAorNaN(v))) {
+    private int[] createIndexes(RAbstractVector v, VectorDataLibrary vecDataLib, int len, byte naLast) {
+        if (notRemoveNAs.profile(!RRuntime.isNA(naLast) || !mayContainNAorNaN(v, vecDataLib))) {
             int[] result = new int[v.getLength()];
             for (int i = 0; i < result.length; i++) {
                 result[i] = i;
@@ -190,34 +193,39 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstIntegerPrecedence(args)"})
-    Object orderInt(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderInt(byte naLast, boolean decreasing, RArgsValuesAndNames args,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary vecDataLib) {
         RIntVector v = (RIntVector) castVector(args.getArgument(0));
-        return executeOrderVector1(v, naLast, decreasing);
+        return executeOrderVector1(v, vecDataLib, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstDoublePrecedence(args)"})
-    Object orderDouble(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderDouble(byte naLast, boolean decreasing, RArgsValuesAndNames args,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary vecDataLib) {
         RDoubleVector v = (RDoubleVector) castVector(args.getArgument(0));
-        return executeOrderVector1(v, naLast, decreasing);
+        return executeOrderVector1(v, vecDataLib, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(args)"})
     Object orderLogical(byte naLast, boolean decreasing, RArgsValuesAndNames args,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary vecDataLib) {
         RIntVector v = (RIntVector) castVector(args.getArgument(0)).castSafe(RType.Integer, isNAProfile);
-        return executeOrderVector1(v, naLast, decreasing);
+        return executeOrderVector1(v, vecDataLib, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstStringPrecedence(args)"})
-    Object orderString(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderString(byte naLast, boolean decreasing, RArgsValuesAndNames args,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary vecDataLib) {
         RStringVector v = (RStringVector) castVector(args.getArgument(0));
-        return executeOrderVector1(v, naLast, decreasing);
+        return executeOrderVector1(v, vecDataLib, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstComplexPrecedence(args)"})
-    Object orderComplex(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
+    Object orderComplex(byte naLast, boolean decreasing, RArgsValuesAndNames args,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary vecDataLib) {
         RComplexVector v = (RComplexVector) castVector(args.getArgument(0));
-        return executeOrderVector1(v, naLast, decreasing);
+        return executeOrderVector1(v, vecDataLib, naLast, decreasing);
     }
 
     @Specialization(guards = {"oneVec(args)", "isFirstListPrecedence(args)"})
@@ -324,8 +332,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
         public abstract Object execute(int[] v, Object dv, byte naLast, boolean dec, boolean sortNA);
 
-        @Specialization
-        protected Object orderVector1(int[] indx, RIntVector dv, byte naLast, boolean decreasing, boolean sortNA) {
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
+        protected Object orderVector1(int[] indx, RIntVector dv, byte naLast, boolean decreasing, boolean sortNA,
+                        @CachedLibrary("dv.getData()") VectorDataLibrary dvDataLib) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -333,10 +342,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             int hi = indx.length - 1;
             if (sortNA) {
                 int numNa = 0;
-                if (!dv.isComplete() && !RRuntime.isNA(naLast)) {
+                if (!dvDataLib.isComplete(dv.getData()) && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
-                        if (RRuntime.isNA(dv.getDataAt(i))) {
+                        if (RRuntime.isNA(dvDataLib.getIntAt(dv.getData(), i))) {
                             isNa[i] = true;
                             numNa++;
                         }
@@ -398,8 +407,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return indx;
         }
 
-        @Specialization
-        protected Object orderVector1(int[] indx, RStringVector dv, byte naLast, boolean decreasing, boolean sortNA) {
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
+        protected Object orderVector1(int[] indx, RStringVector dv, byte naLast, boolean decreasing, boolean sortNA,
+                        @CachedLibrary("dv.getData()") VectorDataLibrary dvDataLib) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -407,10 +417,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             int hi = indx.length - 1;
             if (sortNA) {
                 int numNa = 0;
-                if (!dv.isComplete() && !RRuntime.isNA(naLast)) {
+                if (!dvDataLib.isComplete(dv.getData()) && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
-                        if (RRuntime.isNA(dv.getDataAt(i))) {
+                        if (RRuntime.isNA(dvDataLib.getStringAt(dv.getData(), i))) {
                             isNa[i] = true;
                             numNa++;
                         }
@@ -436,8 +446,9 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return indx;
         }
 
-        @Specialization
-        protected Object orderVector1(int[] indx, RComplexVector dv, byte naLast, boolean decreasing, boolean sortNA) {
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
+        protected Object orderVector1(int[] indx, RComplexVector dv, byte naLast, boolean decreasing, boolean sortNA,
+                        @CachedLibrary("dv.getData()") VectorDataLibrary dvDataLib) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -445,10 +456,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             int hi = indx.length - 1;
             if (sortNA) {
                 int numNa = 0;
-                if (!dv.isComplete() && !RRuntime.isNA(naLast)) {
+                if (!dvDataLib.isComplete(dv.getData()) && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
-                        if (RRuntime.isNA(dv.getDataAt(i))) {
+                        if (RRuntime.isNA(dvDataLib.getComplexAt(dv.getData(), i))) {
                             isNa[i] = true;
                             numNa++;
                         }

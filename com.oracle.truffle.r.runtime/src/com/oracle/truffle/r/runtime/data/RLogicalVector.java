@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package com.oracle.truffle.r.runtime.data;
+
+import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -49,8 +51,6 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import java.util.Arrays;
-
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
 public final class RLogicalVector extends RAbstractAtomicVector implements RMaterializedVector, Shareable {
@@ -58,7 +58,6 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
     private int length;
 
     RLogicalVector(byte[] data, boolean complete) {
-        super(complete);
         setData(new RLogicalArrayVectorData(data, complete), data.length);
         assert RAbstractVector.verifyVector(this);
     }
@@ -69,13 +68,11 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
     }
 
     RLogicalVector(Object data, int newLen) {
-        super(false);
         setData(data, newLen);
         assert RAbstractVector.verifyVector(this);
     }
 
     private RLogicalVector() {
-        super(false);
     }
 
     private void setData(Object data, int newLen) {
@@ -227,7 +224,6 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
         } finally {
             RLogicalNativeVectorData newData = new RLogicalNativeVectorData(this);
             setData(newData, l);
-            setComplete(false);
         }
     }
 
@@ -238,7 +234,6 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
         } finally {
             RLogicalNativeVectorData newData = new RLogicalNativeVectorData(this);
             setData(newData, VectorDataLibrary.getFactory().getUncached().getLength(newData));
-            setComplete(false);
         }
     }
 
@@ -389,14 +384,10 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
     }
 
     public long allocateNativeContents() {
-        try {
-            data = VectorDataLibrary.getFactory().getUncached().materialize(data);
-            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
-            setData(new RLogicalNativeVectorData(this), getLength());
-            return result;
-        } finally {
-            setComplete(false);
-        }
+        data = VectorDataLibrary.getFactory().getUncached().materialize(data);
+        long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+        setData(new RLogicalNativeVectorData(this), getLength());
+        return result;
     }
 
     private static final class FastPathAccess extends FastPathFromLogicalAccess {

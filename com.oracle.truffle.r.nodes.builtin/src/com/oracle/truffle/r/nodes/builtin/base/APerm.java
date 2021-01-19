@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -180,7 +180,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     @Cached("create()") GetNamesAttributeNode getNames,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
 
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
@@ -220,14 +221,15 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
             }
             Object[] permData = new Object[dimNames.getLength()];
             RStringVector names = getNames.getNames(dimNames); // May be null for "list(NULL,NULL)"
+            Object namesData = names != null ? names.getData() : null;
             String[] permNames = (names != null) ? new String[permData.length] : null;
             for (int i = 0; i < permData.length; i++) {
                 permData[i] = extractListElement.execute(dimNames, perm[i]);
                 if (permNames != null) {
-                    permNames[i] = names.getDataAt(perm[i]);
+                    permNames[i] = namesDataLib.getStringAt(namesData, perm[i]);
                 }
             }
-            RList permDimNames = RDataFactory.createList(permData, (names != null) ? RDataFactory.createStringVector(permNames, names.isComplete()) : null);
+            RList permDimNames = RDataFactory.createList(permData, (names != null) ? RDataFactory.createStringVector(permNames, namesDataLib.isComplete(namesData)) : null);
             setDimNames.setDimNames(result, permDimNames);
         }
 
@@ -240,10 +242,11 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     @Cached("create()") GetNamesAttributeNode getNames,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
         AbstractContainerLibrary containerLib = AbstractContainerLibrary.getFactory().getUncached();
         VectorDataLibrary dataLib = VectorDataLibrary.getFactory().getUncached();
-        return doNonIdentity(vector, permVector, resize, containerLib, dataLib, dataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode);
+        return doNonIdentity(vector, permVector, resize, containerLib, dataLib, dataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode, namesDataLib);
     }
 
     protected boolean isIdentityPermutation(RAbstractVector v, RIntVector permVector, GetDimAttributeNode getDimAttributeNode) {
@@ -271,7 +274,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     @Cached("create()") SetDimAttributeNode setDimsNode,
                     @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
+                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
         RList dimNames = getDimNamesNode.getDimNames(vector);
         if (dimNames == null) {
             // TODO: this error is reported after IS_OF_WRONG_LENGTH in GnuR
@@ -295,7 +299,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         }
 
         // Note: if this turns out to be slow, we can cache the permutation
-        return doNonIdentity(vector, permIntVector, resize, vectorLib, vectorDataLib, resultDataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode);
+        return doNonIdentity(vector, permIntVector, resize, vectorLib, vectorDataLib, resultDataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode, namesDataLib);
     }
 
     @Specialization(replaces = "aPerm", limit = "getGenericVectorAccessCacheSize()")
@@ -309,9 +313,10 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     @Cached("create()") SetDimAttributeNode setDimsNode,
                     @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
         return aPerm(vector, permVector, resize, vectorLib, vectorDataLib, resultDataLib, isIdentityProfile, getNames, getDimsNode, setDimsNode, removeClassAttrNode, getDimNamesNode,
-                        reuseNonSharedNode);
+                        reuseNonSharedNode, namesDataLib);
     }
 
     private static int[] getReverse(int[] dim) {

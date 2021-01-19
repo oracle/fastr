@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime.data;
 
 import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -34,37 +36,27 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import java.util.Arrays;
-
 @ExportLibrary(VectorDataLibrary.class)
-public class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
+public class RDoubleArrayVectorData implements TruffleObject {
     private final double[] data;
     private boolean complete;
-    private RDoubleVector owner;
 
     public RDoubleArrayVectorData(double[] data, boolean complete) {
         this.data = data;
         this.complete = complete && ENABLE_COMPLETE;
     }
 
-    @Override
-    public void setOwner(RAbstractContainer newOwner) {
-        owner = (RDoubleVector) newOwner;
-        owner.setComplete(complete);
-    }
-
     @SuppressWarnings("static-method")
     @ExportMessage
-    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        na.enable(!isComplete(ownerIsNull));
+    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
+        na.enable(!isComplete());
         return na;
     }
 
@@ -90,17 +82,12 @@ public class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwne
     }
 
     @ExportMessage
-    public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
-                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        return new RDoubleArrayVectorData(Arrays.copyOf(data, data.length), isComplete(ownerIsNull));
+    public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
+        return new RDoubleArrayVectorData(Arrays.copyOf(data, data.length), isComplete());
     }
 
     @ExportMessage
-    public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        if (owner != null) {
-            return owner.isComplete() && ENABLE_COMPLETE;
-        }
-        ownerIsNull.enter();
+    public boolean isComplete() {
         return complete && ENABLE_COMPLETE;
     }
 
@@ -119,10 +106,9 @@ public class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwne
     @ExportMessage
     public SeqIterator iterator(
                     @Shared("naCheck") @Cached() NACheck naCheck,
-                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(data, data.length);
-        naCheck.enable(!isComplete(ownerIsNull));
+        naCheck.enable(!isComplete());
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -142,15 +128,15 @@ public class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwne
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        naCheck.enable(!isComplete(ownerIsNull));
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete());
         return new RandomAccessIterator(data);
     }
 
     @ExportMessage
-    public double getDoubleAt(int index, @Shared("naCheck") @Cached() NACheck naCheck, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+    public double getDoubleAt(int index, @Shared("naCheck") @Cached() NACheck naCheck) {
         double value = data[index];
-        naCheck.enable(!isComplete(ownerIsNull));
+        naCheck.enable(!isComplete());
         naCheck.check(value);
         return value;
     }
@@ -197,9 +183,6 @@ public class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwne
         if (!neverSeenNA) {
             setCompleteProfile.enter();
             complete = false;
-            if (owner != null) {
-                owner.setComplete(false);
-            }
         }
     }
 
@@ -209,9 +192,6 @@ public class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwne
         if (RRuntime.isNA(value)) {
             setCompleteProfile.enter();
             complete = false;
-            if (owner != null) {
-                owner.setComplete(false);
-            }
         }
     }
 

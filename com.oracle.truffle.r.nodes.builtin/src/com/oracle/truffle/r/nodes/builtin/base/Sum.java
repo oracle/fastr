@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.FullPrecisionSum;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
@@ -39,18 +46,13 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-import static com.oracle.truffle.r.runtime.context.FastROptions.FullPrecisionSum;
 
 /**
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
@@ -90,22 +92,23 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
                     @Cached("create()") VectorLengthProfile lengthProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                     @Cached("create()") NACheck na,
-                    @Cached("createBinaryProfile()") ConditionProfile needsExactSumProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile needsExactSumProfile,
+                    @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary vecDataLib) {
         RDoubleVector vector = (RDoubleVector) args.getArgument(0);
-        int length = lengthProfile.profile(vector.getLength());
+        int length = lengthProfile.profile(vecDataLib.getLength(vector.getData()));
 
         if (needsExactSumProfile.profile(length >= 3)) {
             if (exactSumNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 exactSumNode = (MiscRFFI.ExactSumNode) insert((Node) MiscRFFI.ExactSumNode.create());
             }
-            return exactSumNode.execute(vectorToArrayNode.execute(vector), !vector.isComplete(), cachedNaRm);
+            return exactSumNode.execute(vectorToArrayNode.execute(vector), !vecDataLib.isComplete(vector.getData()), cachedNaRm);
         } else {
             na.enable(vector);
             loopProfile.profileCounted(length);
             double sum = 0;
             for (int i = 0; loopProfile.inject(i < length); i++) {
-                double value = vector.getDataAt(i);
+                double value = vecDataLib.getDoubleAt(vector.getData(), i);
                 if (na.check(value)) {
                     if (!cachedNaRm) {
                         return RRuntime.DOUBLE_NA;

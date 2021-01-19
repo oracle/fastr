@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,14 +25,13 @@ package com.oracle.truffle.r.nodes.access.vector;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionCheckNodeFactory.Mat2indsubNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
@@ -46,11 +45,13 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -280,8 +281,9 @@ abstract class PositionCheckNode extends RBaseNode {
         private final BranchProfile error = BranchProfile.create();
         private final BranchProfile na = BranchProfile.create();
 
-        @Specialization
-        protected RIntVector doInt(int[] vectorDimensions, RIntVector intPos, int[] positionDimensions) {
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        protected RIntVector doInt(int[] vectorDimensions, RIntVector intPos, int[] positionDimensions,
+                        @CachedLibrary("intPos.getData()") VectorDataLibrary intPosDataLib) {
             int numberOfPositions = positionDimensions[0];
             int[] flatIndexes = new int[numberOfPositions];
 
@@ -292,7 +294,7 @@ abstract class PositionCheckNode extends RBaseNode {
                 int tdim = 1;
                 for (int dimIdx = 0; dimIdx < vectorDimensions.length; dimIdx++) {
 
-                    int indexIntoVector = intPos.getDataAt(positionIdx + dimIdx * numberOfPositions); // intPos[positionIdx,dimIdx]
+                    int indexIntoVector = intPosDataLib.getIntAt(intPos.getData(), positionIdx + dimIdx * numberOfPositions); // intPos[positionIdx,dimIdx]
                     if (indexIntoVector == RRuntime.INT_NA || indexIntoVector == 0) {
                         na.enter();
                         flatIndexes[positionIdx] = indexIntoVector;
@@ -311,11 +313,12 @@ abstract class PositionCheckNode extends RBaseNode {
                     tdim *= dimLength;
                 }
             }
-            return RDataFactory.createIntVector(flatIndexes, intPos.isComplete());
+            return RDataFactory.createIntVector(flatIndexes, intPosDataLib.isComplete(intPos.getData()));
         }
 
-        @Specialization
-        protected RDoubleVector doDouble(int[] vectorDimensions, RDoubleVector doublePos, int[] positionDimensions) {
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        protected RDoubleVector doDouble(int[] vectorDimensions, RDoubleVector doublePos, int[] positionDimensions,
+                        @CachedLibrary("doublePos.getData()") VectorDataLibrary doublePosDataLib) {
             int numberOfPositions = positionDimensions[0];
             double[] flatIndexes = new double[numberOfPositions];
 
@@ -325,7 +328,7 @@ abstract class PositionCheckNode extends RBaseNode {
             for (int positionIdx = 0; positionIdx < numberOfPositions; positionIdx++) {
                 int tdim = 1;
                 for (int dimIdx = 0; dimIdx < vectorDimensions.length; dimIdx++) {
-                    double indexIntoVector = doublePos.getDataAt(positionIdx + dimIdx * numberOfPositions);
+                    double indexIntoVector = doublePosDataLib.getDoubleAt(doublePos.getData(), positionIdx + dimIdx * numberOfPositions);
                     if (RRuntime.isNAorNaN(indexIntoVector) || indexIntoVector == 0) {
                         na.enter();
                         flatIndexes[positionIdx] = indexIntoVector;
@@ -344,7 +347,7 @@ abstract class PositionCheckNode extends RBaseNode {
                     tdim *= dimLength;
                 }
             }
-            return RDataFactory.createDoubleVector(flatIndexes, doublePos.isComplete());
+            return RDataFactory.createDoubleVector(flatIndexes, doublePosDataLib.isComplete(doublePos.getData()));
         }
     }
 

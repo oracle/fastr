@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,9 +46,8 @@ import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.FastROptions;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -198,9 +196,7 @@ public class ReplaceVectorNodeTest extends TestBase {
     @Theory
     public void testCompletenessAfterReplace(RType targetType) {
         execInContext(() -> {
-            if (RContext.getInstance().getOption(FastROptions.DSLCacheSizeFactor) == 0.0) {
-                return null;
-            }
+            assumeTrue(isCacheEnabled());
 
             RAbstractVector vector = generateVector(targetType, 4, false);
             RAbstractVector replaceWith = generateVector(targetType, 1, true);
@@ -230,9 +226,11 @@ public class ReplaceVectorNodeTest extends TestBase {
     @Theory
     public void testCompletenessPositionNA(RType targetType) {
         execInContext(() -> {
-            if (targetType == RType.Raw || RContext.getInstance().getOption(FastROptions.DSLCacheSizeFactor) == 0.0) {
-                return null;
-            }
+            // It does not make sense to check for NAs in lists, and raw vectors.
+            assumeTrue(isCacheEnabled());
+            assumeTrue(targetType != RType.Raw);
+            assumeTrue(targetType != RType.List);
+
             RAbstractVector vector = generateVector(targetType, 4, true);
             RAbstractVector replaceWith = generateVector(targetType, 1, true);
 

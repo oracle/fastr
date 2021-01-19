@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
@@ -44,7 +45,6 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitBaseEnvCallDispatcher;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -55,8 +55,10 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode.Arg3 {
@@ -109,15 +111,16 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         return castAsCharacterResultNode.doCast(asCharacterDispatcher.call(frame, result));
     }
 
-    @Specialization
-    protected RStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
-        int length = lengthProfile.profile(values.getLength());
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
+    protected RStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse,
+                    @CachedLibrary("values.getData()") VectorDataLibrary valuesDataLib) {
+        int length = lengthProfile.profile(valuesDataLib.getLength(values.getData()));
         if (hasNonNullElements(values, length)) {
-            int seqPos = isStringSequence(values, length);
+            int seqPos = isStringSequence(values, valuesDataLib, length);
             if (seqPos != -1) {
-                return createStringSequence(frame, values, length, seqPos, sep);
+                return createStringSequence(frame, values, valuesDataLib, length, seqPos, sep);
             } else {
-                String[] result = pasteListElements(frame, values, sep, length);
+                String[] result = pasteListElements(frame, values, valuesDataLib, sep, length);
                 if (result == ONE_EMPTY_STRING) {
                     return RDataFactory.createEmptyStringVector();
                 } else {
@@ -129,11 +132,12 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         }
     }
 
-    @Specialization
-    protected String pasteList(VirtualFrame frame, RAbstractListVector values, String sep, String collapse) {
-        int length = lengthProfile.profile(values.getLength());
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
+    protected String pasteList(VirtualFrame frame, RAbstractListVector values, String sep, String collapse,
+                    @CachedLibrary("values.getData()") VectorDataLibrary valuesDataLib) {
+        int length = lengthProfile.profile(valuesDataLib.getLength(values.getData()));
         if (hasNonNullElements(values, length)) {
-            String[] result = pasteListElements(frame, values, sep, length);
+            String[] result = pasteListElements(frame, values, valuesDataLib, sep, length);
             return collapseString(result, collapse);
         } else {
             return "";
@@ -151,12 +155,12 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         return false;
     }
 
-    private String[] pasteListElements(VirtualFrame frame, RAbstractListVector values, String sep, int length) {
+    private String[] pasteListElements(VirtualFrame frame, RAbstractListVector values, VectorDataLibrary valuesDataLib, String sep, int length) {
         String[][] converted = new String[length][];
         int maxLength = 1;
         int emptyCnt = 0;
         for (int i = 0; i < length; i++) {
-            Object element = values.getDataAt(i);
+            Object element = valuesDataLib.getDataAtAsObject(values.getData(), i);
             String[] array = castCharacterVector(frame, element).materialize().getReadonlyStringData();
             maxLength = Math.max(maxLength, array.length);
             if (array.length == 0) {
@@ -168,7 +172,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         }
         if (convertedEmptyProfile.profile(emptyCnt == length)) {
             return ONE_EMPTY_STRING;
-        } else if (lengthOneAndCompleteProfile.profile(length == 1 && values.isComplete())) {
+        } else if (lengthOneAndCompleteProfile.profile(length == 1 && valuesDataLib.isComplete(values.getData()))) {
             return converted[0];
         } else if (length == 1) { // Incomplete values vector
             // Clone array since it might be physical data array of a string vector
@@ -280,18 +284,19 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     /**
      * Tests for pattern = { scalar } intSequence { scalar }.
      */
-    private static int isStringSequence(RAbstractListVector values, int length) {
+    private static int isStringSequence(RAbstractListVector values, VectorDataLibrary valuesDataLib, int length) {
+        Object valuesData = values.getData();
         int i = 0;
         // consume prefix
-        while (i < length && isScalar(values.getDataAt(i))) {
+        while (i < length && isScalar(valuesDataLib.getDataAtAsObject(valuesData, i))) {
             i++;
         }
         if (i < length) {
-            Object currVal = values.getDataAt(i);
+            Object currVal = valuesDataLib.getDataAtAsObject(valuesData, i);
             if (currVal instanceof RIntVector && ((RIntVector) currVal).isSequence()) {
                 // consume suffix
                 int j = i + 1;
-                while (j < length && isScalar(values.getDataAt(j))) {
+                while (j < length && isScalar(valuesDataLib.getDataAtAsObject(valuesData, j))) {
                     j++;
                 }
                 if (j == length) {
@@ -306,8 +311,8 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         return dataAt instanceof RScalar || dataAt instanceof String || dataAt instanceof Double || dataAt instanceof Integer || dataAt instanceof Byte;
     }
 
-    private RStringVector createStringSequence(VirtualFrame frame, RAbstractListVector values, int length, int seqPos, String sep) {
-        assert isStringSequence(values, length) != -1;
+    private RStringVector createStringSequence(VirtualFrame frame, RAbstractListVector values, VectorDataLibrary valuesDataLib, int length, int seqPos, String sep) {
+        assert isStringSequence(values, valuesDataLib, length) != -1;
 
         String[] prefix = new String[seqPos];
         for (int i = 0; i < seqPos; i++) {

@@ -22,23 +22,25 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.nodes.ResizeContainer;
 
-@GenerateUncached
-public abstract class SetStringEltNode extends FFIUpCallNode.Arg3 {
-    public static SetStringEltNode create() {
-        return SetStringEltNodeGen.create();
+public abstract class LengthGetsNode extends FFIUpCallNode.Arg2 {
+    public static LengthGetsNode create() {
+        return LengthGetsNodeGen.create();
     }
 
-    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
-    Object doIt(RStringVector vector, long index, CharSXPWrapper element,
-                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary) {
-        dataLibrary.setStringAt(vector.getData(), (int) index, element.getContents());
-        return null;
+    @Specialization
+    protected Object resizeNull(RNull rNull, @SuppressWarnings("unused") int newLen) {
+        return rNull;
+    }
+
+    @Specialization
+    protected Object resizeVector(RAbstractContainer container, int newLen,
+                    @Cached ResizeContainer resizeContainer) {
+        return resizeContainer.execute(container, newLen);
     }
 }

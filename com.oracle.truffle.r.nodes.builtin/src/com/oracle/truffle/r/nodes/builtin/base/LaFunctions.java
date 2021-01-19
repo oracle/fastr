@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,15 +56,6 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
-import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
@@ -75,6 +66,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -82,10 +74,18 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorDataReuse;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -401,10 +401,11 @@ public class LaFunctions {
         @Node.Child private LapackRFFI.ZunmqrNode zunmqrNode = LapackRFFI.ZunmqrNode.create();
         @Node.Child private LapackRFFI.ZtrtrsNode ztrtrsNode = LapackRFFI.ZtrtrsNode.create();
 
-        @Specialization
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         Object doQrCoefCmplx(RList q, RComplexVector b,
                         @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary qrDataLib,
                         @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary tauDataLib,
+                        @CachedLibrary("b.getData()") VectorDataLibrary bDataLib,
                         @Cached("create()") VectorDataReuse.Complex vectorDataReuse,
                         @Cached("create()") ExtractListElement extractQrElement,
                         @Cached("create()") ExtractListElement extractTauElement,
@@ -443,7 +444,7 @@ public class LaFunctions {
             if (info != 0) {
                 throw error(Message.LAPACK_ERROR, info, "zunmqr");
             }
-            return resultVectorFactory.createComplexVector(bComplexData, b.isComplete(), bDims);
+            return resultVectorFactory.createComplexVector(bComplexData, bDataLib.isComplete(b.getData()), bDims);
         }
 
     }
@@ -907,12 +908,13 @@ public class LaFunctions {
 
         @Child private LapackRFFI.DtrsmNode dtrsmNode = LapackRFFI.DtrsmNode.create();
 
-        @Specialization
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         Object doBacksolve(RDoubleVector r, RDoubleVector b, int k, boolean upperTri, boolean transpose,
                         @Cached("create()") GetDimAttributeNode getRDimAttribute,
                         @Cached("create()") GetDimAttributeNode getBDimAttribute,
                         @Cached("create()") GetReadonlyData.Double getReadonlyData,
-                        @Cached("create()") VectorFactory resultVectorFactory) {
+                        @Cached("create()") VectorFactory resultVectorFactory,
+                        @CachedLibrary("b.getData()") VectorDataLibrary bDataLib) {
             int[] rDims = getRDimAttribute.getDimensions(r);
             int[] bDims = getBDimAttribute.getDimensions(b);
             int nrr = rDims[0];
@@ -945,7 +947,7 @@ public class LaFunctions {
                 dtrsmNode.execute("L", upperTri ? "U" : "L", transpose ? "T" : "N", "N",
                                 k, ncb, 1d, rData, nrr, resultData, k);
             }
-            return resultVectorFactory.createDoubleVector(resultData, b.isComplete(), new int[]{k, ncb});
+            return resultVectorFactory.createDoubleVector(resultData, bDataLib.isComplete(b.getData()), new int[]{k, ncb});
         }
 
     }

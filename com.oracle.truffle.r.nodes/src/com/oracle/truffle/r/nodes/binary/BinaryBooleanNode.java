@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,8 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
@@ -41,21 +39,23 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
@@ -167,18 +167,21 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
         return isRAbstractListVector(left) ^ isRAbstractListVector(right);
     }
 
-    @Specialization(guards = {"isOneList(left, right)"})
+    @Specialization(guards = {"isOneList(left, right)"}, limit = "getGenericDataLibraryCacheSize()")
     protected Object doList(VirtualFrame frame, RAbstractVector left, RAbstractVector right,
                     @Cached("create()") CastTypeNode cast,
                     @Cached("createRecursive()") BinaryBooleanNode recursive,
-                    @Cached("create()") BranchProfile listCoercionErrorBranch) {
+                    @Cached("create()") BranchProfile listCoercionErrorBranch,
+                    @CachedLibrary("left.getData()") VectorDataLibrary leftDataLib,
+                    @CachedLibrary("right.getData()") VectorDataLibrary rightDataLib,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary resultDataLib) {
         Object recursiveLeft = left;
         if (isRAbstractListVector(left)) {
             if (copyAttributes == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 copyAttributes = insert(CopyAttributesNodeGen.create(true));
             }
-            recursiveLeft = castListToAtomic((RAbstractListBaseVector) left, cast, right.getRType(), copyAttributes);
+            recursiveLeft = castListToAtomic(left, leftDataLib, cast, right.getRType(), copyAttributes, resultDataLib);
             if (recursiveLeft == null) {
                 listCoercionErrorBranch.enter();
                 throw RError.error(RError.NO_CALLER, RError.Message.LIST_COERCION, right.getRType().getName());
@@ -190,7 +193,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 copyAttributes = insert(CopyAttributesNodeGen.create(true));
             }
-            recursiveRight = castListToAtomic((RAbstractListBaseVector) right, cast, left.getRType(), copyAttributes);
+            recursiveRight = castListToAtomic(right, rightDataLib, cast, left.getRType(), copyAttributes, resultDataLib);
             if (recursiveRight == null) {
                 listCoercionErrorBranch.enter();
                 throw RError.error(RError.NO_CALLER, RError.Message.LIST_COERCION, left.getRType().getName());
@@ -200,11 +203,14 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     }
 
     @TruffleBoundary
-    private static Object castListToAtomic(RAbstractListBaseVector source, CastTypeNode cast, RType type, CopyAttributesNode copyAttributes) {
-        RAbstractVector result = type.create(source.getLength(), false);
-        Object store = result.getInternalStore();
-        for (int i = 0; i < source.getLength(); i++) {
-            Object value = source.getDataAt(i);
+    private static Object castListToAtomic(RAbstractVector source, VectorDataLibrary sourceDataLib, CastTypeNode cast, RType type, CopyAttributesNode copyAttributes,
+                    VectorDataLibrary resultDataLib) {
+        Object sourceData = source.getData();
+        int sourceLen = sourceDataLib.getLength(sourceData);
+        RAbstractVector result = type.create(sourceLen, false);
+        Object resultData = result.getData();
+        for (int i = 0; i < sourceLen; i++) {
+            Object value = sourceDataLib.getElementAt(sourceData, i);
             if (value == RNull.instance && type != RType.Character) {
                 return null;
             }
@@ -217,40 +223,27 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                 } else {
                     str = RDeparse.deparse(value);
                 }
-                ((RStringVector) result).setDataAt(store, i, str);
+                resultDataLib.setStringAt(resultData, i, str);
             } else {
                 value = cast.execute(value, type);
                 if (value instanceof RAbstractVector && ((RAbstractVector) value).getLength() == 1) {
                     value = ((RAbstractVector) value).getDataAtAsObject(0);
                 }
-
                 if (type == RType.Integer && value instanceof Integer) {
-                    if (RRuntime.isNA((int) value)) {
-                        result.setComplete(false);
-                    }
-                    ((RIntVector) result).setDataAt(store, i, (int) value);
+                    resultDataLib.setIntAt(resultData, i, (int) value);
                 } else if (type == RType.Double && value instanceof Double) {
-                    if (RRuntime.isNA((double) value)) {
-                        result.setComplete(false);
-                    }
-                    ((RDoubleVector) result).setDataAt(store, i, (double) value);
+                    resultDataLib.setDoubleAt(resultData, i, (double) value);
                 } else if (type == RType.Logical && value instanceof Byte) {
-                    if (RRuntime.isNA((byte) value)) {
-                        result.setComplete(false);
-                    }
-                    ((RLogicalVector) result).setDataAt(store, i, (byte) value);
+                    resultDataLib.setLogicalAt(resultData, i, (byte) value);
                 } else if (type == RType.Complex && value instanceof RComplex) {
-                    if (RRuntime.isNA((RComplex) value)) {
-                        result.setComplete(false);
-                    }
-                    ((RComplexVector) result).setDataAt(store, i, (RComplex) value);
+                    resultDataLib.setComplexAt(resultData, i, (RComplex) value);
                 } else if (type == RType.Raw && value instanceof RRaw) {
-                    ((RRawVector) result).setRawDataAt(store, i, ((RRaw) value).getValue());
+                    resultDataLib.setRawAt(resultData, i, ((RRaw) value).getValue());
                 }
             }
         }
         if (copyAttributes != null) {
-            copyAttributes.execute(result, result, source.getLength(), source, source.getLength());
+            copyAttributes.execute(result, result, sourceLen, source, sourceLen);
         }
         return result;
     }

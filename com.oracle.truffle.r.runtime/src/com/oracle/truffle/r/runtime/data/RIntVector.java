@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,6 @@ public final class RIntVector extends RAbstractNumericVector {
     private int length;
 
     RIntVector(int[] data, boolean complete) {
-        super(complete);
         setData(new RIntArrayVectorData(data, complete), data.length);
         assert RAbstractVector.verifyVector(this);
     }
@@ -69,13 +68,11 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     RIntVector(Object data, int length) {
-        super(false);
         setData(data, length);
         assert RAbstractVector.verifyVector(this);
     }
 
     private RIntVector() {
-        super(RDataFactory.INCOMPLETE_VECTOR);
     }
 
     private void setData(Object data, int newLen) {
@@ -245,7 +242,6 @@ public final class RIntVector extends RAbstractNumericVector {
             NativeDataAccess.setTrueDataLength(this, l);
         } finally {
             setData(new RIntNativeVectorData(this), getLength());
-            setComplete(false);
         }
     }
 
@@ -415,14 +411,10 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     public long allocateNativeContents() {
-        try {
-            setData(VectorDataLibrary.getFactory().getUncached().materialize(data), getLength());
-            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
-            setData(new RIntNativeVectorData(this), getLength());
-            return result;
-        } finally {
-            setComplete(false);
-        }
+        setData(VectorDataLibrary.getFactory().getUncached().materialize(data), getLength());
+        long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+        setData(new RIntNativeVectorData(this), getLength());
+        return result;
     }
 
     private static final class FastPathAccess extends FastPathFromIntAccess {
