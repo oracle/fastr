@@ -36,18 +36,18 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Resizes a string vector to new length filling the extra space with the empty string value.
  */
 @GenerateUncached
-public abstract class CopyResizedNamesWithEmpty extends RBaseNode {
+public abstract class CopyResizedWithEmpty extends RBaseNode {
 
-    public static CopyResizedNamesWithEmpty create() {
-        return CopyResizedNamesWithEmptyNodeGen.create();
+    public static CopyResizedWithEmpty create() {
+        return CopyResizedWithEmptyNodeGen.create();
     }
 
-    public static CopyResizedNamesWithEmpty getUncached() {
-        return CopyResizedNamesWithEmptyNodeGen.getUncached();
+    public static CopyResizedWithEmpty getUncached() {
+        return CopyResizedWithEmptyNodeGen.getUncached();
     }
 
     public static RStringVector executeSlowPath(RStringVector container, int newSize) {
-        return CopyResizedNamesWithEmptyNodeGen.getUncached().execute(container, newSize);
+        return getUncached().execute(container, newSize);
     }
 
     public abstract RStringVector execute(RStringVector container, int newSize);

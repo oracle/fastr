@@ -52,7 +52,7 @@ public abstract class ResizeContainer extends RBaseNode {
     @Specialization(limit = "getGenericDataLibraryCacheSize()")
     public RAbstractContainer resize(RAbstractContainer container, int newLen,
                     @CachedLibrary("container") AbstractContainerLibrary containerLib,
-                    @Cached CopyResizedNamesWithEmpty copyResizedNamesWithEmpty,
+                    @Cached CopyResizedWithEmpty copyResizedNamesWithEmpty,
                     @Cached GetNamesAttributeNode getNamesAttributeNode,
                     @Cached SetNamesAttributeNode setNamesAttributeNode,
                     @Cached CopyResized copyResized,
