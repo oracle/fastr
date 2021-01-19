@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -35,39 +37,26 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 /**
  * A node that updates length of a vector (as in "length<-" statement). Only names attribute is
  * preserved. If the new length is greater than current length, the new vector is filled with NA.
- *
- * This node does not have @GenerateUncached because its child nodes do not have uncached variants,
- * so we have to managed cached/uncached variant manually.
  */
-public final class ResizeContainer extends RBaseNode {
-    private final boolean cached;
-    @Child private AbstractContainerLibrary containerLib;
-    @Child private CopyResizedNamesWithEmpty copyResizedNamesWithEmpty;
-    @Child private GetNamesAttributeNode getNamesAttributeNode;
-    @Child private SetNamesAttributeNode setNamesAttributeNode;
-    @Child private CopyResized copyResized;
-    private final ConditionProfile hasNames;
-
+public abstract class ResizeContainer extends RBaseNode {
     public static ResizeContainer create() {
-        return new ResizeContainer(true);
+        return ResizeContainerNodeGen.create();
     }
 
     public static ResizeContainer getUncached() {
-        return new ResizeContainer(false);
+        return ResizeContainerNodeGen.getUncached();
     }
 
-    private ResizeContainer(boolean cached) {
-        this.cached = cached;
-        this.containerLib = cached ? AbstractContainerLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize())
-                        : AbstractContainerLibrary.getFactory().getUncached();
-        this.copyResizedNamesWithEmpty = cached ? CopyResizedNamesWithEmpty.create() : CopyResizedNamesWithEmpty.getUncached();
-        this.getNamesAttributeNode = cached ? GetNamesAttributeNode.create() : GetNamesAttributeNode.getUncached();
-        this.setNamesAttributeNode = cached ? SetNamesAttributeNode.create() : null;
-        this.copyResized = cached ? CopyResized.create() : CopyResized.getUncached();
-        this.hasNames = cached ? ConditionProfile.createBinaryProfile() : ConditionProfile.getUncached();
-    }
+    public abstract RAbstractContainer execute(RAbstractContainer container, int newLen);
 
-    public RAbstractContainer resize(RAbstractContainer container, int newLen) {
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
+    public RAbstractContainer resize(RAbstractContainer container, int newLen,
+                    @CachedLibrary("container") AbstractContainerLibrary containerLib,
+                    @Cached CopyResizedNamesWithEmpty copyResizedNamesWithEmpty,
+                    @Cached GetNamesAttributeNode getNamesAttributeNode,
+                    @Cached SetNamesAttributeNode setNamesAttributeNode,
+                    @Cached CopyResized copyResized,
+                    @Cached ConditionProfile hasNames) {
         int len = containerLib.getLength(container);
         if (len == newLen) {
             return container;
@@ -78,17 +67,8 @@ public final class ResizeContainer extends RBaseNode {
         RStringVector names = getNamesAttributeNode.getNames(container);
         if (hasNames.profile(names != null)) {
             RStringVector newNames = copyResizedNamesWithEmpty.execute(names, newLen);
-            setNames(res, newNames);
+            setNamesAttributeNode.setNames(res, newNames);
         }
         return res;
-    }
-
-    private void setNames(RAbstractVector vector, RStringVector names) {
-        if (cached) {
-            assert setNamesAttributeNode != null;
-            setNamesAttributeNode.setNames(vector, names);
-        } else {
-            vector.setNames(names);
-        }
     }
 }

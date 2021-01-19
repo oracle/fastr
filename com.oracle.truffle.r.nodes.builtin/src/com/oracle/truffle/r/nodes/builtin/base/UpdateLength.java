@@ -66,6 +66,6 @@ public abstract class UpdateLength extends RBuiltinNode.Arg2 {
     @Specialization
     protected RAbstractContainer updateLength(RAbstractContainer container, int newLength,
                     @Cached ResizeContainer resizeContainer) {
-        return resizeContainer.resize(container, newLength);
+        return resizeContainer.execute(container, newLength);
     }
 }

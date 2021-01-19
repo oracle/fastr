@@ -53,6 +53,8 @@ public final class RFFIUpCallTargets {
 
     public volatile RootCallTarget RfSetAttribNode;
 
+    public volatile RootCallTarget LengthGetsNode;
+
     public volatile RootCallTarget RfEvalNode;
 
     public volatile RootCallTarget TryRfEvalNode;

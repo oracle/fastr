@@ -261,7 +261,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_installChar(Object name);
 
-    @RFFIUpCallNode(LengthGetsNode.class)
+    @RFFIUpCallNode(value = LengthGetsNode.class, needsCallTarget = true)
     Object Rf_lengthgets(Object x, int newSize);
 
     int Rf_isString(Object x);

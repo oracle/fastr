@@ -23,13 +23,11 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.ResizeContainer;
 
-@GenerateUncached
 public abstract class LengthGetsNode extends FFIUpCallNode.Arg2 {
     public static LengthGetsNode create() {
         return LengthGetsNodeGen.create();
@@ -43,6 +41,6 @@ public abstract class LengthGetsNode extends FFIUpCallNode.Arg2 {
     @Specialization
     protected Object resizeVector(RAbstractContainer container, int newLen,
                     @Cached ResizeContainer resizeContainer) {
-        return resizeContainer.resize(container, newLen);
+        return resizeContainer.execute(container, newLen);
     }
 }
