@@ -1706,9 +1706,6 @@ public abstract class VectorDataLibrary extends Library {
             delegate.setDoubleAt(receiver, index, value);
             assert isSame(delegate.getDoubleAt(receiver, index), value);
             // NA written -> complete must be false
-            if (RRuntime.isNA(delegate.getDoubleAt(receiver, index)) && delegate.isComplete(receiver)) {
-                System.out.println("");
-            }
             assert !RRuntime.isNA(delegate.getDoubleAt(receiver, index)) || !delegate.isComplete(receiver) : delegate.getDoubleAt(receiver, index) + " " + delegate.isComplete(receiver);
         }
 
