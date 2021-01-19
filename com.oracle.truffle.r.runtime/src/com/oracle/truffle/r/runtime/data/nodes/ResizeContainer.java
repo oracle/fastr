@@ -43,10 +43,6 @@ public abstract class ResizeContainer extends RBaseNode {
         return ResizeContainerNodeGen.create();
     }
 
-    public static ResizeContainer getUncached() {
-        return ResizeContainerNodeGen.getUncached();
-    }
-
     public abstract RAbstractContainer execute(RAbstractContainer container, int newLen);
 
     @Specialization(limit = "getGenericDataLibraryCacheSize()")
