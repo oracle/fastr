@@ -79,6 +79,11 @@ size_t Rf_ucstoutf8(char *s, const unsigned int wc) {
     return 0;
 }
 
+size_t mbtoucs(unsigned int *wc, const char *s, size_t n) {
+    unimplemented("mbtoucs");
+    return 0;
+}
+
 void setup_RdotApp(void) {
 	unimplemented("setup_RdotApp");
 }
