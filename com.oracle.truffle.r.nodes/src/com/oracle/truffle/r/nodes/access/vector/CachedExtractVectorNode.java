@@ -291,6 +291,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         int[] newDimensions = new int[positionCount];
         RList originalDimNames = getDimNamesNode.getDimNames(originalTarget);
+        Object originalDimNamesData;
         RStringVector originalDimNamesNames;
         Object[] newDimNames;
         String[] newDimNamesNames;
@@ -298,6 +299,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             newDimNames = null;
             originalDimNamesNames = null;
             newDimNamesNames = null;
+            originalDimNamesData = null;
         } else {
             if (getNamesFromDimNamesNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -306,10 +308,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             newDimNames = new Object[positionCount];
             originalDimNamesNames = getNamesFromDimNamesNode.getNames(originalDimNames);
             newDimNamesNames = originalDimNamesNames == null ? null : new String[positionCount];
+            originalDimNamesData = originalDimNames.getData();
         }
-
-        Object originalDimNamesData = originalDimNames != null ? originalDimNames.getData() : null;
-        VectorDataLibrary originalDimNamesDataLib = originalDimNames != null ? getOriginalDimNamesVectorDataLib() : null;
 
         int dimIndex = -1;
         for (int i = 0; i < numberOfPositions; i++) {
@@ -319,8 +319,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 newDimensions[dimIndex] = selectedPositionsCount;
                 if (newDimNames != null) {
                     assert originalDimNames != null;
-                    assert originalDimNamesDataLib != null;
-                    Object dataAt = originalDimNamesDataLib.getDataAtAsObject(originalDimNamesData, i);
+                    Object dataAt = getOriginalDimNamesVectorDataLib().getDataAtAsObject(originalDimNamesData, i);
                     Object result;
                     if (dataAt == RNull.instance) {
                         result = RNull.instance;
@@ -368,10 +367,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     setDimNamesNode = insert(SetDimNamesAttributeNode.create());
                 }
                 assert originalDimNames != null;
-                assert originalDimNamesDataLib != null;
                 setDimNamesNode.setDimNames(extractedTarget,
                                 RDataFactory.createList(newDimNames,
-                                                newDimNamesNames == null ? null : RDataFactory.createStringVector(newDimNamesNames, originalDimNamesDataLib.isComplete(originalDimNamesData))));
+                                                newDimNamesNames == null ? null
+                                                                : RDataFactory.createStringVector(newDimNamesNames, getOriginalDimNamesVectorDataLib().isComplete(originalDimNamesData))));
             }
         } else if (newDimNames != null && originalDimNamesPRofile.profile(originalDimNames.getLength() > 0)) {
             RStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);
