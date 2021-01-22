@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,6 +76,11 @@ size_t ucstoutf8(char *s, const unsigned int wc) {
 
 size_t Rf_ucstoutf8(char *s, const unsigned int wc) {
     unimplemented("Rf_ucstoutf8");
+    return 0;
+}
+
+size_t mbtoucs(unsigned int *wc, const char *s, size_t n) {
+    unimplemented("mbtoucs");
     return 0;
 }
 
