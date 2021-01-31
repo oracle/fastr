@@ -103,6 +103,7 @@ typedef SEXP (*call_Rf_classgets)(SEXP vec, SEXP klass);
 typedef const char *(*call_Rf_translateChar)(SEXP x);
 typedef const char *(*call_Rf_translateChar0)(SEXP x);
 typedef const char *(*call_Rf_translateCharUTF8)(SEXP x);
+typedef const char *(*call_Rf_translateCharFP)(SEXP x);
 typedef SEXP (*call_Rf_lengthgets)(SEXP x, R_len_t y);
 typedef SEXP (*call_Rf_xlengthgets)(SEXP x, R_xlen_t y);
 typedef SEXP (*call_R_lsInternal)(SEXP env, Rboolean all);

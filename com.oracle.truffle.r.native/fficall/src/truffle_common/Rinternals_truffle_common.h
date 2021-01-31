@@ -785,6 +785,13 @@ const char *Rf_translateCharUTF8(SEXP x) {
     return result;
 }
 
+const char *Rf_translateCharFP(SEXP x) {
+    TRACE1(x);
+    // TODO: proper implementation
+    const char *result = CHAR(x);
+    return result;
+}
+
 SEXP Rf_lengthgets(SEXP x, R_len_t y) {
     TRACE1(x);
     SEXP result = ((call_Rf_lengthgets) callbacks[Rf_lengthgets_x])(x, y);
