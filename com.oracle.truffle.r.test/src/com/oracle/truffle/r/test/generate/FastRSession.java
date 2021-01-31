@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.test.generate;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktraces;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
@@ -70,8 +72,6 @@ import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.FastROptions;
-import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktraces;
-import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
@@ -128,7 +128,7 @@ public final class FastRSession implements RSession {
     }
 
     public FastRContext createContext(ContextKind contextKind, @SuppressWarnings("unused") boolean allowHostAccess) {
-        RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--no-echo", "--silent", "--no-restore"}, false), false);
         Map<String, String> env = new HashMap<>();
         env.put("TZ", "GMT");
         ChildContextInfo info = ChildContextInfo.create(params, env, contextKind, contextKind == ContextKind.SHARE_NOTHING ? null : mainRContext, input, output, output);
@@ -163,7 +163,7 @@ public final class FastRSession implements RSession {
             }
         }
         try {
-            RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
+            RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--no-echo", "--silent", "--no-restore"}, false), false);
             ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
             RContext.childInfo = info;
             mainEngine = Engine.newBuilder().allowExperimentalOptions(true).option("engine.UseConservativeContextReferences", "true").in(input).out(output).err(output).build();

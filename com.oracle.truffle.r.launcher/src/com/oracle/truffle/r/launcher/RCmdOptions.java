@@ -493,7 +493,7 @@ public final class RCmdOptions {
         String[] arguments = options.getArguments();
         int resultArgsLength = arguments.length;
         int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
-        // Now reformat the args, setting --slave and --no-restore as per the spec
+        // Now reformat the args, setting --no-echo and --no-restore as per the spec
         ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
         adjArgs.add(arguments[0]);
         adjArgs.add("--no-echo");

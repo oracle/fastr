@@ -133,7 +133,7 @@ public final class ChildContextInfo {
      * @param parent if non-null {@code null}, the parent creating the context
      */
     public static ChildContextInfo createNoRestore(Client client, Map<String, String> env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
-        RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{client.argumentName(), "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{client.argumentName(), "--vanilla", "--no-echo", "--silent", "--no-restore"}, false), false);
         return create(params, env, kind, parent, stdin, stdout, stderr);
     }
 

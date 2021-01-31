@@ -421,7 +421,7 @@ public final class RContext {
         this.language = language;
         String[] args;
         if (env.getApplicationArguments().length == 0) {
-            args = new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"};
+            args = new String[]{"R", "--vanilla", "--no-echo", "--silent", "--no-restore"};
         } else {
             args = env.getApplicationArguments();
         }

@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_SYSTEM_FUNCTION;
+
 import java.util.ArrayList;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
@@ -32,8 +35,6 @@ import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
-import java.util.logging.Level;
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_SYSTEM_FUNCTION;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class SystemFunctionFactory {
@@ -140,7 +141,7 @@ public abstract class SystemFunctionFactory {
                         // We use "-e tools:::.install_packages()" as its simpler
                         ArrayList<String> newArgsList = new ArrayList<>();
                         newArgsList.add("--no-restore");
-                        newArgsList.add("--slave");
+                        newArgsList.add("--no-echo");
                         newArgsList.add("-e");
                         newArgsList.add("tools:::.install_packages()");
                         newArgsList.add("--args");
