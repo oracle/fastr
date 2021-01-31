@@ -139,7 +139,7 @@ public final class RCmdOptions {
         MAX_PPSIZE(RCmdOptionType.STRING, false, "max-ppsize", null, "Set max size of protect stack to N"),
         QUIET(RCmdOptionType.BOOLEAN, true, "q", "quiet", false, "Don't print startup message"),
         SILENT(RCmdOptionType.BOOLEAN, true, "silent", false, "Same as --quiet"),
-        NO_ECHO(RCmdOptionType.BOOLEAN, false, "s", "no-echo", false, "Make R run as quietly as possible"),
+        NO_ECHO(RCmdOptionType.BOOLEAN, true, "s", "no-echo", false, "Make R run as quietly as possible"),
         INTERACTIVE(RCmdOptionType.BOOLEAN, true, "interactive", false, "Force an interactive session"),
         VERBOSE(RCmdOptionType.BOOLEAN, true, "verbose", false, "Print more information about progress"),
         ARGS(RCmdOptionType.BOOLEAN, true, "args", false, "Skip the rest of the command line"),
