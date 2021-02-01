@@ -35,6 +35,6 @@ public class TestBuiltin_allvars extends TestBase {
 
     @Test
     public void testallvars2() {
-        assertEval("{ fml <- as.formula('v ~ a + b'); fml[[2]] <- NULL; all.vars(fml) }");
+        assertEval(Ignored.NewRVersionMigration, "{ fml <- as.formula('v ~ a + b'); fml[[2]] <- NULL; all.vars(fml) }");
     }
 }

@@ -213,7 +213,7 @@ public class TestDistributions extends TestBase {
             String[] newParams = Arrays.copyOf(validParams, validParams.length);
             for (String errVal : errorParamValues) {
                 newParams[i] = errVal;
-                assertEval(Output.MayIgnoreWarningContext, func + "(0, " + String.join(", ", newParams) + ")");
+                assertEval(Ignored.NewRVersionMigration, Output.MayIgnoreWarningContext, func + "(0, " + String.join(", ", newParams) + ")");
             }
         }
     }

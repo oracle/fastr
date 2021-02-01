@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import com.oracle.truffle.r.test.TestBase;
 import org.junit.Test;
+
+import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 
@@ -32,7 +33,7 @@ public class TestBuiltin_dotdotdotelt extends TestBase {
     @Test
     public void testdotdotdotelt1() {
         assertEval("tst <- function(n,...) ...elt(n); tst(1, 1, 2, 3)");
-        assertEval("tst <- function(n,...) ...elt(n); tst(c(3,2,1), 1, 2, 3)");
+        assertEval(Ignored.NewRVersionMigration, "tst <- function(n,...) ...elt(n); tst(c(3,2,1), 1, 2, 3)");
         assertEval("tst <- function(n,...) ...elt(n); tst(1.6, 1, 2, 3)");
         // TODO: error with conversion of string to interger
         assertEval(Ignored.ImplementationError, "tst <- function(n,...) ...elt(n); tst('1.6', 1, 2, 3)");

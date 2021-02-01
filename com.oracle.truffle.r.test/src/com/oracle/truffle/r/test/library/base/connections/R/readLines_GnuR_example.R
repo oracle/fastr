@@ -1,3 +1,4 @@
+#Ignored.NewRVersionMigration
 cat("TITLE extra line", "2 3 5 7", "", "11 13 17", file = "ex.data", sep = "\n")
 r0 <- readLines("ex.data", n = -1)
 unlink("ex.data")

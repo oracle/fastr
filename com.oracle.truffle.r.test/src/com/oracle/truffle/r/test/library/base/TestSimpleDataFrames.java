@@ -175,7 +175,7 @@ public class TestSimpleDataFrames extends TestBase {
     public void testMisc() {
         assertEval("{ y<-data.frame(7); as.logical(y) }");
         assertEval("{ y<-data.frame(integer()); as.logical(y) }");
-        assertEval(Output.IgnoreErrorContext, "{ y<-data.frame(c(1,2,3)); as.logical(y) }");
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ y<-data.frame(c(1,2,3)); as.logical(y) }");
 
         assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
 

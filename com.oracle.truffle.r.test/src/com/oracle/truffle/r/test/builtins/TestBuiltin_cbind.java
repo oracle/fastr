@@ -155,7 +155,7 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("{ v <- 1; class(v) <- c('foo1', 'foo2'); cbind.foo2 <- function(...) 'foo2'; cbind(v) }");
         assertEval("{ v <- 1; class(v) <- c('foo1', 'foo2'); cbind.foo1 <- function(...) 'foo1'; cbind.foo2 <- function(...) 'foo2'; cbind(v) }");
 
-        assertEval("{ v1 <- 1; class(v1) <- 'foo1'; cbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind.foo2 <- function(...) 'foo2'; cbind(v1, v2) }");
+        assertEval(Ignored.NewRVersionMigration, "{ v1 <- 1; class(v1) <- 'foo1'; cbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind.foo2 <- function(...) 'foo2'; cbind(v1, v2) }");
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; cbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind(v1, v2) }");
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; v2 <- 2; class(v2) <- 'foo2'; cbind.foo2 <- function(...) 'foo2'; cbind(v1, v2) }");
     }

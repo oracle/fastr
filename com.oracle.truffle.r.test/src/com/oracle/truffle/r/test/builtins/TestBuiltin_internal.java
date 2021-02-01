@@ -33,6 +33,6 @@ public class TestBuiltin_internal extends TestBase {
     public void testIndirectInternalInvocation() {
         assertEval("is.environment((get('.Internal', envir = baseenv(), mode = 'function'))(getNamespaceRegistry()))");
         assertEval("attr((get('.Internal', envir = baseenv(), mode = 'function'))(getNamespaceRegistry()), 'name')");
-        assertEval("(get('.Internal', envir = baseenv(), mode = 'function')(paste0(1,2,3)))");
+        assertEval(Ignored.NewRVersionMigration, "(get('.Internal', envir = baseenv(), mode = 'function')(paste0(1,2,3)))");
     }
 }

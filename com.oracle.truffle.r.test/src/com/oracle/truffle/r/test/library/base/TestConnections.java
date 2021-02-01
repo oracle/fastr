@@ -179,7 +179,7 @@ public class TestConnections extends TestRBase {
     public void testFileOpenRaw() {
         Assert.assertTrue("Could not create required temp file for test.", Files.exists(tempFileGzip));
         assertEval("{ zz <- file(\"" + tempFileGzip + "\", \"r\", raw=T); res <- readBin(zz, raw(), 4); close(zz); res }");
-        assertEval("{ zz <- rawConnection(as.raw(c(65, 66, 67, 0, 97, 98, 99))); readChar(zz, 6) }");
+        assertEval(Ignored.NewRVersionMigration, "{ zz <- rawConnection(as.raw(c(65, 66, 67, 0, 97, 98, 99))); readChar(zz, 6) }");
     }
 
     @Test
@@ -253,7 +253,7 @@ public class TestConnections extends TestRBase {
         assertEval(template("conn <- rawConnection(raw(0), 'wb'); value <- list(a=c(1,2,3), b='foo'); save(value, file=conn, version=%0); rawConnectionValue(conn)", SAVE_VERSIONS));
         // ignored because save refuses to write to a rawConnection that is not configured to binary
         assertEval(template("conn <- rawConnection(raw(0), 'w'); value <- c(1,2,3); save(value, file=conn, version=%0); rawConnectionValue(conn)", SAVE_VERSIONS));
-        assertEval(template("f <- tempfile(); unlink(f); x <- 1:10; save(x, file=f, version=%0); con <- file(f, 'rb'); dput(class(con))", SAVE_VERSIONS));
+        assertEval(Ignored.NewRVersionMigration, template("f <- tempfile(); unlink(f); x <- 1:10; save(x, file=f, version=%0); con <- file(f, 'rb'); dput(class(con))", SAVE_VERSIONS));
     }
 
     @Test

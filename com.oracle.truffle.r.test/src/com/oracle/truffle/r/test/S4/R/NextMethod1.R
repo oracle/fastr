@@ -18,6 +18,7 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
+#Ignored.NewRVersionMigration
 setClass("A")
 setClass("B", contains = "A")
 setClass("C", contains = "A")

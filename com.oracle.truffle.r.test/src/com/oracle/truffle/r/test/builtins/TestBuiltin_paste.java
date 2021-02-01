@@ -107,8 +107,8 @@ public class TestBuiltin_paste extends TestBase {
         // Note the catch: class on strings is ignored....
         assertEval("{ as.character.myc <- function(x) '42'; val <- 'hello'; class(val) <- 'myc'; paste(val, 'world') }");
         // Next 2 tests should show error since 42, nor NULL is not character
-        assertEval("{ as.character.myc <- function(x) 42; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
-        assertEval("{ as.character.myc <- function(x) NULL; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
+        assertEval(Ignored.NewRVersionMigration, "{ as.character.myc <- function(x) 42; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
+        assertEval(Ignored.NewRVersionMigration, "{ as.character.myc <- function(x) NULL; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
         assertEval("{ as.character.myc <- function(x) '42'; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
         assertEval("{ assign('as.character.myc', function(x) '42', envir=.__S3MethodsTable__.); val <- 3.14; class(val) <- 'myc'; res <- paste(val, 'world'); rm('as.character.myc', envir=.__S3MethodsTable__.); res }");
     }

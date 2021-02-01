@@ -70,7 +70,7 @@ public class TestBuiltin_intToUtf8 extends TestBase {
         assertEval("intToUtf8(65535)");
         // GNU-R outputs a real char vs. FastR outputs "\U00010000"
         assertEval(Ignored.ImplementationError, "intToUtf8(65536)");
-        assertEval("intToUtf8(200000)");
+        assertEval(Ignored.NewRVersionMigration, "intToUtf8(200000)");
         assertEval("intToUtf8(1:100)");
         assertEval("intToUtf8(1:100, FALSE)");
         assertEval("intToUtf8(1:100, TRUE)");

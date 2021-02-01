@@ -35,11 +35,11 @@ public class TestR5 extends TestBase {
      * {@code suppressMessages} is needed to suppress messages about codetools not being available.
      */
     private void assertSuppress(String test) {
-        assertEval("print(suppressMessages({" + test + "}))");
+        assertEval(Ignored.NewRVersionMigration, "print(suppressMessages({" + test + "}))");
     }
 
     private void assertSuppressAndIgnoreWarnings(String test) {
-        assertEval(Output.IgnoreWarningMessage, "print(suppressMessages({" + test + "}))");
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreWarningMessage, "print(suppressMessages({" + test + "}))");
     }
 
     private void assertSuppress(TestTrait trait, String test) {
@@ -59,12 +59,12 @@ public class TestR5 extends TestBase {
 
     @Test
     public void testAttributes() {
-        assertEval("{ clazz <- setRefClass('Foo13R5'); clazz$methods() }");
+        assertEval(Ignored.NewRVersionMigration, "{ clazz <- setRefClass('Foo13R5'); clazz$methods() }");
     }
 
     @Test
     public void testReferenceSemantics() {
-        assertEval("fooClass <- setRefClass('Foo12R5', fields = list( a = 'numeric')); obj0 <- fooClass$new(a = 1); obj1 <- obj0; obj0$a; obj1$a; obj0$a <- 999; obj0$a; obj1$a");
+        assertEval(Ignored.NewRVersionMigration, "fooClass <- setRefClass('Foo12R5', fields = list( a = 'numeric')); obj0 <- fooClass$new(a = 1); obj1 <- obj0; obj0$a; obj1$a; obj0$a <- 999; obj0$a; obj1$a");
     }
 
     @Test
@@ -100,8 +100,8 @@ public class TestR5 extends TestBase {
     @Test
     public void testFieldAccess() {
         assertEval("{ clazz <- setRefClass('Foo14R5'); obj <- clazz$new(); obj$inexistingMethod() }");
-        assertEval("{ clazz <- setRefClass('Foo14R5', fields = c('a')); obj <- clazz$new(); obj$a }");
-        assertEval("{ clazz <- setRefClass('Foo14R5', fields = c('a')); obj <- clazz$new(a = 1); print(obj$a); obj$a <- 'hello'; print(obj$a) }");
+        assertEval(Ignored.NewRVersionMigration, "{ clazz <- setRefClass('Foo14R5', fields = c('a')); obj <- clazz$new(); obj$a }");
+        assertEval(Ignored.NewRVersionMigration, "{ clazz <- setRefClass('Foo14R5', fields = c('a')); obj <- clazz$new(a = 1); print(obj$a); obj$a <- 'hello'; print(obj$a) }");
 
         // list/modify methods
         assertEval("{ clazz <- setRefClass('Foo19R5'); clazz$methods('inexistingMethod') }");

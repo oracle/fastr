@@ -20,11 +20,13 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
-import java.io.File;
-import static org.junit.Assert.assertTrue;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_dircreate extends TestBase {
@@ -41,10 +43,10 @@ public class TestBuiltin_dircreate extends TestBase {
         assertEval("dir.create('" + dirPath + "', showWarnings=F, recursive=F)");
 
         // now create some that do not exist
-        assertEval("unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath1 + "'); dir.exists('" + dirPath1 + "');");
+        assertEval(Ignored.NewRVersionMigration, "unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath1 + "'); dir.exists('" + dirPath1 + "');");
 
-        assertEval("unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', showWarnings=T, recursive=F); dir.exists('" + dirPath2 + "')");
-        assertEval("unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', showWarnings=F, recursive=F); dir.exists('" + dirPath2 + "')");
-        assertEval("unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', recursive=T); dir.exists('" + dirPath2 + "')");
+        assertEval(Ignored.NewRVersionMigration, "unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', showWarnings=T, recursive=F); dir.exists('" + dirPath2 + "')");
+        assertEval(Ignored.NewRVersionMigration, "unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', showWarnings=F, recursive=F); dir.exists('" + dirPath2 + "')");
+        assertEval(Ignored.NewRVersionMigration, "unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', recursive=T); dir.exists('" + dirPath2 + "')");
     }
 }

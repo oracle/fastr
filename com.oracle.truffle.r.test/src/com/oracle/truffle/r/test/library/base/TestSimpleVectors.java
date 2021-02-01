@@ -357,13 +357,18 @@ public class TestSimpleVectors extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ x<-list(1); x[[c(NULL)]] }");
         assertEval(Output.IgnoreErrorContext, "{ x<-list(1); x[[0]] }");
         assertEval(Output.IgnoreErrorContext, "{ x<-list(1); x[[c(0)]] }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1); x[[-1]] }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3); x[[-1]] }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(1,2,3); x[[-5]] }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ x<-list(1); x[[-1]] }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ x<-list(1,2,3); x[[-1]] }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ x<-list(1,2,3); x[[-5]] }");
         assertEval("{ x<-list(42,2,3); x[[c(NA, 1)]] }");
         assertEval(Output.IgnoreErrorContext, "{ x<-list(42,2,3); x[[c(0, 1)]] }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(42,2,3); x[[c(1, -1)]] }");
-        assertEval(Output.IgnoreErrorContext, "{ x<-list(42,2,3); x[[c(-1, 1)]] }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ x<-list(42,2,3); x[[c(1, -1)]] }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ x<-list(42,2,3); x[[c(-1, 1)]] }");
         assertEval("{ x<-list(42,2,3); x[[c(NULL,1)]] }");
         assertEval("{ x<-list(42,2,3); x[[c(NULL, NULL,1)]] }");
         assertEval("{ x<-list(42,2,3); x[[c(1, NULL, 2)]] }");
@@ -1186,13 +1191,18 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ f <- function(x,i) { x[i] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(integer(), NA) }");
         assertEval("{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:3,4) }");
         assertEval("{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:3,NA) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:3,-1) }");
-        assertEval("{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:2,-1) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(2,-2) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(2,-3) }"); // like
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:3,-1) }");
+        assertEval(Ignored.NewRVersionMigration, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:2,-1) }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(2,-2) }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(2,-3) }"); // like
         // GNU-R, but is it a bug?
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:4,-3) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:2,-3) }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:4,-3) }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:2,-3) }");
         assertEval("{ f <- function(x,i) { x[[i]] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:2,-2) }");
         assertEval("{ f <- function(x,i) { x[i] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:2,NA) }");
         assertEval("{ f <- function(x,i) { x[i] } ; f(1:4, 2L) ; f(c(a=1), \"a\") ; f(1:2,-4) }");
@@ -1381,11 +1391,14 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ l <- list(1,list(2)) ; f <- function(i) { l[[i]] } ; f(c(2,1)) ; f(1) }");
         assertEval("{ l <- list(1,NULL) ; f <- function(i) { l[[i]] } ; f(c(2,1)) }");
         assertEval("{ f <- function(i) { l[[i]] } ; l <- list(1, 1:3) ; f(c(2,NA)) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(i) { l[[i]] } ; l <- list(1, 1:3) ; f(c(2,-4)) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(i) { l[[i]] } ; l <- list(1, 2) ; f(c(2,-1)) }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ f <- function(i) { l[[i]] } ; l <- list(1, 1:3) ; f(c(2,-4)) }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ f <- function(i) { l[[i]] } ; l <- list(1, 2) ; f(c(2,-1)) }");
         assertEval("{ f <- function(i) { l[[i]] } ; l <- list(1, c(2,3)) ; f(c(2,-1)) }");
         assertEval("{ f <- function(i) { l[[i]] } ; l <- list(1, c(2,3)) ; f(c(2,-2)) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(i) { l[[i]] } ; l <- list(1, c(2,3)) ; f(c(2,-4)) }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ f <- function(i) { l[[i]] } ; l <- list(1, c(2,3)) ; f(c(2,-4)) }");
         assertEval(Output.IgnoreErrorContext, "{ f <- function(i) { l[[i]] } ; l <- list(1, c(2,3)) ; f(c(2,0)) }");
 
         assertEval("{ x <- list(a=1,b=2,d=list(x=3)) ; x[[c(\"d\",\"x\")]] }");
@@ -1474,7 +1487,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ e < new.env(); e[[\"abc\"]] <- NULL}");
 
         assertEval("{ x<-5:1; x[0-2]<-1000; x }");
-        assertEval("{ x<-c(); x[[TRUE]] <- 2; x }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(); x[[TRUE]] <- 2; x }");
         assertEval("{ x<-1:2; x[[0-2]]<-100; x }");
 
         assertEval(Output.IgnoreErrorContext, "{ f <- function() { a[3] <- 4 } ; f() }");
@@ -2178,7 +2191,7 @@ public class TestSimpleVectors extends TestBase {
 
     @Test
     public void testNullUpdate() {
-        assertEval("{ x <- NULL; x[[1]] <- c(5); x; }");
+        assertEval(Ignored.NewRVersionMigration, "{ x <- NULL; x[[1]] <- c(5); x; }");
         assertEval("{ x <- NULL; x[1] <- c(5); x; }");
         assertEval("{ x <- NULL; x[c(1,2)] <- c(5); x; }");
         assertEval("{ x <- NULL; x[c(1,2)] <- c(1,5); x; }");
@@ -2190,8 +2203,10 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x <- NULL; x[[c(0,1)]] <- c(); x; }");
         assertEval("{ x <- NULL; x[[c(0,2)]] <- c(); x; }");
         assertEval(Output.IgnoreErrorContext, "{ x <- NULL; x[[0]] <- c(5); x; }");
-        assertEval(Output.IgnoreErrorContext, "{ x <- NULL; x[[c(1,0)]] <- c(5); x; }");
-        assertEval(Output.IgnoreErrorContext, "{ x <- NULL; x[[c(1,2)]] <- c(5); x; }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ x <- NULL; x[[c(1,0)]] <- c(5); x; }");
+        // TODO: IgnoreErrorContext does not work here
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ x <- NULL; x[[c(1,2)]] <- c(5); x; }");
         assertEval(Output.IgnoreErrorContext, "{ x <- NULL; x[[c(0,1)]] <- c(5); x; }");
         assertEval(Output.IgnoreErrorContext, "{ x <- NULL; x[[c(0,2)]] <- c(5); x; }");
         assertEval(Output.IgnoreErrorContext, "{ x <- NULL; x[[0]] <- c(1,5); x; }");

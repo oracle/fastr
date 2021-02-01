@@ -89,7 +89,7 @@ public class TestSimpleParsing extends TestBase {
         assertEval("a <- list(a=3, b=9); list(a$a, a$b)");
         assertEval("a <- list(a=3, b=9); list(a$'a', a$\"b\")");
         assertEval("setClass('Foo', representation(x='numeric')); a <- new('Foo'); a@x");
-        assertEval("setClass('Foo', representation(x='numeric')); a <- new('Foo'); a@'x'");
+        assertEval(Ignored.NewRVersionMigration, "setClass('Foo', representation(x='numeric')); a <- new('Foo'); a@'x'");
     }
 
     @Test

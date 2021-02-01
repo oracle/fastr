@@ -41,7 +41,7 @@ public class TestRandGenerationFunctions extends TestBase {
 
     @Test
     public void testFunctions2() {
-        assertEval(Output.IgnoreWhitespace, template("set.seed(1); %0(%1)", FUNCTION2_NAMES, FUNCTION2_PARAMS));
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreWhitespace, template("set.seed(1); %0(%1)", FUNCTION2_NAMES, FUNCTION2_PARAMS));
     }
 
     @Test
@@ -63,7 +63,7 @@ public class TestRandGenerationFunctions extends TestBase {
 
     @Test
     public void testFunctions1() {
-        assertEval(Output.IgnoreWhitespace, template("set.seed(2); %0(13, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.5, 0.0653, 0.000123, 32e-80, 8833, 79e70))", FUNCTION1_NAMES));
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreWhitespace, template("set.seed(2); %0(13, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.5, 0.0653, 0.000123, 32e-80, 8833, 79e70))", FUNCTION1_NAMES));
         // Note: signrank has loop with 'n' iterations: we have to leave out the large numbers
         assertEval(Output.IgnoreWhitespace, "set.seed(10); rsignrank(12, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.6, 0.0653, 0.000123, 32e-80, 10))");
     }

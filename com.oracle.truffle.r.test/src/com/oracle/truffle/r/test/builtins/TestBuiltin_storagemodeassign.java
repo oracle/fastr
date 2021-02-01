@@ -66,7 +66,7 @@ public class TestBuiltin_storagemodeassign extends TestBase {
 
     @Test
     public void testErrors() {
-        assertEval(template("{ x <- %0; storage.mode(x) <- 'integer'; }", new String[]{"new.env()", "quote(a+b)", "as.pairlist(1)"}));
+        assertEval(Ignored.NewRVersionMigration, template("{ x <- %0; storage.mode(x) <- 'integer'; }", new String[]{"new.env()", "quote(a+b)", "as.pairlist(1)"}));
         assertEval("{ x <- 1; storage.mode(x) <- 42.5; }");
     }
 }
