@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1418,8 +1418,11 @@ int NAMED(SEXP x) {
 
 int REFCNT(SEXP x) {
     TRACE0();
-    unimplemented("REFCNT");
-    return 0;
+    // TODO: This is a quick fix for the purpose of migration to GNU-R 4.0.3, but we
+    // might want to leave it here as GNU-R also considers NAMED and REFCNT as synonyms.
+    int result = (int) ((call_NAMED) callbacks[NAMED_x])(x);
+    checkExitCall();
+    return result;
 }
 
 void SET_OBJECT(SEXP x, int v) {
