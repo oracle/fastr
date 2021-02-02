@@ -78,196 +78,196 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("f.access()") VectorAccess fAccess,
                     @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
-        try (SequentialIterator xIter = xAccess.access(x); SequentialIterator fIter = fAccess.access(f)) {
-            RStringVector names = getLevelNode.execute(f);
-            int nLevels = getNLevels(names);
-            int[] collectResultSize = new int[nLevels];
-            Object[] results = new Object[nLevels];
-            boolean isXComplete = xDataLib.isComplete(x.getData());
+        SequentialIterator xIter = xAccess.access(x);
+        SequentialIterator fIter = fAccess.access(f);
+        RStringVector names = getLevelNode.execute(f);
+        int nLevels = getNLevels(names);
+        int[] collectResultSize = new int[nLevels];
+        Object[] results = new Object[nLevels];
+        boolean isXComplete = xDataLib.isComplete(x.getData());
 
-            switch (xAccess.getType()) {
-                case Character: {
-                    // Initialize result arrays
-                    String[][] collectResults = new String[nLevels][INITIAL_SIZE];
+        switch (xAccess.getType()) {
+            case Character: {
+                // Initialize result arrays
+                String[][] collectResults = new String[nLevels][INITIAL_SIZE];
 
-                    // perform split
-                    while (xAccess.next(xIter)) {
-                        fAccess.nextWithWrap(fIter);
-                        if (!fAccess.isNA(fIter)) {
-                            // a factor is a 1-based int vector
-                            int resultIndex = fAccess.getInt(fIter) - 1;
-                            String[] collect = collectResults[resultIndex];
-                            if (collect.length == collectResultSize[resultIndex]) {
-                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
-                            }
-                            collect[collectResultSize[resultIndex]++] = xAccess.getString(xIter);
+                // perform split
+                while (xAccess.next(xIter)) {
+                    fAccess.nextWithWrap(fIter);
+                    if (!fAccess.isNA(fIter)) {
+                        // a factor is a 1-based int vector
+                        int resultIndex = fAccess.getInt(fIter) - 1;
+                        String[] collect = collectResults[resultIndex];
+                        if (collect.length == collectResultSize[resultIndex]) {
+                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
                         }
+                        collect[collectResultSize[resultIndex]++] = xAccess.getString(xIter);
                     }
-
-                    RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
-                    for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
-                                        (resultNames != null) ? resultNames[i] : null);
-                    }
-                    break;
                 }
-                case Complex: {
-                    // Initialize result arrays
-                    double[][] collectResults = new double[nLevels][INITIAL_SIZE * 2];
 
-                    // perform split
-                    while (xAccess.next(xIter)) {
-                        fAccess.nextWithWrap(fIter);
-                        if (!fAccess.isNA(fIter)) {
-                            // a factor is a 1-based int vector
-                            int resultIndex = fAccess.getInt(fIter) - 1;
-                            double[] collect = collectResults[resultIndex];
-                            if (collect.length == collectResultSize[resultIndex] * 2) {
-                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
-                            }
-                            collect[collectResultSize[resultIndex] * 2] = xAccess.getComplexR(xIter);
-                            collect[collectResultSize[resultIndex] * 2 + 1] = xAccess.getComplexI(xIter);
-                            collectResultSize[resultIndex]++;
-                        }
-                    }
-
-                    RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
-                    for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createComplexVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i] * 2), isXComplete,
-                                        (resultNames != null) ? resultNames[i] : null);
-                    }
-                    break;
+                RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
+                for (int i = 0; i < nLevels; i++) {
+                    results[i] = RDataFactory.createStringVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
+                                    (resultNames != null) ? resultNames[i] : null);
                 }
-                case Double: {
-                    // Initialize result arrays
-                    double[][] collectResults = new double[nLevels][INITIAL_SIZE];
-
-                    // perform split
-                    while (xAccess.next(xIter)) {
-                        fAccess.nextWithWrap(fIter);
-                        if (!fAccess.isNA(fIter)) {
-                            // a factor is a 1-based int vector
-                            int resultIndex = fAccess.getInt(fIter) - 1;
-                            double[] collect = collectResults[resultIndex];
-                            if (collect.length == collectResultSize[resultIndex]) {
-                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
-                            }
-                            collect[collectResultSize[resultIndex]++] = xAccess.getDouble(xIter);
-                        }
-                    }
-
-                    RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
-                    for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
-                                        (resultNames != null) ? resultNames[i] : null);
-                    }
-                    break;
-                }
-                case Integer: {
-                    // Initialize result arrays
-                    int[][] collectResults = new int[nLevels][INITIAL_SIZE];
-
-                    // perform split
-                    while (xAccess.next(xIter)) {
-                        fAccess.nextWithWrap(fIter);
-                        if (!fAccess.isNA(fIter)) {
-                            // a factor is a 1-based int vector
-                            int resultIndex = fAccess.getInt(fIter) - 1;
-                            int[] collect = collectResults[resultIndex];
-                            if (collect.length == collectResultSize[resultIndex]) {
-                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
-                            }
-                            collect[collectResultSize[resultIndex]++] = xAccess.getInt(xIter);
-                        }
-                    }
-
-                    RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
-                    for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
-                                        (resultNames != null) ? resultNames[i] : null);
-                    }
-                    break;
-                }
-                case List: {
-                    // Initialize result arrays
-                    Object[][] collectResults = new Object[nLevels][INITIAL_SIZE];
-
-                    // perform split
-                    while (xAccess.next(xIter)) {
-                        fAccess.nextWithWrap(fIter);
-                        if (!fAccess.isNA(fIter)) {
-                            // a factor is a 1-based int vector
-                            int resultIndex = fAccess.getInt(fIter) - 1;
-                            Object[] collect = collectResults[resultIndex];
-                            if (collect.length == collectResultSize[resultIndex]) {
-                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
-                            }
-                            collect[collectResultSize[resultIndex]++] = xAccess.getListElement(xIter);
-                        }
-                    }
-
-                    RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
-                    for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createList(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]),
-                                        (resultNames != null) ? resultNames[i] : null);
-                    }
-                    break;
-                }
-                case Logical: {
-                    // Initialize result arrays
-                    byte[][] collectResults = new byte[nLevels][INITIAL_SIZE];
-
-                    // perform split
-                    while (xAccess.next(xIter)) {
-                        fAccess.nextWithWrap(fIter);
-                        if (!fAccess.isNA(fIter)) {
-                            // a factor is a 1-based int vector
-                            int resultIndex = fAccess.getInt(fIter) - 1;
-                            byte[] collect = collectResults[resultIndex];
-                            if (collect.length == collectResultSize[resultIndex]) {
-                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
-                            }
-                            collect[collectResultSize[resultIndex]++] = xAccess.getLogical(xIter);
-                        }
-                    }
-
-                    RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
-                    for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
-                                        (resultNames != null) ? resultNames[i] : null);
-                    }
-                    break;
-                }
-                case Raw: {
-                    // Initialize result arrays
-                    byte[][] collectResults = new byte[nLevels][INITIAL_SIZE];
-
-                    // perform split
-                    while (xAccess.next(xIter)) {
-                        fAccess.nextWithWrap(fIter);
-                        if (!fAccess.isNA(fIter)) {
-                            // a factor is a 1-based int vector
-                            int resultIndex = fAccess.getInt(fIter) - 1;
-                            byte[] collect = collectResults[resultIndex];
-                            if (collect.length == collectResultSize[resultIndex]) {
-                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
-                            }
-                            collect[collectResultSize[resultIndex]++] = xAccess.getRaw(xIter);
-                        }
-                    }
-
-                    RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
-                    for (int i = 0; i < nLevels; i++) {
-                        results[i] = RDataFactory.createRawVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]),
-                                        (resultNames != null) ? resultNames[i] : null);
-                    }
-                    break;
-                }
-                default:
-                    throw error(Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, xAccess.getType().getName(), "split");
+                break;
             }
-            return RDataFactory.createList(results, names);
+            case Complex: {
+                // Initialize result arrays
+                double[][] collectResults = new double[nLevels][INITIAL_SIZE * 2];
+
+                // perform split
+                while (xAccess.next(xIter)) {
+                    fAccess.nextWithWrap(fIter);
+                    if (!fAccess.isNA(fIter)) {
+                        // a factor is a 1-based int vector
+                        int resultIndex = fAccess.getInt(fIter) - 1;
+                        double[] collect = collectResults[resultIndex];
+                        if (collect.length == collectResultSize[resultIndex] * 2) {
+                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        }
+                        collect[collectResultSize[resultIndex] * 2] = xAccess.getComplexR(xIter);
+                        collect[collectResultSize[resultIndex] * 2 + 1] = xAccess.getComplexI(xIter);
+                        collectResultSize[resultIndex]++;
+                    }
+                }
+
+                RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
+                for (int i = 0; i < nLevels; i++) {
+                    results[i] = RDataFactory.createComplexVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i] * 2), isXComplete,
+                                    (resultNames != null) ? resultNames[i] : null);
+                }
+                break;
+            }
+            case Double: {
+                // Initialize result arrays
+                double[][] collectResults = new double[nLevels][INITIAL_SIZE];
+
+                // perform split
+                while (xAccess.next(xIter)) {
+                    fAccess.nextWithWrap(fIter);
+                    if (!fAccess.isNA(fIter)) {
+                        // a factor is a 1-based int vector
+                        int resultIndex = fAccess.getInt(fIter) - 1;
+                        double[] collect = collectResults[resultIndex];
+                        if (collect.length == collectResultSize[resultIndex]) {
+                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        }
+                        collect[collectResultSize[resultIndex]++] = xAccess.getDouble(xIter);
+                    }
+                }
+
+                RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
+                for (int i = 0; i < nLevels; i++) {
+                    results[i] = RDataFactory.createDoubleVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
+                                    (resultNames != null) ? resultNames[i] : null);
+                }
+                break;
+            }
+            case Integer: {
+                // Initialize result arrays
+                int[][] collectResults = new int[nLevels][INITIAL_SIZE];
+
+                // perform split
+                while (xAccess.next(xIter)) {
+                    fAccess.nextWithWrap(fIter);
+                    if (!fAccess.isNA(fIter)) {
+                        // a factor is a 1-based int vector
+                        int resultIndex = fAccess.getInt(fIter) - 1;
+                        int[] collect = collectResults[resultIndex];
+                        if (collect.length == collectResultSize[resultIndex]) {
+                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        }
+                        collect[collectResultSize[resultIndex]++] = xAccess.getInt(xIter);
+                    }
+                }
+
+                RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
+                for (int i = 0; i < nLevels; i++) {
+                    results[i] = RDataFactory.createIntVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
+                                    (resultNames != null) ? resultNames[i] : null);
+                }
+                break;
+            }
+            case List: {
+                // Initialize result arrays
+                Object[][] collectResults = new Object[nLevels][INITIAL_SIZE];
+
+                // perform split
+                while (xAccess.next(xIter)) {
+                    fAccess.nextWithWrap(fIter);
+                    if (!fAccess.isNA(fIter)) {
+                        // a factor is a 1-based int vector
+                        int resultIndex = fAccess.getInt(fIter) - 1;
+                        Object[] collect = collectResults[resultIndex];
+                        if (collect.length == collectResultSize[resultIndex]) {
+                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        }
+                        collect[collectResultSize[resultIndex]++] = xAccess.getListElement(xIter);
+                    }
+                }
+
+                RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
+                for (int i = 0; i < nLevels; i++) {
+                    results[i] = RDataFactory.createList(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]),
+                                    (resultNames != null) ? resultNames[i] : null);
+                }
+                break;
+            }
+            case Logical: {
+                // Initialize result arrays
+                byte[][] collectResults = new byte[nLevels][INITIAL_SIZE];
+
+                // perform split
+                while (xAccess.next(xIter)) {
+                    fAccess.nextWithWrap(fIter);
+                    if (!fAccess.isNA(fIter)) {
+                        // a factor is a 1-based int vector
+                        int resultIndex = fAccess.getInt(fIter) - 1;
+                        byte[] collect = collectResults[resultIndex];
+                        if (collect.length == collectResultSize[resultIndex]) {
+                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        }
+                        collect[collectResultSize[resultIndex]++] = xAccess.getLogical(xIter);
+                    }
+                }
+
+                RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
+                for (int i = 0; i < nLevels; i++) {
+                    results[i] = RDataFactory.createLogicalVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]), isXComplete,
+                                    (resultNames != null) ? resultNames[i] : null);
+                }
+                break;
+            }
+            case Raw: {
+                // Initialize result arrays
+                byte[][] collectResults = new byte[nLevels][INITIAL_SIZE];
+
+                // perform split
+                while (xAccess.next(xIter)) {
+                    fAccess.nextWithWrap(fIter);
+                    if (!fAccess.isNA(fIter)) {
+                        // a factor is a 1-based int vector
+                        int resultIndex = fAccess.getInt(fIter) - 1;
+                        byte[] collect = collectResults[resultIndex];
+                        if (collect.length == collectResultSize[resultIndex]) {
+                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        }
+                        collect[collectResultSize[resultIndex]++] = xAccess.getRaw(xIter);
+                    }
+                }
+
+                RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
+                for (int i = 0; i < nLevels; i++) {
+                    results[i] = RDataFactory.createRawVector(Arrays.copyOfRange(collectResults[i], 0, collectResultSize[i]),
+                                    (resultNames != null) ? resultNames[i] : null);
+                }
+                break;
+            }
+            default:
+                throw error(Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, xAccess.getType().getName(), "split");
         }
+        return RDataFactory.createList(results, names);
     }
 
     @Specialization(replaces = "split")
@@ -304,13 +304,12 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         @Specialization(guards = "namesAccess.supports(names)", limit = "getVectorAccessCacheSize()")
         protected void fillNames(VectorAccess fAccess, SequentialIterator fIter, RStringVector names, String[][] namesArr, int[] resultNamesIdxs,
                         @Cached("names.access()") VectorAccess namesAccess) {
-            try (SequentialIterator namesIter = namesAccess.access(names)) {
-                while (namesAccess.next(namesIter)) {
-                    fAccess.nextWithWrap(fIter);
-                    int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
-                                                                 // vector
-                    namesArr[resultIndex][resultNamesIdxs[resultIndex]++] = namesAccess.getString(namesIter);
-                }
+            SequentialIterator namesIter = namesAccess.access(names);
+            while (namesAccess.next(namesIter)) {
+                fAccess.nextWithWrap(fIter);
+                int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
+                                                             // vector
+                namesArr[resultIndex][resultNamesIdxs[resultIndex]++] = namesAccess.getString(namesIter);
             }
         }
 

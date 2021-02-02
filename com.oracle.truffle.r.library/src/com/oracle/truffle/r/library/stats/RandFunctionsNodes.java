@@ -208,37 +208,38 @@ public final class RandFunctionsNodes {
                         @Cached("a.access()") VectorAccess aAccess,
                         @Cached("b.access()") VectorAccess bAccess,
                         @Cached("c.access()") VectorAccess cAccess) {
-            try (SequentialIterator aIter = aAccess.access(a); SequentialIterator bIter = bAccess.access(b); SequentialIterator cIter = cAccess.access(c)) {
-                if (aAccess.getLength(aIter) == 0 || bAccess.getLength(bIter) == 0 || cAccess.getLength(cIter) == 0) {
-                    nanResult.enter();
-                    showNAWarning();
-                    int[] nansResult = new int[length];
-                    Arrays.fill(nansResult, RRuntime.INT_NA);
-                    return RDataFactory.createIntVector(nansResult, false);
-                }
-
-                boolean nans = false;
-                int[] result = new int[length];
-                loopConditionProfile.profileCounted(length);
-                for (int i = 0; loopConditionProfile.inject(i < length); i++) {
-                    aAccess.nextWithWrap(aIter);
-                    bAccess.nextWithWrap(bIter);
-                    cAccess.nextWithWrap(cIter);
-                    double value = function.execute(aAccess.getDouble(aIter), bAccess.getDouble(bIter), cAccess.getDouble(cIter), randProvider);
-                    if (Double.isNaN(value) || value <= Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                        nan.enter();
-                        nans = true;
-                        result[i] = RRuntime.INT_NA;
-                    } else {
-                        result[i] = (int) value;
-                    }
-                }
-                putRNGState();
-                if (nans) {
-                    showNAWarning();
-                }
-                return RDataFactory.createIntVector(result, !nans);
+            SequentialIterator aIter = aAccess.access(a);
+            SequentialIterator bIter = bAccess.access(b);
+            SequentialIterator cIter = cAccess.access(c);
+            if (aAccess.getLength(aIter) == 0 || bAccess.getLength(bIter) == 0 || cAccess.getLength(cIter) == 0) {
+                nanResult.enter();
+                showNAWarning();
+                int[] nansResult = new int[length];
+                Arrays.fill(nansResult, RRuntime.INT_NA);
+                return RDataFactory.createIntVector(nansResult, false);
             }
+
+            boolean nans = false;
+            int[] result = new int[length];
+            loopConditionProfile.profileCounted(length);
+            for (int i = 0; loopConditionProfile.inject(i < length); i++) {
+                aAccess.nextWithWrap(aIter);
+                bAccess.nextWithWrap(bIter);
+                cAccess.nextWithWrap(cIter);
+                double value = function.execute(aAccess.getDouble(aIter), bAccess.getDouble(bIter), cAccess.getDouble(cIter), randProvider);
+                if (Double.isNaN(value) || value <= Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+                    nan.enter();
+                    nans = true;
+                    result[i] = RRuntime.INT_NA;
+                } else {
+                    result[i] = (int) value;
+                }
+            }
+            putRNGState();
+            if (nans) {
+                showNAWarning();
+            }
+            return RDataFactory.createIntVector(result, !nans);
         }
 
         @Specialization(replaces = "cached")
@@ -260,35 +261,36 @@ public final class RandFunctionsNodes {
                         @Cached("a.access()") VectorAccess aAccess,
                         @Cached("b.access()") VectorAccess bAccess,
                         @Cached("c.access()") VectorAccess cAccess) {
-            try (SequentialIterator aIter = aAccess.access(a); SequentialIterator bIter = bAccess.access(b); SequentialIterator cIter = cAccess.access(c)) {
-                if (aAccess.getLength(aIter) == 0 || bAccess.getLength(bIter) == 0 || cAccess.getLength(cIter) == 0) {
-                    nanResult.enter();
-                    showNAWarning();
-                    double[] nansResult = new double[length];
-                    Arrays.fill(nansResult, RRuntime.DOUBLE_NA);
-                    return RDataFactory.createDoubleVector(nansResult, false);
-                }
-
-                boolean nans = false;
-                double[] result = new double[length];
-                loopConditionProfile.profileCounted(length);
-                for (int i = 0; loopConditionProfile.inject(i < length); i++) {
-                    aAccess.nextWithWrap(aIter);
-                    bAccess.nextWithWrap(bIter);
-                    cAccess.nextWithWrap(cIter);
-                    double value = function.execute(aAccess.getDouble(aIter), bAccess.getDouble(bIter), cAccess.getDouble(cIter), randProvider);
-                    if (Double.isNaN(value) || RRuntime.isNA(value)) {
-                        nan.enter();
-                        nans = true;
-                    }
-                    result[i] = value;
-                }
-                putRNGState();
-                if (nans) {
-                    showNAWarning();
-                }
-                return RDataFactory.createDoubleVector(result, !nans);
+            SequentialIterator aIter = aAccess.access(a);
+            SequentialIterator bIter = bAccess.access(b);
+            SequentialIterator cIter = cAccess.access(c);
+            if (aAccess.getLength(aIter) == 0 || bAccess.getLength(bIter) == 0 || cAccess.getLength(cIter) == 0) {
+                nanResult.enter();
+                showNAWarning();
+                double[] nansResult = new double[length];
+                Arrays.fill(nansResult, RRuntime.DOUBLE_NA);
+                return RDataFactory.createDoubleVector(nansResult, false);
             }
+
+            boolean nans = false;
+            double[] result = new double[length];
+            loopConditionProfile.profileCounted(length);
+            for (int i = 0; loopConditionProfile.inject(i < length); i++) {
+                aAccess.nextWithWrap(aIter);
+                bAccess.nextWithWrap(bIter);
+                cAccess.nextWithWrap(cIter);
+                double value = function.execute(aAccess.getDouble(aIter), bAccess.getDouble(bIter), cAccess.getDouble(cIter), randProvider);
+                if (Double.isNaN(value) || RRuntime.isNA(value)) {
+                    nan.enter();
+                    nans = true;
+                }
+                result[i] = value;
+            }
+            putRNGState();
+            if (nans) {
+                showNAWarning();
+            }
+            return RDataFactory.createDoubleVector(result, !nans);
         }
 
         @Specialization(replaces = "cached")

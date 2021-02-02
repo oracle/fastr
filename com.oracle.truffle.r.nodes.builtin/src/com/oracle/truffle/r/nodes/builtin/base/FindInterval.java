@@ -60,23 +60,22 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
                     @Cached("create(x)") VectorAccess xAccess,
                     @Cached("create()") VectorFactory vectorFactory) {
         boolean leftOpenProfiled = leftOpenProfile.profile(leftOpen);
-        try (SequentialIterator xIter = xAccess.access(x)) {
-            int[] result = new int[xAccess.getLength(xIter)];
-            int i = 0;
-            boolean complete = true;
-            int previous = 1;
-            while (xAccess.next(xIter)) {
-                if (xAccess.isNA(xIter)) {
-                    previous = RRuntime.INT_NA;
-                    complete = false;
-                } else {
-                    RandomIterator xtIter = xtAccess.randomAccess(xt);
-                    previous = findInterval2(xtAccess, xtIter, xAccess.getDouble(xIter), right, inside, leftOpenProfiled, previous);
-                }
-                result[i++] = previous;
+        SequentialIterator xIter = xAccess.access(x);
+        int[] result = new int[xAccess.getLength(xIter)];
+        int i = 0;
+        boolean complete = true;
+        int previous = 1;
+        while (xAccess.next(xIter)) {
+            if (xAccess.isNA(xIter)) {
+                previous = RRuntime.INT_NA;
+                complete = false;
+            } else {
+                RandomIterator xtIter = xtAccess.randomAccess(xt);
+                previous = findInterval2(xtAccess, xtIter, xAccess.getDouble(xIter), right, inside, leftOpenProfiled, previous);
             }
-            return vectorFactory.createIntVector(result, complete);
+            result[i++] = previous;
         }
+        return vectorFactory.createIntVector(result, complete);
     }
 
     @Specialization(replaces = "doFindInterval")

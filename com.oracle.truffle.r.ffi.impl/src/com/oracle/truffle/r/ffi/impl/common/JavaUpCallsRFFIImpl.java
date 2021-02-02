@@ -936,25 +936,24 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         VectorAccess targetAccess = target.slowPathAccess();
         VectorAccess sourceAccess = source.slowPathAccess();
 
-        try (SequentialIterator sourceIter = sourceAccess.access(source)) {
-            if (byRow != 0) { // copy by row
-                int tRows = RRuntime.nrows(target);
-                int tCols = RRuntime.ncols(target);
-                RandomIterator targetIter = targetAccess.randomAccess(target);
-                for (int i = 0; i < tRows; i++) {
-                    int tIdx = i;
-                    for (int j = 0; j < tCols; j++) {
-                        sourceAccess.nextWithWrap(sourceIter);
-                        targetAccess.setFromSameType(targetIter, tIdx, sourceAccess, sourceIter);
-                        tIdx += tRows;
-                    }
+        SequentialIterator sourceIter = sourceAccess.access(source);
+        if (byRow != 0) { // copy by row
+            int tRows = RRuntime.nrows(target);
+            int tCols = RRuntime.ncols(target);
+            RandomIterator targetIter = targetAccess.randomAccess(target);
+            for (int i = 0; i < tRows; i++) {
+                int tIdx = i;
+                for (int j = 0; j < tCols; j++) {
+                    sourceAccess.nextWithWrap(sourceIter);
+                    targetAccess.setFromSameType(targetIter, tIdx, sourceAccess, sourceIter);
+                    tIdx += tRows;
                 }
-            } else { // copy by column
-                try (SequentialIterator targetIter = targetAccess.access(target)) {
-                    while (targetAccess.next(targetIter)) {
-                        sourceAccess.nextWithWrap(sourceIter);
-                        targetAccess.setFromSameType(targetIter, sourceAccess, sourceIter);
-                    }
+            }
+        } else { // copy by column
+            try (SequentialIterator targetIter = targetAccess.access(target)) {
+                while (targetAccess.next(targetIter)) {
+                    sourceAccess.nextWithWrap(sourceIter);
+                    targetAccess.setFromSameType(targetIter, sourceAccess, sourceIter);
                 }
             }
         }

@@ -168,37 +168,35 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
     }
 
     protected static double prodDouble(Object v, VectorAccess access, boolean naRm) {
-        try (SequentialIterator iter = access.access(v)) {
-            double value = 1;
-            while (access.next(iter)) {
-                double element = access.getDouble(iter);
-                if (access.na.check(element)) {
-                    if (!naRm) {
-                        return RRuntime.DOUBLE_NA;
-                    }
-                } else {
-                    value *= element;
+        SequentialIterator iter = access.access(v);
+        double value = 1;
+        while (access.next(iter)) {
+            double element = access.getDouble(iter);
+            if (access.na.check(element)) {
+                if (!naRm) {
+                    return RRuntime.DOUBLE_NA;
                 }
+            } else {
+                value *= element;
             }
-            return value;
         }
+        return value;
     }
 
     protected RComplex prodComplex(Object v, VectorAccess access, boolean naRm) {
-        try (SequentialIterator iter = access.access(v)) {
-            RComplex value = RComplex.valueOf(1, 0);
-            while (access.next(iter)) {
-                RComplex element = access.getComplex(iter);
-                if (access.na.check(element)) {
-                    if (!naRm) {
-                        return element;
-                    }
-                } else {
-                    value = prod.op(value.getRealPart(), value.getImaginaryPart(), element.getRealPart(), element.getImaginaryPart());
+        SequentialIterator iter = access.access(v);
+        RComplex value = RComplex.valueOf(1, 0);
+        while (access.next(iter)) {
+            RComplex element = access.getComplex(iter);
+            if (access.na.check(element)) {
+                if (!naRm) {
+                    return element;
                 }
+            } else {
+                value = prod.op(value.getRealPart(), value.getImaginaryPart(), element.getRealPart(), element.getImaginaryPart());
             }
-            return value;
         }
+        return value;
     }
 
     @Fallback

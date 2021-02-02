@@ -69,25 +69,24 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected RDoubleVector cumprodDouble(RDoubleVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
-        try (SequentialIterator iter = xAccess.access(x)) {
-            double[] array = new double[xAccess.getLength(iter)];
-            double prev = 1;
-            while (xAccess.next(iter)) {
-                double value = xAccess.getDouble(iter);
-                if (xAccess.na.check(value)) {
-                    Arrays.fill(array, iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
-                    break;
-                }
-                if (xAccess.na.checkNAorNaN(value)) {
-                    Arrays.fill(array, iter.getIndex(), array.length, Double.NaN);
-                    break;
-                }
-                prev = mul.op(prev, value);
-                assert !RRuntime.isNA(prev) : "double multiplication should not introduce NAs";
-                array[iter.getIndex()] = prev;
+        SequentialIterator iter = xAccess.access(x);
+        double[] array = new double[xAccess.getLength(iter)];
+        double prev = 1;
+        while (xAccess.next(iter)) {
+            double value = xAccess.getDouble(iter);
+            if (xAccess.na.check(value)) {
+                Arrays.fill(array, iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
+                break;
             }
-            return RDataFactory.createDoubleVector(array, xAccess.na.neverSeenNA(), extractNamesNode.execute(x));
+            if (xAccess.na.checkNAorNaN(value)) {
+                Arrays.fill(array, iter.getIndex(), array.length, Double.NaN);
+                break;
+            }
+            prev = mul.op(prev, value);
+            assert !RRuntime.isNA(prev) : "double multiplication should not introduce NAs";
+            array[iter.getIndex()] = prev;
         }
+        return RDataFactory.createDoubleVector(array, xAccess.na.neverSeenNA(), extractNamesNode.execute(x));
     }
 
     @Specialization(replaces = "cumprodDouble")
@@ -98,23 +97,22 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected RComplexVector cumprodComplex(RComplexVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
-        try (SequentialIterator iter = xAccess.access(x)) {
-            double[] array = new double[xAccess.getLength(iter) * 2];
-            RComplex prev = RComplex.valueOf(1, 0);
-            while (xAccess.next(iter)) {
-                double real = xAccess.getComplexR(iter);
-                double imag = xAccess.getComplexI(iter);
-                if (xAccess.na.check(real, imag)) {
-                    Arrays.fill(array, 2 * iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
-                    break;
-                }
-                prev = mul.op(prev.getRealPart(), prev.getImaginaryPart(), real, imag);
-                assert !RRuntime.isNA(prev) : "complex multiplication should not introduce NAs";
-                array[iter.getIndex() * 2] = prev.getRealPart();
-                array[iter.getIndex() * 2 + 1] = prev.getImaginaryPart();
+        SequentialIterator iter = xAccess.access(x);
+        double[] array = new double[xAccess.getLength(iter) * 2];
+        RComplex prev = RComplex.valueOf(1, 0);
+        while (xAccess.next(iter)) {
+            double real = xAccess.getComplexR(iter);
+            double imag = xAccess.getComplexI(iter);
+            if (xAccess.na.check(real, imag)) {
+                Arrays.fill(array, 2 * iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
+                break;
             }
-            return RDataFactory.createComplexVector(array, xAccess.na.neverSeenNA(), extractNamesNode.execute(x));
+            prev = mul.op(prev.getRealPart(), prev.getImaginaryPart(), real, imag);
+            assert !RRuntime.isNA(prev) : "complex multiplication should not introduce NAs";
+            array[iter.getIndex() * 2] = prev.getRealPart();
+            array[iter.getIndex() * 2 + 1] = prev.getImaginaryPart();
         }
+        return RDataFactory.createComplexVector(array, xAccess.na.neverSeenNA(), extractNamesNode.execute(x));
     }
 
     @Specialization(replaces = "cumprodComplex")

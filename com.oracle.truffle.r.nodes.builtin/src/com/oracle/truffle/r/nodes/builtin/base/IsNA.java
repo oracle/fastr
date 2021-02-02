@@ -112,39 +112,38 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
                     @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode) {
-        try (SequentialIterator iter = access.access(vector)) {
-            byte[] data = new byte[access.getLength(iter)];
-            while (access.next(iter)) {
-                boolean isNA;
-                switch (access.getType()) {
-                    case Double:
-                        isNA = access.na.checkNAorNaN(access.getDouble(iter));
-                        break;
-                    case Character:
-                    case Complex:
-                    case Integer:
-                    case Logical:
-                        isNA = access.isNA(iter);
-                        break;
-                    case Raw:
-                        isNA = false;
-                        break;
-                    case List:
-                        // result is false unless that element is a length-one vector (incl. lists)
-                        // and the single element of that vector is regarded as NA
-                        isNA = isNARecursive(access.getListElement(iter));
-                        break;
-                    case Expression:
-                        isNA = false;
-                        break;
-                    default:
-                        throw RInternalError.shouldNotReachHere();
+        SequentialIterator iter = access.access(vector);
+        byte[] data = new byte[access.getLength(iter)];
+        while (access.next(iter)) {
+            boolean isNA;
+            switch (access.getType()) {
+                case Double:
+                    isNA = access.na.checkNAorNaN(access.getDouble(iter));
+                    break;
+                case Character:
+                case Complex:
+                case Integer:
+                case Logical:
+                    isNA = access.isNA(iter);
+                    break;
+                case Raw:
+                    isNA = false;
+                    break;
+                case List:
+                    // result is false unless that element is a length-one vector (incl. lists)
+                    // and the single element of that vector is regarded as NA
+                    isNA = isNARecursive(access.getListElement(iter));
+                    break;
+                case Expression:
+                    isNA = false;
+                    break;
+                default:
+                    throw RInternalError.shouldNotReachHere();
 
-                }
-                data[iter.getIndex()] = RRuntime.asLogical(isNA);
             }
-            return factory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(vector), extractNamesNode.execute(vector), extractDimNamesNode.execute(vector));
+            data[iter.getIndex()] = RRuntime.asLogical(isNA);
         }
+        return factory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(vector), extractNamesNode.execute(vector), extractDimNamesNode.execute(vector));
     }
 
     @Specialization(replaces = "isNACached")
@@ -224,25 +223,24 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
         }
 
         private static boolean isNAVector(RAbstractAtomicVector vector, VectorAccess access) {
-            try (SequentialIterator iter = access.access(vector)) {
-                if (access.getLength(iter) != 1) {
+            SequentialIterator iter = access.access(vector);
+            if (access.getLength(iter) != 1) {
+                return false;
+            }
+            access.next(iter);
+            switch (access.getType()) {
+                case Double:
+                    return access.na.checkNAorNaN(access.getDouble(iter));
+                case Character:
+                case Complex:
+                case Integer:
+                case Logical:
+                    return access.isNA(iter);
+                case Raw:
                     return false;
-                }
-                access.next(iter);
-                switch (access.getType()) {
-                    case Double:
-                        return access.na.checkNAorNaN(access.getDouble(iter));
-                    case Character:
-                    case Complex:
-                    case Integer:
-                    case Logical:
-                        return access.isNA(iter);
-                    case Raw:
-                        return false;
-                    default:
-                        CompilerDirectives.transferToInterpreter();
-                        throw RInternalError.shouldNotReachHere("Unexpected atomic vector type " + access.getType());
-                }
+                default:
+                    CompilerDirectives.transferToInterpreter();
+                    throw RInternalError.shouldNotReachHere("Unexpected atomic vector type " + access.getType());
             }
         }
     }

@@ -204,50 +204,49 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
         double doubleResult = semantics.getDoubleStart();
         boolean overflow = false;
         boolean empty = true;
-        try (VectorAccess.SequentialIterator iter = access.access(vector)) {
-            while (access.next(iter)) {
-                int d;
-                switch (access.getType()) {
-                    case Integer:
-                        d = access.getInt(iter);
-                        if (access.na.check(d)) {
-                            if (profiledNaRm) {
-                                continue;
-                            } else {
-                                return RRuntime.INT_NA;
-                            }
+        VectorAccess.SequentialIterator iter = access.access(vector);
+        while (access.next(iter)) {
+            int d;
+            switch (access.getType()) {
+                case Integer:
+                    d = access.getInt(iter);
+                    if (access.na.check(d)) {
+                        if (profiledNaRm) {
+                            continue;
+                        } else {
+                            return RRuntime.INT_NA;
                         }
-                        break;
-                    case Logical:
-                        byte logical = access.getLogical(iter);
-                        if (access.na.check(logical)) {
-                            if (profiledNaRm) {
-                                continue;
-                            } else {
-                                return RRuntime.INT_NA;
-                            }
+                    }
+                    break;
+                case Logical:
+                    byte logical = access.getLogical(iter);
+                    if (access.na.check(logical)) {
+                        if (profiledNaRm) {
+                            continue;
+                        } else {
+                            return RRuntime.INT_NA;
                         }
-                        d = logical; // 0 or 1
-                        break;
-                    default:
-                        throw RInternalError.shouldNotReachHere();
-                }
-
-                if (overflow) {
-                    doubleResult = arithmetic.op(doubleResult, d);
-                } else {
-                    oldResult = result;
-                }
-
-                result = arithmetic.op(result, d);
-
-                if (RRuntime.isNA(result) && !overflow) {
-                    intNANoOverflowProfile.enter();
-                    overflow = true;
-                    doubleResult = arithmetic.op((double) oldResult, (double) d);
-                }
-                empty = false;
+                    }
+                    d = logical; // 0 or 1
+                    break;
+                default:
+                    throw RInternalError.shouldNotReachHere();
             }
+
+            if (overflow) {
+                doubleResult = arithmetic.op(doubleResult, d);
+            } else {
+                oldResult = result;
+            }
+
+            result = arithmetic.op(result, d);
+
+            if (RRuntime.isNA(result) && !overflow) {
+                intNANoOverflowProfile.enter();
+                overflow = true;
+                doubleResult = arithmetic.op((double) oldResult, (double) d);
+            }
+            empty = false;
         }
         if (empty) {
             emptyWarning();
@@ -289,26 +288,25 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
         boolean profiledFinite = finiteProfile.profile(finite);
         double result = semantics.getDoubleStart();
         boolean empty = true;
-        try (VectorAccess.SequentialIterator iter = access.access(vector)) {
-            while (access.next(iter)) {
-                double d = access.getDouble(iter);
-                if (access.na.checkNAorNaN(d)) {
-                    if (profiledNaRm) {
-                        continue;   // ignore NA/NaN
-                    } else if (access.na.check(d)) {
-                        // NA produces NA directly, but NaN should be handled by arithmetics.op to
-                        // produce NaN. We cannot directly return NaN because if we encounter NA
-                        // later
-                        // on, we should return NA not NaN
-                        return RRuntime.DOUBLE_NA;
-                    }
-                } else if (profiledFinite && isInfiniteProfile.profile(!RRuntime.isFinite(d))) {
-                    // ignore -/+Inf if 'infinite == TRUE'
-                    continue;
+        VectorAccess.SequentialIterator iter = access.access(vector);
+        while (access.next(iter)) {
+            double d = access.getDouble(iter);
+            if (access.na.checkNAorNaN(d)) {
+                if (profiledNaRm) {
+                    continue;   // ignore NA/NaN
+                } else if (access.na.check(d)) {
+                    // NA produces NA directly, but NaN should be handled by arithmetics.op to
+                    // produce NaN. We cannot directly return NaN because if we encounter NA
+                    // later
+                    // on, we should return NA not NaN
+                    return RRuntime.DOUBLE_NA;
                 }
-                result = arithmetic.op(result, d);
-                empty = false;
+            } else if (profiledFinite && isInfiniteProfile.profile(!RRuntime.isFinite(d))) {
+                // ignore -/+Inf if 'infinite == TRUE'
+                continue;
             }
+            result = arithmetic.op(result, d);
+            empty = false;
         }
         if (empty) {
             emptyWarning();

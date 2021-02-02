@@ -81,34 +81,33 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
         int resultIdx = 0;
         int colIdx = 1; // R indexing
         int naCount = 0;
-        try (SequentialIterator it = xAccess.access(x)) {
-            while (xAccess.next(it)) {
-                double value = xAccess.getDouble(it);
-                // skip rows for which we already got NA
-                if (!xAccess.na.check(maxVals[resultIdx])) {
-                    if (xAccess.na.check(value)) {
-                        maxVals[resultIdx] = RRuntime.DOUBLE_NA;
-                        cols[resultIdx] = RRuntime.INT_NA;
-                        naCount++;
-                        if (naCount == nrows) {
-                            // all NAs we're done
-                            return vectorFactory.createIntVector(cols, RDataFactory.INCOMPLETE_VECTOR);
-                        }
-                    } else {
-                        double prevValue = maxVals[resultIdx];
-                        boolean isLastTie = tieLast && prevValue == value;
-                        boolean ignoreInf = tieRandom && Double.isInfinite(value);
-                        if (!ignoreInf && (isLastTie || prevValue < value)) {
-                            maxVals[resultIdx] = value;
-                            cols[resultIdx] = colIdx;
-                        }
+        SequentialIterator it = xAccess.access(x);
+        while (xAccess.next(it)) {
+            double value = xAccess.getDouble(it);
+            // skip rows for which we already got NA
+            if (!xAccess.na.check(maxVals[resultIdx])) {
+                if (xAccess.na.check(value)) {
+                    maxVals[resultIdx] = RRuntime.DOUBLE_NA;
+                    cols[resultIdx] = RRuntime.INT_NA;
+                    naCount++;
+                    if (naCount == nrows) {
+                        // all NAs we're done
+                        return vectorFactory.createIntVector(cols, RDataFactory.INCOMPLETE_VECTOR);
+                    }
+                } else {
+                    double prevValue = maxVals[resultIdx];
+                    boolean isLastTie = tieLast && prevValue == value;
+                    boolean ignoreInf = tieRandom && Double.isInfinite(value);
+                    if (!ignoreInf && (isLastTie || prevValue < value)) {
+                        maxVals[resultIdx] = value;
+                        cols[resultIdx] = colIdx;
                     }
                 }
-                resultIdx++;
-                if (resultIdx == maxVals.length) {
-                    resultIdx = 0;
-                    colIdx++;
-                }
+            }
+            resultIdx++;
+            if (resultIdx == maxVals.length) {
+                resultIdx = 0;
+                colIdx++;
             }
         }
 

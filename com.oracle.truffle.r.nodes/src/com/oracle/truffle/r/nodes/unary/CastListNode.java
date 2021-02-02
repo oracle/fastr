@@ -90,10 +90,9 @@ public abstract class CastListNode extends CastBaseNode {
         RAbstractVector profiledOperand = vectorClassProfile.profile(operand);
         Object[] data = new Object[profiledOperand.getLength()];
 
-        try (SequentialIterator sIter = uAccess.access(profiledOperand, warningContext())) {
-            while (uAccess.next(sIter)) {
-                data[sIter.getIndex()] = uAccess.getListElement(sIter);
-            }
+        SequentialIterator sIter = uAccess.access(profiledOperand, warningContext());
+        while (uAccess.next(sIter)) {
+            data[sIter.getIndex()] = uAccess.getListElement(sIter);
         }
         RList ret = factory().createList(data, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {

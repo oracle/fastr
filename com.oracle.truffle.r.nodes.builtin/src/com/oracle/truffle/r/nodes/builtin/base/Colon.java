@@ -279,14 +279,13 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         protected double doString(RStringVector vector,
                         @Cached("vector.access()") VectorAccess uAccess) {
             checkLength(vector.getLength());
-            try (SequentialIterator sIter = uAccess.access(vector, this)) {
-                while (uAccess.next(sIter)) {
-                    double result = uAccess.getDouble(sIter);
-                    if (RRuntime.isNA(result)) {
-                        throw error(RError.Message.NA_OR_NAN);
-                    }
-                    return result;
+            SequentialIterator sIter = uAccess.access(vector, this);
+            while (uAccess.next(sIter)) {
+                double result = uAccess.getDouble(sIter);
+                if (RRuntime.isNA(result)) {
+                    throw error(RError.Message.NA_OR_NAN);
                 }
+                return result;
             }
             throw RInternalError.shouldNotReachHere();
         }

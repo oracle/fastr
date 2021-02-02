@@ -165,37 +165,36 @@ public abstract class ToStringNode extends RBaseNode {
 
     @TruffleBoundary
     private String vectorToString(RAbstractVector vector, String separator, VectorAccess vectorAccess) {
-        try (SequentialIterator iter = vectorAccess.access(vector)) {
-            int length = vectorAccess.getLength(iter);
-            if (length == 0) {
-                return EMPTY.get(vectorAccess.getType());
-            }
-            StringBuilder b = new StringBuilder();
-            if (vectorAccess.next(iter)) {
-                while (true) {
-                    if (vectorAccess.getType() == RType.List) {
-                        Object value = vectorAccess.getListElement(iter);
-                        if (value instanceof RAbstractListVector) {
-                            RAbstractListVector l = (RAbstractListVector) value;
-                            if (l.getLength() == 0) {
-                                b.append("list()");
-                            } else {
-                                b.append("list(").append(toStringRecursive(l, separator)).append(')');
-                            }
+        SequentialIterator iter = vectorAccess.access(vector);
+        int length = vectorAccess.getLength(iter);
+        if (length == 0) {
+            return EMPTY.get(vectorAccess.getType());
+        }
+        StringBuilder b = new StringBuilder();
+        if (vectorAccess.next(iter)) {
+            while (true) {
+                if (vectorAccess.getType() == RType.List) {
+                    Object value = vectorAccess.getListElement(iter);
+                    if (value instanceof RAbstractListVector) {
+                        RAbstractListVector l = (RAbstractListVector) value;
+                        if (l.getLength() == 0) {
+                            b.append("list()");
                         } else {
-                            b.append(toStringRecursive(value, separator));
+                            b.append("list(").append(toStringRecursive(l, separator)).append(')');
                         }
                     } else {
-                        b.append(vectorAccess.getString(iter));
+                        b.append(toStringRecursive(value, separator));
                     }
-                    if (!vectorAccess.next(iter)) {
-                        break;
-                    }
-                    b.append(separator);
+                } else {
+                    b.append(vectorAccess.getString(iter));
                 }
+                if (!vectorAccess.next(iter)) {
+                    break;
+                }
+                b.append(separator);
             }
-            return b.toString();
         }
+        return b.toString();
     }
 
     @Specialization(guards = "vectorAccess.supports(vector)", limit = "getVectorAccessCacheSize()")

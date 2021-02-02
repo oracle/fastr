@@ -48,18 +48,17 @@ public abstract class RawToBits extends RBuiltinNode.Arg1 {
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected RRawVector rawToBits(RRawVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
-        try (SequentialIterator iter = xAccess.access(x)) {
-            byte[] result = new byte[8 * x.getLength()];
-            int pos = 0;
-            while (xAccess.next(iter)) {
-                byte temp = xAccess.getRaw(iter);
-                for (int i = 0; i < 8; i++) {
-                    result[pos++] = (byte) (temp & 1);
-                    temp >>= 1;
-                }
+        SequentialIterator iter = xAccess.access(x);
+        byte[] result = new byte[8 * x.getLength()];
+        int pos = 0;
+        while (xAccess.next(iter)) {
+            byte temp = xAccess.getRaw(iter);
+            for (int i = 0; i < 8; i++) {
+                result[pos++] = (byte) (temp & 1);
+                temp >>= 1;
             }
-            return RDataFactory.createRawVector(result);
         }
+        return RDataFactory.createRawVector(result);
     }
 
     @Specialization(replaces = "rawToBits")

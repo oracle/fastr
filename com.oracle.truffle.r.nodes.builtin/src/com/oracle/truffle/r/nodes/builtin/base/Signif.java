@@ -81,49 +81,48 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
                     @Cached("create()") BranchProfile emptyProfile,
                     @Cached("create()") BranchProfile identityProfile,
                     @Cached("createBinaryProfile()") ConditionProfile infProfile) {
-        try (SequentialIterator xIter = xAccess.access(x);
-                        SequentialIterator digitsIter = digitsAccess.access(digits)) {
-            int xLength = xAccess.getLength(xIter);
-            if (xLength == 0) {
-                emptyProfile.enter();
-                return RDataFactory.createEmptyDoubleVector();
-            }
-            int digitsLength = digitsAccess.getLength(digitsIter); // always >0
-            int resultLength = Math.max(xLength, digitsLength);
-            double[] resultData = new double[resultLength];
-            boolean resultComplete = true;
-            for (int i = 0; i < resultLength; i++) {
-                xAccess.nextWithWrap(xIter);
-                digitsAccess.nextWithWrap(digitsIter);
-                double res;
-                if (digitsAccess.isNA(digitsIter) || xAccess.isNA(xIter)) {
-                    res = RRuntime.DOUBLE_NA;
-                    resultComplete = false;
+        SequentialIterator xIter = xAccess.access(x);
+        SequentialIterator digitsIter = digitsAccess.access(digits);
+        int xLength = xAccess.getLength(xIter);
+        if (xLength == 0) {
+            emptyProfile.enter();
+            return RDataFactory.createEmptyDoubleVector();
+        }
+        int digitsLength = digitsAccess.getLength(digitsIter); // always >0
+        int resultLength = Math.max(xLength, digitsLength);
+        double[] resultData = new double[resultLength];
+        boolean resultComplete = true;
+        for (int i = 0; i < resultLength; i++) {
+            xAccess.nextWithWrap(xIter);
+            digitsAccess.nextWithWrap(digitsIter);
+            double res;
+            if (digitsAccess.isNA(digitsIter) || xAccess.isNA(xIter)) {
+                res = RRuntime.DOUBLE_NA;
+                resultComplete = false;
+            } else {
+                int digitCount = digitsAccess.getInt(digitsIter);
+                if (digitCount > 22) {
+                    identityProfile.enter();
+                    res = xAccess.getDouble(xIter);
                 } else {
-                    int digitCount = digitsAccess.getInt(digitsIter);
-                    if (digitCount > 22) {
-                        identityProfile.enter();
-                        res = xAccess.getDouble(xIter);
+                    if (digitCount <= 0) {
+                        digitCount = 1;
+                    }
+                    double val = xAccess.getDouble(xIter);
+                    if (infProfile.profile(Double.isNaN(val))) {
+                        res = Double.NaN;
+                    } else if (infProfile.profile(Double.isInfinite(val))) {
+                        res = Double.POSITIVE_INFINITY;
                     } else {
-                        if (digitCount <= 0) {
-                            digitCount = 1;
-                        }
-                        double val = xAccess.getDouble(xIter);
-                        if (infProfile.profile(Double.isNaN(val))) {
-                            res = Double.NaN;
-                        } else if (infProfile.profile(Double.isInfinite(val))) {
-                            res = Double.POSITIVE_INFINITY;
-                        } else {
-                            res = bigIntegerSignif(digitCount, val);
-                        }
+                        res = bigIntegerSignif(digitCount, val);
                     }
                 }
-                resultData[i] = res;
             }
-            RDoubleVector resultVec = RDataFactory.createDoubleVector(resultData, resultComplete);
-            resultVec = (RDoubleVector) copyAttributes.execute(resultVec, x, xLength, digits, digitsLength);
-            return resultVec;
+            resultData[i] = res;
         }
+        RDoubleVector resultVec = RDataFactory.createDoubleVector(resultData, resultComplete);
+        resultVec = (RDoubleVector) copyAttributes.execute(resultVec, x, xLength, digits, digitsLength);
+        return resultVec;
     }
 
     @Specialization(replaces = "signifDouble")

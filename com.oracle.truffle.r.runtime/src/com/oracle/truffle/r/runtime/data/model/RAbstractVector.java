@@ -848,19 +848,18 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         CompilerAsserts.neverPartOfCompilation();
         StringBuilder str = new StringBuilder("[");
         VectorAccess access = slowPathAccess();
-        try (SequentialIterator iter = access.access(this)) {
-            if (access.next(iter)) {
-                while (true) {
-                    str.append(access.getType().isAtomic() ? access.getString(iter) : access.getListElement(iter).toString());
-                    if (!access.next(iter)) {
-                        break;
-                    }
-                    str.append(", ");
-                    if (str.length() > MAX_TOSTRING_LENGTH - 1) {
-                        str.setLength(MAX_TOSTRING_LENGTH - 4);
-                        str.append("...");
-                        break;
-                    }
+        SequentialIterator iter = access.access(this);
+        if (access.next(iter)) {
+            while (true) {
+                str.append(access.getType().isAtomic() ? access.getString(iter) : access.getListElement(iter).toString());
+                if (!access.next(iter)) {
+                    break;
+                }
+                str.append(", ");
+                if (str.length() > MAX_TOSTRING_LENGTH - 1) {
+                    str.setLength(MAX_TOSTRING_LENGTH - 4);
+                    str.append("...");
+                    break;
                 }
             }
         }
@@ -936,10 +935,9 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         assert access.getType().isVector();
         if (!access.getType().isAtomic()) {
             // check non-atomic vectors for nullness
-            try (SequentialIterator iter = access.access(vector)) {
-                while (access.next(iter)) {
-                    assert access.getListElement(iter) != null : "element " + iter.getIndex() + " of vector " + vector + " is null";
-                }
+            SequentialIterator iter = access.access(vector);
+            while (access.next(iter)) {
+                assert access.getListElement(iter) != null : "element " + iter.getIndex() + " of vector " + vector + " is null";
             }
         } else if (access.getType() == RType.List) {
             assert !vector.isComplete();
@@ -947,10 +945,9 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         if (vector.isComplete() && !vector.isSequence()) {
             // check all vectors for completeness
             access.na.enable(true);
-            try (SequentialIterator iter = access.access(vector)) {
-                while (access.next(iter)) {
-                    assert !access.isNA(iter) : "element " + iter.getIndex() + " of vector " + vector + " is NA";
-                }
+            SequentialIterator iter = access.access(vector);
+            while (access.next(iter)) {
+                assert !access.isNA(iter) : "element " + iter.getIndex() + " of vector " + vector + " is NA";
             }
         }
         return true;

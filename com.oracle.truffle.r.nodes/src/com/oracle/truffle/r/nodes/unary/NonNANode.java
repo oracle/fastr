@@ -162,11 +162,10 @@ public abstract class NonNANode extends CastNode {
     @Specialization(guards = {"access.supports(x)", "!x.isComplete()"})
     protected RAbstractAtomicVector onPossiblyIncompleteContainerCached(RAbstractAtomicVector x,
                     @Cached("x.access()") VectorAccess access) {
-        try (SequentialIterator iter = access.access(x)) {
-            while (access.next(iter)) {
-                if (access.isNA(iter)) {
-                    handleNA(x);
-                }
+        SequentialIterator iter = access.access(x);
+        while (access.next(iter)) {
+            if (access.isNA(iter)) {
+                handleNA(x);
             }
         }
         return x;

@@ -93,10 +93,9 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
     protected double doComplex(@SuppressWarnings("unused") RComplex operand,
                     @Cached("getVector(operand)") RComplexVector vector,
                     @Cached("vector.access()") VectorAccess uAccess) {
-        try (VectorAccess.SequentialIterator sIter = uAccess.access(vector, warningContext())) {
-            uAccess.next(sIter);
-            return uAccess.getDouble(sIter);
-        }
+        VectorAccess.SequentialIterator sIter = uAccess.access(vector, warningContext());
+        uAccess.next(sIter);
+        return uAccess.getDouble(sIter);
     }
 
     @Specialization(replaces = "doComplex")

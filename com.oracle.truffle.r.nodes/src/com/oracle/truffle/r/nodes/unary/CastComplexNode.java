@@ -147,13 +147,12 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     private RComplexVector createResultVector(RAbstractVector operand, VectorAccess uAccess) {
         double[] ddata = new double[operand.getLength() << 1];
-        try (SequentialIterator sIter = uAccess.access(operand, warningContext())) {
-            while (uAccess.next(sIter)) {
-                RComplex complexValue = uAccess.getComplex(sIter);
-                int index = sIter.getIndex() << 1;
-                ddata[index] = complexValue.getRealPart();
-                ddata[index + 1] = complexValue.getImaginaryPart();
-            }
+        SequentialIterator sIter = uAccess.access(operand, warningContext());
+        while (uAccess.next(sIter)) {
+            RComplex complexValue = uAccess.getComplex(sIter);
+            int index = sIter.getIndex() << 1;
+            ddata[index] = complexValue.getRealPart();
+            ddata[index + 1] = complexValue.getImaginaryPart();
         }
         RComplexVector ret = factory().createComplexVector(ddata, !uAccess.na.isEnabled(), getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
@@ -184,38 +183,37 @@ public abstract class CastComplexNode extends CastBaseNode {
         int length = list.getLength();
         double[] result = new double[length * 2];
         boolean seenNA = false;
-        try (SequentialIterator sIter = uAccess.access(list, warningContext())) {
-            while (uAccess.next(sIter)) {
-                int i = sIter.getIndex() << 1;
-                Object entry = uAccess.getListElement(sIter);
-                if (entry instanceof RList) {
-                    result[i] = RRuntime.DOUBLE_NA;
-                    result[i + 1] = RRuntime.DOUBLE_NA;
-                    seenNA = true;
-                } else {
-                    Object castEntry = castComplexRecursive(entry);
-                    if (castEntry instanceof RComplex) {
-                        RComplex value = (RComplex) castEntry;
+        SequentialIterator sIter = uAccess.access(list, warningContext());
+        while (uAccess.next(sIter)) {
+            int i = sIter.getIndex() << 1;
+            Object entry = uAccess.getListElement(sIter);
+            if (entry instanceof RList) {
+                result[i] = RRuntime.DOUBLE_NA;
+                result[i + 1] = RRuntime.DOUBLE_NA;
+                seenNA = true;
+            } else {
+                Object castEntry = castComplexRecursive(entry);
+                if (castEntry instanceof RComplex) {
+                    RComplex value = (RComplex) castEntry;
+                    result[i] = value.getRealPart();
+                    result[i + 1] = value.getImaginaryPart();
+                    seenNA = seenNA || RRuntime.isNA(value);
+                } else if (castEntry instanceof RComplexVector) {
+                    RComplexVector complexVector = (RComplexVector) castEntry;
+                    if (complexVector.getLength() == 1) {
+                        RComplex value = complexVector.getDataAt(0);
                         result[i] = value.getRealPart();
                         result[i + 1] = value.getImaginaryPart();
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (castEntry instanceof RComplexVector) {
-                        RComplexVector complexVector = (RComplexVector) castEntry;
-                        if (complexVector.getLength() == 1) {
-                            RComplex value = complexVector.getDataAt(0);
-                            result[i] = value.getRealPart();
-                            result[i + 1] = value.getImaginaryPart();
-                            seenNA = seenNA || RRuntime.isNA(value);
-                        } else if (complexVector.getLength() == 0) {
-                            result[i] = RRuntime.DOUBLE_NA;
-                            result[i + 1] = RRuntime.DOUBLE_NA;
-                            seenNA = true;
-                        } else {
-                            throw throwCannotCoerceListError("complex");
-                        }
+                    } else if (complexVector.getLength() == 0) {
+                        result[i] = RRuntime.DOUBLE_NA;
+                        result[i + 1] = RRuntime.DOUBLE_NA;
+                        seenNA = true;
                     } else {
                         throw throwCannotCoerceListError("complex");
                     }
+                } else {
+                    throw throwCannotCoerceListError("complex");
                 }
             }
         }

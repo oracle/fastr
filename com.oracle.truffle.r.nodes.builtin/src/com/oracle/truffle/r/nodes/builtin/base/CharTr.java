@@ -64,25 +64,25 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
         RStringVector result = vectorReuse.getResult(values);
         VectorAccess resultAccess = vectorReuse.access(result);
         removeRegAttributesNode.execute(result);
-        try (SequentialIterator readIter = resultAccess.access(result); SequentialIterator writeIter = resultAccess.access(result)) {
-            while (resultAccess.next(readIter)) {
-                resultAccess.next(writeIter);
-                String value = resultAccess.getString(readIter);
-                if (RRuntime.isNA(value)) {
-                    continue;
-                }
-                int replaceIdx = 0;
-                while (replaceIdx < oldStr.length()) {
-                    if (replaceIdx + 2 < oldStr.length() && oldStr.charAt(replaceIdx + 1) == '-') {
-                        value = replaceRange(replaceIdx, oldStr, newStr, value);
-                        replaceIdx += 3;
-                    } else {
-                        value = value.replace(oldStr.charAt(replaceIdx), newStr.charAt(replaceIdx));
-                        replaceIdx++;
-                    }
-                }
-                resultAccess.setString(writeIter, value);
+        SequentialIterator readIter = resultAccess.access(result);
+        SequentialIterator writeIter = resultAccess.access(result);
+        while (resultAccess.next(readIter)) {
+            resultAccess.next(writeIter);
+            String value = resultAccess.getString(readIter);
+            if (RRuntime.isNA(value)) {
+                continue;
             }
+            int replaceIdx = 0;
+            while (replaceIdx < oldStr.length()) {
+                if (replaceIdx + 2 < oldStr.length() && oldStr.charAt(replaceIdx + 1) == '-') {
+                    value = replaceRange(replaceIdx, oldStr, newStr, value);
+                    replaceIdx += 3;
+                } else {
+                    value = value.replace(oldStr.charAt(replaceIdx), newStr.charAt(replaceIdx));
+                    replaceIdx++;
+                }
+            }
+            resultAccess.setString(writeIter, value);
         }
         return result;
     }

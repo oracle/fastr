@@ -1136,57 +1136,56 @@ public abstract class ConnectionFunctions {
         @Specialization(guards = "objectAccess.supports(object)", limit = "getVectorAccessCacheSize()")
         protected ByteBuffer write(RAbstractVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes,
                         @Cached("object.access()") VectorAccess objectAccess) {
-            try (SequentialIterator iter = objectAccess.access(object)) {
-                int length = objectAccess.getLength(iter);
+            SequentialIterator iter = objectAccess.access(object);
+            int length = objectAccess.getLength(iter);
 
-                ByteBuffer buffer;
-                switch (objectAccess.getType()) {
-                    case Integer:
-                    case Logical:
-                        buffer = allocate(4 * length, swap);
-                        while (objectAccess.next(iter)) {
-                            buffer.putInt(objectAccess.getInt(iter));
-                        }
-                        return buffer;
-                    case Double:
-                        buffer = allocate(8 * length, swap);
-                        while (objectAccess.next(iter)) {
-                            buffer.putDouble(objectAccess.getDouble(iter));
-                        }
-                        return buffer;
-                    case Complex:
-                        buffer = allocate(16 * length, swap);
-                        while (objectAccess.next(iter)) {
-                            buffer.putDouble(objectAccess.getComplexR(iter));
-                            buffer.putDouble(objectAccess.getComplexI(iter));
-                        }
-                        return buffer;
-                    case Character:
-                        byte[][] data = new byte[length][];
-                        int totalLength = 0;
-                        while (objectAccess.next(iter)) {
-                            // There is no special encoding for NA_character_
-                            data[iter.getIndex()] = encodeString(objectAccess.getString(iter));
-                            // zero pad
-                            totalLength = totalLength + data[iter.getIndex()].length + 1;
-                        }
+            ByteBuffer buffer;
+            switch (objectAccess.getType()) {
+                case Integer:
+                case Logical:
+                    buffer = allocate(4 * length, swap);
+                    while (objectAccess.next(iter)) {
+                        buffer.putInt(objectAccess.getInt(iter));
+                    }
+                    return buffer;
+                case Double:
+                    buffer = allocate(8 * length, swap);
+                    while (objectAccess.next(iter)) {
+                        buffer.putDouble(objectAccess.getDouble(iter));
+                    }
+                    return buffer;
+                case Complex:
+                    buffer = allocate(16 * length, swap);
+                    while (objectAccess.next(iter)) {
+                        buffer.putDouble(objectAccess.getComplexR(iter));
+                        buffer.putDouble(objectAccess.getComplexI(iter));
+                    }
+                    return buffer;
+                case Character:
+                    byte[][] data = new byte[length][];
+                    int totalLength = 0;
+                    while (objectAccess.next(iter)) {
+                        // There is no special encoding for NA_character_
+                        data[iter.getIndex()] = encodeString(objectAccess.getString(iter));
+                        // zero pad
+                        totalLength = totalLength + data[iter.getIndex()].length + 1;
+                    }
 
-                        buffer = allocate(totalLength, swap);
-                        for (int i = 0; i < length; i++) {
-                            buffer.put(data[i]);
-                            buffer.put((byte) 0);
-                        }
-                        return buffer;
-                    // converted to int
-                    case Raw:
-                        buffer = allocate(length, swap);
-                        while (objectAccess.next(iter)) {
-                            buffer.put(objectAccess.getRaw(iter));
-                        }
-                        return buffer;
-                    default:
-                        throw RInternalError.shouldNotReachHere();
-                }
+                    buffer = allocate(totalLength, swap);
+                    for (int i = 0; i < length; i++) {
+                        buffer.put(data[i]);
+                        buffer.put((byte) 0);
+                    }
+                    return buffer;
+                // converted to int
+                case Raw:
+                    buffer = allocate(length, swap);
+                    while (objectAccess.next(iter)) {
+                        buffer.put(objectAccess.getRaw(iter));
+                    }
+                    return buffer;
+                default:
+                    throw RInternalError.shouldNotReachHere();
             }
         }
 

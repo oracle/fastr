@@ -111,10 +111,9 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     protected int doComplex(@SuppressWarnings("unused") RComplex operand,
                     @Cached("getVector(operand)") RComplexVector vector,
                     @Cached("vector.access()") VectorAccess uAccess) {
-        try (SequentialIterator sIter = uAccess.access(vector, getWarningContext())) {
-            uAccess.next(sIter);
-            return uAccess.getInt(sIter);
-        }
+        SequentialIterator sIter = uAccess.access(vector, getWarningContext());
+        uAccess.next(sIter);
+        return uAccess.getInt(sIter);
     }
 
     @Specialization(replaces = "doComplex")

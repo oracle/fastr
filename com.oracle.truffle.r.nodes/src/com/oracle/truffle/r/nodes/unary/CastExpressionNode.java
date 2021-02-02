@@ -103,10 +103,9 @@ public abstract class CastExpressionNode extends CastBaseNode {
                     @Cached("obj.access()") VectorAccess uAccess) {
         int len = obj.getLength();
         Object[] data = new Object[len];
-        try (SequentialIterator sIter = uAccess.access(obj, warningContext())) {
-            while (uAccess.next(sIter)) {
-                data[sIter.getIndex()] = uAccess.getListElement(sIter);
-            }
+        SequentialIterator sIter = uAccess.access(obj, warningContext());
+        while (uAccess.next(sIter)) {
+            data[sIter.getIndex()] = uAccess.getListElement(sIter);
         }
         if (obj instanceof RList) {
             RList list = (RList) obj;
