@@ -368,7 +368,9 @@ public final class AttributesAccessNodes {
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             clearAttrs(target);
             DynamicObject attrs = target.getAttributes();
-            for (RPairList attr : attributes) {
+            Object it = plLib.getIterator(attributes);
+            while (plLib.iteratorNext(attributes, it)) {
+                RPairList attr = plLib.iteratorCurrent(attributes, it);
                 Object tag = plLib.getTag(attr);
                 if (!(tag instanceof RSymbol)) {
                     CompilerDirectives.transferToInterpreter();
