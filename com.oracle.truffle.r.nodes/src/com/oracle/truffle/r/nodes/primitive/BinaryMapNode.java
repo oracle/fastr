@@ -28,10 +28,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.HasFixedAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
@@ -47,24 +43,26 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.WarningInfo;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.HasFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class BinaryMapScalarNode extends BinaryMapNode {
 
-    @Child private VectorAccess leftAccess;
-    @Child private VectorAccess rightAccess;
+    @Child private VectorDataLibrary leftLib;
+    @Child private VectorDataLibrary rightLib;
 
     BinaryMapScalarNode(BinaryMapFunctionNode function, RAbstractVector left, RAbstractVector right, RType argumentType, RType resultType) {
         super(function, left, right, argumentType, resultType);
-        this.leftAccess = left.access();
-        this.rightAccess = right.access();
+        this.leftLib = VectorDataLibrary.getFactory().create(left.getData());
+        this.rightLib = VectorDataLibrary.getFactory().create(right.getData());
     }
 
     @Override
     public boolean isSupported(RAbstractVector left, RAbstractVector right) {
-        return leftAccess.supports(left) && rightAccess.supports(right);
+        return leftLib.accepts(left.getData()) && rightLib.accepts(right.getData());
     }
 
     @Override
@@ -72,77 +70,77 @@ final class BinaryMapScalarNode extends BinaryMapNode {
         assert isSupported(originalLeft, originalRight);
         RAbstractVector left = leftClass.cast(originalLeft);
         RAbstractVector right = rightClass.cast(originalRight);
-        try (RandomIterator leftIter = leftAccess.randomAccess(left); RandomIterator rightIter = rightAccess.randomAccess(right)) {
 
-            assert left != null;
-            assert right != null;
-            function.enable(left, right);
-            assert leftAccess.getLength(leftIter) == 1;
-            assert rightAccess.getLength(rightIter) == 1;
+        assert left != null;
+        assert right != null;
+        function.enable(left, right);
+        Object leftData = left.getData();
+        Object rightData = right.getData();
+        assert leftLib.getLength(leftData) == 1;
+        assert rightLib.getLength(rightData) == 1;
 
-            switch (argumentType) {
-                case Raw:
-                    byte leftValueRaw = leftAccess.getRaw(leftIter, 0);
-                    byte rightValueRaw = rightAccess.getRaw(rightIter, 0);
-                    switch (resultType) {
-                        case Raw:
-                            return RRaw.valueOf(function.applyRaw(leftValueRaw, rightValueRaw));
-                        case Logical:
-                            return function.applyLogical(RRuntime.raw2int(leftValueRaw), RRuntime.raw2int(rightValueRaw));
-                        default:
-                            throw RInternalError.shouldNotReachHere();
-                    }
-                case Logical:
-                    byte leftValueLogical = leftAccess.getLogical(leftIter, 0);
-                    byte rightValueLogical = rightAccess.getLogical(rightIter, 0);
-                    return function.applyLogical(leftValueLogical, rightValueLogical);
-                case Integer:
-                    int leftValueInt = leftAccess.getInt(leftIter, 0);
-                    int rightValueInt = rightAccess.getInt(rightIter, 0);
-                    switch (resultType) {
-                        case Logical:
-                            return function.applyLogical(leftValueInt, rightValueInt);
-                        case Integer:
-                            return function.applyInteger(leftValueInt, rightValueInt);
-                        case Double:
-                            return function.applyDouble(leftValueInt, rightValueInt);
-                        default:
-                            throw RInternalError.shouldNotReachHere();
-                    }
-                case Double:
-                    double leftValueDouble = leftAccess.getDouble(leftIter, 0);
-                    double rightValueDouble = rightAccess.getDouble(rightIter, 0);
-                    switch (resultType) {
-                        case Logical:
-                            return function.applyLogical(leftValueDouble, rightValueDouble);
-                        case Double:
-                            return function.applyDouble(leftValueDouble, rightValueDouble);
-                        default:
-                            throw RInternalError.shouldNotReachHere();
-                    }
-                case Complex:
-                    RComplex leftValueComplex = leftAccess.getComplex(leftIter, 0);
-                    RComplex rightValueComplex = rightAccess.getComplex(rightIter, 0);
-                    switch (resultType) {
-                        case Logical:
-                            return function.applyLogical(leftValueComplex, rightValueComplex);
-                        case Complex:
-                            return function.applyComplex(leftValueComplex, rightValueComplex);
-                        default:
-                            throw RInternalError.shouldNotReachHere();
-                    }
-                case Character:
-                    String leftValueString = leftAccess.getString(leftIter, 0);
-                    String rightValueString = rightAccess.getString(rightIter, 0);
-                    switch (resultType) {
-                        case Logical:
-                            return function.applyLogical(leftValueString, rightValueString);
-                        default:
-                            throw RInternalError.shouldNotReachHere();
-                    }
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
+        switch (argumentType) {
+            case Raw:
+                byte leftValueRaw = leftLib.getRawAt(leftData, 0);
+                byte rightValueRaw = rightLib.getRawAt(rightData, 0);
+                switch (resultType) {
+                    case Raw:
+                        return RRaw.valueOf(function.applyRaw(leftValueRaw, rightValueRaw));
+                    case Logical:
+                        return function.applyLogical(RRuntime.raw2int(leftValueRaw), RRuntime.raw2int(rightValueRaw));
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            case Logical:
+                byte leftValueLogical = leftLib.getLogicalAt(leftData, 0);
+                byte rightValueLogical = rightLib.getLogicalAt(rightData, 0);
+                return function.applyLogical(leftValueLogical, rightValueLogical);
+            case Integer:
+                int leftValueInt = leftLib.getIntAt(leftData, 0);
+                int rightValueInt = rightLib.getIntAt(rightData, 0);
+                switch (resultType) {
+                    case Logical:
+                        return function.applyLogical(leftValueInt, rightValueInt);
+                    case Integer:
+                        return function.applyInteger(leftValueInt, rightValueInt);
+                    case Double:
+                        return function.applyDouble(leftValueInt, rightValueInt);
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            case Double:
+                double leftValueDouble = leftLib.getDoubleAt(leftData, 0);
+                double rightValueDouble = rightLib.getDoubleAt(rightData, 0);
+                switch (resultType) {
+                    case Logical:
+                        return function.applyLogical(leftValueDouble, rightValueDouble);
+                    case Double:
+                        return function.applyDouble(leftValueDouble, rightValueDouble);
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            case Complex:
+                RComplex leftValueComplex = leftLib.getComplexAt(leftData, 0);
+                RComplex rightValueComplex = rightLib.getComplexAt(rightData, 0);
+                switch (resultType) {
+                    case Logical:
+                        return function.applyLogical(leftValueComplex, rightValueComplex);
+                    case Complex:
+                        return function.applyComplex(leftValueComplex, rightValueComplex);
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            case Character:
+                String leftValueString = leftLib.getStringAt(leftData, 0);
+                String rightValueString = rightLib.getStringAt(rightData, 0);
+                switch (resultType) {
+                    case Logical:
+                        return function.applyLogical(leftValueString, rightValueString);
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            default:
+                throw RInternalError.shouldNotReachHere();
         }
     }
 }
