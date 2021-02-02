@@ -728,11 +728,10 @@ public class FrameFunctions {
             return new Object[]{1};
         }
 
-        @Specialization
+        @Specialization(guards = "nIn == n", limit = "1")
         protected REnvironment parentFrame(VirtualFrame frame, int nIn,
-                        @Cached("createEqualityProfile()") ValueProfile nProfile,
+                        @Cached("nIn") int n,
                         @Cached("new()") ParentFrameIterator iter) {
-            int n = nProfile.profile(nIn);
             if (n <= 0) {
                 throw error(RError.Message.INVALID_VALUE, "n");
             }
@@ -745,6 +744,12 @@ public class FrameFunctions {
                 i++;
             }
             return iter.environment(frame, iterState);
+        }
+
+        @Specialization(replaces = "parentFrame")
+        protected REnvironment parentFrameGeneric(VirtualFrame frame, int nIn,
+                                           @Cached("new()") ParentFrameIterator iter) {
+            return parentFrame(frame, nIn, nIn, iter);
         }
     }
 
