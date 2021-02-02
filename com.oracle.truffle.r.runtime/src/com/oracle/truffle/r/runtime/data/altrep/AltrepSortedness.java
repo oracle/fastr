@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
  * This enum represents an information about sortedness of a vector and is transcribed from
