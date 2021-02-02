@@ -25,6 +25,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.Utils.toLowerCase;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -379,14 +380,14 @@ public class GrepFunctions {
                         @SuppressWarnings("unused") boolean perl,
                         @SuppressWarnings("unused") boolean fixed, @SuppressWarnings("unused") boolean useBytes, boolean invert) {
 
-            String pattern = ignoreCase ? patternPar.toLowerCase() : patternPar;
+            String pattern = ignoreCase ? toLowerCase(patternPar) : patternPar;
 
             int[] matchIndices = new int[vector.getLength()];
             int matches = 0;
             for (int i = 0; i < vector.getLength(); i++) {
                 String s = vector.getDataAt(i);
                 if (ignoreCase) {
-                    s = s.toLowerCase();
+                    s = toLowerCase(s);
                 }
 
                 if (s.contains(pattern) == !invert) {
@@ -710,7 +711,7 @@ public class GrepFunctions {
                         int endIndex = (fromByteMapping != null) ? fromByteMapping[ovector[2 * k + 1]] : ovector[2 * k + 1];
                         for (int i = startIndex; i < endIndex; i++) {
                             char c = input.charAt(i);
-                            sb.append(upper ? Character.toUpperCase(c) : (lower ? Character.toLowerCase(c) : c));
+                            sb.append(upper ? Character.toUpperCase(c) : (lower ? toLowerCase(c) : c));
                         }
                     } else if (p1 == 'U') {
                         upper = true;
@@ -978,7 +979,7 @@ public class GrepFunctions {
                 int index = 0;
                 while (true) {
                     if (ignoreCase) {
-                        index = text.toLowerCase().indexOf(pattern.toLowerCase(), index);
+                        index = toLowerCase(text).indexOf(toLowerCase(pattern), index);
                     } else {
                         index = text.indexOf(pattern, index);
                     }
@@ -1039,7 +1040,7 @@ public class GrepFunctions {
                 Matcher m = getPatternMatcher(pattern, text, ignoreCase);
                 while (m.find()) {
                     // R starts counting at index 1
-                    list.add(new Info(m.start() + 1, m.end() - m.start(), null, null, null));
+                    list.add(new Info(Regexec.start(m) + 1, Regexec.end(m) - Regexec.start(m), null, null, null));
                 }
             }
             if (list.size() > 0) {
@@ -1156,7 +1157,7 @@ public class GrepFunctions {
             if (fixed) {
                 int index;
                 if (ignoreCase) {
-                    index = text.toLowerCase().indexOf(pattern.toLowerCase());
+                    index = toLowerCase(text).indexOf(toLowerCase(pattern));
                 } else {
                     index = text.indexOf(pattern);
                 }
@@ -1168,7 +1169,7 @@ public class GrepFunctions {
                 if (find(m)) {
                     result = new Info[m.groupCount() + 1];
                     for (int i = 0; i <= m.groupCount(); i++) {
-                        result[i] = new Info(m.start(i) + 1, m.end(i) - m.start(i), null, null, null);
+                        result[i] = new Info(start(m, i) + 1, end(m, i) - start(m, i), null, null, null);
                     }
                 }
             }
@@ -1181,6 +1182,26 @@ public class GrepFunctions {
         @TruffleBoundary
         private static boolean find(Matcher m) {
             return m.find();
+        }
+
+        @TruffleBoundary
+        private static int start(Matcher m, int i) {
+            return m.start(i);
+        }
+
+        @TruffleBoundary
+        private static int end(Matcher m, int i) {
+            return m.end(i);
+        }
+
+        @TruffleBoundary
+        private static int start(Matcher m) {
+            return m.start();
+        }
+
+        @TruffleBoundary
+        private static int end(Matcher m) {
+            return m.end();
         }
 
         @TruffleBoundary
@@ -1379,7 +1400,7 @@ public class GrepFunctions {
                 int ld;
                 if (ignoreCase) {
                     // reliable only with fixed=true
-                    ld = ld(pattern.toLowerCase(), vector.getDataAt(i).toLowerCase());
+                    ld = ld(toLowerCase(pattern), toLowerCase(vector.getDataAt(i)));
                 } else {
                     ld = ld(pattern, vector.getDataAt(i));
                 }
