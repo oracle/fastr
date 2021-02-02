@@ -161,13 +161,11 @@ class RRawArrayVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public void commitWriteIterator(SeqWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
-        iterator.commit();
+    public void commitWriteIterator(@SuppressWarnings("unused") SeqWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
     }
 
     @ExportMessage
-    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
-        iterator.commit();
+    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") RandomAccessWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
     }
 
     @ExportMessage

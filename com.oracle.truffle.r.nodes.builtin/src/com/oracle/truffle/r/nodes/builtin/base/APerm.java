@@ -115,7 +115,9 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] ap = new int[diml];
 
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData);
+        boolean neverSeenNA = false;
+        try {
             RandomAccessIterator vectorIt = vectorDataLib.randomAccessIterator(vectorData);
             for (int i = 0; i < resultLen; i++) {
                 for (int j = 0; j < ap.length; j++) {
@@ -131,7 +133,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     posV[j] = 0;
                 }
             }
-            boolean neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+            neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, neverSeenNA);
         }
 
@@ -198,7 +201,9 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         setDimsNode.setDimensions(result, resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData);
+        boolean neverSeenNA = false;
+        try {
             RandomAccessIterator vectorIt = vectorDataLib.randomAccessIterator(vectorData);
             // Move along the old array using stride
             for (int i = 0; i < resultLen; i++) {
@@ -206,7 +211,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                 resultDataLib.transfer(resultData, resultIt, i, vectorDataLib, vectorIt, vectorData, pos);
                 incArray(posV, pDim);
             }
-            boolean neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+            neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, neverSeenNA);
         }
 

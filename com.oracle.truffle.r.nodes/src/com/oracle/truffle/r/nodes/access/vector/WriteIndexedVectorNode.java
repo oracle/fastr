@@ -95,9 +95,11 @@ abstract class WriteIndexedVectorNode extends Node {
                     @Cached("createWrite()") WriteIndexedVectorAccessNode write) {
         Object rightData = right.getData();
         Object leftData = left.getData();
-        try (RandomAccessWriteIterator leftIter = leftDataLib.randomAccessWriteIterator(leftData)) {
+        RandomAccessWriteIterator leftIter = leftDataLib.randomAccessWriteIterator(leftData);
+        try {
             RandomAccessIterator rightIter = rightDataLib.randomAccessIterator(rightData);
             write.apply(positionContainerLibrary, leftIter, leftDataLib, leftData, positions, rightIter, rightDataLib, rightData, right, positionTargetDimensions);
+        } finally {
             leftDataLib.commitRandomAccessWriteIterator(leftData, leftIter, rightDataLib.getNACheck(rightData).neverSeenNA());
         }
     }

@@ -94,13 +94,15 @@ public abstract class Diag extends RBuiltinNode.Arg3 {
         SeqIterator xIt = xDataLib.iterator(xData);
         RAbstractVector result = xContainerLib.createEmptySameType(x, nrow * ncol, false);
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData);
+        try {
             int resultIndex = 0;
             for (int j = 0; j < mn; j++) {
                 xDataLib.nextWithWrap(xData, xIt);
                 resultDataLib.transferNextToRandom(resultData, resultIt, resultIndex, xDataLib, xIt, xData);
                 resultIndex += nrow + 1;
             }
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, xDataLib.getNACheck(xData).neverSeenNA());
         }
         setDimAttributeNode.setDimensions(result, new int[]{nrow, ncol});

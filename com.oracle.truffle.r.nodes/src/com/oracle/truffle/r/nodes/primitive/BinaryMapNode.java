@@ -255,24 +255,30 @@ final class BinaryMapVectorNode extends BinaryMapNode {
             SeqIterator rightIter = rightLibrary.iterator(rightData);
             if (mayShareLeft && left.getRType() == resultType && shareLeft.profile(leftLength == maxLength && ((RSharingAttributeStorage) left).isTemporary())) {
                 target = left;
-                try (SeqWriteIterator resultIter = leftLibrary.writeIterator(leftData)) {
+                SeqWriteIterator resultIter = leftLibrary.writeIterator(leftData);
+                try {
                     warningInfo = resultIter.getWarningInfo();
                     vectorNode.execute(function, leftLength, rightLength, leftData, leftLibrary, resultIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
+                } finally {
                     leftLibrary.commitWriteIterator(leftData, resultIter, function.isComplete());
                 }
             } else if (mayShareRight && right.getRType() == resultType && shareRight.profile(rightLength == maxLength && ((RSharingAttributeStorage) right).isTemporary())) {
                 target = right;
-                try (SeqWriteIterator resultIter = rightLibrary.writeIterator(rightData)) {
+                SeqWriteIterator resultIter = rightLibrary.writeIterator(rightData);
+                try {
                     warningInfo = resultIter.getWarningInfo();
                     vectorNode.execute(function, leftLength, rightLength, rightData, rightLibrary, resultIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
+                } finally {
                     rightLibrary.commitWriteIterator(rightData, resultIter, function.isComplete());
                 }
             } else {
                 target = resultType.create(maxLength, false);
                 Object targetData = target.getData();
-                try (SeqWriteIterator resultIter = getResultLibrary().writeIterator(targetData)) {
+                SeqWriteIterator resultIter = getResultLibrary().writeIterator(targetData);
+                try {
                     warningInfo = resultIter.getWarningInfo();
                     vectorNode.execute(function, leftLength, rightLength, targetData, getResultLibrary(), resultIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
+                } finally {
                     getResultLibrary().commitWriteIterator(targetData, resultIter, function.isComplete());
                 }
             }

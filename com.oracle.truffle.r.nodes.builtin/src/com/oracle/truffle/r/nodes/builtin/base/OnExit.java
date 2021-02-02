@@ -70,7 +70,7 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object onExit(VirtualFrame frame, RPromise expr, boolean add,
-                            @Cached BranchProfile appendToEndProfile) {
+                    @Cached BranchProfile appendToEndProfile) {
 
         if (onExitSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();

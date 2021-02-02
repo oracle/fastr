@@ -748,7 +748,7 @@ public class FrameFunctions {
 
         @Specialization(replaces = "parentFrame")
         protected REnvironment parentFrameGeneric(VirtualFrame frame, int nIn,
-                                           @Cached("new()") ParentFrameIterator iter) {
+                        @Cached("new()") ParentFrameIterator iter) {
             return parentFrame(frame, nIn, nIn, iter);
         }
     }

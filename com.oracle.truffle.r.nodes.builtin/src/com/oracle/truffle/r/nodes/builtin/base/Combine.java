@@ -382,11 +382,13 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             VectorDataLibrary vDataLib = getElemDataLib(elementIndex);
             Object resultData = result.getData();
             Object vData = v.getData();
-            try (RandomAccessWriteIterator resultIt = resultDataLibrary.randomAccessWriteIterator(resultData)) {
+            RandomAccessWriteIterator resultIt = resultDataLibrary.randomAccessWriteIterator(resultData);
+            try {
                 RandomAccessIterator vIt = vDataLib.randomAccessIterator(vData);
                 for (int i = 0; i < v.getLength(); i++) {
                     resultDataLibrary.transfer(resultData, resultIt, pos + i, vDataLib, vIt, vData, i);
                 }
+            } finally {
                 resultDataLibrary.commitRandomAccessWriteIterator(resultData, resultIt, vDataLib.getNACheck(vData).neverSeenNA());
             }
             return vDataLib.getLength(vData);

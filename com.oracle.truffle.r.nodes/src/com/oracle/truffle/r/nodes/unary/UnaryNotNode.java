@@ -120,12 +120,14 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
         Object vectorData = vector.getData();
         Object resultData = result.getData();
         SeqIterator vectorIter = vectorDataLib.iterator(vectorData);
-        try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+        SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData);
+        try {
             while (vectorDataLib.nextLoopCondition(vectorData, vectorIter) && resultDataLib.nextLoopCondition(resultData, resultIter)) {
                 boolean isNextNA = vectorDataLib.isNextNA(vectorData, vectorIter);
                 byte value = vectorDataLib.getNextLogical(vectorData, vectorIter);
                 resultDataLib.setNextLogical(resultData, resultIter, isNextNA ? RRuntime.LOGICAL_NA : not(value));
             }
+        } finally {
             resultDataLib.commitWriteIterator(resultData, resultIter, vectorDataLib.getNACheck(vectorData).neverSeenNA());
         }
         return result;
@@ -152,6 +154,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
         RAbstractVector result;
         Object resultData;
         RType vectorDataType = vectorDataLib.getType(vectorData);
+        SeqWriteIterator resultIter;
         switch (vectorDataType) {
             case Character:
             case List:
@@ -165,12 +168,14 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
             case Raw:
                 result = factory.createRawVector(length);
                 resultData = result.getData();
-                try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+                resultIter = resultDataLib.writeIterator(resultData);
+                try {
                     // raw does not produce a logical result, but (255 - value)
                     while (vectorDataLib.next(vectorData, vectorIter) && resultDataLib.next(resultData, resultIter)) {
                         byte value = notRaw(vectorDataLib.getNextRaw(vectorData, vectorIter));
                         resultDataLib.setNextRaw(resultData, resultIter, value);
                     }
+                } finally {
                     resultDataLib.commitWriteIterator(resultData, resultIter, vectorDataLib.getNACheck(vectorData).neverSeenNA());
                 }
                 copyAttrNode.execute(result, vector);
@@ -178,12 +183,14 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
             default:
                 result = factory.createLogicalVector(length, false);
                 resultData = result.getData();
-                try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+                resultIter = resultDataLib.writeIterator(resultData);
+                try {
                     while (vectorDataLib.next(vectorData, vectorIter) && resultDataLib.next(resultData, resultIter)) {
                         byte value = vectorDataLib.getNextLogical(vectorData, vectorIter);
                         boolean isNextNA = vectorDataLib.isNextNA(vectorData, vectorIter);
                         resultDataLib.setNextLogical(resultData, resultIter, isNextNA ? RRuntime.LOGICAL_NA : not(value));
                     }
+                } finally {
                     resultDataLib.commitWriteIterator(resultData, resultIter, vectorDataLib.getNACheck(vectorData).neverSeenNA());
                 }
                 if (vectorDataType == RType.Logical) {

@@ -102,7 +102,8 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         RAbstractVector result = factory.createUninitializedVector(vectorDataLib.getType(vectorData), totalLength, dimArray, null, null);
         Object resultData = result.getData();
         SeqIterator vectorIter = vectorDataLib.iterator(vectorData);
-        try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+        SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData);
+        try {
             if (isEmpty.profile(vectorDataLib.getLength(vectorData) == 0)) {
                 while (resultDataLib.nextLoopCondition(resultData, resultIter)) {
                     resultDataLib.setNextNA(resultData, resultIter);
@@ -114,6 +115,7 @@ public abstract class Array extends RBuiltinNode.Arg3 {
                     resultDataLib.setNextElement(resultData, resultIter, value);
                 }
             }
+        } finally {
             resultDataLib.commitWriteIterator(resultData, resultIter, vectorDataLib.getNACheck(vectorData).neverSeenNA());
         }
 

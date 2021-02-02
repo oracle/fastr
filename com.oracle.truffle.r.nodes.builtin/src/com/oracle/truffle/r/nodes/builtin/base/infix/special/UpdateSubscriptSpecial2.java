@@ -52,8 +52,10 @@ public abstract class UpdateSubscriptSpecial2 extends IndexingSpecial2Common {
     protected RIntVector setInt(RIntVector vector, int index1, int index2, int value,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         Object vectorData = vector.getData();
-        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+        VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData);
+        try {
             dataLib.setInt(vectorData, it, matrixIndex(vector, index1, index2), value);
+        } finally {
             dataLib.commitRandomAccessWriteIterator(vectorData, it, !RRuntime.isNA(value));
         }
         return vector;
@@ -63,8 +65,10 @@ public abstract class UpdateSubscriptSpecial2 extends IndexingSpecial2Common {
     protected RDoubleVector setDouble(RDoubleVector vector, int index1, int index2, double value,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         Object vectorData = vector.getData();
-        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+        VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData);
+        try {
             dataLib.setDouble(vectorData, it, matrixIndex(vector, index1, index2), value);
+        } finally {
             dataLib.commitRandomAccessWriteIterator(vectorData, it, !RRuntime.isNA(value));
         }
         return vector;
@@ -74,8 +78,10 @@ public abstract class UpdateSubscriptSpecial2 extends IndexingSpecial2Common {
     protected RStringVector setString(RStringVector vector, int index1, int index2, String value,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         Object vectorData = vector.getData();
-        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+        VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData);
+        try {
             dataLib.setString(vectorData, it, matrixIndex(vector, index1, index2), value);
+        } finally {
             dataLib.commitRandomAccessWriteIterator(vectorData, it, !RRuntime.isNA(value));
         }
         return vector;
@@ -86,8 +92,10 @@ public abstract class UpdateSubscriptSpecial2 extends IndexingSpecial2Common {
     protected Object setList(RList list, int index1, int index2, Object value,
                     @CachedLibrary("list.getData()") VectorDataLibrary dataLib) {
         Object vectorData = list.getData();
-        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+        VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData);
+        try {
             dataLib.setElement(vectorData, it, matrixIndex(list, index1, index2), value);
+        } finally {
             dataLib.commitRandomAccessWriteIterator(vectorData, it, false);
         }
         return list;
@@ -98,12 +106,17 @@ public abstract class UpdateSubscriptSpecial2 extends IndexingSpecial2Common {
                     @Cached("createBinaryProfile()") ConditionProfile naProfile,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         Object vectorData = vector.getData();
-        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
-            if (naProfile.profile(RRuntime.isNA(value))) {
+        VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData);
+        if (naProfile.profile(RRuntime.isNA(value))) {
+            try {
                 dataLib.setDouble(vectorData, it, matrixIndex(vector, index1, index2), RRuntime.DOUBLE_NA);
+            } finally {
                 dataLib.commitRandomAccessWriteIterator(vectorData, it, false);
-            } else {
+            }
+        } else {
+            try {
                 dataLib.setDouble(vectorData, it, matrixIndex(vector, index1, index2), value);
+            } finally {
                 dataLib.commitRandomAccessWriteIterator(vectorData, it, true);
             }
         }

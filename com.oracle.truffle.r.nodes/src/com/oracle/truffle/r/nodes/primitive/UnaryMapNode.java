@@ -158,9 +158,12 @@ final class UnaryMapVectorNode extends UnaryMapNode {
             Object resultData = result.getData();
             SeqIterator operandIter = operandDataLib.iterator(operandData);
             assert resultDataLib != null;
-            try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+            SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData);
+            boolean neverSeenNA = false;
+            try {
                 vectorNode.execute(function, operandLength, resultDataLib, resultData, resultIter, operandDataLib, operandData, operandIter);
-                boolean neverSeenNA = operandLength == 0 || operandDataLib.getNACheck(operandData).neverSeenNA();
+                neverSeenNA = operandLength == 0 || operandDataLib.getNACheck(operandData).neverSeenNA();
+            } finally {
                 resultDataLib.commitWriteIterator(resultData, resultIter, neverSeenNA);
             }
             RBaseNode.reportWork(this, operandLength);
