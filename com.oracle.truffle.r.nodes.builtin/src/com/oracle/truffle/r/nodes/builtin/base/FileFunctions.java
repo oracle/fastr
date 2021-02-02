@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
@@ -64,7 +65,6 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
@@ -84,10 +84,10 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import java.nio.file.FileVisitor;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 
 // Much of this code was influences/transcribed from GnuR src/main/platform.c
 
@@ -1232,19 +1232,21 @@ public class FileFunctions {
         }
     }
 
-    @RBuiltin(name = "unlink", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "recursive", "force"}, behavior = IO)
-    public abstract static class Unlink extends RBuiltinNode.Arg3 {
+    @RBuiltin(name = "unlink", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "recursive", "force", "expand"}, behavior = IO)
+    public abstract static class Unlink extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(Unlink.class);
             casts.arg("x").mustBe(stringValue(), RError.Message.CHAR_VEC_ARGUMENT);
             casts.arg("recursive").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             casts.arg("force").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg("expand").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
+        // TODO: NewVersionMigration - expand parameter
         @Specialization
         @TruffleBoundary
-        protected int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force,
+        protected int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, boolean expand,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             int result = 1;
             for (int i = -0; i < vec.getLength(); i++) {
