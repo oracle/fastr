@@ -274,6 +274,7 @@ public abstract class Filter<T, R extends T> {
             public final RType type;
 
             public ScalarValue(Object value, RType type) {
+                assert value instanceof Integer || value instanceof Double || value instanceof Byte || value instanceof String;
                 this.value = value;
                 this.type = type;
             }

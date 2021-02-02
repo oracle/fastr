@@ -464,7 +464,10 @@ public final class PipelineToCastNode {
                         case Logical:
                             return (Byte arg) -> arg == (byte) scalarValue.value;
                         case Any:
-                            return arg -> arg.equals(scalarValue.value);
+                            return arg -> (arg instanceof String && scalarValue.value instanceof String && ((String) arg).equals((String) scalarValue.value)) ||
+                                            (arg instanceof Integer && scalarValue.value instanceof Integer && ((Integer) arg).intValue() == ((Integer) scalarValue.value).intValue()) ||
+                                            (arg instanceof Double && scalarValue.value instanceof Double && ((Double) arg).doubleValue() == ((Double) scalarValue.value).doubleValue()) ||
+                                            (arg instanceof Byte && scalarValue.value instanceof Byte && ((Byte) arg).byteValue() == ((Byte) scalarValue.value).byteValue());
                         default:
                             throw RInternalError.unimplemented("TODO: more types here ");
                     }
