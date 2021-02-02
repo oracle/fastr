@@ -27,6 +27,7 @@ import java.util.Iterator;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -566,13 +567,20 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     /**
      * Appends given value as the last element of the pairlist.
      */
-    public void appendToEnd(RPairList value) {
-        ensurePairList();
-        RPairList last = null;
-        for (RPairList item : this) {
-            last = item;
+    @ExportMessage
+    public void appendToEnd(RPairList newEnd,
+                    @Exclusive @Cached BranchProfile hasClosure) {
+        if (hasClosure()) {
+            hasClosure.enter();
+            ensurePairList();
         }
-        last.setCdr(value);
+        RPairList last = null;
+        Object item = this;
+        while (item instanceof RPairList) {
+            last = (RPairList) item;
+            item = last.cdr;
+        }
+        last.setCdr(newEnd);
     }
 
     @Override
@@ -592,7 +600,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
 
         @Specialization(guards = "pl.hasClosure()")
         // @TruffleBoundary - is it necessary?
-        static int getLengthWithClosure(RPairList pl, @Cached BranchProfile profile) {
+        static int getLengthWithClosure(RPairList pl, @Exclusive @Cached BranchProfile profile) {
             RSyntaxElement s = pl.closure.getSyntaxElement();
             if (s instanceof RSyntaxCall) {
                 profile.enter();
@@ -804,46 +812,72 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     @Ignore
     @Override
     public Iterator<RPairList> iterator() {
-        return RPairListLibrary.getUncached().iterable(this).iterator();
+        // allows to use Java for-each on slow path
+        return new PairListIterator(this);
     }
 
     @Ignore
     public java.lang.Iterable<RPairList> iterable() {
-        return RPairListLibrary.getUncached().iterable(this);
+        return new PairListIterable();
+    }
+
+    final class PairListIterable implements Iterable<RPairList> {
+        @Override
+        public Iterator<RPairList> iterator() {
+            return new PairListIterator(RPairList.this);
+        }
+    }
+
+    static final class PairListIterator implements Iterator<RPairList> {
+        private Object plt;
+
+        PairListIterator(Object plt) {
+            this.plt = plt;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !RRuntime.isNull(plt);
+        }
+
+        @Override
+        public RPairList next() {
+            assert plt instanceof RPairList;
+            RPairList curr = (RPairList) plt;
+            plt = curr.cdr();
+            return curr;
+        }
+    }
+
+    static final class PEIterator {
+        RPairList current;
     }
 
     @ExportMessage
-    static class Iterable {
+    public Object getIterator() {
+        return new PEIterator();
+    }
 
-        @Specialization
-        static java.lang.Iterable<RPairList> iterable(RPairList pl, @CachedLibrary(limit = "1") RPairListLibrary plLib) {
-            pl.ensurePairList();
-
-            return new java.lang.Iterable<RPairList>() {
-
-                @Override
-                public Iterator<RPairList> iterator() {
-                    return new Iterator<RPairList>() {
-                        private Object plt = pl;
-
-                        @Override
-                        public boolean hasNext() {
-                            return !RRuntime.isNull(plt);
-                        }
-
-                        @Override
-                        public RPairList next() {
-                            assert plt instanceof RPairList;
-                            RPairList curr = (RPairList) plt;
-                            plt = plLib.cdr(curr);
-                            return curr;
-                        }
-                    };
-                }
-
-            };
-
+    @ExportMessage
+    public boolean iteratorNext(Object iterator) {
+        PEIterator it = (PEIterator) iterator;
+        if (it.current == null) {
+            it.current = this;
+            return true;
+        } else {
+            if (it.current.car instanceof RPairList) {
+                it.current = (RPairList) it.current.car;
+                return true;
+            } else {
+                return false;
+            }
         }
+    }
+
+    @ExportMessage
+    public RPairList iteratorCurrent(Object iterator) {
+        PEIterator it = (PEIterator) iterator;
+        return it.current;
     }
 
     @TruffleBoundary
@@ -1199,6 +1233,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
 
     private static final RPairList[] EMPTY_CELLS = new RPairList[0];
 
+    @TruffleBoundary
     public static RPairList[] getCells(RPairList head) {
         if (head == null) {
             return EMPTY_CELLS;

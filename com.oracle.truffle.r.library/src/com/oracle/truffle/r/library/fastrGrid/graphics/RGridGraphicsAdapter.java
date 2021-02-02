@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.library.fastrGrid.graphics;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RError;
@@ -146,7 +147,7 @@ public final class RGridGraphicsAdapter {
         REnvironment baseEnv = REnvironment.baseEnv();
         baseEnv.safePut(DOT_DEVICE, name);
         RPairList dotDevices = fixupDevicesVariable(rCtx);
-        dotDevices.appendToEnd(RDataFactory.createPairList(name));
+        dotDevices.appendToEnd(RDataFactory.createPairList(name), BranchProfile.getUncached());
     }
 
     public static String getDefaultDevice() {
