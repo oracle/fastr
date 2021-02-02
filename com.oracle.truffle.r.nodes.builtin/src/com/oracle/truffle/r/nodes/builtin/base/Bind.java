@@ -30,7 +30,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -85,7 +84,6 @@ import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@ReportPolymorphism
 public abstract class Bind extends RBaseNodeWithWarnings {
 
     protected enum BindType {

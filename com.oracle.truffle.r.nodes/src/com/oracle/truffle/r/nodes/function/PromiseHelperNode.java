@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -44,7 +43,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValueForEagerPromiseNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallerFrameClosureProvider;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -58,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -478,7 +477,6 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
      * {@link ArgumentStatePush#MAX_COUNTED_ARGS} arguments.
      */
     @ImportStatic(DSLConfig.class)
-    @ReportPolymorphism
     protected abstract static class GenerateValueForEagerPromiseNode extends Node {
 
         protected static final int ASSUMPTION_CACHE_SIZE = ArgumentStatePush.MAX_COUNTED_ARGS + 4;

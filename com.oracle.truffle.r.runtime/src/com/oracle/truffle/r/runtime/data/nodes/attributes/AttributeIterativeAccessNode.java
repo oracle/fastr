@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
@@ -43,7 +42,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * properties (i.e. attributes) it is unnecessary to invoke method {@link Shape#getPropertyList()},
  * which would be more expensive.
  */
-@ReportPolymorphism
 public abstract class AttributeIterativeAccessNode extends RBaseNode {
 
     protected int getCacheLimit() {

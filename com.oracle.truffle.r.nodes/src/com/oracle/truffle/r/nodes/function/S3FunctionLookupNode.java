@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -301,9 +301,6 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                 UseMethodFunctionLookupCachedNode cachedNode = replace(
                                 specialize(frame, genericName, type, group, callerFrame, genericDefFrame,
                                                 new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod, defaultMethod, depth + 1)));
-                if (depth > 1) {
-                    reportPolymorphicSpecialize();
-                }
                 return cachedNode.execute(frame, genericName, type, group, callerFrame, genericDefFrame);
             }
         }

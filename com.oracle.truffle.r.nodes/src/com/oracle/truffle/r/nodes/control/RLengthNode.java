@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.control;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -52,7 +51,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * overridden for some S3/S4 classes. Check if you need to get actual length, or what the 'length'
  * function returns, like in {@code seq_along}.
  */
-@ReportPolymorphism
 @GenerateUncached
 @ImportStatic(DSLConfig.class)
 public abstract class RLengthNode extends RBaseNode {

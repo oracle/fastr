@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
@@ -33,7 +32,6 @@ import com.oracle.truffle.api.object.Shape;
 /**
  * Base class for nodes that access {@link DynamicObject}.
  */
-@ReportPolymorphism
 public abstract class PropertyAccessNode extends Node {
     protected static Shape lookupShape(DynamicObject attrs) {
         CompilerAsserts.neverPartOfCompilation();
