@@ -176,7 +176,9 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         protected int getLengthPairList(RPairList list,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             int totalSize = 0;
-            for (RPairList item : list) {
+            Object it = plLib.getIterator(list);
+            while (plLib.iteratorNext(list, it)) {
+                RPairList item = plLib.iteratorCurrent(list, it);
                 totalSize += getRecursiveLength(plLib.car(item));
             }
             return totalSize;
