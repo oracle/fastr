@@ -480,14 +480,15 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
         Object vecData = vec.getData();
         int vecLength = vecDataLib.getLength(vecData);
         reportWork(vecLength);
-        BitSet bitset = new BitSet(256);
+        boolean[] bitset = new boolean[Byte.MAX_VALUE - Byte.MIN_VALUE + 1];
         byte[] data = new byte[vecLength];
         int ind = 0;
         SeqIterator vecIter = vecDataLib.iterator(vecData);
         while (vecDataLib.nextLoopCondition(vecData, vecIter)) {
             byte val = vecDataLib.getNextRaw(vecData, vecIter);
-            if (!bitset.get(val)) {
-                bitset.set(val);
+            int idx = val - Byte.MIN_VALUE;
+            if (!bitset[idx]) {
+                bitset[idx] = true;
                 data[ind++] = val;
             }
         }
