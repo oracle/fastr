@@ -354,7 +354,8 @@ public abstract class VectorDataLibrary extends Library {
     /**
      * @see #commitWriteIterator(Object, SeqWriteIterator, boolean)
      */
-    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") Object receiver, @SuppressWarnings("unused") RandomAccessWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
+    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") Object receiver, @SuppressWarnings("unused") RandomAccessWriteIterator iterator,
+                    @SuppressWarnings("unused") boolean neverSeenNA) {
     }
 
     /**

@@ -120,9 +120,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 if (sv.getLength() == 1) {
                     String ctmp;
                     VectorAccess access = sv.slowPathAccess();
-                    try (RandomIterator iter = access.randomAccess(sv)) {
-                        ctmp = RRuntime.escapeString(access.getString(iter, 0), true, true);
-                    }
+                    RandomIterator iter = access.randomAccess(sv);
+                    ctmp = RRuntime.escapeString(access.getString(iter, 0), true, true);
                     if (ctmp.length() < 100) {
                         pbuf = ctmp;
                     } else {

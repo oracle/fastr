@@ -61,13 +61,12 @@ public class RawFunctions {
         @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
         protected RRawVector charToRaw(RStringVector x,
                         @Cached("x.access()") VectorAccess xAccess) {
-            try (RandomIterator iter = xAccess.randomAccess(x)) {
-                if (xAccess.getLength(iter) != 1) {
-                    warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
-                }
-                String s = xAccess.getString(iter, 0);
-                return stringToRaw(s);
+            RandomIterator iter = xAccess.randomAccess(x);
+            if (xAccess.getLength(iter) != 1) {
+                warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
             }
+            String s = xAccess.getString(iter, 0);
+            return stringToRaw(s);
         }
 
         @Specialization(replaces = "charToRaw")

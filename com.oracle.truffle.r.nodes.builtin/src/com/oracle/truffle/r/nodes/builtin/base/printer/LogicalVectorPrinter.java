@@ -116,21 +116,20 @@ public final class LogicalVectorPrinter extends VectorPrinter<RLogicalVector> {
 
     public static String[] format(RLogicalVector value, boolean trim, int width, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
-        try (RandomIterator iter = access.randomAccess(value)) {
-            int length = access.getLength(iter);
-            int w;
-            if (trim) {
-                w = 1;
-            } else {
-                w = formatLogicalVectorInternal(iter, access, 0, length, pp.getNaWidth());
-            }
-            w = Math.max(w, width);
-
-            String[] result = new String[value.getLength()];
-            for (int i = 0; i < length; i++) {
-                result[i] = encodeLogical(access.getLogical(iter, i), w, pp);
-            }
-            return result;
+        RandomIterator iter = access.randomAccess(value);
+        int length = access.getLength(iter);
+        int w;
+        if (trim) {
+            w = 1;
+        } else {
+            w = formatLogicalVectorInternal(iter, access, 0, length, pp.getNaWidth());
         }
+        w = Math.max(w, width);
+
+        String[] result = new String[value.getLength()];
+        for (int i = 0; i < length; i++) {
+            result[i] = encodeLogical(access.getLogical(iter, i), w, pp);
+        }
+        return result;
     }
 }

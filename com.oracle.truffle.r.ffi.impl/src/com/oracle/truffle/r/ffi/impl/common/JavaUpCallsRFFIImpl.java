@@ -940,14 +940,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             if (byRow != 0) { // copy by row
                 int tRows = RRuntime.nrows(target);
                 int tCols = RRuntime.ncols(target);
-                try (RandomIterator targetIter = targetAccess.randomAccess(target)) {
-                    for (int i = 0; i < tRows; i++) {
-                        int tIdx = i;
-                        for (int j = 0; j < tCols; j++) {
-                            sourceAccess.nextWithWrap(sourceIter);
-                            targetAccess.setFromSameType(targetIter, tIdx, sourceAccess, sourceIter);
-                            tIdx += tRows;
-                        }
+                RandomIterator targetIter = targetAccess.randomAccess(target);
+                for (int i = 0; i < tRows; i++) {
+                    int tIdx = i;
+                    for (int j = 0; j < tCols; j++) {
+                        sourceAccess.nextWithWrap(sourceIter);
+                        targetAccess.setFromSameType(targetIter, tIdx, sourceAccess, sourceIter);
+                        tIdx += tRows;
                     }
                 }
             } else { // copy by column

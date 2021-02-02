@@ -71,26 +71,25 @@ final class UnaryMapScalarNode extends UnaryMapNode {
         function.enable(operand);
         assert operand.getLength() == 1;
 
-        try (RandomIterator iter = operandAccess.randomAccess(operand)) {
-            switch (argumentType) {
-                case Logical:
-                    return function.applyLogical(operandAccess.getLogical(iter, 0));
-                case Integer:
-                    return function.applyInteger(operandAccess.getInt(iter, 0));
-                case Double:
-                    return function.applyDouble(operandAccess.getDouble(iter, 0));
-                case Complex:
-                    switch (resultType) {
-                        case Double:
-                            return function.applyDouble(operandAccess.getComplex(iter, 0));
-                        case Complex:
-                            return function.applyComplex(operandAccess.getComplex(iter, 0));
-                        default:
-                            throw RInternalError.shouldNotReachHere();
-                    }
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
+        RandomIterator iter = operandAccess.randomAccess(operand);
+        switch (argumentType) {
+            case Logical:
+                return function.applyLogical(operandAccess.getLogical(iter, 0));
+            case Integer:
+                return function.applyInteger(operandAccess.getInt(iter, 0));
+            case Double:
+                return function.applyDouble(operandAccess.getDouble(iter, 0));
+            case Complex:
+                switch (resultType) {
+                    case Double:
+                        return function.applyDouble(operandAccess.getComplex(iter, 0));
+                    case Complex:
+                        return function.applyComplex(operandAccess.getComplex(iter, 0));
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            default:
+                throw RInternalError.shouldNotReachHere();
         }
     }
 }

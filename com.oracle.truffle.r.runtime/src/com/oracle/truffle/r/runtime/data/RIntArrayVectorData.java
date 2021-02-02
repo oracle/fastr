@@ -174,7 +174,8 @@ public class RIntArrayVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") RandomAccessWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
+    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") RandomAccessWriteIterator iterator, boolean neverSeenNA,
+                    @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         commitWrites(neverSeenNA, setCompleteProfile);
     }
 

@@ -46,33 +46,32 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
             // Note: otherwise array index out of bounds
             throw error(Message.MUST_BE_SQUARE_MATRIX, "x");
         }
-        try (RandomIterator aIter = aAccess.randomAccess(a)) {
-            RDoubleVector result = reuse.getResult(a);
-            VectorAccess resultAccess = reuse.access(result);
-            try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
-                for (int i = 0; i < n; i++) {
-                    double sum = 0;
-                    for (int j = 0; j < n; j++) {
-                        sum += aAccess.getDouble(aIter, i + j * n);
-                    }
-                    sum /= n;
-                    for (int j = 0; j < n; j++) {
-                        resultAccess.setDouble(resultIter, i + j * n, aAccess.getDouble(aIter, i + j * n) - sum);
-                    }
-                }
+        RandomIterator aIter = aAccess.randomAccess(a);
+        RDoubleVector result = reuse.getResult(a);
+        VectorAccess resultAccess = reuse.access(result);
+        try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
+            for (int i = 0; i < n; i++) {
+                double sum = 0;
                 for (int j = 0; j < n; j++) {
-                    double sum = 0;
-                    for (int i = 0; i < n; i++) {
-                        sum += resultAccess.getDouble(aIter, i + j * n);
-                    }
-                    sum /= n;
-                    for (int i = 0; i < n; i++) {
-                        resultAccess.setDouble(resultIter, i + j * n, resultAccess.getDouble(aIter, i + j * n) - sum);
-                    }
+                    sum += aAccess.getDouble(aIter, i + j * n);
+                }
+                sum /= n;
+                for (int j = 0; j < n; j++) {
+                    resultAccess.setDouble(resultIter, i + j * n, aAccess.getDouble(aIter, i + j * n) - sum);
                 }
             }
-            return result;
+            for (int j = 0; j < n; j++) {
+                double sum = 0;
+                for (int i = 0; i < n; i++) {
+                    sum += resultAccess.getDouble(aIter, i + j * n);
+                }
+                sum /= n;
+                for (int i = 0; i < n; i++) {
+                    resultAccess.setDouble(resultIter, i + j * n, resultAccess.getDouble(aIter, i + j * n) - sum);
+                }
+            }
         }
+        return result;
     }
 
     @Specialization(replaces = "doubleCentre")

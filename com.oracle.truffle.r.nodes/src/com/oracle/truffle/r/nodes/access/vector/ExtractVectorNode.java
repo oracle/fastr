@@ -193,7 +193,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
         @Specialization(limit = "getVectorAccessCacheSize()")
         protected static String extractCached(RStringVector value,
-                                              @CachedLibrary("value.getData()") VectorDataLibrary lib) {
+                        @CachedLibrary("value.getData()") VectorDataLibrary lib) {
             Object data = value.getData();
             if (lib.getLength(data) == 1) {
                 return lib.getStringAt(data, 0);

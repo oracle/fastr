@@ -58,12 +58,11 @@ public abstract class SizeToOctalRawNode extends UnaryNode {
 
     private RRawVector toOctal(long size) {
         RRawVector ans = factory.createRawVector(11);
-        try (RandomIterator iter = resultAccess.randomAccess(ans)) {
-            long s = size;
-            for (int i = 0; i < 11; i++) {
-                resultAccess.setRaw(iter, 10 - i, (byte) (48.0 + (s % 8)));
-                s /= 8;
-            }
+        RandomIterator iter = resultAccess.randomAccess(ans);
+        long s = size;
+        for (int i = 0; i < 11; i++) {
+            resultAccess.setRaw(iter, 10 - i, (byte) (48.0 + (s % 8)));
+            s /= 8;
         }
         return ans;
     }

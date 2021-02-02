@@ -70,9 +70,8 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
                     previous = RRuntime.INT_NA;
                     complete = false;
                 } else {
-                    try (RandomIterator xtIter = xtAccess.randomAccess(xt)) {
-                        previous = findInterval2(xtAccess, xtIter, xAccess.getDouble(xIter), right, inside, leftOpenProfiled, previous);
-                    }
+                    RandomIterator xtIter = xtAccess.randomAccess(xt);
+                    previous = findInterval2(xtAccess, xtIter, xAccess.getDouble(xIter), right, inside, leftOpenProfiled, previous);
                 }
                 result[i++] = previous;
             }

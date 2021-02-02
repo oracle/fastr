@@ -177,9 +177,8 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
                     @Cached("createTemporary(x)") VectorReuse xReuse) {
         RAbstractVector result = xReuse.getResult(x);
         VectorAccess resultAccess = xReuse.access(result);
-        try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
-            transposeSquareMatrixInPlace(result, resultIter, resultAccess);
-        }
+        RandomIterator resultIter = resultAccess.randomAccess(result);
+        transposeSquareMatrixInPlace(result, resultIter, resultAccess);
         return result;
     }
 

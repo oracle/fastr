@@ -74,9 +74,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
         double[] ans = new double[n];
 
-        try (RandomIterator xIter = xAccess.randomAccess(x)) {
-            rdistance(xAccess, xIter, nr, nc, ans, false, methodObj, p);
-        }
+        RandomIterator xIter = xAccess.randomAccess(x);
+        rdistance(xAccess, xIter, nr, nc, ans, false, methodObj, p);
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
 
         RStringVector names = (RStringVector) getNamesAttrNode.execute(list);

@@ -175,21 +175,20 @@ public final class IntegerVectorPrinter extends VectorPrinter<RIntVector> {
 
     public static String[] format(RIntVector value, boolean trim, int width, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
-        try (RandomIterator iter = access.randomAccess(value)) {
-            int w;
-            int length = access.getLength(iter);
-            if (trim) {
-                w = 1;
-            } else {
-                w = formatIntVectorInternal(iter, access, 0, length, pp.getNaWidth());
-            }
-            w = Math.max(w, width);
-
-            String[] result = new String[length];
-            for (int i = 0; i < length; i++) {
-                result[i] = encodeInteger(access.getInt(iter, i), w, pp);
-            }
-            return result;
+        RandomIterator iter = access.randomAccess(value);
+        int w;
+        int length = access.getLength(iter);
+        if (trim) {
+            w = 1;
+        } else {
+            w = formatIntVectorInternal(iter, access, 0, length, pp.getNaWidth());
         }
+        w = Math.max(w, width);
+
+        String[] result = new String[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = encodeInteger(access.getInt(iter, i), w, pp);
+        }
+        return result;
     }
 }

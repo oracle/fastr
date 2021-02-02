@@ -138,31 +138,30 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
         // order as GNU R, which is row by row
         int colIdx;
         boolean usedRandom = false;
-        try (RandomIterator it = xAccess.randomAccess(x)) {
-            for (int rowIdx = 0; rowIdx < nrows; rowIdx++) {
-                if (xAccess.na.check(cols[rowIdx])) {
-                    // this row contains NA
-                    continue;
-                }
-                double max = xAccess.getDouble(it, rowIdx);
-                cols[rowIdx] = 1; // R indexing
-                int ntie = 1;
-                for (colIdx = 1; colIdx < ncols; colIdx++) {
-                    double value = xAccess.getDouble(it, rowIdx + colIdx * nrows);
-                    if (value > max + epsilons[rowIdx]) {
-                        max = value;
+        RandomIterator it = xAccess.randomAccess(x);
+        for (int rowIdx = 0; rowIdx < nrows; rowIdx++) {
+            if (xAccess.na.check(cols[rowIdx])) {
+                // this row contains NA
+                continue;
+            }
+            double max = xAccess.getDouble(it, rowIdx);
+            cols[rowIdx] = 1; // R indexing
+            int ntie = 1;
+            for (colIdx = 1; colIdx < ncols; colIdx++) {
+                double value = xAccess.getDouble(it, rowIdx + colIdx * nrows);
+                if (value > max + epsilons[rowIdx]) {
+                    max = value;
+                    cols[rowIdx] = colIdx + 1;
+                    ntie = 1;
+                } else if (value >= max - epsilons[rowIdx]) {
+                    ntie++;
+                    if (!usedRandom) {
+                        RRNG.getRNGState();
+                        usedRandom = true;
+                    }
+                    if (ntie * RRNG.unifRand() < 1.) {
                         cols[rowIdx] = colIdx + 1;
-                        ntie = 1;
-                    } else if (value >= max - epsilons[rowIdx]) {
-                        ntie++;
-                        if (!usedRandom) {
-                            RRNG.getRNGState();
-                            usedRandom = true;
-                        }
-                        if (ntie * RRNG.unifRand() < 1.) {
-                            cols[rowIdx] = colIdx + 1;
-                            // NOTE: GNU R also does not update the actual value
-                        }
+                        // NOTE: GNU R also does not update the actual value
                     }
                 }
             }

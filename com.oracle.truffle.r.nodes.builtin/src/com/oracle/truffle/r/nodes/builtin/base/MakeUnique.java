@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "make.unique", kind = INTERNAL, parameterNames = {"names", "sep"}, behavior = PURE)
@@ -93,47 +94,46 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
     @TruffleBoundary
     protected RStringVector doLargeVector(RStringVector names, String sep) {
         VectorAccess access = names.slowPathAccess();
-        try (VectorAccess.RandomIterator iter = access.randomAccess(names)) {
-            int length = access.getLength(iter);
-            HashMap<String, AtomicInteger> keys = new HashMap<>(length);
-            boolean containsDuplicates = false;
-            boolean containsClashes = true;
-            for (int i = 0; i < length; i++) {
-                AtomicInteger value = new AtomicInteger(0);
-                String element = access.getString(iter, i);
-                AtomicInteger prev = keys.put(element, value);
-                if (prev != null) {
-                    containsDuplicates = true;
-                    value.incrementAndGet();
-                    if (!containsClashes) {
-                        int lastIndexOf = element.lastIndexOf(sep);
-                        // If an element contains the separator string followed by a digit, we may
-                        // encounter clashes.
-                        containsClashes = lastIndexOf != -1 && lastIndexOf + 1 < element.length() && Character.isDigit(element.charAt(lastIndexOf + 1));
-                    }
+        RandomIterator iter = access.randomAccess(names);
+        int length = access.getLength(iter);
+        HashMap<String, AtomicInteger> keys = new HashMap<>(length);
+        boolean containsDuplicates = false;
+        boolean containsClashes = true;
+        for (int i = 0; i < length; i++) {
+            AtomicInteger value = new AtomicInteger(0);
+            String element = access.getString(iter, i);
+            AtomicInteger prev = keys.put(element, value);
+            if (prev != null) {
+                containsDuplicates = true;
+                value.incrementAndGet();
+                if (!containsClashes) {
+                    int lastIndexOf = element.lastIndexOf(sep);
+                    // If an element contains the separator string followed by a digit, we may
+                    // encounter clashes.
+                    containsClashes = lastIndexOf != -1 && lastIndexOf + 1 < element.length() && Character.isDigit(element.charAt(lastIndexOf + 1));
                 }
             }
-            if (containsDuplicates) {
-                for (int i = 0; i < length; i++) {
-                    AtomicInteger atomicInteger = keys.get(access.getString(iter, i));
-                    int curCnt = atomicInteger.getAndIncrement() - 1;
-                    if (curCnt > 0) {
-                        String updatedElement;
-                        do {
-                            updatedElement = access.getString(iter, i) + sep + curCnt;
-
-                            // The generated string may already be in the vector.
-                            if (containsClashes && keys.containsKey(updatedElement)) {
-                                curCnt = atomicInteger.getAndIncrement() - 1;
-                            } else {
-                                break;
-                            }
-                        } while (true);
-                        access.setString(iter, i, updatedElement);
-                    }
-                }
-            }
-            return names;
         }
+        if (containsDuplicates) {
+            for (int i = 0; i < length; i++) {
+                AtomicInteger atomicInteger = keys.get(access.getString(iter, i));
+                int curCnt = atomicInteger.getAndIncrement() - 1;
+                if (curCnt > 0) {
+                    String updatedElement;
+                    do {
+                        updatedElement = access.getString(iter, i) + sep + curCnt;
+
+                        // The generated string may already be in the vector.
+                        if (containsClashes && keys.containsKey(updatedElement)) {
+                            curCnt = atomicInteger.getAndIncrement() - 1;
+                        } else {
+                            break;
+                        }
+                    } while (true);
+                    access.setString(iter, i, updatedElement);
+                }
+            }
+        }
+        return names;
     }
 }
