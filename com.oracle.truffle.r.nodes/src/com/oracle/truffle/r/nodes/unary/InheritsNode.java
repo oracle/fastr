@@ -90,7 +90,7 @@ public abstract class InheritsNode extends RBaseNode {
     @Specialization(guards = {"!which", "whatAccess.supports(what)"}, limit = "getVectorAccessCacheSize()")
     protected byte doesInherit(Object x, RStringVector what, @SuppressWarnings("unused") boolean which,
                     @Cached BranchProfile nonEmptyClassHierarchy,
-                    @Cached("createEqualityProfile()") ValueProfile whatValueProfile,
+                    @Cached("createIdentityProfile()") ValueProfile whatValueProfile,
                     @Cached("createBinaryProfile()") ConditionProfile whatIsSingleElement,
                     @Cached ContainsCheck containsCheck,
                     @Cached("what.access()") VectorAccess whatAccess) {

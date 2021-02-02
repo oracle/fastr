@@ -25,6 +25,7 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN_SQRT_2PI;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_SQRT_PI;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.logspaceAdd;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -520,6 +521,7 @@ public final class TOMS708 {
                             break L_end;
 
                         default:
+                            CompilerDirectives.transferToInterpreter();
                             throw RInternalError.shouldNotReachHere("state: " + state);
                     }/* bratio */
                 }

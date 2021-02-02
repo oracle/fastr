@@ -485,6 +485,7 @@ public class DebugHandling {
             enableChildren();
         }
 
+        @TruffleBoundary
         void enableChildren() {
             statementListener.enable();
             for (LoopStatementEventListener lser : loopStatementListeners) {
@@ -492,6 +493,7 @@ public class DebugHandling {
             }
         }
 
+        @TruffleBoundary
         void disableChildren() {
             statementListener.disable();
             for (LoopStatementEventListener lser : loopStatementListeners) {

@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
@@ -59,7 +60,7 @@ public abstract class CopyResizedToPreallocated extends RBaseNode {
 
     @Specialization(guards = "fillWithNA", limit = "getCacheSize(1)")
     public void fillWithNAValues(VectorDataLibrary dataLib, Object data, Object resultData, @SuppressWarnings("unused") boolean fillWithNA,
-                    @Cached("createEqualityProfile()") ValueProfile writtenNAProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile writtenNAProfile,
                     @CachedLibrary("resultData") VectorDataLibrary resultDataLib) {
         SeqWriteIterator rIt = resultDataLib.writeIterator(resultData);
         boolean neverSeenNA = false;

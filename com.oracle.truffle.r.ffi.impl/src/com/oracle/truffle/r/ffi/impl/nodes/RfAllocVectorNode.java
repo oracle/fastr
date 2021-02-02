@@ -94,6 +94,7 @@ public abstract class RfAllocVectorNode extends FFIUpCallNode.Arg2 {
             case NILSXP:
                 return RNull.instance;
             default:
+                CompilerDirectives.transferToInterpreter();
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
     }

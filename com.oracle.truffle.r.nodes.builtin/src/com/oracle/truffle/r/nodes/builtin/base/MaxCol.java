@@ -31,6 +31,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -61,7 +62,7 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
         return MaxColNodeGen.create();
     }
 
-    private final ValueProfile tieProfile = ValueProfile.createEqualityProfile();
+    private final PrimitiveValueProfile tieProfile = PrimitiveValueProfile.createEqualityProfile();
 
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     RIntVector findMaxCol(RAbstractContainer x, int tieArg,

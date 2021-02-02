@@ -24,6 +24,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
@@ -35,8 +36,8 @@ public abstract class Rnorm extends RandFunction2_Double {
     @Specialization
     public double exec(double muIn, double sigmaIn, RandomNumberProvider rand,
                     @Cached("createBinaryProfile()") ConditionProfile zeroSigmaProfile,
-                    @Cached("createEqualityProfile()") ValueProfile sigmaValueProfile,
-                    @Cached("createEqualityProfile()") ValueProfile muValueProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile sigmaValueProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile muValueProfile,
                     @Cached() BranchProfile errorProfile) {
         double sigma = sigmaValueProfile.profile(sigmaIn);
         double mu = muValueProfile.profile(muIn);

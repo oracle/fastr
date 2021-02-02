@@ -31,6 +31,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -173,7 +174,7 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     @ExportMessage(name = "createEmptySameType", library = AbstractContainerLibrary.class)
     public RAbstractVector containerLibCreateEmptySameType(int newLength, boolean fillWithNA,
-                    @Cached("createEqualityProfile()") ValueProfile fillWithNAProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile fillWithNAProfile,
                     @Shared("rtypeProfile") @Cached("createIdentityProfile()") ValueProfile typeProfile) {
         assert this instanceof RAbstractVector;
         return typeProfile.profile(getRType()).create(newLength, fillWithNAProfile.profile(fillWithNA));

@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CallTarget;
@@ -67,6 +68,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -76,6 +78,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+
+import org.graalvm.collections.EconomicMap;
 
 public final class Utils {
 
@@ -227,6 +231,21 @@ public final class Utils {
     @TruffleBoundary(allowInlining = true)
     public static double doubleValue(Number num) {
         return num.doubleValue();
+    }
+
+    @TruffleBoundary
+    public static <K, T> void put(EconomicMap<K, T> map, K k, T t) {
+        map.put(k, t);
+    }
+
+    @TruffleBoundary
+    public static <K, T> T get(EconomicMap<K, T> map, K k) {
+        return map.get(k);
+    }
+
+    @TruffleBoundary
+    public static AtomicInteger get(EconomicMap<RBaseObject, AtomicInteger> preserveList, RBaseObject x) {
+        return preserveList.get(x);
     }
 
     /**

@@ -308,6 +308,7 @@ public class DLL {
             return create(name, path, dynamicLookup, handle, addToList, false);
         }
 
+        @TruffleBoundary
         private static DLLInfo create(String name, String path, boolean dynamicLookup, LibHandle handle, boolean addToList, boolean syntheticHandle) {
             DLLInfo result = new DLLInfo(name, path, dynamicLookup, handle, syntheticHandle);
             if (addToList) {

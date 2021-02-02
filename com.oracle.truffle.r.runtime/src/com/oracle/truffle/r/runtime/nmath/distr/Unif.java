@@ -24,6 +24,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
@@ -45,8 +46,8 @@ public final class Unif {
         public double exec(double minIn, double maxIn, RandomNumberProvider rand,
                         @Cached() BranchProfile errorProfile,
                         @Cached("createBinaryProfile()") ConditionProfile minEqualsMaxProfile,
-                        @Cached("createEqualityProfile()") ValueProfile minValueProfile,
-                        @Cached("createEqualityProfile()") ValueProfile maxValueProfile) {
+                        @Cached("createEqualityProfile()") PrimitiveValueProfile minValueProfile,
+                        @Cached("createEqualityProfile()") PrimitiveValueProfile maxValueProfile) {
             double min = minValueProfile.profile(minIn);
             double max = maxValueProfile.profile(maxIn);
             if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {

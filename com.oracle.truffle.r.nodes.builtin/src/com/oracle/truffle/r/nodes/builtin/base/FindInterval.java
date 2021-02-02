@@ -55,7 +55,7 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
 
     @Specialization(guards = {"xtAccess.supports(xt)", "xAccess.supports(x)"})
     RIntVector doFindInterval(RDoubleVector xt, RDoubleVector x, boolean right, boolean inside, boolean leftOpen,
-                    @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
+                    @Cached("createIdentityProfile()") ValueProfile leftOpenProfile,
                     @Cached("create(xt)") VectorAccess xtAccess,
                     @Cached("create(x)") VectorAccess xAccess,
                     @Cached("create()") VectorFactory vectorFactory) {
@@ -80,7 +80,7 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
 
     @Specialization(replaces = "doFindInterval")
     RIntVector doFindIntervalGeneric(RDoubleVector xt, RDoubleVector x, boolean right, boolean inside, boolean leftOpen,
-                    @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
+                    @Cached("createIdentityProfile()") ValueProfile leftOpenProfile,
                     @Cached("create()") VectorFactory factory) {
         return doFindInterval(xt, x, right, inside, leftOpen, leftOpenProfile, xt.slowPathAccess(), x.slowPathAccess(), factory);
     }

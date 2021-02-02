@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
@@ -57,7 +58,8 @@ public enum AltrepSortedness {
             case 0:
                 return KNOWN_UNSORTED;
         }
-        throw RInternalError.shouldNotReachHere("Got unexpected integer value: " + value);
+        assert false : value;
+        throw CompilerDirectives.shouldNotReachHere("Got unexpected integer value.");
     }
 
     public int getValue() {

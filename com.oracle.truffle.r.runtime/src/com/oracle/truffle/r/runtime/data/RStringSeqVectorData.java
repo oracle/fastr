@@ -181,8 +181,9 @@ public class RStringSeqVectorData implements RSeq {
 
     // Utility methods:
 
+    @TruffleBoundary
     private String getStringImpl(int index) {
         assert index >= 0 && index < getLength();
-        return prefix + Integer.toString(start + stride * index) + suffix;
+        return prefix + (start + stride * index) + suffix;
     }
 }

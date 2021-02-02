@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SetAttributeNode;
@@ -64,7 +65,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object updateNull(@SuppressWarnings("unused") RNull x, String value,
-                    @Cached("createEqualityProfile()") ValueProfile valueProfile) {
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile valueProfile) {
         RType mode = typeFromMode.execute(valueProfile.profile(value));
         checkMode(mode);
         return mode.create(0, false);

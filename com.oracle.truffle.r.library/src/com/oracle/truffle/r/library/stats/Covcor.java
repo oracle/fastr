@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
@@ -952,7 +953,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
 
     private final BranchProfile naInRes = BranchProfile.create();
     private final ConditionProfile matrixProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile methodValueProfile = ValueProfile.createEqualityProfile();
+    private final PrimitiveValueProfile methodValueProfile = PrimitiveValueProfile.createEqualityProfile();
 
     @Child private GetReadonlyData.Double getReadonlyDataNode = GetReadonlyData.Double.create();
     @Child private GetDimAttributeNode getDimsXNode = GetDimAttributeNode.create();

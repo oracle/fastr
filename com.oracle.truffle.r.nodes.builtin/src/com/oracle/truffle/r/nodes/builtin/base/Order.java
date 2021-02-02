@@ -38,6 +38,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RPrecedenceBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
@@ -269,7 +270,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
      */
     @Specialization(guards = {"!oneVec(args)", "!noVec(args)"})
     Object orderMulti(byte naLast, boolean decreasing, RArgsValuesAndNames args,
-                    @Cached("createEqualityProfile()") ValueProfile lengthProfile) {
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile lengthProfile) {
         int n = preprocessVectors(args, lengthProfile);
 
         int[] indx = new int[n];
