@@ -190,10 +190,13 @@ public class TruffleNFI_Context extends RFFIContext {
                         } else if (value instanceof String) {
                             interop.execute(lookupNativeFunction(NativeFunction.initvar_string), i, value);
                         } else {
-                            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
+                            FFIDownCallWrap ffiWrap = new FFIDownCallWrap();
+                            try {
                                 interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, ffiWrap.wrapUncached(value));
                             } catch (Exception ex) {
                                 throw RInternalError.shouldNotReachHere(ex);
+                            } finally {
+                                ffiWrap.close();
                             }
                         }
                     } catch (InteropException ex) {
@@ -225,7 +228,7 @@ public class TruffleNFI_Context extends RFFIContext {
     private void initCallbacks(RContext context) {
         if (context.getKind() == ContextKind.SHARE_NOTHING) {
             // create and fill a new callbacks table
-            callbacks = NativeMemory.allocate(Callbacks.values().length * Long.BYTES, "callbacks");
+            callbacks = NativeMemory.allocate(Callbacks.values().length * (long) Long.BYTES, "callbacks");
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
             Object addCallback;
             try {

@@ -59,8 +59,7 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     public Object bytesToNativeCharArray(byte[] bytes) {
-        Object result = new NativeCharArray(bytes);
-        return result;
+        return new NativeCharArray(bytes);
     }
 
     @Override
@@ -111,10 +110,13 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     protected void setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
+        FFIDownCallWrap ffiWrap = new FFIDownCallWrap();
+        try {
             InteropLibrary.getFactory().getUncached().execute(setSymbolHandle, ffiWrap.wrapUncached(dllInfo), nstOrd, routines, index);
         } catch (Exception ex) {
             throw RInternalError.shouldNotReachHere(ex);
+        } finally {
+            ffiWrap.close();
         }
     }
 

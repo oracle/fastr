@@ -181,10 +181,13 @@ public final class TruffleLLVM_Call implements CallRFFI {
                 } else if (value instanceof String) {
                     interop.execute(INIT_VAR_FUN.STRING.symbolHandle.asTruffleObject(), i, new NativeCharArray((String) value));
                 } else if (value instanceof TruffleObject) {
-                    try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
+                    FFIDownCallWrap ffiWrap = new FFIDownCallWrap();
+                    try {
                         interop.execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, ffiWrap.wrapUncached(value));
                     } catch (Exception ex) {
                         throw RInternalError.shouldNotReachHere(ex);
+                    } finally {
+                        ffiWrap.close();
                     }
                 }
             } catch (InteropException ex) {
@@ -303,8 +306,6 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
     /**
      * Upcalled from Rinternal et al.
-     *
-     * @param function
      */
     @SuppressWarnings("static-method")
     public void unimplemented(String function) {

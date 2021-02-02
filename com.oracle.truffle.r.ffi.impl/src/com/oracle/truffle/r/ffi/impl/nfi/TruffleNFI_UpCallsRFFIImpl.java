@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -75,7 +76,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object R_alloc(int n, int size) {
-        long result = NativeMemory.allocate(n * size, "R_alloc");
+        long result = NativeMemory.allocate(n * (long) size, "R_alloc");
         getContext().transientAllocations.peek().add(result);
         return result;
     }
@@ -109,14 +110,18 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
+            FFIDownCallWrap ffiWrap = new FFIDownCallWrap();
+            try {
                 Object[] args = frame.getArguments();
                 // first arg is DLLInfo - have to wrapUncached it for native
                 args[0] = ffiWrap.wrapUncached(args[0]);
                 interop.execute(setSymFun, args);
                 return RNull.instance;
             } catch (Exception ex) {
+                CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere(ex);
+            } finally {
+                ffiWrap.close();
             }
         }
 

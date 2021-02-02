@@ -70,7 +70,11 @@ import com.oracle.truffle.r.runtime.RInternalError;
  */
 public class FFIWrap {
 
-    public static final class FFIDownCallWrap implements AutoCloseable {
+    /**
+     * We cannot use try with resources dues to PE limitations, but this class should be used in the
+     * same fashion, using try and finally blocks.
+     */
+    public static final class FFIDownCallWrap {
         /**
          * Hold the materialized values for as long, as the FFIWrap instance exists.
          */
@@ -112,7 +116,6 @@ public class FFIWrap {
             return wrappedArgs;
         }
 
-        @Override
         public void close() {
             if (materialized == null) {
                 throw RInternalError.shouldNotReachHere();
