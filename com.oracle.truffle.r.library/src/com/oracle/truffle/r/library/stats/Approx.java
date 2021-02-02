@@ -25,15 +25,15 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleV
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class Approx extends RExternalBuiltinNode.Arg7 {
@@ -54,11 +54,11 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
         casts.arg(6).asDoubleVector().findFirst();
     }
 
-    @Specialization(guards = {"xAccess.supports(x)", "yAccess.supports(y)", "vAccess.supports(v)"})
+    @Specialization(limit = "getVectorAccessCacheSize()")
     protected RDoubleVector approx(RDoubleVector x, RDoubleVector y, RDoubleVector v, int method, double yl, double yr, double f,
-                    @Cached("x.access()") VectorAccess xAccess,
-                    @Cached("y.access()") VectorAccess yAccess,
-                    @Cached("v.access()") VectorAccess vAccess) {
+                    @CachedLibrary("x.getData()") VectorDataLibrary xLib,
+                    @CachedLibrary("y.getData()") VectorDataLibrary yLib,
+                    @CachedLibrary("v.getData()") VectorDataLibrary vLib) {
         int nx = x.getLength();
         int nout = v.getLength();
         double[] yout = new double[nout];
@@ -71,21 +71,21 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
         apprMeth.yhigh = yr;
         naCheck.enable(true);
 
-        try (RandomIterator xIter = xAccess.randomAccess(x); RandomIterator yIter = yAccess.randomAccess(y); SequentialIterator vIter = vAccess.access(v)) {
-            int i = 0;
-            while (vAccess.next(vIter)) {
-                double xouti = vAccess.getDouble(vIter);
-                yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, xAccess, xIter, yAccess, yIter, nx, apprMeth);
-                naCheck.check(yout[i]);
-                i++;
-            }
-            return RDataFactory.createDoubleVector(yout, naCheck.neverSeenNA());
-        }
-    }
+        Object xData = x.getData();
+        RandomAccessIterator xIter = xLib.randomAccessIterator(xData);
+        Object yData = y.getData();
+        RandomAccessIterator yIter = yLib.randomAccessIterator(yData);
+        Object vData = v.getData();
+        SeqIterator vIter = vLib.iterator(vData);
 
-    @Specialization(replaces = "approx")
-    protected RDoubleVector approxGeneric(RDoubleVector x, RDoubleVector y, RDoubleVector v, int method, double yl, double yr, double f) {
-        return approx(x, y, v, method, yl, yr, f, x.slowPathAccess(), y.slowPathAccess(), v.slowPathAccess());
+        int i = 0;
+        while (vLib.next(vData, vIter)) {
+            double xouti = vLib.getNextDouble(vData, vIter);
+            yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, xLib, xData, xIter, yLib, yData, yIter, nx, apprMeth);
+            naCheck.check(yout[i]);
+            i++;
+        }
+        return RDataFactory.createDoubleVector(yout, naCheck.neverSeenNA());
     }
 
     private static class ApprMeth {
@@ -96,8 +96,8 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
         int kind;
     }
 
-    private static double approx1(double v, VectorAccess xAccess, RandomIterator xIter, VectorAccess yAccess, RandomIterator yIter, int n,
-                    ApprMeth apprMeth) {
+    private static double approx1(double v, VectorDataLibrary xLib, Object xData, RandomAccessIterator xIter,
+                    VectorDataLibrary yLib, Object yData, RandomAccessIterator yIter, int n, ApprMeth apprMeth) {
         /* Approximate y(v), given (x,y)[i], i = 0,..,n-1 */
 
         if (n == 0) {
@@ -107,10 +107,10 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
         int i = 0;
         int j = n - 1;
         /* handle out-of-domain points */
-        if (v < xAccess.getDouble(xIter, i)) {
+        if (v < xLib.getDouble(xData, xIter, i)) {
             return apprMeth.ylow;
         }
-        if (v > xAccess.getDouble(xIter, j)) {
+        if (v > xLib.getDouble(xData, xIter, j)) {
             return apprMeth.yhigh;
         }
 
@@ -118,7 +118,7 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
         while (i < j - 1) { /* x.getDataAt(i) <= v <= x.getDataAt(j) */
             int ij = (i + j) / 2;
             /* i+1 <= ij <= j-1 */
-            if (v < xAccess.getDouble(xIter, ij)) {
+            if (v < xLib.getDouble(xData, xIter, ij)) {
                 j = ij;
             } else {
                 i = ij;
@@ -129,13 +129,13 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
 
         /* interpolation */
 
-        double xJ = xAccess.getDouble(xIter, j);
-        double yJ = yAccess.getDouble(yIter, j);
+        double xJ = xLib.getDouble(xData, xIter, j);
+        double yJ = yLib.getDouble(yData, yIter, j);
         if (v == xJ) {
             return yJ;
         }
-        double xI = xAccess.getDouble(xIter, i);
-        double yI = yAccess.getDouble(yIter, i);
+        double xI = xLib.getDouble(xData, xIter, i);
+        double yI = yLib.getDouble(yData, yIter, i);
         if (v == xI) {
             return yI;
         }
