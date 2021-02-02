@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairList.PairListIterator;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -368,9 +369,10 @@ public final class AttributesAccessNodes {
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             clearAttrs(target);
             DynamicObject attrs = target.getAttributes();
-            Object it = plLib.getIterator(attributes);
-            while (plLib.iteratorNext(attributes, it)) {
-                RPairList attr = plLib.iteratorCurrent(attributes, it);
+
+            PairListIterator it = attributes.iterator();
+            while (it.hasNext()) {
+                RPairList attr = it.next(plLib);
                 Object tag = plLib.getTag(attr);
                 if (!(tag instanceof RSymbol)) {
                     CompilerDirectives.transferToInterpreter();

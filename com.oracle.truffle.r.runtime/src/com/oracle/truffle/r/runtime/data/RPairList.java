@@ -811,24 +811,24 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
 
     @Ignore
     @Override
-    public Iterator<RPairList> iterator() {
+    public PairListIterator iterator() {
         // allows to use Java for-each on slow path
         return new PairListIterator(this);
     }
 
     @Ignore
-    public java.lang.Iterable<RPairList> iterable() {
+    public PairListIterable iterable() {
         return new PairListIterable();
     }
 
-    final class PairListIterable implements Iterable<RPairList> {
+    public final class PairListIterable implements Iterable<RPairList> {
         @Override
         public Iterator<RPairList> iterator() {
             return new PairListIterator(RPairList.this);
         }
     }
 
-    static final class PairListIterator implements Iterator<RPairList> {
+    public static final class PairListIterator implements Iterator<RPairList> {
         private Object plt;
 
         PairListIterator(Object plt) {
@@ -847,37 +847,13 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
             plt = curr.cdr();
             return curr;
         }
-    }
 
-    static final class PEIterator {
-        RPairList current;
-    }
-
-    @ExportMessage
-    public Object getIterator() {
-        return new PEIterator();
-    }
-
-    @ExportMessage
-    public boolean iteratorNext(Object iterator) {
-        PEIterator it = (PEIterator) iterator;
-        if (it.current == null) {
-            it.current = this;
-            return true;
-        } else {
-            if (it.current.car instanceof RPairList) {
-                it.current = (RPairList) it.current.car;
-                return true;
-            } else {
-                return false;
-            }
+        public RPairList next(RPairListLibrary lib) {
+            assert plt instanceof RPairList;
+            RPairList curr = (RPairList) plt;
+            plt = lib.cdr(curr);
+            return curr;
         }
-    }
-
-    @ExportMessage
-    public RPairList iteratorCurrent(Object iterator) {
-        PEIterator it = (PEIterator) iterator;
-        return it.current;
     }
 
     @TruffleBoundary

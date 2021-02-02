@@ -53,21 +53,5 @@ public abstract class RPairListLibrary extends Library {
 
     public abstract Closure getClosure(Object target);
 
-    /**
-     * Returns an opaque iterator object that can be passed as argument to
-     * {@link #iteratorNext(Object, Object)} and {@link #iteratorCurrent(Object, Object)}. The
-     * iterator is initialized to point to item item before the start, i.e., one should start using
-     * it by calling {@link #iteratorNext(Object, Object)}.
-     */
-    public abstract Object getIterator(Object target);
-
-    /**
-     * Moves the iterator to the next item. If there is no such item (i.e., {@code cdr} is null or
-     * something else than a pair-list), then this return {@code false}.
-     */
-    public abstract boolean iteratorNext(Object target, Object iterator);
-
-    public abstract RPairList iteratorCurrent(Object target, Object iterator);
-
     public abstract int getLength(Object target);
 }

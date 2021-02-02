@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairList.PairListIterator;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -194,9 +195,9 @@ public abstract class PrecedenceNode extends RBaseNode {
                     @Cached("createRecursive()") PrecedenceNode precedenceNode,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         int precedence = -1;
-        Object it = plLib.getIterator(list);
-        while (plLib.iteratorNext(list, it)) {
-            RPairList item = plLib.iteratorCurrent(list, it);
+        PairListIterator it = list.iterator();
+        while (it.hasNext()) {
+            RPairList item = it.next(plLib);
             precedence = Math.max(precedence, precedenceNode.executeInteger(plLib.car(item), recursive));
         }
         return precedence;
