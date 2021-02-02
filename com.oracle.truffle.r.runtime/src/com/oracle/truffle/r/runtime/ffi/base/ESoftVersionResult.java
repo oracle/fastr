@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.ffi.base;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -44,6 +45,7 @@ public final class ESoftVersionResult implements RTruffleObject {
         return true;
     }
 
+    @TruffleBoundary
     @ExportMessage
     public Object execute(Object[] arguments) {
         if (arguments.length == 2) {

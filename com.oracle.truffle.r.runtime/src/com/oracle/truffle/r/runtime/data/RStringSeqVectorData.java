@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -182,6 +183,6 @@ public class RStringSeqVectorData implements RSeq {
 
     private String getStringImpl(int index) {
         assert index >= 0 && index < getLength();
-        return prefix + (start + stride * index) + suffix;
+        return prefix + Integer.toString(start + stride * index) + suffix;
     }
 }

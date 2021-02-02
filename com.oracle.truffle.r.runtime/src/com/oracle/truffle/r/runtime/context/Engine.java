@@ -97,6 +97,7 @@ public interface Engine {
             return source != null;
         }
 
+        @TruffleBoundary
         @ExportMessage(name = "getSourceLocation")
         final SourceSection getSourceSection() throws UnsupportedMessageException {
             if (source == null) {

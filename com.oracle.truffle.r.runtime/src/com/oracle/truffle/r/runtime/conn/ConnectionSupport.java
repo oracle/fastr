@@ -39,6 +39,7 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -893,6 +894,7 @@ public class ConnectionSupport {
         protected abstract void createDelegateConnection() throws IOException;
 
         public void setCompressionType(@SuppressWarnings("unused") RCompression.Type cType) throws IOException {
+            CompilerDirectives.transferToInterpreter();
             throw new IOException("Not yet implemented");
         }
 

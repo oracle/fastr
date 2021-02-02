@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.builtin.base.IdenticalFactory.IdenticalInterna
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -344,7 +345,7 @@ public final class Identical extends RBuiltinNode.Arg8 {
                         if (identical((double) xValue, (double) yValue, numEq, singleNA) == RRuntime.LOGICAL_FALSE) {
                             return RRuntime.LOGICAL_FALSE;
                         }
-                    } else if (!xValue.equals(yValue)) {
+                    } else if (!Utils.equals(xValue, yValue)) {
                         return RRuntime.LOGICAL_FALSE;
                     }
                 }

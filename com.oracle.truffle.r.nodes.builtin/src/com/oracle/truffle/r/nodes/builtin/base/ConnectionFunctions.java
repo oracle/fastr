@@ -1236,8 +1236,13 @@ public abstract class ConnectionFunctions {
         protected RRawVector writeBin(RAbstractVector object, @SuppressWarnings("unused") RRawVector con, int size, boolean swap, boolean useBytes,
                         @Cached("create()") WriteDataNode writeData) {
             ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
+            return RDataFactory.createRawVector(getBytes(buffer));
+        }
+
+        @TruffleBoundary
+        private static byte[] getBytes(ByteBuffer buffer) {
             buffer.flip();
-            return RDataFactory.createRawVector(buffer.array());
+            return buffer.array();
         }
     }
 

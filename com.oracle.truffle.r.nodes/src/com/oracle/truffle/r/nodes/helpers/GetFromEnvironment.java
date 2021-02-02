@@ -76,7 +76,7 @@ public abstract class GetFromEnvironment extends RBaseNode {
         return frameProfile.profile(env.getFrame(frameAccessProfile)).getFrameDescriptor();
     }
 
-    @Specialization(guards = {"getFrameDescriptor(env) == envDesc", "read.getIdentifier().equals(name)"})
+    @Specialization(guards = {"getFrameDescriptor(env) == envDesc", "name.equals(read.getIdentifier())"})
     protected Object getCached(VirtualFrame frame, REnvironment env, @SuppressWarnings("unused") String name,
                     @Cached("env.getFrame().getFrameDescriptor()") @SuppressWarnings("unused") FrameDescriptor envDesc,
                     @Cached("createRead(name)") LocalReadVariableNode read) {

@@ -180,7 +180,7 @@ public class TrigExpFunctions {
 
         @Override
         public RComplex op(double re, double im) {
-            throw new UnsupportedOperationException();
+            throw CompilerDirectives.shouldNotReachHere();
         }
     }
 

@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.graalvm.collections.EconomicMap;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -53,12 +54,22 @@ public abstract class PreserveObjectNode extends FFIUpCallNode.Arg1 {
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
         RContext ctx = ctxRef.get();
         EconomicMap<RBaseObject, AtomicInteger> preserveList = ctx.getStateRFFI().rffiContextState.preserveList;
-        AtomicInteger prevCnt = preserveList.get(x);
+        AtomicInteger prevCnt = get(preserveList, x);
         if (profile.profile(prevCnt != null)) {
             prevCnt.incrementAndGet();
         } else {
-            preserveList.put(x, new AtomicInteger(1));
+            put(preserveList, x);
         }
         return x;
+    }
+
+    @TruffleBoundary
+    private static void put(EconomicMap<RBaseObject, AtomicInteger> preserveList, RBaseObject x) {
+        preserveList.put(x, new AtomicInteger(1));
+    }
+
+    @TruffleBoundary
+    private static AtomicInteger get(EconomicMap<RBaseObject, AtomicInteger> preserveList, RBaseObject x) {
+        return preserveList.get(x);
     }
 }

@@ -656,13 +656,13 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     @SuppressWarnings("unused")
     @InternalDeprecation("Use VectorDataLibrary")
     public RAbstractVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
-        throw new UnsupportedOperationException();
+        throw CompilerDirectives.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
     @InternalDeprecation("Use VectorDataLibrary#transfer")
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        throw new UnsupportedOperationException();
+        throw CompilerDirectives.shouldNotReachHere();
     }
 
     @InternalDeprecation("Use dedicated node for attributes manipulation")

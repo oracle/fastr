@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetDouble;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -109,16 +110,16 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
             }
             return RDataFactory.createStringVector(Arrays.copyOf(data, ind), vecLib.isComplete(vecData));
         } else {
-            ArrayList<String> dataList = new ArrayList<>(vecLength);
+            ArrayList<String> dataList = Utils.createArrayList(vecLength);
             SeqIterator it = vecLib.iterator(vecData);
             while (vecLib.nextLoopCondition(vecData, it)) {
                 String s = vecLib.getNextString(vecData, it);
-                if (!dataList.contains(s)) {
-                    dataList.add(s);
+                if (!Utils.contains(dataList, s)) {
+                    Utils.add(dataList, s);
                 }
             }
             String[] data = new String[dataList.size()];
-            dataList.toArray(data);
+            Utils.toArray(dataList, data);
             return RDataFactory.createStringVector(data, vecLib.isComplete(vecData));
         }
     }

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 
@@ -47,7 +48,7 @@ public abstract class BooleanOperation extends Operation {
 
     @SuppressWarnings("unused")
     public byte opRaw(byte left, byte right) {
-        throw new UnsupportedOperationException();
+        throw CompilerDirectives.shouldNotReachHere();
     }
 
     public abstract boolean op(int left, int right);

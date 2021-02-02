@@ -386,9 +386,14 @@ public class TruffleNFI_Context extends RFFIContext {
     @Override
     public Object beforeDowncall(MaterializedFrame frame, RFFIFactory.Type rffiType) {
         Object tokenFromSuper = super.beforeDowncall(frame, RFFIFactory.Type.NFI);
-        transientAllocations.push(new ArrayList<>());
+        addTransientAllocationsFrame();
         acquireLock();
         return new Object[]{tokenFromSuper, pushCallbacks()};
+    }
+
+    @TruffleBoundary
+    private void addTransientAllocationsFrame() {
+        transientAllocations.push(new ArrayList<>());
     }
 
     @Override
@@ -404,15 +409,20 @@ public class TruffleNFI_Context extends RFFIContext {
         Object[] tokens = (Object[]) beforeValue;
         super.afterDowncall(tokens[0], rffiType, profiles);
         popCallbacks((long) tokens[1]);
-        for (Long ptr : transientAllocations.pop()) {
-            NativeMemory.free(ptr, "Rf_alloc");
-        }
+        freeCurrentTransientAllocations();
         RuntimeException lastUpCallEx = getLastUpCallException();
         setLastUpCallException(null);
         releaseLock();
         if (lastUpCallEx != null) {
             CompilerDirectives.transferToInterpreter();
             throw lastUpCallEx;
+        }
+    }
+
+    @TruffleBoundary
+    private void freeCurrentTransientAllocations() {
+        for (Long ptr : transientAllocations.pop()) {
+            NativeMemory.free(ptr, "Rf_alloc");
         }
     }
 

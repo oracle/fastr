@@ -176,6 +176,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         if (result instanceof ExplicitArgs) {
             return (ExplicitArgs) result;
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere("explicit args should always be of type ExplicitArgs, not " + result);
         }
     }

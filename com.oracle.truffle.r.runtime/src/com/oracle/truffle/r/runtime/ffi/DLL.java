@@ -619,7 +619,7 @@ public class DLL {
 
     public static DLLInfo createSyntheticLib(RContext context, String library) {
         DLLInfo dllInfo = DLLInfo.create(library, library, true, new SynthLibHandle(), false, true);
-        context.stateDLL.list.add(dllInfo);
+        Utils.add(context.stateDLL.list, dllInfo);
         return dllInfo;
     }
 
@@ -922,6 +922,7 @@ public class DLL {
      * where {@code name} should be equivalent to having called {@link #libName} on the path to the
      * library.
      */
+    @TruffleBoundary
     public static DLLInfo findLibrary(String name) {
         ContextStateImpl contextState = getContextState();
         for (DLLInfo dllInfo : contextState.list) {

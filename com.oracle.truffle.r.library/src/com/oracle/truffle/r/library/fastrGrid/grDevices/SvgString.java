@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
  * current drawing.
  */
 public class SvgString extends RExternalBuiltinNode.Arg0 {
+    @TruffleBoundary
     @Override
     public Object execute() {
         GridContext ctx = GridContext.getContext();

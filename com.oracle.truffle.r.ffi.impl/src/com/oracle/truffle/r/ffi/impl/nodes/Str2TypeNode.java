@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import java.util.HashMap;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -73,6 +74,7 @@ public abstract class Str2TypeNode extends FFIUpCallNode.Arg1 {
         return Str2TypeNodeGen.getUncached();
     }
 
+    @TruffleBoundary
     @Specialization
     Object handleString(String name) {
         if (name == null) {

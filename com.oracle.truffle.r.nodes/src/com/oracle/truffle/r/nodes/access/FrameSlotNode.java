@@ -133,7 +133,7 @@ public abstract class FrameSlotNode extends RBaseNode {
 
         @Override
         public FrameSlot executeFrameSlot(Frame frame) {
-            throw new UnsupportedOperationException();
+            throw CompilerDirectives.shouldNotReachHere();
         }
 
         @Override

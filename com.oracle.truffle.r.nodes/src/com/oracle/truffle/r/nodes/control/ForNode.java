@@ -325,6 +325,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                     return false;
                 }
             } catch (UnsupportedMessageException | InvalidArrayIndexException ex) {
+                CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere(ex, "could not read foreign member: " + (index - 1));
             }
         }

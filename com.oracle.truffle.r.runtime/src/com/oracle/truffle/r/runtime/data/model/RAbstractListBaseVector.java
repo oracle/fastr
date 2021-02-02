@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -131,7 +132,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
 
     @SuppressWarnings("unused")
     public void setDataAt(Object store, int index, Object value) {
-        throw new UnsupportedOperationException();
+        throw CompilerDirectives.shouldNotReachHere();
     }
 
     @Override

@@ -53,7 +53,7 @@ public final class Collections {
         }
 
         public boolean add(KEY key) {
-            int hc = key.hashCode();
+            int hc = Utils.hashCode(key);
             if (hc == Integer.MIN_VALUE) {
                 hc = 0;
             }
@@ -63,7 +63,7 @@ public final class Collections {
                 if (keys[ind] == null) {
                     keys[ind] = key;
                     return false;
-                } else if (key.equals(keys[ind])) {
+                } else if (Utils.equals(key, keys[ind])) {
                     return true;
                 } else {
                     ind = (ind + 1) % keys.length;
@@ -72,13 +72,13 @@ public final class Collections {
                         Object[] newKeys = new Object[keys.length + keys.length / 2];
                         for (int i = 0; i < keys.length; i++) {
                             if (keys[i] != null) {
-                                int tmpInd = Math.abs(keys[i].hashCode()) % newKeys.length;
+                                int tmpInd = Math.abs(Utils.hashCode(keys[i])) % newKeys.length;
                                 while (true) {
                                     if (newKeys[tmpInd] == null) {
                                         newKeys[tmpInd] = keys[i];
                                         break;
                                     } else {
-                                        assert !keys[i].equals(newKeys[tmpInd]);
+                                        assert !Utils.equals(keys[i], newKeys[tmpInd]);
                                         tmpInd = (tmpInd + 1) % newKeys.length;
                                     }
                                 }

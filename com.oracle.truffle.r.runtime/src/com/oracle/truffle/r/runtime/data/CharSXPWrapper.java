@@ -163,23 +163,29 @@ public final class CharSXPWrapper extends RBaseObject {
         if (RRuntime.isNA(contents)) {
             return NA;
         } else {
-            CharSXPWrapper cachedWrapper;
-            CharSXPWrapper newWrapper = new CharSXPWrapper(contents);
-            synchronized (instances) {
-                WeakReference<CharSXPWrapper> wr = instances.get(newWrapper);
-                if (wr != null) {
-                    cachedWrapper = wr.get();
-                    if (cachedWrapper != null) {
-                        if (intern) {
-                            cachedWrapper.contents = contents;
-                        }
-                        return cachedWrapper;
-                    }
-                }
-                instances.put(newWrapper, new WeakReference<>(newWrapper));
-            }
-            return newWrapper;
+            return createNonNA(contents, intern);
         }
+    }
+
+    @TruffleBoundary
+    private static CharSXPWrapper createNonNA(String contents, boolean intern) {
+        assert !RRuntime.isNA(contents);
+        CharSXPWrapper cachedWrapper;
+        CharSXPWrapper newWrapper = new CharSXPWrapper(contents);
+        synchronized (instances) {
+            WeakReference<CharSXPWrapper> wr = instances.get(newWrapper);
+            if (wr != null) {
+                cachedWrapper = wr.get();
+                if (cachedWrapper != null) {
+                    if (intern) {
+                        cachedWrapper.contents = contents;
+                    }
+                    return cachedWrapper;
+                }
+            }
+            instances.put(newWrapper, new WeakReference<>(newWrapper));
+        }
+        return newWrapper;
     }
 
     public long allocateNativeContents() {

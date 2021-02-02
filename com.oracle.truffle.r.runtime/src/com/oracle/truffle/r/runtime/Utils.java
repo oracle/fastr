@@ -31,8 +31,11 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -82,6 +85,16 @@ public final class Utils {
 
     public static boolean isRomanLetter(char c) {
         return (/* lower case */c >= '\u00DF' && c <= '\u00FF') || (/* upper case */c >= '\u00C0' && c <= '\u00DE');
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static String toLowerCase(String s) {
+        return s.toLowerCase(Locale.ROOT);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static char toLowerCase(char c) {
+        return Character.toLowerCase(c);
     }
 
     /**
@@ -169,6 +182,51 @@ public final class Utils {
         // CheckStyle: stop system..print check
         System.err.println("FastR warning: " + msg);
         // CheckStyle: resume system..print check
+    }
+
+    @TruffleBoundary
+    public static String stringValueOf(Object value) {
+        return String.valueOf(value);
+    }
+
+    @TruffleBoundary
+    public static int hashCode(Object obj) {
+        return Objects.hashCode(obj);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static <T> ArrayList<T> createArrayList(int capacity) {
+        return new ArrayList<>(capacity);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static <T> boolean add(ArrayList<T> list, T obj) {
+        return list.add(obj);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static <T> boolean contains(ArrayList<T> list, T obj) {
+        return list.contains(obj);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static <T> T[] toArray(ArrayList<T> list, T[] arr) {
+        return list.toArray(arr);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static byte byteValue(Number value) {
+        return value.byteValue();
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static int intValue(Number num) {
+        return num.intValue();
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static double doubleValue(Number num) {
+        return num.doubleValue();
     }
 
     /**
@@ -944,6 +1002,7 @@ public final class Utils {
         return (s.toString());
     }
 
+    @TruffleBoundary(allowInlining = true)
     public static byte[] intArrayToByteArray(int[] intArr, ByteOrder o) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(intArr.length * 4);
         byteBuffer.order(o);
