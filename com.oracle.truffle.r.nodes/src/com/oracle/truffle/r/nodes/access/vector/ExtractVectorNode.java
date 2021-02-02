@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.ReadPositionsNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen.ExtractSingleNameNodeGen;
@@ -48,11 +49,10 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -191,21 +191,14 @@ public abstract class ExtractVectorNode extends RBaseNode {
             return value;
         }
 
-        @Specialization(guards = "access.supports(value)", limit = "getVectorAccessCacheSize()")
+        @Specialization(limit = "getVectorAccessCacheSize()")
         protected static String extractCached(RStringVector value,
-                        @Cached("value.access()") VectorAccess access) {
-            try (RandomIterator iter = access.randomAccess(value)) {
-                if (access.getLength(iter) == 1) {
-                    return access.getString(iter, 0);
-                }
+                                              @CachedLibrary("value.getData()") VectorDataLibrary lib) {
+            Object data = value.getData();
+            if (lib.getLength(data) == 1) {
+                return lib.getStringAt(data, 0);
             }
             return null;
-        }
-
-        @Specialization(replaces = "extractCached")
-        @TruffleBoundary
-        protected static String extractGeneric(RStringVector value) {
-            return extractCached(value, value.slowPathAccess());
         }
 
         @Fallback

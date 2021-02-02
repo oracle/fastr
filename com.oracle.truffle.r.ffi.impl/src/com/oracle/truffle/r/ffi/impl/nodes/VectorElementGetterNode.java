@@ -30,19 +30,20 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
-import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
+import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -116,20 +117,12 @@ public abstract class VectorElementGetterNode extends RBaseNode {
     abstract static class SetListElement extends Node {
         public abstract void execute(RAbstractListBaseVector container, int index, Object value);
 
-        @Specialization(guards = "listAccess.supports(list)", limit = "getVectorAccessCacheSize()")
+        @Specialization(limit = "getVectorAccessCacheSize()")
         static void doList(RAbstractListBaseVector list, int index, Object value,
-                        @Cached("create(list)") VectorAccess listAccess,
+                        @CachedLibrary("list.getData()") VectorDataLibrary listLib,
                         @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
-            try (VectorAccess.RandomIterator it = listAccess.randomAccess(list)) {
-                listAccess.setListElement(it, index, value);
-            }
+            listLib.setElementAt(list.getData(), index, value);
             updateStateNode.updateState(list, value);
-        }
-
-        @Specialization(replaces = "doList")
-        static void doListUncached(RAbstractListBaseVector list, int index, Object value,
-                        @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
-            doList(list, index, value, list.slowPathAccess(), updateStateNode);
         }
     }
 }

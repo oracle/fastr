@@ -95,18 +95,11 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         return setString(vector, index, value, VectorDataLibrary.getFactory().getUncached());
     }
 
-    @Specialization(guards = {"access.supports(list)", "simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
+    @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"}, limit = "getVectorAccessCacheSize()")
     protected static Object setList(RList list, int index, Object value,
-                    @Cached("list.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(list)) {
-            access.setListElement(iter, index - 1, value);
-            return list;
-        }
-    }
-
-    @Specialization(replaces = "setList", guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
-    protected static Object setListGeneric(RList list, int index, Object value) {
-        return setList(list, index, value, list.slowPathAccess());
+                    @CachedLibrary("list.getData()") VectorDataLibrary lib) {
+        lib.setElementAt(list.getData(), index - 1, value);
+        return list;
     }
 
     @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")

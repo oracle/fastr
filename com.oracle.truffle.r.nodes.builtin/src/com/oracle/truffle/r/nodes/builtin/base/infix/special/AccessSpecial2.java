@@ -59,17 +59,10 @@ public abstract class AccessSpecial2 extends IndexingSpecial2Common implements S
         return dataLib.getDoubleAt(vector.getData(), matrixIndex(vector, index1, index2));
     }
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"}, limit = "getVectorAccessCacheSize()")
     protected String accessString(RStringVector vector, int index1, int index2,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            return access.getString(iter, matrixIndex(vector, index1, index2));
-        }
-    }
-
-    @Specialization(replaces = "accessString", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected String accessStringGeneric(RStringVector vector, int index1, int index2) {
-        return accessString(vector, index1, index2, vector.slowPathAccess());
+                    @CachedLibrary("vector.getData()") VectorDataLibrary lib) {
+        return lib.getStringAt(vector.getData(), matrixIndex(vector, index1, index2));
     }
 
     @SuppressWarnings("unused")
