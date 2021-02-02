@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.Utils.doubleValue;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -76,9 +78,8 @@ class RDoubleForeignObjData implements TruffleObject {
     @ExportMessage
     public RDoubleArrayVectorData materialize(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
-                    @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return copy(false, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+        return copy(false, valueInterop, interop, unprecisseDoubleProfile);
     }
 
     @ExportMessage
@@ -90,18 +91,16 @@ class RDoubleForeignObjData implements TruffleObject {
     public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
-                    @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return new RDoubleArrayVectorData(getDoubleDataCopy(valueInterop, interop, resultProfile, unprecisseDoubleProfile), RDataFactory.INCOMPLETE_VECTOR);
+        return new RDoubleArrayVectorData(getDoubleDataCopy(valueInterop, interop, unprecisseDoubleProfile), RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage
     public double[] getDoubleDataCopy(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
-                    @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
         int len = getLength(interop);
-        return getDataAsArray(len, len, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+        return getDataAsArray(len, len, valueInterop, interop, unprecisseDoubleProfile);
     }
 
     @ExportMessage
@@ -134,13 +133,12 @@ class RDoubleForeignObjData implements TruffleObject {
         return new RandomAccessIterator(foreign);
     }
 
-    private static double getDoubleImpl(Object foreign, int index, NACheck naCheck, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile,
-                    ConditionProfile unprecisseDoubleProfile) {
+    private static double getDoubleImpl(Object foreign, int index, NACheck naCheck, InteropLibrary valueInterop, InteropLibrary interop, ConditionProfile unprecisseDoubleProfile) {
         try {
             Object result = interop.readArrayElement(foreign, index);
             double rd;
             try {
-                rd = ((Number) resultProfile.profile(valueInterop.asDouble(result))).doubleValue();
+                rd = valueInterop.asDouble(result);
                 naCheck.check(rd);
             } catch (UnsupportedMessageException e) {
                 if (valueInterop.isNull(result)) {
@@ -168,9 +166,8 @@ class RDoubleForeignObjData implements TruffleObject {
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("naCheck") @Cached() NACheck naCheck,
-                    @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return getDoubleImpl(foreign, index, naCheck, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+        return getDoubleImpl(foreign, index, naCheck, valueInterop, interop, unprecisseDoubleProfile);
     }
 
     @ExportMessage
@@ -178,9 +175,8 @@ class RDoubleForeignObjData implements TruffleObject {
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("naCheck") @Cached() NACheck naCheck,
-                    @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return getDoubleImpl(it.getStore(), it.getIndex(), naCheck, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+        return getDoubleImpl(it.getStore(), it.getIndex(), naCheck, valueInterop, interop, unprecisseDoubleProfile);
     }
 
     @ExportMessage
@@ -188,15 +184,14 @@ class RDoubleForeignObjData implements TruffleObject {
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("naCheck") @Cached() NACheck naCheck,
-                    @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return getDoubleImpl(it.getStore(), index, naCheck, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+        return getDoubleImpl(it.getStore(), index, naCheck, valueInterop, interop, unprecisseDoubleProfile);
     }
 
-    private double[] getDataAsArray(int newLength, int length, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile unprecisseDoubleProfile) {
+    private double[] getDataAsArray(int newLength, int length, InteropLibrary valueInterop, InteropLibrary interop, ConditionProfile unprecisseDoubleProfile) {
         double[] data = new double[newLength];
         for (int i = 0; i < Math.min(newLength, length); i++) {
-            data[i] = getDoubleAt(i, valueInterop, interop, NACheck.getDisabled(), resultProfile, unprecisseDoubleProfile);
+            data[i] = getDoubleAt(i, valueInterop, interop, NACheck.getDisabled(), unprecisseDoubleProfile);
         }
         return data;
     }
