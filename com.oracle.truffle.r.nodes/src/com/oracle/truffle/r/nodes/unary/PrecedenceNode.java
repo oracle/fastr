@@ -194,7 +194,9 @@ public abstract class PrecedenceNode extends RBaseNode {
                     @Cached("createRecursive()") PrecedenceNode precedenceNode,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         int precedence = -1;
-        for (RPairList item : list) {
+        Object it = plLib.getIterator(list);
+        while (plLib.iteratorNext(list, it)) {
+            RPairList item = plLib.iteratorCurrent(list, it);
             precedence = Math.max(precedence, precedenceNode.executeInteger(plLib.car(item), recursive));
         }
         return precedence;
