@@ -248,6 +248,26 @@ public final class Utils {
         return preserveList.get(x);
     }
 
+    @TruffleBoundary
+    public static String newString(char[] chars) {
+        return new String(chars);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static StringBuilder newStringBuilder(int capacity) {
+        return new StringBuilder(capacity);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static StringBuilder append(StringBuilder sb, String str) {
+        return sb.append(str);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static String toString(StringBuilder sb) {
+        return sb.toString();
+    }
+
     /**
      * When running in "debug" mode, this exception is thrown rather than a call to System.exit, so
      * that control can return to an in-process debugger.

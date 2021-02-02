@@ -148,7 +148,7 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
             }
         }
         if (nameArray != null) {
-            newName = new String(nameArray);
+            newName = Utils.newString(nameArray);
         }
         if (Utils.isIsoLatinDigit(newName.charAt(0)) || (newName.length() > 1 && newName.charAt(0) == '.' && Utils.isIsoLatinDigit(newName.charAt(1))) ||
                         (newName.charAt(0) == '.' && name.charAt(0) != '.')) {

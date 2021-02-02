@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.RError.Message.X_LONGER_THAN_Y;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveRegAttributesNode;
@@ -78,7 +79,7 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
                     value = replaceRange(replaceIdx, oldStr, newStr, value);
                     replaceIdx += 3;
                 } else {
-                    value = value.replace(oldStr.charAt(replaceIdx), newStr.charAt(replaceIdx));
+                    value = replace(value, oldStr.charAt(replaceIdx), newStr.charAt(replaceIdx));
                     replaceIdx++;
                 }
             }
@@ -107,8 +108,13 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
         }
         String replacedValue = value;
         for (int rangeIdx = 0; rangeIdx <= oldEnd - oldStart; rangeIdx++) {
-            replacedValue = value.replace((char) (oldStart + rangeIdx), (char) (newStart + rangeIdx));
+            replacedValue = replace(value, (char) (oldStart + rangeIdx), (char) (newStart + rangeIdx));
         }
         return replacedValue;
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    private static String replace(String s, char oldChar, char newChar) {
+        return s.replace(oldChar, newChar);
     }
 }

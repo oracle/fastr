@@ -159,6 +159,7 @@ public abstract class NativeMemory {
         return copyCString(address.getAddress(), maxLength, encoding);
     }
 
+    @TruffleBoundary
     public static String copyCString(long address, long maxLength, Charset encoding) {
         int length = 0;
         while (length < maxLength && NativeMemory.getByte(address, length) != 0) {

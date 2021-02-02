@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -69,7 +70,7 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
                 result[j] = "";
             } else {
                 try {
-                    result[j] = new String(new int[]{temp}, 0, 1);
+                    result[j] = newString(new int[]{temp}, 1);
                 } catch (IllegalArgumentException e) {
                     throw error(Message.GENERIC, "illegal unicode code point");
                 }
@@ -95,9 +96,14 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
             }
         }
         try {
-            return new String(result, 0, pos);
+            return newString(result, pos);
         } catch (IllegalArgumentException e) {
             throw error(Message.GENERIC, "illegal unicode code point");
         }
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    private static String newString(int[] result, int pos) {
+        return new String(result, 0, pos);
     }
 }

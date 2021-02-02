@@ -1656,7 +1656,7 @@ public class GrepFunctions {
             assert !RRuntime.isNA(input);
             String[] result = new String[input.length()];
             for (int i = 0; i < input.length(); i++) {
-                result[i] = new String(new char[]{input.charAt(i)});
+                result[i] = String.valueOf(input.charAt(i));
             }
             return RDataFactory.createStringVector(result, true);
         }

@@ -231,7 +231,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
             pos += element.length();
         }
         assert pos == stringLength;
-        return new String(chars);
+        return Utils.newString(chars);
     }
 
     private static String collapseString(String[] value, String collapseString) {
@@ -251,7 +251,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
             pos += element.length();
         }
         assert pos == stringLength;
-        return new String(chars);
+        return Utils.newString(chars);
     }
 
     private void ensureAsCharacterFuncNodes() {

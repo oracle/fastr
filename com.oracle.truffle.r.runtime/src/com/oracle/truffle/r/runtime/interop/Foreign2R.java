@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -115,8 +116,9 @@ public abstract class Foreign2R extends Node {
     }
 
     @Specialization
+    @TruffleBoundary
     public String doChar(char obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
-        return ((Character) obj).toString();
+        return new String(new char[]{obj});
     }
 
     @Specialization

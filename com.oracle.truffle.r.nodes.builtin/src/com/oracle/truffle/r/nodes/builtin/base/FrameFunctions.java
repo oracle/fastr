@@ -728,7 +728,7 @@ public class FrameFunctions {
         }
 
         @Specialization(guards = "nIn == n", limit = "1")
-        protected REnvironment parentFrame(VirtualFrame frame, int nIn,
+        protected REnvironment parentFrame(VirtualFrame frame, @SuppressWarnings("unused") int nIn,
                         @Cached("nIn") int n,
                         @Cached("new()") ParentFrameIterator iter) {
             if (n <= 0) {
