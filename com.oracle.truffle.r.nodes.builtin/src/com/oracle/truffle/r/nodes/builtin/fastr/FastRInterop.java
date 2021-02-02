@@ -1187,7 +1187,12 @@ public class FastRInterop {
             throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC,
                             "Java Interop is not available, please run FastR with --jvm, e.g. '$bin/R --jvm CMD INSTALL' or '$bin/Rscript --jvm myscript.R'");
         }
-        return silent ? RNull.instance : new ClassNotFoundException(className + " not found");
+        return silent ? RNull.instance : createClassNotFoundException(className);
+    }
+
+    @TruffleBoundary
+    private static ClassNotFoundException createClassNotFoundException(String className) {
+        return new ClassNotFoundException(className + " not found");
     }
 
     @TruffleBoundary
