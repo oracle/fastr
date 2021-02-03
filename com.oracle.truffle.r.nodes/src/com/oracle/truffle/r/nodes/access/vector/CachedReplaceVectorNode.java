@@ -126,6 +126,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             } else {
                 this.castType = vectorType;
             }
+        } else if (valueType == RType.PairList) {
+            this.castType = vectorType;
         } else if (valueType.isVector()) {
             if (vectorType.isAtomic() && valueType.isAtomic() && (vectorType == RType.Raw ^ valueType == RType.Raw)) {
                 // mixing with raw with other atomic types is not allowed

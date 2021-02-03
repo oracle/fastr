@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,5 +36,12 @@ public class TestBuiltin_pairlist extends TestBase {
     @Test
     public void testPairList() {
         assertEval("{ x<-7; y<-c(foo=42); z<-pairlist(x, y); list(z, typeof(z)) }");
+    }
+
+    @Test
+    public void testPairListAssignment() {
+        assertEval("{ l1 <- pairlist(a=1); l2 <- pairlist(a=42); l1['a'] <- l2 }");
+        assertEval("{ l1 <- pairlist(a=1); l2 <- pairlist(a=42); l1['a'] <- l2['a'] }");
+        assertEval("{ l1 <- pairlist(a=1, b=2); l2 <- pairlist(a=41, b=42); l1[c('a', 'b')] <- l2 }");
     }
 }
