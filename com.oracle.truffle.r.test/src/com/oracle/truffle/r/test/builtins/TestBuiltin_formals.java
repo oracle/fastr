@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -53,5 +53,16 @@ public class TestBuiltin_formals extends TestBase {
         assertEval("{ f <- function(a) {}; formals(f) }");
         assertEval("{ f <- function(a, b) {}; formals(f) }");
         assertEval("{ f <- function(a, b = c(1, 2)) {}; formals(f) }");
+    }
+
+    /**
+     * Tests an assignment of formals of some function. This is done in surveillance package.
+     */
+    @Test
+    public void testFormalsAssignment() {
+        assertEval("{ f <- function(x=42L) x; g <- function(x) x; formals(g) <- formals(f); g() }");
+        // Assign just subset of formals
+        assertEval("{ f <- function(x,y) x; g <- function(y=2) y; formals(f)['y'] <- formals(g); f(42) }");
+        assertEval("{ f <- function(x,y) x; g <- function(y=2) y; formals(f)[names(formals(g))] <- formals(g); f(42) }");
     }
 }
