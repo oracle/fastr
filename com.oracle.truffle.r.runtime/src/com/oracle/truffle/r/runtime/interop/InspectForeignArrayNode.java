@@ -111,6 +111,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
             }
             return true;
         } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+            CompilerDirectives.transferToInterpreter();
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
     }

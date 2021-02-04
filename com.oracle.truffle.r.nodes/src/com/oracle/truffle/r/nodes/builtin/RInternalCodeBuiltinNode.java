@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
@@ -64,6 +65,7 @@ public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
         RInternalCode internalCode = RInternalCode.lookup(RContext.getInstance(), basePackage, code);
         RFunction function = internalCode.lookupFunction(functionName);
         if (function == null) {
+            CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere("Could not load RInternalCodeBuiltin function '" + functionName + "'.");
         }
 

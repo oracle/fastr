@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
@@ -62,6 +63,7 @@ public class RAltRepData {
     }
 
     @Override
+    @TruffleBoundary
     public String toString() {
         return "data1=" + (data.car() == null ? "null" : data.car()) +
                         ", data2=" + (data.cdr() == null ? "null" : data.cdr());

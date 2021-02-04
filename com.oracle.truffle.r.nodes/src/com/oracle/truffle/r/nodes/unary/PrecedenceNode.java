@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import static com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode.isForeignArray;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -292,13 +293,14 @@ public abstract class PrecedenceNode extends RBaseNode {
                 }
             }
         } catch (InvalidArrayIndexException | UnsupportedMessageException ex) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             throw error(RError.Message.GENERIC, "error while accessing array: " + ex.getMessage());
         }
         return precedence;
     }
 
     @TruffleBoundary
-    private int getPrecedence(Class<?> ct) {
+    private static int getPrecedence(Class<?> ct) {
         if (ct != null && ct.isArray()) {
             return getPrecedence(ct.getComponentType());
         }

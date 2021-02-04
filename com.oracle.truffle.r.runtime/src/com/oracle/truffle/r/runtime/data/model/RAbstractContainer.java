@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data.model;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -217,6 +218,7 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
     public void containerLibToNativeDummyImpl() {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere(this.getClass().getSimpleName());
     }
 }

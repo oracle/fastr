@@ -89,6 +89,7 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 {
 
         @Override
         public final Object call(RArgsValuesAndNames args) {
+            CompilerDirectives.transferToInterpreter();
             throw RInternalError.unimplemented("unimplemented external builtin: " + name);
         }
     }

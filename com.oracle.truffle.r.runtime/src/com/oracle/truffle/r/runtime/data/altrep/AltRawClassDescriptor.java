@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * See the documentation of {@link AltRepClassDescriptor}.
@@ -70,6 +71,7 @@ public class AltRawClassDescriptor extends AltVecClassDescriptor {
     }
 
     @Override
+    @TruffleBoundary
     public String toString() {
         return "ALTRAW class descriptor for " + super.toString();
     }

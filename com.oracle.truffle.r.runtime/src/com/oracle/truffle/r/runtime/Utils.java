@@ -268,6 +268,26 @@ public final class Utils {
         return sb.toString();
     }
 
+    @TruffleBoundary(allowInlining = true)
+    public static void putByte(ByteBuffer buffer, byte b) {
+        buffer.put(b);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static void putBytes(ByteBuffer buffer, byte[] bytes) {
+        buffer.put(bytes);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static void putDouble(ByteBuffer buffer, double aDouble) {
+        buffer.putDouble(aDouble);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static void putInt(ByteBuffer buffer, int anInt) {
+        buffer.putInt(anInt);
+    }
+
     /**
      * When running in "debug" mode, this exception is thrown rather than a call to System.exit, so
      * that control can return to an in-process debugger.

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * See the documentation of {@link AltRepClassDescriptor}.
@@ -128,6 +129,7 @@ public class AltLogicalClassDescriptor extends AltVecClassDescriptor {
     }
 
     @Override
+    @TruffleBoundary
     public String toString() {
         return "ALTLOGICAL class descriptor for " + super.toString();
     }

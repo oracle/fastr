@@ -227,8 +227,13 @@ public class RPromise extends RBaseObject {
             } catch (Throwable ex) {
                 assert false : ex.getMessage();
             }
-            return exprAsString == null ? "<unevaluated>" : "<unevaluated expression: " + exprAsString + ">";
+            return exprAsString == null ? "<unevaluated>" : createUnevaluatedExprString(exprAsString);
         }
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    private static String createUnevaluatedExprString(String exprAsString) {
+        return "<unevaluated expression: " + exprAsString + ">";
     }
 
     @SuppressWarnings("static-method")

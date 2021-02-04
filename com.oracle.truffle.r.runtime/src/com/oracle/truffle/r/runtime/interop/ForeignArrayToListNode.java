@@ -89,6 +89,7 @@ abstract class ForeignArrayToListNode extends RBaseNode {
             }
             return ConvertForeignObjectNode.asAbstractVector(currentElements, type != null ? type : currentTypeCheck.getType());
         } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+            CompilerDirectives.transferToInterpreter();
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
     }

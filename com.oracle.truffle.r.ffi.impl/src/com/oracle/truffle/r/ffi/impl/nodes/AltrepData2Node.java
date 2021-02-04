@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -61,6 +62,7 @@ public abstract class AltrepData2Node extends FFIUpCallNode.Arg1 {
 
     @Fallback
     protected Object fallback(Object object) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere("Unknown type " + object.getClass().getSimpleName() + " for R_altrep_data2");
     }
 }

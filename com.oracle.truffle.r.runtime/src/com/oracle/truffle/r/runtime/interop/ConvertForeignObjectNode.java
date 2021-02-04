@@ -470,6 +470,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                     elementNames.add(name);
                 }
             } catch (UnknownIdentifierException | UnsupportedMessageException ex) {
+                CompilerDirectives.transferToInterpreter();
                 throw error(RError.Message.GENERIC, "error while converting truffle object to list: " + ex.getMessage());
             }
         }

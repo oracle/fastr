@@ -111,6 +111,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     public boolean isForeignWrapper() {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere(getClass().getSimpleName());
     }
 

@@ -2408,6 +2408,7 @@ public abstract class VectorDataLibrary extends Library {
     // Private utility methods
 
     private static RInternalError notImplemented(Object receiver) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.unimplemented(receiver == null ? "null" : receiver.getClass().getSimpleName());
     }
 

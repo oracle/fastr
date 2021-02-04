@@ -86,6 +86,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.TempPathName;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.ChannelConnections.ChannelRConnection;
@@ -1145,20 +1147,20 @@ public abstract class ConnectionFunctions {
                 case Logical:
                     buffer = allocate(4 * length, swap);
                     while (objectAccess.next(iter)) {
-                        buffer.putInt(objectAccess.getInt(iter));
+                        Utils.putInt(buffer, objectAccess.getInt(iter));
                     }
                     return buffer;
                 case Double:
                     buffer = allocate(8 * length, swap);
                     while (objectAccess.next(iter)) {
-                        buffer.putDouble(objectAccess.getDouble(iter));
+                        Utils.putDouble(buffer, objectAccess.getDouble(iter));
                     }
                     return buffer;
                 case Complex:
                     buffer = allocate(16 * length, swap);
                     while (objectAccess.next(iter)) {
-                        buffer.putDouble(objectAccess.getComplexR(iter));
-                        buffer.putDouble(objectAccess.getComplexI(iter));
+                        Utils.putDouble(buffer, objectAccess.getComplexR(iter));
+                        Utils.putDouble(buffer, objectAccess.getComplexI(iter));
                     }
                     return buffer;
                 case Character:
@@ -1173,15 +1175,15 @@ public abstract class ConnectionFunctions {
 
                     buffer = allocate(totalLength, swap);
                     for (int i = 0; i < length; i++) {
-                        buffer.put(data[i]);
-                        buffer.put((byte) 0);
+                        Utils.putBytes(buffer, data[i]);
+                        Utils.putByte(buffer, (byte) 0);
                     }
                     return buffer;
                 // converted to int
                 case Raw:
                     buffer = allocate(length, swap);
                     while (objectAccess.next(iter)) {
-                        buffer.put(objectAccess.getRaw(iter));
+                        Utils.putByte(buffer, objectAccess.getRaw(iter));
                     }
                     return buffer;
                 default:
