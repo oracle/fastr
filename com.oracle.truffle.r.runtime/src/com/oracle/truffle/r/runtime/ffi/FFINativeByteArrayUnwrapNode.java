@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import java.nio.ByteOrder;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -132,6 +133,7 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
 
     @Fallback
     protected byte[] doFallback(@SuppressWarnings("unused") Object length, Object x) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(this, RError.Message.GENERIC, "Invalid double array object " + x);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (C) 1998--2012  The R Core Team
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,12 +34,16 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 
 /**
@@ -61,22 +65,28 @@ public class SplineFunctions {
             casts.arg(2).mustNotBeMissing().asDoubleVector();
         }
 
+        @Child private VectorDataLibrary dataLib = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize());
+        @Child private AbstractContainerLibrary containerLib = AbstractContainerLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize());
+
         @Specialization
         @TruffleBoundary
         protected Object splineCoef(int method, RDoubleVector x, RDoubleVector y) {
-            return splineCoefImpl(method, x.materialize(), y.materialize());
+            RAbstractContainer materializedX = containerLib.materialize(x);
+            RAbstractContainer materializedY = containerLib.materialize(y);
+            assert materializedX instanceof RDoubleVector && materializedY instanceof RDoubleVector;
+            return splineCoefImpl(method, (RDoubleVector) materializedX, (RDoubleVector) materializedY);
         }
 
         @Specialization
         @TruffleBoundary
         protected Object splineCoef(int method, RDoubleVector x, @SuppressWarnings("unused") RNull y) {
-            return splineCoefImpl(method, x.materialize(), RDataFactory.createDoubleVector(0));
+            return splineCoefImpl(method, (RDoubleVector) containerLib.materialize(x), RDataFactory.createDoubleVector(0));
         }
 
         @Specialization
         @TruffleBoundary
         protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, RDoubleVector y) {
-            return splineCoefImpl(method, RDataFactory.createDoubleVector(0), y.materialize());
+            return splineCoefImpl(method, RDataFactory.createDoubleVector(0), (RDoubleVector) containerLib.materialize(y));
         }
 
         @Specialization
@@ -86,8 +96,10 @@ public class SplineFunctions {
         }
 
         private RList splineCoefImpl(int method, RDoubleVector x, RDoubleVector y) {
-            int n = x.getLength();
-            if (y.getLength() != n) {
+            Object xData = x.getData();
+            Object yData = y.getData();
+            int n = dataLib.getLength(xData);
+            if (dataLib.getLength(yData) != n) {
                 throw error(RError.Message.INPUTS_DIFFERENT_LENGTHS);
             }
 
@@ -95,9 +107,11 @@ public class SplineFunctions {
             double[] c = new double[n];
             double[] d = new double[n];
 
-            SplineFunctions.splineCoef(method, n, x.getReadonlyData(), y.getReadonlyData(), b, c, d);
+            double[] xReadonlyData = dataLib.getReadonlyDoubleData(xData);
+            double[] yReadonlyData = dataLib.getReadonlyDoubleData(yData);
+            SplineFunctions.splineCoef(method, n, xReadonlyData, yReadonlyData, b, c, d);
 
-            final boolean complete = x.isComplete() && y.isComplete();
+            final boolean complete = dataLib.isComplete(xData) && dataLib.isComplete(yData);
             RDoubleVector bv = RDataFactory.createDoubleVector(b, complete);
             RDoubleVector cv = RDataFactory.createDoubleVector(c, complete);
             RDoubleVector dv = RDataFactory.createDoubleVector(d, complete);
@@ -430,7 +444,12 @@ public class SplineFunctions {
 
         splineEval(method, nu, xout.getReadonlyData(), yout, nx, x.getReadonlyData(), y.getReadonlyData(), b.getReadonlyData(), c.getReadonlyData(),
                         d.getReadonlyData());
-        return RDataFactory.createDoubleVector(yout, xout.isComplete() && x.isComplete() && y.isComplete());
+
+        VectorDataLibrary uncachedDataLib = VectorDataLibrary.getFactory().getUncached();
+        boolean isXoutComplete = uncachedDataLib.isComplete(xout.getData());
+        boolean isXComplete = uncachedDataLib.isComplete(x.getData());
+        boolean isYComplete = uncachedDataLib.isComplete(y.getData());
+        return RDataFactory.createDoubleVector(yout, isXoutComplete && isXComplete && isYComplete);
     }
 
     private static void splineEval(int method, int nu, double[] u, double[] v, int n, double[] x, double[] y, double[] b, double[] c, double[] d) {

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -271,7 +271,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
         throw RInternalError.shouldNotReachHere();
     }
 
-    private RSyntaxElement simplify(String functionName, RSyntaxElement arg1, RSyntaxElement arg2) {
+    private static RSyntaxElement simplify(String functionName, RSyntaxElement arg1, RSyntaxElement arg2) {
         if (Utils.identityEquals(functionName, PLUS)) {
             if (arg2 == null) {
                 return arg1;

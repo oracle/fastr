@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,15 +31,9 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.ExtractDimNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -54,10 +48,16 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class CachedExtractVectorNode extends CachedVectorNode {
@@ -86,6 +86,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @Child private BoxPrimitiveNode boxNewDimName;
     @Children private final DispatchedCachedExtractVectorNode[] extractNames;
     @Child private VectorDataLibrary extractedVectorDataLib;
+    @Child private VectorDataLibrary originalDimNamesVectorDataLib;
 
     @Child private GetFixedAttributeNode getSrcrefNode;
     @Child private CachedExtractVectorNode extractSrcrefNode;
@@ -235,6 +236,14 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return extractedVectorDataLib;
     }
 
+    private VectorDataLibrary getOriginalDimNamesVectorDataLib() {
+        if (originalDimNamesVectorDataLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            originalDimNamesVectorDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize()));
+        }
+        return originalDimNamesVectorDataLib;
+    }
+
     private Object trySubsetPrimitive(RAbstractVector extractedVector) {
         if (!getMetadataApplied().isVisited() && positionsCheckNode.getCachedSelectedPositionsCount() == 1 && vectorType != RType.List && vectorType != RType.Expression) {
             /*
@@ -282,6 +291,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         int[] newDimensions = new int[positionCount];
         RList originalDimNames = getDimNamesNode.getDimNames(originalTarget);
+        Object originalDimNamesData;
         RStringVector originalDimNamesNames;
         Object[] newDimNames;
         String[] newDimNamesNames;
@@ -289,6 +299,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             newDimNames = null;
             originalDimNamesNames = null;
             newDimNamesNames = null;
+            originalDimNamesData = null;
         } else {
             if (getNamesFromDimNamesNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -297,6 +308,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             newDimNames = new Object[positionCount];
             originalDimNamesNames = getNamesFromDimNamesNode.getNames(originalDimNames);
             newDimNamesNames = originalDimNamesNames == null ? null : new String[positionCount];
+            originalDimNamesData = originalDimNames.getData();
         }
 
         int dimIndex = -1;
@@ -306,7 +318,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 dimIndex++;
                 newDimensions[dimIndex] = selectedPositionsCount;
                 if (newDimNames != null) {
-                    Object dataAt = originalDimNames.getDataAt(i);
+                    assert originalDimNames != null;
+                    Object dataAt = getOriginalDimNamesVectorDataLib().getDataAtAsObject(originalDimNamesData, i);
                     Object result;
                     if (dataAt == RNull.instance) {
                         result = RNull.instance;
@@ -353,8 +366,11 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     setDimNamesNode = insert(SetDimNamesAttributeNode.create());
                 }
+                assert originalDimNames != null;
                 setDimNamesNode.setDimNames(extractedTarget,
-                                RDataFactory.createList(newDimNames, newDimNamesNames == null ? null : RDataFactory.createStringVector(newDimNamesNames, originalDimNames.isComplete())));
+                                RDataFactory.createList(newDimNames,
+                                                newDimNamesNames == null ? null
+                                                                : RDataFactory.createStringVector(newDimNamesNames, getOriginalDimNamesVectorDataLib().isComplete(originalDimNamesData))));
             }
         } else if (newDimNames != null && originalDimNamesPRofile.profile(originalDimNames.getLength() > 0)) {
             RStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);

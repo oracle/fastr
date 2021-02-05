@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 /**
  * Internal node that extracts data under given index from any RAbstractContainer. In the case of
@@ -63,9 +64,8 @@ public abstract class ExtractListElement extends Node {
                     @Cached("create(list)") VectorAccess listAccess,
                     @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
         Object element;
-        try (VectorAccess.RandomIterator it = listAccess.randomAccess(list)) {
-            element = listAccess.getListElement(it, index);
-        }
+        RandomIterator it = listAccess.randomAccess(list);
+        element = listAccess.getListElement(it, index);
         return updateStateNode.updateState(list, element);
     }
 

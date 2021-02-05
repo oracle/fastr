@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,6 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     private int length;
 
     RList(Object[] data) {
-        super(false);
         assert data.getClass().isAssignableFrom(Object[].class) : data;
         setData(data, data.length);
         assert RAbstractVector.verifyVector(this);
@@ -66,7 +65,6 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     }
 
     private RList(Object data, int length) {
-        super(false);
         // if data is array => it must be Object array
         assert !data.getClass().isArray() || data.getClass().isAssignableFrom(Object[].class) : data;
         setData(data, length);

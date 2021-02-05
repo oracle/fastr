@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1994-9 W. N. Venables and B. D. Ripley
  * Copyright (c) 2007-2017, The R Core Team
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -61,7 +61,7 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
         return MaxColNodeGen.create();
     }
 
-    private final ValueProfile tieProfile = ValueProfile.createEqualityProfile();
+    private final PrimitiveValueProfile tieProfile = PrimitiveValueProfile.createEqualityProfile();
 
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     RIntVector findMaxCol(RAbstractContainer x, int tieArg,
@@ -81,34 +81,33 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
         int resultIdx = 0;
         int colIdx = 1; // R indexing
         int naCount = 0;
-        try (SequentialIterator it = xAccess.access(x)) {
-            while (xAccess.next(it)) {
-                double value = xAccess.getDouble(it);
-                // skip rows for which we already got NA
-                if (!xAccess.na.check(maxVals[resultIdx])) {
-                    if (xAccess.na.check(value)) {
-                        maxVals[resultIdx] = RRuntime.DOUBLE_NA;
-                        cols[resultIdx] = RRuntime.INT_NA;
-                        naCount++;
-                        if (naCount == nrows) {
-                            // all NAs we're done
-                            return vectorFactory.createIntVector(cols, RDataFactory.INCOMPLETE_VECTOR);
-                        }
-                    } else {
-                        double prevValue = maxVals[resultIdx];
-                        boolean isLastTie = tieLast && prevValue == value;
-                        boolean ignoreInf = tieRandom && Double.isInfinite(value);
-                        if (!ignoreInf && (isLastTie || prevValue < value)) {
-                            maxVals[resultIdx] = value;
-                            cols[resultIdx] = colIdx;
-                        }
+        SequentialIterator it = xAccess.access(x);
+        while (xAccess.next(it)) {
+            double value = xAccess.getDouble(it);
+            // skip rows for which we already got NA
+            if (!xAccess.na.check(maxVals[resultIdx])) {
+                if (xAccess.na.check(value)) {
+                    maxVals[resultIdx] = RRuntime.DOUBLE_NA;
+                    cols[resultIdx] = RRuntime.INT_NA;
+                    naCount++;
+                    if (naCount == nrows) {
+                        // all NAs we're done
+                        return vectorFactory.createIntVector(cols, RDataFactory.INCOMPLETE_VECTOR);
+                    }
+                } else {
+                    double prevValue = maxVals[resultIdx];
+                    boolean isLastTie = tieLast && prevValue == value;
+                    boolean ignoreInf = tieRandom && Double.isInfinite(value);
+                    if (!ignoreInf && (isLastTie || prevValue < value)) {
+                        maxVals[resultIdx] = value;
+                        cols[resultIdx] = colIdx;
                     }
                 }
-                resultIdx++;
-                if (resultIdx == maxVals.length) {
-                    resultIdx = 0;
-                    colIdx++;
-                }
+            }
+            resultIdx++;
+            if (resultIdx == maxVals.length) {
+                resultIdx = 0;
+                colIdx++;
             }
         }
 
@@ -138,31 +137,30 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
         // order as GNU R, which is row by row
         int colIdx;
         boolean usedRandom = false;
-        try (RandomIterator it = xAccess.randomAccess(x)) {
-            for (int rowIdx = 0; rowIdx < nrows; rowIdx++) {
-                if (xAccess.na.check(cols[rowIdx])) {
-                    // this row contains NA
-                    continue;
-                }
-                double max = xAccess.getDouble(it, rowIdx);
-                cols[rowIdx] = 1; // R indexing
-                int ntie = 1;
-                for (colIdx = 1; colIdx < ncols; colIdx++) {
-                    double value = xAccess.getDouble(it, rowIdx + colIdx * nrows);
-                    if (value > max + epsilons[rowIdx]) {
-                        max = value;
+        RandomIterator it = xAccess.randomAccess(x);
+        for (int rowIdx = 0; rowIdx < nrows; rowIdx++) {
+            if (xAccess.na.check(cols[rowIdx])) {
+                // this row contains NA
+                continue;
+            }
+            double max = xAccess.getDouble(it, rowIdx);
+            cols[rowIdx] = 1; // R indexing
+            int ntie = 1;
+            for (colIdx = 1; colIdx < ncols; colIdx++) {
+                double value = xAccess.getDouble(it, rowIdx + colIdx * nrows);
+                if (value > max + epsilons[rowIdx]) {
+                    max = value;
+                    cols[rowIdx] = colIdx + 1;
+                    ntie = 1;
+                } else if (value >= max - epsilons[rowIdx]) {
+                    ntie++;
+                    if (!usedRandom) {
+                        RRNG.getRNGState();
+                        usedRandom = true;
+                    }
+                    if (ntie * RRNG.unifRand() < 1.) {
                         cols[rowIdx] = colIdx + 1;
-                        ntie = 1;
-                    } else if (value >= max - epsilons[rowIdx]) {
-                        ntie++;
-                        if (!usedRandom) {
-                            RRNG.getRNGState();
-                            usedRandom = true;
-                        }
-                        if (ntie * RRNG.unifRand() < 1.) {
-                            cols[rowIdx] = colIdx + 1;
-                            // NOTE: GNU R also does not update the actual value
-                        }
+                        // NOTE: GNU R also does not update the actual value
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -43,17 +42,6 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.CopyMost
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.RfSetAttribNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.SetAttribNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.TAGNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetHiddenAttrsProperty;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetHiddenAttrsProperty;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetPropertyNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -71,11 +59,23 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairList.PairListIterator;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetHiddenAttrsProperty;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetHiddenAttrsProperty;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetPropertyNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 /**
  * Implements RFFI functions for access to the attributes. Some set/get single attributes, but there
@@ -176,7 +176,6 @@ public final class AttributesAccessNodes {
         }
     }
 
-    @ReportPolymorphism
     public abstract static class ATTRIB extends FFIUpCallNode.Arg1 {
         @Specialization
         public Object doAttributable(RAttributable obj,
@@ -370,7 +369,10 @@ public final class AttributesAccessNodes {
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             clearAttrs(target);
             DynamicObject attrs = target.getAttributes();
-            for (RPairList attr : attributes) {
+
+            PairListIterator it = attributes.iterator();
+            while (it.hasNext()) {
+                RPairList attr = it.next(plLib);
                 Object tag = plLib.getTag(attr);
                 if (!(tag instanceof RSymbol)) {
                     CompilerDirectives.transferToInterpreter();

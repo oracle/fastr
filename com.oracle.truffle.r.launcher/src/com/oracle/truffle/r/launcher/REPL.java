@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import org.graalvm.shadowed.org.jline.reader.UserInterruptException;
 /**
  * Implements the read-eval-print loop.
  *
- * @see #readEvalPrint(Context, ConsoleHandler, File, boolean)
+ * @see #readEvalPrint(Context, ConsoleHandler, File, REngineExecutor)
  */
 public class REPL {
     /**
@@ -61,8 +61,30 @@ public class REPL {
     private static final Source GET_EXECUTOR = Source.newBuilder("R", ".fastr.getExecutor()", "<get-executor>").internal(true).buildLiteral();
     private static final Source PRINT_ERROR = Source.newBuilder("R", ".fastr.printError", "<print-error>").internal(true).buildLiteral();
 
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, boolean useExecutor) {
-        return readEvalPrint(context, consoleHandler, null, useExecutor);
+    public static final class REngineExecutor {
+        private ExecutorService executorService;
+
+        public void setExecutorService(ExecutorService executorService) {
+            this.executorService = executorService;
+        }
+
+        public boolean run(Runnable action) {
+            if (executorService != null) {
+                try {
+                    executorService.submit(action, null).get();
+                } catch (InterruptedException | ExecutionException e) {
+                    System.err.println("Unexpected error when closing the context: " + e.getClass().getSimpleName());
+                    return false;
+                }
+            } else {
+                action.run();
+            }
+            return true;
+        }
+    }
+
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, REngineExecutor rExecutor) {
+        return readEvalPrint(context, consoleHandler, null, rExecutor);
     }
 
     /**
@@ -74,12 +96,17 @@ public class REPL {
      * </ol>
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
+     * 
+     * The {@code rExecutor} parameter may be left {@code null}, in which case we do not use
+     * executor, otherwise the {@code rExecutor} is updated with the actual {@code ExecutorService}.
      */
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor) {
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, REngineExecutor rExecutor) {
+        final boolean useExecutor = rExecutor != null;
         final ExecutorService executor;
         final EventLoopThread eventLoopThread;
         if (useExecutor) {
             executor = context.eval(GET_EXECUTOR).asHostObject();
+            rExecutor.setExecutorService(executor);
             eventLoopThread = initializeNativeEventLoop(context, executor);
         } else {
             executor = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,9 +49,6 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
@@ -59,7 +56,6 @@ import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
@@ -74,9 +70,9 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -85,8 +81,13 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 @ImportStatic({RRuntime.class, DSLConfig.class})
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"...", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -111,7 +112,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     @Children private final VectorDataLibrary[] elementsDataLibs = new VectorDataLibrary[MAX_PROFILES];
     @Child private VectorDataLibrary overflowElementDataLib;
 
-    @Child private VectorDataLibrary vectorDataLibrary;
+    @Child private VectorDataLibrary resultDataLib;
 
     private final ConditionProfile fastNamesMerge = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isAbstractVectorProfile = ConditionProfile.createBinaryProfile();
@@ -338,14 +339,14 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             }
             if (hasNewNamesProfile.profile(newNames != null)) {
                 VectorAccess newNamesAccess = newNames.slowPathAccess();
-                try (VectorAccess.RandomIterator newNamesIter = newNamesAccess.randomAccess(newNames)) {
-                    for (int i1 = 0; i1 < length; i1++) {
-                        foldedNames.names[pos + i1] = newNamesAccess.getString(newNamesIter, i1);
-                    }
-                    if (!newNames.isComplete()) {
-                        naNameBranch.enter();
-                        foldedNames.complete = false;
-                    }
+                RandomIterator newNamesIter = newNamesAccess.randomAccess(newNames);
+                for (int i1 = 0; i1 < length; i1++) {
+                    foldedNames.names[pos + i1] = newNamesAccess.getString(newNamesIter, i1);
+                }
+                VectorDataLibrary newNamesDataLib = getElemDataLib(index);
+                if (!newNamesDataLib.isComplete(newNames.getData())) {
+                    naNameBranch.enter();
+                    foldedNames.complete = false;
                 }
             } else {
                 for (int i1 = 0; i1 < length; i1++) {
@@ -377,33 +378,35 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     private int processContentElement(RAbstractVector result, int pos, Object element, int elementIndex) {
         if (isAbstractVectorProfile.profile(element instanceof RAbstractVector)) {
             RAbstractVector v = (RAbstractVector) element;
-            VectorDataLibrary resultDataLib = getVectorDataLibrary();
+            VectorDataLibrary resultDataLibrary = getResultDataLibrary();
             VectorDataLibrary vDataLib = getElemDataLib(elementIndex);
             Object resultData = result.getData();
             Object vData = v.getData();
-            try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+            RandomAccessWriteIterator resultIt = resultDataLibrary.randomAccessWriteIterator(resultData);
+            try {
                 RandomAccessIterator vIt = vDataLib.randomAccessIterator(vData);
                 for (int i = 0; i < v.getLength(); i++) {
-                    resultDataLib.transfer(resultData, resultIt, pos + i, vDataLib, vIt, vData, i);
+                    resultDataLibrary.transfer(resultData, resultIt, pos + i, vDataLib, vIt, vData, i);
                 }
-                resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, vDataLib.getNACheck(vData).neverSeenNA());
+            } finally {
+                resultDataLibrary.commitRandomAccessWriteIterator(resultData, resultIt, vDataLib.getNACheck(vData).neverSeenNA());
             }
             return vDataLib.getLength(vData);
         } else if (element instanceof RNull) {
             // nothing to do - NULL elements are skipped
             return 0;
         } else {
-            getVectorDataLibrary().setDataAtAsObject(result.getData(), pos, element);
+            getResultDataLibrary().setDataAtAsObject(result.getData(), pos, element);
             return 1;
         }
     }
 
-    private VectorDataLibrary getVectorDataLibrary() {
-        if (vectorDataLibrary == null) {
+    private VectorDataLibrary getResultDataLibrary() {
+        if (resultDataLib == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            vectorDataLibrary = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize()));
+            resultDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize()));
         }
-        return vectorDataLibrary;
+        return resultDataLib;
     }
 
     private static boolean signatureHasNames(ArgumentsSignature signature) {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995--2015, The R Core Team
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,85 +73,84 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
         int[] z = new int[n];
 
         int[] iAns = new int[n * whichLen];
-        try (RandomIterator mergeIter = mergeAccess.randomAccess(merge); RandomIterator whichIter = whichAccess.randomAccess(which)) {
+        RandomIterator mergeIter = mergeAccess.randomAccess(merge);
+        RandomIterator whichIter = whichAccess.randomAccess(which);
+        // for (k = 1; k <= n; k++) {
+        for (k = 0; k < n; k++) {
+            sing[k] = true; /* is k-th obs. still alone in cluster ? */
+            mNr[k] = 0; /* containing last merge-step number of k-th obs. */
+        }
 
-            // for (k = 1; k <= n; k++) {
-            for (k = 0; k < n; k++) {
-                sing[k] = true; /* is k-th obs. still alone in cluster ? */
-                mNr[k] = 0; /* containing last merge-step number of k-th obs. */
-            }
+        for (k = 1; k <= n - 1; k++) {
+            /* k-th merge, from n-k+1 to n-k atoms: (m1,m2) = merge[ k , ] */
+            m1 = mergeAccess.getInt(mergeIter, k - 1);
+            m2 = mergeAccess.getInt(mergeIter, n - 1 + k - 1);
 
-            for (k = 1; k <= n - 1; k++) {
-                /* k-th merge, from n-k+1 to n-k atoms: (m1,m2) = merge[ k , ] */
-                m1 = mergeAccess.getInt(mergeIter, k - 1);
-                m2 = mergeAccess.getInt(mergeIter, n - 1 + k - 1);
-
-                if (m1 < 0 && m2 < 0) { /* merging atoms [-m1] and [-m2] */
-                    mNr[adj(-m1)] = mNr[adj(-m2)] = k;
-                    sing[adj(-m1)] = sing[adj(-m2)] = false;
-                } else if (m1 < 0 || m2 < 0) { /* the other >= 0 */
-                    if (m1 < 0) {
-                        j = -m1;
-                        m1 = m2;
-                    } else {
-                        j = -m2;
-                    }
-                    /* merging atom j & cluster m1 */
-                    for (l = 1; l <= n; l++) {
-                        if (mNr[adj(l)] == m1) {
-                            mNr[adj(l)] = k;
-                        }
-                    }
-                    mNr[adj(j)] = k;
-                    sing[adj(j)] = false;
-                } else { /* both m1, m2 >= 0 */
-                    for (l = 1; l <= n; l++) {
-                        if (mNr[adj(l)] == m1 || mNr[adj(l)] == m2) {
-                            mNr[adj(l)] = k;
-                        }
+            if (m1 < 0 && m2 < 0) { /* merging atoms [-m1] and [-m2] */
+                mNr[adj(-m1)] = mNr[adj(-m2)] = k;
+                sing[adj(-m1)] = sing[adj(-m2)] = false;
+            } else if (m1 < 0 || m2 < 0) { /* the other >= 0 */
+                if (m1 < 0) {
+                    j = -m1;
+                    m1 = m2;
+                } else {
+                    j = -m2;
+                }
+                /* merging atom j & cluster m1 */
+                for (l = 1; l <= n; l++) {
+                    if (mNr[adj(l)] == m1) {
+                        mNr[adj(l)] = k;
                     }
                 }
+                mNr[adj(j)] = k;
+                sing[adj(j)] = false;
+            } else { /* both m1, m2 >= 0 */
+                for (l = 1; l <= n; l++) {
+                    if (mNr[adj(l)] == m1 || mNr[adj(l)] == m2) {
+                        mNr[adj(l)] = k;
+                    }
+                }
+            }
 
-                /*
-                 * does this k-th merge belong to a desired group size which[j] ? if yes, find j
-                 * (maybe multiple ones):
-                 */
-                foundJ = false;
-                for (j = 0; j < whichLen; j++) {
-                    if (whichAccess.getInt(whichIter, j) == n - k) {
-                        if (!foundJ) { /* first match (and usually only one) */
-                            foundJ = true;
-                            // for (l = 1; l <= n; l++)
-                            for (l = 0; l < n; l++) {
-                                z[l] = 0;
-                            }
-                            nclust = 0;
-                            mm = j * n; /* may want to copy this column of ans[] */
-                            for (l = 1, m1 = mm; l <= n; l++, m1++) {
-                                if (sing[adj(l)]) {
-                                    iAns[m1] = ++nclust;
-                                } else {
-                                    if (z[adj(mNr[adj(l)])] == 0) {
-                                        z[adj(mNr[adj(l)])] = ++nclust;
-                                    }
-                                    iAns[m1] = z[adj(mNr[adj(l)])];
+            /*
+             * does this k-th merge belong to a desired group size which[j] ? if yes, find j (maybe
+             * multiple ones):
+             */
+            foundJ = false;
+            for (j = 0; j < whichLen; j++) {
+                if (whichAccess.getInt(whichIter, j) == n - k) {
+                    if (!foundJ) { /* first match (and usually only one) */
+                        foundJ = true;
+                        // for (l = 1; l <= n; l++)
+                        for (l = 0; l < n; l++) {
+                            z[l] = 0;
+                        }
+                        nclust = 0;
+                        mm = j * n; /* may want to copy this column of ans[] */
+                        for (l = 1, m1 = mm; l <= n; l++, m1++) {
+                            if (sing[adj(l)]) {
+                                iAns[m1] = ++nclust;
+                            } else {
+                                if (z[adj(mNr[adj(l)])] == 0) {
+                                    z[adj(mNr[adj(l)])] = ++nclust;
                                 }
-                            }
-                        } else { /* found_j: another which[j] == n-k : copy column */
-                            for (l = 1, m1 = j * n, m2 = mm; l <= n; l++, m1++, m2++) {
-                                iAns[m1] = iAns[m2];
+                                iAns[m1] = z[adj(mNr[adj(l)])];
                             }
                         }
-                    } /* if ( match ) */
-                } /* for(j .. which[j] ) */
-            } /* for(k ..) {merge} */
-
-            /* Dealing with trivial case which[] = n : */
-            for (j = 0; j < whichLen; j++) {
-                if (whichAccess.getInt(whichIter, j) == n) {
-                    for (l = 1, m1 = j * n; l <= n; l++, m1++) {
-                        iAns[m1] = l;
+                    } else { /* found_j: another which[j] == n-k : copy column */
+                        for (l = 1, m1 = j * n, m2 = mm; l <= n; l++, m1++, m2++) {
+                            iAns[m1] = iAns[m2];
+                        }
                     }
+                } /* if ( match ) */
+            } /* for(j .. which[j] ) */
+        } /* for(k ..) {merge} */
+
+        /* Dealing with trivial case which[] = n : */
+        for (j = 0; j < whichLen; j++) {
+            if (whichAccess.getInt(whichIter, j) == n) {
+                for (l = 1, m1 = j * n; l <= n; l++, m1++) {
+                    iAns[m1] = l;
                 }
             }
         }

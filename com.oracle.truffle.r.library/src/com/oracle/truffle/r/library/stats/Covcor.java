@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
@@ -952,7 +952,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
 
     private final BranchProfile naInRes = BranchProfile.create();
     private final ConditionProfile matrixProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile methodValueProfile = ValueProfile.createEqualityProfile();
+    private final PrimitiveValueProfile methodValueProfile = PrimitiveValueProfile.createEqualityProfile();
 
     @Child private GetReadonlyData.Double getReadonlyDataNode = GetReadonlyData.Double.create();
     @Child private GetDimAttributeNode getDimsXNode = GetDimAttributeNode.create();

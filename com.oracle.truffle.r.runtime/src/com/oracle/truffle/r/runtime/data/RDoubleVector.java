@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,6 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     private int length;
 
     RDoubleVector(double[] data, boolean complete) {
-        super(complete);
         setData(new RDoubleArrayVectorData(data, complete), data.length);
         assert RAbstractVector.verifyVector(this);
     }
@@ -66,13 +65,11 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     }
 
     RDoubleVector(Object data, int newLen) {
-        super(false);
         setData(data, newLen);
         assert RAbstractVector.verifyVector(this);
     }
 
     private RDoubleVector() {
-        super(false);
     }
 
     private void setData(Object data, int newLen) {
@@ -212,7 +209,6 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
         } finally {
             RDoubleNativeVectorData newData = new RDoubleNativeVectorData(this);
             setData(newData, l);
-            setComplete(false);
         }
     }
 
@@ -228,7 +224,6 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
         } finally {
             RDoubleNativeVectorData newData = new RDoubleNativeVectorData(this);
             setData(newData, VectorDataLibrary.getFactory().getUncached().getLength(newData));
-            setComplete(false);
         }
     }
 
@@ -373,14 +368,10 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     }
 
     public long allocateNativeContents() {
-        try {
-            data = VectorDataLibrary.getFactory().getUncached().materialize(data);
-            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
-            setData(new RDoubleNativeVectorData(this), getLength());
-            return result;
-        } finally {
-            setComplete(false);
-        }
+        data = VectorDataLibrary.getFactory().getUncached().materialize(data);
+        long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+        setData(new RDoubleNativeVectorData(this), getLength());
+        return result;
     }
 
     private static final class FastPathAccess extends FastPathFromDoubleAccess {

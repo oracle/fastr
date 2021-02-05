@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -40,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @ImportStatic(DSLConfig.class)
@@ -73,35 +74,31 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         return vector;
     }
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected RStringVector setString(RStringVector vector, int index, String value,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            access.setString(iter, index - 1, value);
-            if (RRuntime.isNA(value)) {
-                vector.setComplete(false);
-            }
-            return vector;
+                    @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib) {
+        RandomAccessWriteIterator iter = vectorDataLib.randomAccessWriteIterator(vector.getData());
+        boolean neverSeenNA = false;
+        try {
+            vectorDataLib.setStringAt(vector.getData(), index - 1, value);
+            neverSeenNA = vectorDataLib.getNACheck(vector.getData()).neverSeenNA();
+        } finally {
+            vectorDataLib.commitRandomAccessWriteIterator(vector.getData(), iter, neverSeenNA);
         }
+        return vector;
     }
 
+    @TruffleBoundary
     @Specialization(replaces = "setString", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RStringVector setStringGeneric(RStringVector vector, int index, String value) {
-        return setString(vector, index, value, vector.slowPathAccess());
+        return setString(vector, index, value, VectorDataLibrary.getFactory().getUncached());
     }
 
-    @Specialization(guards = {"access.supports(list)", "simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
+    @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"}, limit = "getVectorAccessCacheSize()")
     protected static Object setList(RList list, int index, Object value,
-                    @Cached("list.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(list)) {
-            access.setListElement(iter, index - 1, value);
-            return list;
-        }
-    }
-
-    @Specialization(replaces = "setList", guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
-    protected static Object setListGeneric(RList list, int index, Object value) {
-        return setList(list, index, value, list.slowPathAccess());
+                    @CachedLibrary("list.getData()") VectorDataLibrary lib) {
+        lib.setElementAt(list.getData(), index - 1, value);
+        return list;
     }
 
     @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
@@ -111,7 +108,7 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         if (RRuntime.isNA(value)) {
             isNAProfile.enter();
             dataLib.setDoubleAt(vector.getData(), index - 1, RRuntime.DOUBLE_NA);
-            assert !vector.isComplete();
+            assert !dataLib.isComplete(vector.getData());
         } else {
             dataLib.setDoubleAt(vector.getData(), index - 1, value);
         }

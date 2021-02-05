@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -60,10 +60,9 @@ public abstract class InheritsNode extends RBaseNode {
     }
 
     protected static boolean vectorEquals(VectorAccess access, RAbstractVector vec, String what) {
-        try (SequentialIterator it = access.access(vec)) {
-            access.next(it);
-            return access.getLength(it) == 1 && access.getString(it).equals(what);
-        }
+        SequentialIterator it = access.access(vec);
+        access.next(it);
+        return access.getLength(it) == 1 && access.getString(it).equals(what);
     }
 
     protected static String getSingleOrNull(RStringVector vec) {
@@ -91,7 +90,7 @@ public abstract class InheritsNode extends RBaseNode {
     @Specialization(guards = {"!which", "whatAccess.supports(what)"}, limit = "getVectorAccessCacheSize()")
     protected byte doesInherit(Object x, RStringVector what, @SuppressWarnings("unused") boolean which,
                     @Cached BranchProfile nonEmptyClassHierarchy,
-                    @Cached("createEqualityProfile()") ValueProfile whatValueProfile,
+                    @Cached("createIdentityProfile()") ValueProfile whatValueProfile,
                     @Cached("createBinaryProfile()") ConditionProfile whatIsSingleElement,
                     @Cached ContainsCheck containsCheck,
                     @Cached("what.access()") VectorAccess whatAccess) {
@@ -100,17 +99,16 @@ public abstract class InheritsNode extends RBaseNode {
             return RRuntime.LOGICAL_FALSE;
         }
         nonEmptyClassHierarchy.enter();
-        try (SequentialIterator whatIt = whatAccess.access(what)) {
-            if (whatIsSingleElement.profile(whatAccess.getLength(whatIt) == 1)) {
-                whatAccess.next(whatIt);
-                String whatString = whatValueProfile.profile(whatAccess.getString(whatIt));
-                return RRuntime.asLogical(containsCheck.execute(whatString, hierarchy));
-            }
-            while (whatAccess.next(whatIt)) {
-                String whatString = whatValueProfile.profile(whatAccess.getString(whatIt));
-                if (containsCheck.execute(whatString, hierarchy)) {
-                    return RRuntime.LOGICAL_TRUE;
-                }
+        SequentialIterator whatIt = whatAccess.access(what);
+        if (whatIsSingleElement.profile(whatAccess.getLength(whatIt) == 1)) {
+            whatAccess.next(whatIt);
+            String whatString = whatValueProfile.profile(whatAccess.getString(whatIt));
+            return RRuntime.asLogical(containsCheck.execute(whatString, hierarchy));
+        }
+        while (whatAccess.next(whatIt)) {
+            String whatString = whatValueProfile.profile(whatAccess.getString(whatIt));
+            if (containsCheck.execute(whatString, hierarchy)) {
+                return RRuntime.LOGICAL_TRUE;
             }
         }
         return RRuntime.LOGICAL_FALSE;
@@ -153,11 +151,10 @@ public abstract class InheritsNode extends RBaseNode {
         @Specialization(guards = {"haystackAccess.supports(haystack)"}, limit = "getVectorAccessCacheSize()")
         protected boolean doLongHaystack(String needle, RStringVector haystack,
                         @Cached("haystack.access()") VectorAccess haystackAccess) {
-            try (SequentialIterator it = haystackAccess.access(haystack)) {
-                while (haystackAccess.next(it)) {
-                    if (needle.equals(haystackAccess.getString(it))) {
-                        return true;
-                    }
+            SequentialIterator it = haystackAccess.access(haystack);
+            while (haystackAccess.next(it)) {
+                if (needle.equals(haystackAccess.getString(it))) {
+                    return true;
                 }
             }
             return false;

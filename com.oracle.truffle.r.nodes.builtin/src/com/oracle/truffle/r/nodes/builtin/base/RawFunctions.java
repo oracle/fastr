@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,13 +61,12 @@ public class RawFunctions {
         @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
         protected RRawVector charToRaw(RStringVector x,
                         @Cached("x.access()") VectorAccess xAccess) {
-            try (RandomIterator iter = xAccess.randomAccess(x)) {
-                if (xAccess.getLength(iter) != 1) {
-                    warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
-                }
-                String s = xAccess.getString(iter, 0);
-                return stringToRaw(s);
+            RandomIterator iter = xAccess.randomAccess(x);
+            if (xAccess.getLength(iter) != 1) {
+                warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
             }
+            String s = xAccess.getString(iter, 0);
+            return stringToRaw(s);
         }
 
         @Specialization(replaces = "charToRaw")
@@ -99,25 +98,24 @@ public class RawFunctions {
         @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
         protected Object rawToChar(RRawVector x, boolean multiple,
                         @Cached("x.access()") VectorAccess xAccess) {
-            try (SequentialIterator iter = xAccess.access(x)) {
-                if (multiple) {
-                    String[] data = new String[xAccess.getLength(iter)];
-                    while (xAccess.next(iter)) {
-                        byte value = xAccess.getRaw(iter);
-                        data[iter.getIndex()] = createString(value);
-                    }
-                    return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-                } else {
-                    int j = 0;
-                    byte[] data = new byte[xAccess.getLength(iter)];
-                    while (xAccess.next(iter)) {
-                        byte b = xAccess.getRaw(iter);
-                        if (b != 0) {
-                            data[j++] = b;
-                        }
-                    }
-                    return createString(j, data);
+            SequentialIterator iter = xAccess.access(x);
+            if (multiple) {
+                String[] data = new String[xAccess.getLength(iter)];
+                while (xAccess.next(iter)) {
+                    byte value = xAccess.getRaw(iter);
+                    data[iter.getIndex()] = createString(value);
                 }
+                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            } else {
+                int j = 0;
+                byte[] data = new byte[xAccess.getLength(iter)];
+                while (xAccess.next(iter)) {
+                    byte b = xAccess.getRaw(iter);
+                    if (b != 0) {
+                        data[j++] = b;
+                    }
+                }
+                return createString(j, data);
             }
         }
 
@@ -141,19 +139,18 @@ public class RawFunctions {
         protected RRawVector rawShift(RRawVector x, int n,
                         @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile,
                         @Cached("x.access()") VectorAccess xAccess) {
-            try (SequentialIterator iter = xAccess.access(x)) {
-                byte[] data = new byte[xAccess.getLength(iter)];
-                if (negativeShiftProfile.profile(n < 0)) {
-                    while (xAccess.next(iter)) {
-                        data[iter.getIndex()] = (byte) ((xAccess.getRaw(iter) & 0xff) >> (-n));
-                    }
-                } else {
-                    while (xAccess.next(iter)) {
-                        data[iter.getIndex()] = (byte) (xAccess.getRaw(iter) << n);
-                    }
+            SequentialIterator iter = xAccess.access(x);
+            byte[] data = new byte[xAccess.getLength(iter)];
+            if (negativeShiftProfile.profile(n < 0)) {
+                while (xAccess.next(iter)) {
+                    data[iter.getIndex()] = (byte) ((xAccess.getRaw(iter) & 0xff) >> (-n));
                 }
-                return RDataFactory.createRawVector(data);
+            } else {
+                while (xAccess.next(iter)) {
+                    data[iter.getIndex()] = (byte) (xAccess.getRaw(iter) << n);
+                }
             }
+            return RDataFactory.createRawVector(data);
         }
 
         @Specialization(replaces = "rawShift")

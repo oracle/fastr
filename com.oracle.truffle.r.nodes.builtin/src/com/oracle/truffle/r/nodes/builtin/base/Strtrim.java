@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ToLowerOrUpper.StringMapNode;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
 @RBuiltin(name = "strtrim", kind = INTERNAL, parameterNames = {"x", "width"}, behavior = PURE)
 public abstract class Strtrim extends RBuiltinNode.Arg2 {
@@ -50,11 +52,12 @@ public abstract class Strtrim extends RBuiltinNode.Arg2 {
         casts.arg("width").mustNotBeMissing().mustBe(nullValue().not()).asIntegerVector();
     }
 
-    @Specialization
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected RStringVector srtrim(RStringVector x, RIntVector width,
                     @Cached("create()") StringMapNode mapNode,
-                    @Cached("createBinaryProfile()") ConditionProfile fitsProfile) {
-        int len = x.getLength();
+                    @Cached("createBinaryProfile()") ConditionProfile fitsProfile,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        int len = xDataLib.getLength(x.getData());
         int nw = width.getLength();
         if (nw == 0 || nw < len && (len % nw != 0)) {
             CompilerDirectives.transferToInterpreter();
@@ -76,7 +79,7 @@ public abstract class Strtrim extends RBuiltinNode.Arg2 {
                 return substring(element, w);
             }
         };
-        return mapNode.apply(x, function);
+        return mapNode.apply(x, xDataLib, function);
     }
 
     @TruffleBoundary

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ import org.graalvm.polyglot.Source;
 
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.launcher.REPL.REngineExecutor;
 
 /**
  * Main entry point for the R engine. The first argument must be either {@code 'R'} or
@@ -187,10 +188,11 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         this.consoleHandler.setContext(context);
         if (launcherMode) {
             int exitCode = 0;
+            REngineExecutor executor = new REngineExecutor();
             try {
-                exitCode = execute(context);
+                exitCode = execute(context, executor);
             } finally {
-                context.close();
+                executor.run(context::close);
                 System.exit(exitCode);
             }
         }
@@ -202,12 +204,13 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             // launch did not set the value
             return 1;
         }
-        int result = execute(preparedContext);
+        REngineExecutor executor = new REngineExecutor();
+        int result = execute(preparedContext, executor);
         StartupTiming.printSummary();
         return result;
     }
 
-    protected int execute(Context context) {
+    protected int execute(Context context, REngineExecutor executor) {
         StartupTiming.timestamp("RMain.execute");
         String fileOption = options.getString(RCmdOption.FILE);
         File srcFile = null;
@@ -217,7 +220,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             }
             srcFile = new File(fileOption);
         }
-        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, true);
+        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, executor);
         StartupTiming.printSummary();
         return result;
     }

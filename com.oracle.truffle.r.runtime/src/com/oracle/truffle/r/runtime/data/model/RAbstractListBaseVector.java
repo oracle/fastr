@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -61,10 +62,6 @@ import com.oracle.truffle.r.runtime.interop.R2Foreign;
  */
 @ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractListBaseVector extends RAbstractVector {
-
-    public RAbstractListBaseVector(boolean complete) {
-        super(complete);
-    }
 
     @SuppressWarnings("static-method")
     @ExportMessage
@@ -135,7 +132,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
 
     @SuppressWarnings("unused")
     public void setDataAt(Object store, int index, Object value) {
-        throw new UnsupportedOperationException();
+        throw CompilerDirectives.shouldNotReachHere();
     }
 
     @Override

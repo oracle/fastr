@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -422,6 +422,10 @@ public final class SpecialAttributesFunctions {
             return SpecialAttributesFunctionsFactory.GetNamesAttributeNodeGen.create();
         }
 
+        public static GetNamesAttributeNode getUncached() {
+            return SpecialAttributesFunctionsFactory.GetNamesAttributeNodeGen.getUncached();
+        }
+
         @Override
         public abstract Object execute(RAttributable attr);
 
@@ -671,10 +675,10 @@ public final class SpecialAttributesFunctions {
         }
 
         public static GetDimAttributeNode create() {
-            return new GetDimAttributeNode(false);
+            return new GetDimAttributeNode(true);
         }
 
-        private static final GetDimAttributeNode UNCACHED = new GetDimAttributeNode(true);
+        private static final GetDimAttributeNode UNCACHED = new GetDimAttributeNode(false);
 
         public static GetDimAttributeNode getUncached() {
             return UNCACHED;
@@ -879,8 +883,10 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization
-        protected Object getDimNamesFromAttributable(RAttributable x) {
-            return getAttrFromAttributable(x);
+        protected Object getDimNamesFromAttributable(RAttributable x,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode) {
+            return getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
         }
 
         public final RList getDimNames(RAttributable x) {
@@ -1239,8 +1245,10 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization
-        protected Object getClassAttrFromAttributable(RAttributable x) {
-            return getAttrFromAttributable(x);
+        protected Object getClassAttrFromAttributable(RAttributable x,
+                        @Cached BranchProfile attrNullProfile,
+                        @Cached GetPropertyNode getPropertyNode) {
+            return getAttrFromAttributable(x, attrNullProfile, getPropertyNode);
         }
 
         public final RStringVector getClassAttr(RAttributable x) {

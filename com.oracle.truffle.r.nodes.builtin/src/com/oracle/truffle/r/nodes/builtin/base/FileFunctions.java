@@ -1125,8 +1125,7 @@ public class FileFunctions {
             }
         }
 
-        @SuppressWarnings("static-method")
-        private boolean copyDir(TruffleFile fromDir, TruffleFile toDir, CopyOption[] copyOptions) throws IOException {
+        private static boolean copyDir(TruffleFile fromDir, TruffleFile toDir, CopyOption[] copyOptions) throws IOException {
             DirCopy dirCopy = new DirCopy(fromDir, toDir, copyOptions);
             FileSystemUtils.walkFileTree(fromDir, dirCopy);
             return !dirCopy.error;
@@ -1246,7 +1245,7 @@ public class FileFunctions {
         // TODO: NewVersionMigration - expand parameter
         @Specialization
         @TruffleBoundary
-        protected int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, boolean expand,
+        protected static int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, boolean expand,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             int result = 1;
             for (int i = -0; i < vec.getLength(); i++) {
@@ -1264,7 +1263,7 @@ public class FileFunctions {
             return result;
         }
 
-        private int removeGlob(RContext context, String pathPattern, boolean recursive, int firstGlobCharIdx, int result) {
+        private static int removeGlob(RContext context, String pathPattern, boolean recursive, int firstGlobCharIdx, int result) {
             String fileSeparator = context.getEnv().getFileNameSeparator();
             // we take as much as we can from the pathPatter as the search root
             int lastSeparator = pathPattern.substring(0, firstGlobCharIdx).lastIndexOf(fileSeparator);
@@ -1288,7 +1287,7 @@ public class FileFunctions {
             }
         }
 
-        private int removeFile(TruffleFile file, boolean recursive, int resultIn) {
+        private static int removeFile(TruffleFile file, boolean recursive, int resultIn) {
             int result = resultIn;
             if (file.isDirectory()) {
                 if (!recursive) {
@@ -1319,7 +1318,7 @@ public class FileFunctions {
             return -1;
         }
 
-        private int recursiveDelete(TruffleFile f) {
+        private static int recursiveDelete(TruffleFile f) {
             try (DirectoryStream<TruffleFile> stream = f.newDirectoryStream()) {
                 for (TruffleFile entry : stream) {
                     if (entry.isDirectory()) {

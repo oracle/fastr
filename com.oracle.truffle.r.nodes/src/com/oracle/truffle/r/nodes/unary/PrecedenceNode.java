@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import static com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode.isForeignArray;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -46,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairList.PairListIterator;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -194,7 +196,9 @@ public abstract class PrecedenceNode extends RBaseNode {
                     @Cached("createRecursive()") PrecedenceNode precedenceNode,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         int precedence = -1;
-        for (RPairList item : list) {
+        PairListIterator it = list.iterator();
+        while (it.hasNext()) {
+            RPairList item = it.next(plLib);
             precedence = Math.max(precedence, precedenceNode.executeInteger(plLib.car(item), recursive));
         }
         return precedence;
@@ -289,13 +293,14 @@ public abstract class PrecedenceNode extends RBaseNode {
                 }
             }
         } catch (InvalidArrayIndexException | UnsupportedMessageException ex) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             throw error(RError.Message.GENERIC, "error while accessing array: " + ex.getMessage());
         }
         return precedence;
     }
 
     @TruffleBoundary
-    private int getPrecedence(Class<?> ct) {
+    private static int getPrecedence(Class<?> ct) {
         if (ct != null && ct.isArray()) {
             return getPrecedence(ct.getComponentType());
         }

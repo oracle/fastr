@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1999--2014, The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -105,6 +105,7 @@ public final class Wilcox {
             return result;
         }
 
+        @TruffleBoundary
         public static void freeData() {
             data.set(null);
         }

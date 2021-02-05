@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,8 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
@@ -45,10 +45,6 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
  */
 @ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
-
-    public RAbstractNumericVector(boolean complete) {
-        super(complete);
-    }
 
     protected Object getScalarValue(VectorDataLibrary dataLib) {
         assert dataLib.getLength(getData()) == 1 && getLength() == 1;

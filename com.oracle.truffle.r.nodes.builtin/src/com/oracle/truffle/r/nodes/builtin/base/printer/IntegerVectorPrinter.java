@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -175,21 +175,20 @@ public final class IntegerVectorPrinter extends VectorPrinter<RIntVector> {
 
     public static String[] format(RIntVector value, boolean trim, int width, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
-        try (RandomIterator iter = access.randomAccess(value)) {
-            int w;
-            int length = access.getLength(iter);
-            if (trim) {
-                w = 1;
-            } else {
-                w = formatIntVectorInternal(iter, access, 0, length, pp.getNaWidth());
-            }
-            w = Math.max(w, width);
-
-            String[] result = new String[length];
-            for (int i = 0; i < length; i++) {
-                result[i] = encodeInteger(access.getInt(iter, i), w, pp);
-            }
-            return result;
+        RandomIterator iter = access.randomAccess(value);
+        int w;
+        int length = access.getLength(iter);
+        if (trim) {
+            w = 1;
+        } else {
+            w = formatIntVectorInternal(iter, access, 0, length, pp.getNaWidth());
         }
+        w = Math.max(w, width);
+
+        String[] result = new String[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = encodeInteger(access.getInt(iter, i), w, pp);
+        }
+        return result;
     }
 }

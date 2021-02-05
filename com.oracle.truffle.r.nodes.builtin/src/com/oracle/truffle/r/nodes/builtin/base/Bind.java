@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,19 +30,14 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
@@ -56,10 +51,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -75,15 +67,23 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@ReportPolymorphism
 public abstract class Bind extends RBaseNodeWithWarnings {
 
     protected enum BindType {
@@ -154,7 +154,7 @@ public abstract class Bind extends RBaseNodeWithWarnings {
     }
 
     private Object bindInternal(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, CastNode castNode, boolean needsVectorCast, SetDimAttributeNode setDimNode,
-                    GetDimNamesAttributeNode getDimNamesNode, ExtractNamesAttributeNode extractNamesNode) {
+                    GetDimNamesAttributeNode getDimNamesNode, ExtractNamesAttributeNode extractNamesNode, VectorDataLibrary dispatchedDataLib) {
         ArgumentsSignature signature = promiseArgs.getSignature();
         String[] vecNames = nullNamesProfile.profile(signature.getNonNullCount() == 0) ? null : new String[signature.getLength()];
         RAbstractVector[] vectors = new RAbstractVector[args.length];
@@ -175,13 +175,13 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     // an empty matrix with a positive column, resp. row, dimension cannot be
                     // ignored
                     vectors[ind] = vector;
-                    complete &= vector.isComplete();
+                    complete &= dispatchedDataLib.isComplete(vector.getData());
                     ind++;
                 }
                 // nothing to do
             } else {
                 vectors[ind] = vector;
-                complete &= vector.isComplete();
+                complete &= dispatchedDataLib.isComplete(vector.getData());
                 ind++;
             }
         }
@@ -191,7 +191,7 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                 for (int i = 0; i < args.length; i++) {
                     setVectorNames(vecNames, i, signature.getName(i));
                     vectors[i] = getVector(args[i], castNode, needsVectorCast);
-                    complete &= vectors[i].isComplete();
+                    complete &= dispatchedDataLib.isComplete(vectors[i].getData());
                 }
             } else {
                 if (vecNames != null) {
@@ -245,8 +245,9 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     @Cached("create()") CastLogicalNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode, namesDataLib);
     }
 
     @Specialization(guards = {"precedence == INT_PRECEDENCE", "args.length > 1"})
@@ -254,8 +255,9 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     @Cached("create()") CastIntegerNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode, namesDataLib);
     }
 
     @Specialization(guards = {"precedence == DOUBLE_PRECEDENCE", "args.length > 1"})
@@ -263,8 +265,9 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     @Cached("create()") CastDoubleNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode, namesDataLib);
     }
 
     @Specialization(guards = {"precedence == STRING_PRECEDENCE", "args.length> 1"})
@@ -272,8 +275,9 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     @Cached("create()") CastStringNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode, namesDataLib);
     }
 
     @Specialization(guards = {"precedence == COMPLEX_PRECEDENCE", "args.length > 1"})
@@ -281,8 +285,9 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     @Cached("create()") CastComplexNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode, namesDataLib);
     }
 
     @Specialization(guards = {"precedence == LIST_PRECEDENCE", "args.length > 1"})
@@ -290,8 +295,9 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     @Cached("create()") CastListNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, false, setDimNode, getDimNamesNode, extractNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, false, setDimNode, getDimNamesNode, extractNamesNode, namesDataLib);
     }
 
     /**

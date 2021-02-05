@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.builtin.base.IdenticalFactory.IdenticalInterna
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -344,7 +345,7 @@ public final class Identical extends RBuiltinNode.Arg8 {
                         if (identical((double) xValue, (double) yValue, numEq, singleNA) == RRuntime.LOGICAL_FALSE) {
                             return RRuntime.LOGICAL_FALSE;
                         }
-                    } else if (!xValue.equals(yValue)) {
+                    } else if (!Utils.equals(xValue, yValue)) {
                         return RRuntime.LOGICAL_FALSE;
                     }
                 }

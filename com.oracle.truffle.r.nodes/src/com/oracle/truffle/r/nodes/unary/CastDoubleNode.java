@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,21 +33,21 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -76,36 +76,37 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return recursiveCastDouble.executeDouble(o);
     }
 
-    private RDoubleVector vectorCopy(RAbstractContainer operand, double[] data, boolean isComplete) {
+    private RDoubleVector vectorCopy(RAbstractContainer operand, double[] data, boolean isComplete, CopyOfRegAttributesNode copyOfRegAttributesNode) {
         RDoubleVector ret = factory().createDoubleVector(data, isComplete, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
-            ret.copyRegAttributesFrom(operand);
+            copyOfRegAttributesNode.execute(operand, ret);
         }
         return ret;
     }
 
-    private RDoubleVector createResultVector(RAbstractAtomicVector operand, VectorAccess uAccess) {
+    private RDoubleVector createResultVector(RAbstractAtomicVector operand, VectorAccess uAccess, CopyOfRegAttributesNode copyOfRegAttributesNode) {
         double[] idata = new double[operand.getLength()];
-        try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
-            while (uAccess.next(sIter)) {
-                idata[sIter.getIndex()] = uAccess.getDouble(sIter);
-            }
+        SequentialIterator sIter = uAccess.access(operand, warningContext());
+        while (uAccess.next(sIter)) {
+            idata[sIter.getIndex()] = uAccess.getDouble(sIter);
         }
-        return vectorCopy(operand, idata, uAccess.na.neverSeenNAOrNaN());
+        return vectorCopy(operand, idata, uAccess.na.neverSeenNAOrNaN(), copyOfRegAttributesNode);
     }
 
     @Specialization(guards = {"uAccess.supports(x)", "noClosure(x)", "!isForeignIntVector(x)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RDoubleVector doAbstractVector(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile,
-                    @Cached("x.access()") VectorAccess uAccess) {
+                    @Cached("x.access()") VectorAccess uAccess,
+                    @Cached CopyOfRegAttributesNode copyOfRegAttributesNode) {
         RAbstractAtomicVector operand = operandTypeProfile.profile(x);
-        return createResultVector(operand, uAccess);
+        return createResultVector(operand, uAccess, copyOfRegAttributesNode);
     }
 
     @Specialization(replaces = "doAbstractVector", guards = {"noClosure(x)", "!isForeignIntVector(x)"})
     protected RDoubleVector doAbstractVectorGeneric(RAbstractAtomicVector x,
-                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
-        return doAbstractVector(x, operandTypeProfile, x.slowPathAccess());
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile,
+                    @Cached CopyOfRegAttributesNode copyOfRegAttributesNode) {
+        return doAbstractVector(x, operandTypeProfile, x.slowPathAccess(), copyOfRegAttributesNode);
     }
 
     @Specialization(guards = {"useClosure(x)", "!isForeignIntVector(x)"})
@@ -127,34 +128,33 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         int length = list.getLength();
         double[] result = new double[length];
         boolean seenNA = false;
-        try (SequentialIterator sIter = uAccess.access(list, warningContext())) {
-            while (uAccess.next(sIter)) {
-                int i = sIter.getIndex();
-                Object entry = uAccess.getListElement(sIter);
-                if (entry instanceof RList) {
-                    result[i] = RRuntime.DOUBLE_NA;
-                    seenNA = true;
-                } else {
-                    Object castEntry = castDoubleRecursive(entry);
-                    if (castEntry instanceof Double) {
-                        double value = (Double) castEntry;
+        SequentialIterator sIter = uAccess.access(list, warningContext());
+        while (uAccess.next(sIter)) {
+            int i = sIter.getIndex();
+            Object entry = uAccess.getListElement(sIter);
+            if (entry instanceof RList) {
+                result[i] = RRuntime.DOUBLE_NA;
+                seenNA = true;
+            } else {
+                Object castEntry = castDoubleRecursive(entry);
+                if (castEntry instanceof Double) {
+                    double value = (Double) castEntry;
+                    result[i] = value;
+                    seenNA = seenNA || RRuntime.isNA(value);
+                } else if (castEntry instanceof RDoubleVector) {
+                    RDoubleVector doubleVector = (RDoubleVector) castEntry;
+                    if (doubleVector.getLength() == 1) {
+                        double value = doubleVector.getDataAt(0);
                         result[i] = value;
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (castEntry instanceof RDoubleVector) {
-                        RDoubleVector doubleVector = (RDoubleVector) castEntry;
-                        if (doubleVector.getLength() == 1) {
-                            double value = doubleVector.getDataAt(0);
-                            result[i] = value;
-                            seenNA = seenNA || RRuntime.isNA(value);
-                        } else if (doubleVector.getLength() == 0) {
-                            result[i] = RRuntime.DOUBLE_NA;
-                            seenNA = true;
-                        } else {
-                            throw throwCannotCoerceListError("numeric");
-                        }
+                    } else if (doubleVector.getLength() == 0) {
+                        result[i] = RRuntime.DOUBLE_NA;
+                        seenNA = true;
                     } else {
                         throw throwCannotCoerceListError("numeric");
                     }
+                } else {
+                    throw throwCannotCoerceListError("numeric");
                 }
             }
         }

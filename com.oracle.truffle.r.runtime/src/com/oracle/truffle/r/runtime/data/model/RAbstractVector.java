@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,11 +56,9 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataWithOwner;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
-import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -86,10 +84,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      */
     protected static volatile int fence;
 
-    private boolean complete; // "complete" means: does not contain NAs
-
-    protected RAbstractVector(boolean complete) {
-        this.complete = complete && ENABLE_COMPLETE;
+    protected RAbstractVector() {
     }
 
     public final void setData(Object data) {
@@ -100,8 +95,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         }
         // temporary solution to keep isShareable() fast
         shareable = VectorDataLibrary.getFactory().getUncached().isWriteable(data);
-        // temporary solution to keep isComplete() fast
-        complete = VectorDataLibrary.getFactory().getUncached().isComplete(data);
         verifyData();
     }
 
@@ -118,6 +111,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     public boolean isForeignWrapper() {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere(getClass().getSimpleName());
     }
 
@@ -228,15 +222,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      */
     public Object getDataTemp() {
         return isTemporary() ? getReadonlyData() : getDataCopy();
-    }
-
-    @InternalDeprecation("Some data strategies do not maintain completeness flag, " +
-                    "it should be the sole responsibility of the VectorDataLibrary implementation to keep the flag up-to-date." +
-                    "There should be no need to set completeness manually if one uses the write operations of VectorDataLibrary." +
-                    "See how the Diag builtin was rewritten to avoid calling setComplete.")
-    public void setComplete(boolean complete) {
-        this.complete = complete && ENABLE_COMPLETE;
-        assert RAbstractVector.verifyVector(this);
     }
 
     /*
@@ -470,7 +455,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     @Override
     @Ignore // AbstractContainerLibrary
     public final boolean isComplete() {
-        return complete && ENABLE_COMPLETE;
+        return VectorDataLibrary.getFactory().getUncached().isComplete(getData());
     }
 
     // Tagging interface for vectors with array based data. Make sure that an implementation also is
@@ -672,13 +657,13 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     @SuppressWarnings("unused")
     @InternalDeprecation("Use VectorDataLibrary")
     public RAbstractVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
-        throw new UnsupportedOperationException();
+        throw CompilerDirectives.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
     @InternalDeprecation("Use VectorDataLibrary#transfer")
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        throw new UnsupportedOperationException();
+        throw CompilerDirectives.shouldNotReachHere();
     }
 
     @InternalDeprecation("Use dedicated node for attributes manipulation")
@@ -701,20 +686,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     @CompilerDirectives.TruffleBoundary
     private RAbstractContainer copyClassAttr(DynamicObject vecAttributes) {
         return (RAbstractContainer) setClassAttr((RStringVector) DynamicObjectLibrary.getUncached().getOrDefault(vecAttributes, RRuntime.CLASS_ATTR_KEY, null));
-    }
-
-    /*
-     * Internal version without profiles used in a rare (and already slow) case of double-to-int
-     * vector conversion when setting class attribute
-     */
-    private RAttributable copyAttributesFromVector(RAbstractVector vector) {
-        DynamicObject vecAttributes = vector.getAttributes();
-        if (vecAttributes != null) {
-            initAttributes(RAttributesLayout.copy(vecAttributes));
-            return copyClassAttr(vecAttributes);
-        } else {
-            return this;
-        }
     }
 
     @InternalDeprecation("Use dedicated node for attributes manipulation")
@@ -839,35 +810,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return super.getNonShared();
     }
 
-    @Override
-    public RAbstractVector resize(int size) {
-        RAbstractVector materialized = materialize();
-        assert materialized.isMaterialized();
-        return materialized.resize(size, true);
-    }
-
-    private RAbstractVector resize(int size, boolean resetAll) {
-        setComplete(this.complete && getLength() >= size);
-        RStringVector oldNames = UpdateShareableChildValue.update(this, this.getNamesFromAttrs());
-        RAbstractVector res = copyResized(size, true);
-        if (this.isShared()) {
-            assert res.isTemporary();
-            res.incRefCount();
-        }
-        if (resetAll) {
-            res.resetAllAttributes(oldNames == null);
-        } else {
-            res.copyAttributesFromVector(this);
-            res.setDimensionsNoCheck(null);
-            res.setDimNamesNoCheck(null);
-        }
-        if (oldNames != null) {
-            oldNames = CopyResizedWithEmpty.executeSlowPath(oldNames, size);
-            res.putAttribute(RRuntime.NAMES_ATTR_KEY, oldNames);
-        }
-        return res;
-    }
-
     @CompilerDirectives.TruffleBoundary
     public final void resetDimensions(int[] newDimensions) {
         // reset all attributes other than dimensions;
@@ -907,19 +849,18 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         CompilerAsserts.neverPartOfCompilation();
         StringBuilder str = new StringBuilder("[");
         VectorAccess access = slowPathAccess();
-        try (SequentialIterator iter = access.access(this)) {
-            if (access.next(iter)) {
-                while (true) {
-                    str.append(access.getType().isAtomic() ? access.getString(iter) : access.getListElement(iter).toString());
-                    if (!access.next(iter)) {
-                        break;
-                    }
-                    str.append(", ");
-                    if (str.length() > MAX_TOSTRING_LENGTH - 1) {
-                        str.setLength(MAX_TOSTRING_LENGTH - 4);
-                        str.append("...");
-                        break;
-                    }
+        SequentialIterator iter = access.access(this);
+        if (access.next(iter)) {
+            while (true) {
+                str.append(access.getType().isAtomic() ? access.getString(iter) : access.getListElement(iter).toString());
+                if (!access.next(iter)) {
+                    break;
+                }
+                str.append(", ");
+                if (str.length() > MAX_TOSTRING_LENGTH - 1) {
+                    str.setLength(MAX_TOSTRING_LENGTH - 4);
+                    str.append("...");
+                    break;
                 }
             }
         }
@@ -995,10 +936,9 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         assert access.getType().isVector();
         if (!access.getType().isAtomic()) {
             // check non-atomic vectors for nullness
-            try (SequentialIterator iter = access.access(vector)) {
-                while (access.next(iter)) {
-                    assert access.getListElement(iter) != null : "element " + iter.getIndex() + " of vector " + vector + " is null";
-                }
+            SequentialIterator iter = access.access(vector);
+            while (access.next(iter)) {
+                assert access.getListElement(iter) != null : "element " + iter.getIndex() + " of vector " + vector + " is null";
             }
         } else if (access.getType() == RType.List) {
             assert !vector.isComplete();
@@ -1006,10 +946,9 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         if (vector.isComplete() && !vector.isSequence()) {
             // check all vectors for completeness
             access.na.enable(true);
-            try (SequentialIterator iter = access.access(vector)) {
-                while (access.next(iter)) {
-                    assert !access.isNA(iter) : "element " + iter.getIndex() + " of vector " + vector + " is NA";
-                }
+            SequentialIterator iter = access.access(vector);
+            while (access.next(iter)) {
+                assert !access.isNA(iter) : "element " + iter.getIndex() + " of vector " + vector + " is NA";
             }
         }
         return true;

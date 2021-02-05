@@ -257,7 +257,7 @@ def split_j_args(extraVmArgsList):
     extraVmArgs = []
     if extraVmArgsList:
         for e in extraVmArgsList:
-            extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
+            extraVmArgs += shlex.split(e.lstrip('@'))
     return extraVmArgs
 
 def rshell(args):

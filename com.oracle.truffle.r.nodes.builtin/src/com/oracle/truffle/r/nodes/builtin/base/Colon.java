@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -279,14 +279,13 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         protected double doString(RStringVector vector,
                         @Cached("vector.access()") VectorAccess uAccess) {
             checkLength(vector.getLength());
-            try (SequentialIterator sIter = uAccess.access(vector, this)) {
-                while (uAccess.next(sIter)) {
-                    double result = uAccess.getDouble(sIter);
-                    if (RRuntime.isNA(result)) {
-                        throw error(RError.Message.NA_OR_NAN);
-                    }
-                    return result;
+            SequentialIterator sIter = uAccess.access(vector, this);
+            while (uAccess.next(sIter)) {
+                double result = uAccess.getDouble(sIter);
+                if (RRuntime.isNA(result)) {
+                    throw error(RError.Message.NA_OR_NAN);
                 }
+                return result;
             }
             throw RInternalError.shouldNotReachHere();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -893,6 +894,7 @@ public class ConnectionSupport {
         protected abstract void createDelegateConnection() throws IOException;
 
         public void setCompressionType(@SuppressWarnings("unused") RCompression.Type cType) throws IOException {
+            CompilerDirectives.transferToInterpreter();
             throw new IOException("Not yet implemented");
         }
 

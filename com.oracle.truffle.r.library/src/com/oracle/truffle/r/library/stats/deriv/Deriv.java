@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -197,7 +197,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     @TruffleBoundary
-    private DerivResult findDerive(RSyntaxElement elem, RStringVector names, Object functionArg, String tag, boolean hessian) {
+    private static DerivResult findDerive(RSyntaxElement elem, RStringVector names, Object functionArg, String tag, boolean hessian) {
         LinkedList<RSyntaxNode> exprlist = new LinkedList<>();
         int fIndex = findSubexpression(elem, exprlist, tag);
 
@@ -366,7 +366,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
         }
     }
 
-    private int findSubexpression(RSyntaxElement expr, List<RSyntaxNode> exprlist, String tag) {
+    private static int findSubexpression(RSyntaxElement expr, List<RSyntaxNode> exprlist, String tag) {
         RSyntaxVisitor<Integer> vis = new RSyntaxVisitor<Integer>() {
             @Override
             protected Integer visit(RSyntaxCall call) {
@@ -435,7 +435,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
         return isDoubleValue(elem, 1.);
     }
 
-    private int accumulate(RSyntaxElement expr, List<RSyntaxNode> exprlist) {
+    private static int accumulate(RSyntaxElement expr, List<RSyntaxNode> exprlist) {
         for (int k = 0; k < exprlist.size(); k++) {
             if (equal(expr, exprlist.get(k))) {
                 return k + 1;
@@ -446,7 +446,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     // TODO: move to a utility class
-    private boolean equal(RSyntaxElement expr1, RSyntaxElement expr2) {
+    private static boolean equal(RSyntaxElement expr1, RSyntaxElement expr2) {
         if (expr1.getClass() != expr2.getClass()) {
             return false;
         }

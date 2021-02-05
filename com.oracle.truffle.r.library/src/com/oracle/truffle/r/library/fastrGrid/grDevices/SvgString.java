@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
  * current drawing.
  */
 public class SvgString extends RExternalBuiltinNode.Arg0 {
+    @TruffleBoundary
     @Override
     public Object execute() {
         GridContext ctx = GridContext.getContext();

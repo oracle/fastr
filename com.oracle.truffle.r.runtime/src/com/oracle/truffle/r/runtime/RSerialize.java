@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1777,11 +1777,10 @@ public class RSerialize {
                                 // logicals are written as ints
                                 RAbstractVector vector = (RAbstractVector) obj;
                                 VectorAccess access = vector.slowPathAccess();
-                                try (SequentialIterator iter = access.access(vector)) {
-                                    stream.writeInt(access.getLength(iter));
-                                    while (access.next(iter)) {
-                                        stream.writeInt(access.getInt(iter));
-                                    }
+                                SequentialIterator iter = access.access(vector);
+                                stream.writeInt(access.getLength(iter));
+                                while (access.next(iter)) {
+                                    stream.writeInt(access.getInt(iter));
                                 }
                                 break;
                             }
@@ -1789,11 +1788,10 @@ public class RSerialize {
                             case REALSXP: {
                                 RDoubleVector vector = (RDoubleVector) obj;
                                 VectorAccess access = vector.slowPathAccess();
-                                try (SequentialIterator iter = access.access(vector)) {
-                                    stream.writeInt(access.getLength(iter));
-                                    while (access.next(iter)) {
-                                        stream.writeDouble(access.getDouble(iter));
-                                    }
+                                SequentialIterator iter = access.access(vector);
+                                stream.writeInt(access.getLength(iter));
+                                while (access.next(iter)) {
+                                    stream.writeDouble(access.getDouble(iter));
                                 }
                                 break;
                             }
@@ -1801,16 +1799,15 @@ public class RSerialize {
                             case CPLXSXP: {
                                 RComplexVector vector = (RComplexVector) obj;
                                 VectorAccess access = vector.slowPathAccess();
-                                try (SequentialIterator iter = access.access(vector)) {
-                                    stream.writeInt(access.getLength(iter));
-                                    while (access.next(iter)) {
-                                        if (access.isNA(iter)) {
-                                            stream.writeDouble(RRuntime.DOUBLE_NA);
-                                            stream.writeDouble(RRuntime.DOUBLE_NA);
-                                        } else {
-                                            stream.writeDouble(access.getComplexR(iter));
-                                            stream.writeDouble(access.getComplexI(iter));
-                                        }
+                                SequentialIterator iter = access.access(vector);
+                                stream.writeInt(access.getLength(iter));
+                                while (access.next(iter)) {
+                                    if (access.isNA(iter)) {
+                                        stream.writeDouble(RRuntime.DOUBLE_NA);
+                                        stream.writeDouble(RRuntime.DOUBLE_NA);
+                                    } else {
+                                        stream.writeDouble(access.getComplexR(iter));
+                                        stream.writeDouble(access.getComplexI(iter));
                                     }
                                 }
                                 break;
@@ -1820,11 +1817,10 @@ public class RSerialize {
                             case VECSXP: {
                                 RAbstractListBaseVector vector = (RAbstractListBaseVector) obj;
                                 VectorAccess access = vector.slowPathAccess();
-                                try (SequentialIterator iter = access.access(vector)) {
-                                    stream.writeInt(access.getLength(iter));
-                                    while (access.next(iter)) {
-                                        writeItem(access.getListElement(iter));
-                                    }
+                                SequentialIterator iter = access.access(vector);
+                                stream.writeInt(access.getLength(iter));
+                                while (access.next(iter)) {
+                                    writeItem(access.getListElement(iter));
                                 }
                                 break;
                             }
@@ -1832,11 +1828,10 @@ public class RSerialize {
                             case RAWSXP: {
                                 RRawVector vector = (RRawVector) obj;
                                 VectorAccess access = vector.slowPathAccess();
-                                try (SequentialIterator iter = access.access(vector)) {
-                                    stream.writeInt(access.getLength(iter));
-                                    while (access.next(iter)) {
-                                        stream.writeRaw(access.getRaw(iter));
-                                    }
+                                SequentialIterator iter = access.access(vector);
+                                stream.writeInt(access.getLength(iter));
+                                while (access.next(iter)) {
+                                    stream.writeRaw(access.getRaw(iter));
                                 }
                                 break;
                             }

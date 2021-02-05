@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -42,8 +46,6 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(AbstractContainerLibrary.class)
 public abstract class RAbstractContainer extends RSharingAttributeStorage {
@@ -76,8 +78,6 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
     public abstract int getTrueLength();
 
     public abstract void setTrueLength(int l);
-
-    public abstract RAbstractContainer resize(int size);
 
     public abstract boolean hasDimensions();
 
@@ -175,7 +175,7 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     @ExportMessage(name = "createEmptySameType", library = AbstractContainerLibrary.class)
     public RAbstractVector containerLibCreateEmptySameType(int newLength, boolean fillWithNA,
-                    @Cached("createEqualityProfile()") ValueProfile fillWithNAProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile fillWithNAProfile,
                     @Shared("rtypeProfile") @Cached("createIdentityProfile()") ValueProfile typeProfile) {
         assert this instanceof RAbstractVector;
         return typeProfile.profile(getRType()).create(newLength, fillWithNAProfile.profile(fillWithNA));
@@ -218,6 +218,7 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
     public void containerLibToNativeDummyImpl() {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere(this.getClass().getSimpleName());
     }
 }

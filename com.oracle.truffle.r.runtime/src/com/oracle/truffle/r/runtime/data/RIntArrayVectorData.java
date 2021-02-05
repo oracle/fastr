@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
+import java.util.Arrays;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -37,17 +41,11 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import java.util.Arrays;
-
-import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
-
 @ExportLibrary(VectorDataLibrary.class)
-public class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
+public class RIntArrayVectorData implements TruffleObject {
     private final int[] data;
-    private RIntVector owner;
     private boolean complete;
 
     public RIntArrayVectorData(int[] data, boolean complete) {
@@ -55,16 +53,10 @@ public class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
         this.complete = complete && ENABLE_COMPLETE;
     }
 
-    @Override
-    public void setOwner(RAbstractContainer newOwner) {
-        owner = (RIntVector) newOwner;
-        owner.setComplete(complete);
-    }
-
     @SuppressWarnings("static-method")
     @ExportMessage
-    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        na.enable(!isComplete(ownerIsNull));
+    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
+        na.enable(!isComplete());
         return na;
     }
 
@@ -90,17 +82,12 @@ public class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RIntArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
-                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        return new RIntArrayVectorData(Arrays.copyOf(data, data.length), isComplete(ownerIsNull));
+    public RIntArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
+        return new RIntArrayVectorData(Arrays.copyOf(data, data.length), isComplete());
     }
 
     @ExportMessage
-    public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        if (owner != null) {
-            return owner.isComplete() && ENABLE_COMPLETE;
-        }
-        ownerIsNull.enter();
+    public boolean isComplete() {
         return complete && ENABLE_COMPLETE;
     }
 
@@ -119,10 +106,9 @@ public class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public SeqIterator iterator(
                     @Shared("naCheck") @Cached() NACheck naCheck,
-                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(data, data.length);
-        naCheck.enable(!isComplete(ownerIsNull));
+        naCheck.enable(!isComplete());
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -142,17 +128,16 @@ public class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        naCheck.enable(!isComplete(ownerIsNull));
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete());
         return new RandomAccessIterator(data);
     }
 
     @ExportMessage
     public int getIntAt(int index,
-                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull,
                     @Shared("naCheck") @Cached() NACheck naCheck) {
         int value = data[index];
-        naCheck.enable(!isComplete(ownerIsNull));
+        naCheck.enable(!isComplete());
         naCheck.check(value);
         return value;
     }
@@ -184,23 +169,19 @@ public class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public void commitWriteIterator(SeqWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
-        iterator.commit();
+    public void commitWriteIterator(@SuppressWarnings("unused") SeqWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         commitWrites(neverSeenNA, setCompleteProfile);
     }
 
     @ExportMessage
-    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
-        iterator.commit();
+    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") RandomAccessWriteIterator iterator, boolean neverSeenNA,
+                    @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         commitWrites(neverSeenNA, setCompleteProfile);
     }
 
     private void commitWrites(boolean neverSeenNA, @Cached BranchProfile setCompleteProfile) {
         if (!neverSeenNA) {
             setCompleteProfile.enter();
-            if (owner != null) {
-                owner.setComplete(false);
-            }
             complete = false;
         }
     }
@@ -210,9 +191,6 @@ public class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
         data[index] = value;
         if (RRuntime.isNA(value)) {
             setCompleteProfile.enter();
-            if (owner != null) {
-                owner.setComplete(false);
-            }
             complete = false;
         }
     }

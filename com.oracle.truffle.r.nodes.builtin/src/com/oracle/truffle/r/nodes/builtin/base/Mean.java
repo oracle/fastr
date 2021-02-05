@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,20 +50,19 @@ public abstract class Mean extends RBuiltinNode.Arg1 {
     protected double meanDoubleCached(RAbstractVector x,
                     @Cached("x.access()") VectorAccess access,
                     @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
-        try (SequentialIterator iter = access.access(x)) {
-            if (emptyProfile.profile(!access.next(iter))) {
-                return Double.NaN;
-            }
-            double sum = 0;
-            do {
-                double value = access.getDouble(iter);
-                if (access.na.checkNAorNaN(value)) {
-                    return value;
-                }
-                sum += value;
-            } while (access.next(iter));
-            return sum / access.getLength(iter);
+        SequentialIterator iter = access.access(x);
+        if (emptyProfile.profile(!access.next(iter))) {
+            return Double.NaN;
         }
+        double sum = 0;
+        do {
+            double value = access.getDouble(iter);
+            if (access.na.checkNAorNaN(value)) {
+                return value;
+            }
+            sum += value;
+        } while (access.next(iter));
+        return sum / access.getLength(iter);
     }
 
     @Specialization(replaces = "meanDoubleCached", guards = "x.getRType() != Complex")
@@ -76,24 +75,23 @@ public abstract class Mean extends RBuiltinNode.Arg1 {
     protected RComplex meanComplexCached(RAbstractVector x,
                     @Cached("x.access()") VectorAccess access,
                     @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
-        try (SequentialIterator iter = access.access(x)) {
-            if (emptyProfile.profile(!access.next(iter))) {
-                return RComplex.valueOf(Double.NaN, Double.NaN);
-            }
-            double sumR = 0;
-            double sumI = 0;
-            do {
-                double valueR = access.getComplexR(iter);
-                double valueI = access.getComplexI(iter);
-                if (access.na.check(valueR, valueI)) {
-                    return RComplex.valueOf(valueR, valueI);
-                }
-                sumR += valueR;
-                sumI += valueI;
-            } while (access.next(iter));
-            int length = access.getLength(iter);
-            return RComplex.valueOf(sumR / length, sumI / length);
+        SequentialIterator iter = access.access(x);
+        if (emptyProfile.profile(!access.next(iter))) {
+            return RComplex.valueOf(Double.NaN, Double.NaN);
         }
+        double sumR = 0;
+        double sumI = 0;
+        do {
+            double valueR = access.getComplexR(iter);
+            double valueI = access.getComplexI(iter);
+            if (access.na.check(valueR, valueI)) {
+                return RComplex.valueOf(valueR, valueI);
+            }
+            sumR += valueR;
+            sumI += valueI;
+        } while (access.next(iter));
+        int length = access.getLength(iter);
+        return RComplex.valueOf(sumR / length, sumI / length);
     }
 
     @Specialization(replaces = "meanComplexCached", guards = "x.getRType() == Complex")

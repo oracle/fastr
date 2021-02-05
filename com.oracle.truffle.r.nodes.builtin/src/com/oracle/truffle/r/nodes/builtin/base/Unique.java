@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -44,15 +43,16 @@ import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetDouble;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
@@ -109,16 +109,16 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
             }
             return RDataFactory.createStringVector(Arrays.copyOf(data, ind), vecLib.isComplete(vecData));
         } else {
-            ArrayList<String> dataList = new ArrayList<>(vecLength);
+            ArrayList<String> dataList = Utils.createArrayList(vecLength);
             SeqIterator it = vecLib.iterator(vecData);
             while (vecLib.nextLoopCondition(vecData, it)) {
                 String s = vecLib.getNextString(vecData, it);
-                if (!dataList.contains(s)) {
-                    dataList.add(s);
+                if (!Utils.contains(dataList, s)) {
+                    Utils.add(dataList, s);
                 }
             }
             String[] data = new String[dataList.size()];
-            dataList.toArray(data);
+            Utils.toArray(dataList, data);
             return RDataFactory.createStringVector(data, vecLib.isComplete(vecData));
         }
     }
@@ -386,89 +386,111 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected RDoubleVector doUnique(RDoubleVector vec, byte incomparables, byte fromLast, int nmax) {
-        reportWork(vec.getLength());
-        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashSetDouble set = new NonRecursiveHashSetDouble(vec.getLength());
-            double[] data = new double[vec.getLength()];
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector doUnique(RDoubleVector vec, byte incomparables, byte fromLast, int nmax,
+                    @CachedLibrary("vec.getData()") VectorDataLibrary vecDataLib) {
+        Object vecData = vec.getData();
+        int vecLen = vecDataLib.getLength(vecData);
+        boolean isVecComplete = vecDataLib.isComplete(vecData);
+        reportWork(vecLen);
+        if (bigProfile.profile(vecLen * (long) vecLen > BIG_THRESHOLD)) {
+            NonRecursiveHashSetDouble set = new NonRecursiveHashSetDouble(vecLen);
+            double[] data = new double[vecLen];
             int ind = 0;
-            for (int i = 0; i < vec.getLength(); i++) {
-                double val = vec.getDataAt(i);
+            SeqIterator vecIter = vecDataLib.iterator(vecData);
+            while (vecDataLib.nextLoopCondition(vecData, vecIter)) {
+                double val = vecDataLib.getNextDouble(vecData, vecIter);
                 if (!set.add(val)) {
                     data[ind++] = val;
                 }
             }
-            return RDataFactory.createDoubleVector(Arrays.copyOf(data, ind), vec.isComplete());
+            return RDataFactory.createDoubleVector(Arrays.copyOf(data, ind), isVecComplete);
         } else {
-            DoubleArray dataList = new DoubleArray(vec.getLength());
-            for (int i = 0; i < vec.getLength(); i++) {
-                double val = vec.getDataAt(i);
+            DoubleArray dataList = new DoubleArray(vecLen);
+            SeqIterator vecIter = vecDataLib.iterator(vecData);
+            while (vecDataLib.nextLoopCondition(vecData, vecIter)) {
+                double val = vecDataLib.getNextDouble(vecData, vecIter);
                 if (!dataList.contains(val)) {
                     dataList.add(val);
                 }
             }
-            return RDataFactory.createDoubleVector(dataList.toArray(), vec.isComplete());
+            return RDataFactory.createDoubleVector(dataList.toArray(), isVecComplete);
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected RLogicalVector doUnique(RLogicalVector vec, byte incomparables, byte fromLast, int nmax) {
-        reportWork(vec.getLength());
-        ByteArray dataList = new ByteArray(vec.getLength());
-        for (int i = 0; i < vec.getLength(); i++) {
-            byte val = vec.getDataAt(i);
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RLogicalVector doUnique(RLogicalVector vec, byte incomparables, byte fromLast, int nmax,
+                    @CachedLibrary("vec.getData()") VectorDataLibrary vecDataLib) {
+        Object vecData = vec.getData();
+        int vecLen = vecDataLib.getLength(vecData);
+        boolean isVecComplete = vecDataLib.isComplete(vecData);
+        reportWork(vecLen);
+        ByteArray dataList = new ByteArray(vecLen);
+        SeqIterator vecIter = vecDataLib.iterator(vecData);
+        while (vecDataLib.nextLoopCondition(vecData, vecIter)) {
+            byte val = vecDataLib.getNextLogical(vecData, vecIter);
             if (!dataList.contains(val)) {
                 dataList.add(val);
             }
         }
-        return RDataFactory.createLogicalVector(dataList.toArray(), vec.isComplete());
+        return RDataFactory.createLogicalVector(dataList.toArray(), isVecComplete);
     }
 
     @SuppressWarnings("unused")
-    @Specialization
-    protected RComplexVector doUnique(RComplexVector vec, byte incomparables, byte fromLast, int nmax) {
-        reportWork(vec.getLength());
-        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashSet<RComplex> set = new NonRecursiveHashSet<>(vec.getLength());
-            double[] data = new double[vec.getLength() * 2];
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RComplexVector doUnique(RComplexVector vec, byte incomparables, byte fromLast, int nmax,
+                    @CachedLibrary("vec.getData()") VectorDataLibrary vecDataLib) {
+        Object vecData = vec.getData();
+        int vecLength = vecDataLib.getLength(vecData);
+        boolean isVecComplete = vecDataLib.isComplete(vecData);
+        reportWork(vecLength);
+        if (bigProfile.profile(vecLength * (long) vecLength > BIG_THRESHOLD)) {
+            NonRecursiveHashSet<RComplex> set = new NonRecursiveHashSet<>(vecLength);
+            double[] data = new double[vecLength * 2];
+            SeqIterator vecIter = vecDataLib.iterator(vecData);
             int ind = 0;
-            for (int i = 0; i < vec.getLength(); i++) {
-                RComplex val = vec.getDataAt(i);
+            while (vecDataLib.nextLoopCondition(vecData, vecIter)) {
+                RComplex val = vecDataLib.getNextComplex(vecData, vecIter);
                 if (!set.add(val)) {
                     data[ind++] = val.getRealPart();
                     data[ind++] = val.getImaginaryPart();
                 }
             }
-            return RDataFactory.createComplexVector(Arrays.copyOf(data, ind), vec.isComplete());
+            return RDataFactory.createComplexVector(Arrays.copyOf(data, ind), isVecComplete);
         } else {
-            DoubleArrayForComplex dataList = new DoubleArrayForComplex(vec.getLength());
-            for (int i = 0; i < vec.getLength(); i++) {
-                RComplex s = vec.getDataAt(i);
+            DoubleArrayForComplex dataList = new DoubleArrayForComplex(vecLength);
+            SeqIterator vecIter = vecDataLib.iterator(vecData);
+            while (vecDataLib.nextLoopCondition(vecData, vecIter)) {
+                RComplex s = vecDataLib.getNextComplex(vecData, vecIter);
                 if (!dataList.contains(s)) {
                     dataList.add(s);
                 }
             }
-            return RDataFactory.createComplexVector(dataList.toArray(), vec.isComplete());
+            return RDataFactory.createComplexVector(dataList.toArray(), isVecComplete);
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected RRawVector doUnique(RRawVector vec, byte incomparables, byte fromLast, int nmax,
-                    @Cached("createBinaryProfile()") ConditionProfile needsCopyProfile) {
-        reportWork(vec.getLength());
-        BitSet bitset = new BitSet(256);
-        byte[] data = new byte[vec.getLength()];
+                    @Cached("createBinaryProfile()") ConditionProfile needsCopyProfile,
+                    @CachedLibrary("vec.getData()") VectorDataLibrary vecDataLib) {
+        Object vecData = vec.getData();
+        int vecLength = vecDataLib.getLength(vecData);
+        reportWork(vecLength);
+        boolean[] bitset = new boolean[Byte.MAX_VALUE - Byte.MIN_VALUE + 1];
+        byte[] data = new byte[vecLength];
         int ind = 0;
-        for (int i = 0; i < vec.getLength(); i++) {
-            byte val = vec.getRawDataAt(i);
-            if (!bitset.get(val)) {
-                bitset.set(val);
+        SeqIterator vecIter = vecDataLib.iterator(vecData);
+        while (vecDataLib.nextLoopCondition(vecData, vecIter)) {
+            byte val = vecDataLib.getNextRaw(vecData, vecIter);
+            int idx = val - Byte.MIN_VALUE;
+            if (!bitset[idx]) {
+                bitset[idx] = true;
                 data[ind++] = val;
             }
         }
-        return RDataFactory.createRawVector(needsCopyProfile.profile(ind == vec.getLength()) ? data : Arrays.copyOf(data, ind));
+        return RDataFactory.createRawVector(needsCopyProfile.profile(ind == vecLength) ? data : Arrays.copyOf(data, ind));
     }
 }

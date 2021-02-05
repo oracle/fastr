@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
@@ -64,7 +64,7 @@ public abstract class UpdateStorageMode extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object updateNull(@SuppressWarnings("unused") RNull x, String value,
-                    @Cached("createEqualityProfile()") ValueProfile valueProfile) {
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile valueProfile) {
         RType mode = typeFromMode.execute(valueProfile.profile(value));
         checkMode(mode);
         return mode.create(0, false);

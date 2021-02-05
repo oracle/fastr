@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,14 +40,9 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedReplaceVectorNodeFactory.ValueProfileNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
-import com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -61,11 +56,16 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
+import com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 final class CachedReplaceVectorNode extends CachedVectorNode {
 
@@ -126,6 +126,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             } else {
                 this.castType = vectorType;
             }
+        } else if (valueType == RType.PairList) {
+            this.castType = vectorType;
         } else if (valueType.isVector()) {
             if (vectorType.isAtomic() && valueType.isAtomic() && (vectorType == RType.Raw ^ valueType == RType.Raw)) {
                 // mixing with raw with other atomic types is not allowed
@@ -460,6 +462,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         @CompilationFinal private int previousResultLength = PREVIOUS_RESULT_UNINITIALIZED;
 
         @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+        @Child private VectorDataLibrary namesDataLib;
 
         public RAbstractVector deleteElements(RAbstractVector vector, int vectorLength) {
             // we can speculate here that we delete always the same number of elements
@@ -480,6 +483,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             String[] newNames = null;
             if (hasNames) {
                 newNames = new String[resultLength];
+                if (namesDataLib == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    namesDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize()));
+                }
             }
 
             // initialized to -1 to trigger misspeculation for cachedLength == 0; for example:
@@ -492,7 +499,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                     if (element != DELETE_MARKER) {
                         data[resultIndex] = element;
                         if (hasNames) {
-                            newNames[resultIndex] = names.getDataAt(i);
+                            assert namesDataLib != null;
+                            newNames[resultIndex] = namesDataLib.getStringAt(names.getData(), i);
                         }
                         resultIndex++;
                         if (isPreviousResultSpecialized() && resultIndex >= resultLength) {
@@ -513,7 +521,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
             RStringVector newNamesVector = null;
             if (hasNames) {
-                newNamesVector = RDataFactory.createStringVector(newNames, names.isComplete());
+                assert namesDataLib != null;
+                newNamesVector = RDataFactory.createStringVector(newNames, namesDataLib.isComplete(names.getData()));
             }
             RList result = RDataFactory.createList(data, newNamesVector);
             copyAttributes(vector, result);

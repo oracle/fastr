@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.instrumentation.InstrumentableNode.WrapperNode;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeUtil;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -310,7 +311,12 @@ public final class RASTUtils {
         if (fun.isBuiltin()) {
             return RNull.instance;
         }
-        FunctionDefinitionNode fdNode = (FunctionDefinitionNode) fun.getTarget().getRootNode();
+        RootNode root = fun.getRootNode();
+        assert root == null || root instanceof FunctionDefinitionNode;
+        if (!(root instanceof FunctionDefinitionNode)) {
+            return RNull.instance;
+        }
+        FunctionDefinitionNode fdNode = (FunctionDefinitionNode) root;
         FormalArguments formalArgs = fdNode.getFormalArguments();
         Object succ = RNull.instance;
         for (int i = formalArgs.getSignature().getLength() - 1; i >= 0; i--) {
@@ -325,7 +331,7 @@ public final class RASTUtils {
     @TruffleBoundary
     public static void modifyFunction(RFunction fun, Object newBody, Object newFormals, MaterializedFrame newEnv) {
         RootCallTarget target = fun.getTarget();
-        FunctionDefinitionNode root = (FunctionDefinitionNode) target.getRootNode();
+        FunctionDefinitionNode root = target != null ? (FunctionDefinitionNode) target.getRootNode() : null;
 
         SaveArgumentsNode saveArguments;
         FormalArguments formals;
@@ -377,16 +383,17 @@ public final class RASTUtils {
             access.setFormals(formals);
         }
 
-        RSyntaxNode bodyNode = root.getBody();
+        RSyntaxNode bodyNode = root != null ? root.getBody() : null;
         if (newBody != null) {
             bodyNode = RASTUtils.createSyntaxNodeForRValue(newBody);
         }
 
+        String name = root != null ? root.getName() : "<unknown-from-SET_BODY>";
         FrameDescriptor descriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<SET_BODY/SET_FORMALS/SET_CLOENV>", descriptor);
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, newEnv);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, bodyNode, formals,
-                        root.getName(), null);
+                        name, null);
         RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
         fun.reassignTarget(callTarget);
         fun.reassignEnclosingFrame(newEnv);

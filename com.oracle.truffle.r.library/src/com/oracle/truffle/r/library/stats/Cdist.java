@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,9 +74,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
         double[] ans = new double[n];
 
-        try (RandomIterator xIter = xAccess.randomAccess(x)) {
-            rdistance(xAccess, xIter, nr, nc, ans, false, methodObj, p);
-        }
+        RandomIterator xIter = xAccess.randomAccess(x);
+        rdistance(xAccess, xIter, nr, nc, ans, false, methodObj, p);
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
 
         RStringVector names = (RStringVector) getNamesAttrNode.execute(list);

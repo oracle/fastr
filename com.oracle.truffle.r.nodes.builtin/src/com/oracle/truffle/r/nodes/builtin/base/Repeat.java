@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -259,14 +259,17 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
             // Note: the complete flag will be updated in the commitRandomAccessWriteIterator
             RAbstractVector r = x.createEmptySameType(xLen * each, true);
             Object rData = r.getData();
-            try (RandomAccessWriteIterator rIt = eachResultDataLib.randomAccessWriteIterator(rData)) {
+            RandomAccessWriteIterator rIt = eachResultDataLib.randomAccessWriteIterator(rData);
+            boolean neverSeenNA = false;
+            try {
                 RandomAccessIterator xIt = xDataLib.randomAccessIterator(xData);
                 for (int i = 0; i < xLen; i++) {
                     for (int j = i * each; j < (i + 1) * each; j++) {
                         eachResultDataLib.transfer(rData, rIt, j, xDataLib, xIt, xData, i);
                     }
                 }
-                boolean neverSeenNA = xDataLib.isComplete(xData) || xDataLib.getNACheck(xData).neverSeenNA();
+                neverSeenNA = xDataLib.isComplete(xData) || xDataLib.getNACheck(xData).neverSeenNA();
+            } finally {
                 eachResultDataLib.commitRandomAccessWriteIterator(rData, rIt, neverSeenNA);
             }
             return r;
@@ -322,7 +325,9 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
                 RAbstractVector r = x.createEmptySameType(resultLength, true);
                 Object rData = r.getData();
                 VectorDataLibrary rDataLib = getResultDataLib();
-                try (RandomAccessWriteIterator rIt = rDataLib.randomAccessWriteIterator(rData)) {
+                RandomAccessWriteIterator rIt = rDataLib.randomAccessWriteIterator(rData);
+                boolean neverSeenNA = false;
+                try {
                     RandomAccessIterator xIt = xDataLib.randomAccessIterator(xData);
                     int xLen = xDataLib.getLength(xData);
                     int wp = 0; // write pointer
@@ -331,7 +336,8 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
                             rDataLib.transfer(rData, rIt, wp, xDataLib, xIt, xData, i);
                         }
                     }
-                    boolean neverSeenNA = xDataLib.isComplete(xData) || xDataLib.getNACheck(xData).neverSeenNA();
+                    neverSeenNA = xDataLib.isComplete(xData) || xDataLib.getNACheck(xData).neverSeenNA();
+                } finally {
                     rDataLib.commitRandomAccessWriteIterator(rData, rIt, neverSeenNA);
                 }
                 return r;

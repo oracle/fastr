@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,8 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
     @TruffleBoundary
     protected Object rm(RStringVector list, REnvironment envir, boolean inherits,
                     @Cached("createSlowPath(list)") VectorAccess listAccess) {
-        try (SequentialIterator listIter = listAccess.access(list)) {
+        try {
+            SequentialIterator listIter = listAccess.access(list);
             while (listAccess.next(listIter)) {
                 String key = listAccess.getString(listIter);
                 if (!removeFromEnv(envir, key, inherits)) {

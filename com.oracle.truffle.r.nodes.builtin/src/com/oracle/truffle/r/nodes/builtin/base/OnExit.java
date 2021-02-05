@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,13 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -67,7 +69,8 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object onExit(VirtualFrame frame, RPromise expr, boolean add) {
+    protected Object onExit(VirtualFrame frame, RPromise expr, boolean add,
+                    @Cached BranchProfile appendToEndProfile) {
 
         if (onExitSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -101,7 +104,7 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
                     list.setCar(RNull.instance);
                 }
             }
-            list.appendToEnd(RDataFactory.createPairList(expr.getRep()));
+            list.appendToEnd(RDataFactory.createPairList(expr.getRep()), appendToEndProfile);
         }
         return RNull.instance;
     }

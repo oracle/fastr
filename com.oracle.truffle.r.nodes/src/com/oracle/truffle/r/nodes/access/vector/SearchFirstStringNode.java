@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,11 +31,13 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.SearchFirstStringNode.CompareStringNode.StringEqualsNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashMapCharacter;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -60,6 +62,8 @@ final class SearchFirstStringNode extends Node {
     private final BranchProfile everFoundDuplicate = BranchProfile.create();
     private final BranchProfile seenInvalid = BranchProfile.create();
 
+    @Child private VectorDataLibrary elementsDataLib;
+
     /** Instead of using the notFoundStartIndex we use NA. */
     private final boolean useNAForNotFound;
     private final boolean exactMatch;
@@ -83,6 +87,11 @@ final class SearchFirstStringNode extends Node {
 
         targetNACheck.enable(target);
         elementsNACheck.enable(elements);
+
+        if (elementsDataLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            elementsDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericDataLibraryCacheSize()));
+        }
 
         if (cachedIndices == UNINTIALIZED_CACHED_INDICES) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -195,7 +204,7 @@ final class SearchFirstStringNode extends Node {
         }
         int notFoundIndex = notFoundStartIndex;
         for (int i = 0; i < elementsLength; i++) {
-            String element = elements.getDataAt(i);
+            String element = elementsDataLib.getStringAt(elements.getData(), i);
             boolean isElementNA = elementsNACheck.check(element) || element.length() == 0;
             if (!isElementNA) {
                 int index;
@@ -235,7 +244,7 @@ final class SearchFirstStringNode extends Node {
                 indices[i] = nextIndex;
             }
         }
-        return RDataFactory.createIntVector(indices, resultComplete && elements.isComplete(), names);
+        return RDataFactory.createIntVector(indices, resultComplete && elementsDataLib.isComplete(elements.getData()), names);
     }
 
     private int findNonExactIndex(RStringVector target, int targetLength, String element) {
@@ -287,7 +296,7 @@ final class SearchFirstStringNode extends Node {
 
         int elementHash = element.hashCode();
         for (int j = 0; j < currentIndex; j++) {
-            String otherElement = elements.getDataAt(j);
+            String otherElement = elementsDataLib.getStringAt(elements.getData(), j);
             if (!targetNACheck.check(otherElement) && equalsDuplicate.executeCompare(element, elementHash, otherElement)) {
                 everFoundDuplicate.enter();
                 return j;

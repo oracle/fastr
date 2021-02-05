@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.Utils.toLowerCase;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -42,11 +43,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Collections.ArrayListObj;
@@ -58,11 +59,13 @@ import com.oracle.truffle.r.runtime.RegExp;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
@@ -377,14 +380,14 @@ public class GrepFunctions {
                         @SuppressWarnings("unused") boolean perl,
                         @SuppressWarnings("unused") boolean fixed, @SuppressWarnings("unused") boolean useBytes, boolean invert) {
 
-            String pattern = ignoreCase ? patternPar.toLowerCase() : patternPar;
+            String pattern = ignoreCase ? toLowerCase(patternPar) : patternPar;
 
             int[] matchIndices = new int[vector.getLength()];
             int matches = 0;
             for (int i = 0; i < vector.getLength(); i++) {
                 String s = vector.getDataAt(i);
                 if (ignoreCase) {
-                    s = s.toLowerCase();
+                    s = toLowerCase(s);
                 }
 
                 if (s.contains(pattern) == !invert) {
@@ -443,7 +446,7 @@ public class GrepFunctions {
         private static final String APPEND_MISSING_NL_PATTERN = "([^\n])$";
         private static final String APPEND_MISSING_NL_REPLACEMENT = "\\1\n";
 
-        protected RStringVector doSub(String patternArg, String replacementArg, RStringVector vector, boolean ignoreCase, boolean perlPar,
+        protected RStringVector doSub(String patternArg, String replacementArg, RStringVector vector, VectorDataLibrary vectorDataLib, boolean ignoreCase, boolean perlPar,
                         boolean fixedPar, @SuppressWarnings("unused") boolean useBytes, boolean gsub) {
             try {
 
@@ -453,7 +456,7 @@ public class GrepFunctions {
                 // The original (wrong) behavior appended a new line even if the source was
                 // terminated by a new line.
                 if (APPEND_MISSING_NL_PATTERN.equals(patternArg) && APPEND_MISSING_NL_REPLACEMENT.equals(replacementArg)) {
-                    return appendMissingNewLine(vector);
+                    return appendMissingNewLine(vector, vectorDataLib);
                 }
 
                 boolean perl = perlPar;
@@ -464,7 +467,7 @@ public class GrepFunctions {
                 String pattern = patternArg;
                 String replacement = replacementArg;
 
-                int len = vector.getLength();
+                int len = vectorDataLib.getLength(vector.getData());
                 if (RRuntime.isNA(pattern)) {
                     return allStringNAResult(len);
                 }
@@ -490,7 +493,7 @@ public class GrepFunctions {
                 String preparedReplacement = null;
                 String[] result = new String[len];
                 for (int i = 0; i < len; i++) {
-                    String input = vector.getDataAt(i);
+                    String input = vectorDataLib.getStringAt(vector.getData(), i);
                     if (RRuntime.isNA(input)) {
                         result[i] = input;
                         continue;
@@ -585,7 +588,8 @@ public class GrepFunctions {
                     }
                     result[i] = value;
                 }
-                RStringVector ret = RDataFactory.createStringVector(result, vector.isComplete());
+                boolean isVectorComplete = vectorDataLib.isComplete(vector.getData());
+                RStringVector ret = RDataFactory.createStringVector(result, isVectorComplete);
                 ret.copyAttributesFrom(vector);
                 return ret;
             } catch (PatternSyntaxException e) {
@@ -593,25 +597,27 @@ public class GrepFunctions {
             }
         }
 
-        private static RStringVector appendMissingNewLine(RStringVector vector) {
+        private static RStringVector appendMissingNewLine(RStringVector vector, VectorDataLibrary vectorDataLib) {
             String[] newElems = null;
-            for (int i = 0; i < vector.getLength(); i++) {
-                String elem = vector.getDataAt(i);
+            Object vectorData = vector.getData();
+            int vecLength = vectorDataLib.getLength(vectorData);
+            for (int i = 0; i < vecLength; i++) {
+                String elem = vectorDataLib.getStringAt(vectorData, i);
                 if (!RRuntime.isNA(elem) && elem.charAt(elem.length() - 1) != '\n') {
                     if (newElems == null) {
-                        newElems = new String[vector.getLength()];
+                        newElems = new String[vecLength];
                         for (int j = 0; j < i; j++) {
-                            newElems[j] = vector.getDataAt(j);
+                            newElems[j] = vectorDataLib.getStringAt(vectorData, j);
                         }
                     }
 
-                    newElems[i] = vector.getDataAt(i) + "\n";
+                    newElems[i] = vectorDataLib.getStringAt(vectorData, i) + "\n";
                 } else if (newElems != null) {
                     newElems[i] = elem;
                 }
             }
 
-            return newElems == null ? vector : RDataFactory.createStringVector(newElems, vector.isComplete());
+            return newElems == null ? vector : RDataFactory.createStringVector(newElems, vectorDataLib.isComplete(vectorData));
         }
 
         private static final int SIMPLE_PATTERN_MAX_LENGTH = 5;
@@ -705,7 +711,7 @@ public class GrepFunctions {
                         int endIndex = (fromByteMapping != null) ? fromByteMapping[ovector[2 * k + 1]] : ovector[2 * k + 1];
                         for (int i = startIndex; i < endIndex; i++) {
                             char c = input.charAt(i);
-                            sb.append(upper ? Character.toUpperCase(c) : (lower ? Character.toLowerCase(c) : c));
+                            sb.append(upper ? Character.toUpperCase(c) : (lower ? toLowerCase(c) : c));
                         }
                     } else if (p1 == 'U') {
                         upper = true;
@@ -770,12 +776,13 @@ public class GrepFunctions {
             castUseBytes(casts);
         }
 
-        @Specialization
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         @TruffleBoundary
         protected RStringVector subRegexp(String patternArgVec, String replacementVec, RStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical,
                         boolean useBytes,
+                        @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
                         @Cached("createSubCommon()") SubCommonCodeNode common) {
-            return common.doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, false);
+            return common.doSub(patternArgVec, replacementVec, x, xDataLib, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, false);
         }
     }
 
@@ -794,12 +801,13 @@ public class GrepFunctions {
             castUseBytes(casts);
         }
 
-        @Specialization
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
         @TruffleBoundary
         protected RStringVector gsub(String patternArgVec, String replacementVec, RStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical,
                         boolean useBytes,
+                        @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
                         @Cached("createSubCommon()") SubCommonCodeNode common) {
-            return common.doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
+            return common.doSub(patternArgVec, replacementVec, x, xDataLib, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
         }
     }
 
@@ -971,7 +979,7 @@ public class GrepFunctions {
                 int index = 0;
                 while (true) {
                     if (ignoreCase) {
-                        index = text.toLowerCase().indexOf(pattern.toLowerCase(), index);
+                        index = toLowerCase(text).indexOf(toLowerCase(pattern), index);
                     } else {
                         index = text.indexOf(pattern, index);
                     }
@@ -1032,7 +1040,7 @@ public class GrepFunctions {
                 Matcher m = getPatternMatcher(pattern, text, ignoreCase);
                 while (m.find()) {
                     // R starts counting at index 1
-                    list.add(new Info(m.start() + 1, m.end() - m.start(), null, null, null));
+                    list.add(new Info(Regexec.start(m) + 1, Regexec.end(m) - Regexec.start(m), null, null, null));
                 }
             }
             if (list.size() > 0) {
@@ -1149,7 +1157,7 @@ public class GrepFunctions {
             if (fixed) {
                 int index;
                 if (ignoreCase) {
-                    index = text.toLowerCase().indexOf(pattern.toLowerCase());
+                    index = toLowerCase(text).indexOf(toLowerCase(pattern));
                 } else {
                     index = text.indexOf(pattern);
                 }
@@ -1161,7 +1169,7 @@ public class GrepFunctions {
                 if (find(m)) {
                     result = new Info[m.groupCount() + 1];
                     for (int i = 0; i <= m.groupCount(); i++) {
-                        result[i] = new Info(m.start(i) + 1, m.end(i) - m.start(i), null, null, null);
+                        result[i] = new Info(start(m, i) + 1, end(m, i) - start(m, i), null, null, null);
                     }
                 }
             }
@@ -1174,6 +1182,26 @@ public class GrepFunctions {
         @TruffleBoundary
         private static boolean find(Matcher m) {
             return m.find();
+        }
+
+        @TruffleBoundary
+        private static int start(Matcher m, int i) {
+            return m.start(i);
+        }
+
+        @TruffleBoundary
+        private static int end(Matcher m, int i) {
+            return m.end(i);
+        }
+
+        @TruffleBoundary
+        private static int start(Matcher m) {
+            return m.start();
+        }
+
+        @TruffleBoundary
+        private static int end(Matcher m) {
+            return m.end();
         }
 
         @TruffleBoundary
@@ -1372,7 +1400,7 @@ public class GrepFunctions {
                 int ld;
                 if (ignoreCase) {
                     // reliable only with fixed=true
-                    ld = ld(pattern.toLowerCase(), vector.getDataAt(i).toLowerCase());
+                    ld = ld(toLowerCase(pattern), toLowerCase(vector.getDataAt(i)));
                 } else {
                     ld = ld(pattern, vector.getDataAt(i));
                 }
@@ -1628,7 +1656,7 @@ public class GrepFunctions {
             assert !RRuntime.isNA(input);
             String[] result = new String[input.length()];
             for (int i = 0; i < input.length(); i++) {
-                result[i] = new String(new char[]{input.charAt(i)});
+                result[i] = String.valueOf(input.charAt(i));
             }
             return RDataFactory.createStringVector(result, true);
         }

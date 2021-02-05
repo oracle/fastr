@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -187,7 +187,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
                         FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
                     } else if (isRNull(element)) {
                         result.setDataAt(resultStore, i, element);
-                    } else if (classes.equals("ANY") || inheritsNode.execute(element, RDataFactory.createStringVector(classes), false).equals(RRuntime.LOGICAL_TRUE)) {
+                    } else if (classes.equals("ANY") || Byte.valueOf(RRuntime.LOGICAL_TRUE).equals(inheritsNode.execute(element, RDataFactory.createStringVector(classes), false))) {
                         result.setDataAt(resultStore, i, callNode.execute(frame, f));
                     } else {
                         result.setDataAt(resultStore, i, element);
@@ -231,7 +231,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
                         FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
                     } else if (isRNull(element)) {
                         result[i] = RDataFactory.createList();
-                    } else if (classes.equals("ANY") || inheritsNode.execute(element, RDataFactory.createStringVector(classes), false).equals(RRuntime.LOGICAL_TRUE)) {
+                    } else if (classes.equals("ANY") || Byte.valueOf(RRuntime.LOGICAL_TRUE).equals(inheritsNode.execute(element, RDataFactory.createStringVector(classes), false))) {
                         result[i] = callNode.execute(frame, f);
                     } else {
                         result[i] = deflt;

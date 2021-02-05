@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,10 +97,9 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     private RIntVector createResultVector(RAbstractVector operand, VectorAccess uAccess) {
         int[] idata = new int[operand.getLength()];
-        try (SequentialIterator sIter = uAccess.access(operand, getWarningContext())) {
-            while (uAccess.next(sIter)) {
-                idata[sIter.getIndex()] = uAccess.getInt(sIter);
-            }
+        SequentialIterator sIter = uAccess.access(operand, getWarningContext());
+        while (uAccess.next(sIter)) {
+            idata[sIter.getIndex()] = uAccess.getInt(sIter);
         }
         return vectorCopy(operand, idata, uAccess.na.neverSeenNAOrNaN());
     }
@@ -130,34 +129,33 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         int length = list.getLength();
         int[] result = new int[length];
         boolean seenNA = false;
-        try (SequentialIterator sIter = uAccess.access(list, getWarningContext())) {
-            while (uAccess.next(sIter)) {
-                int i = sIter.getIndex();
-                Object entry = uAccess.getListElement(sIter);
-                if (entry instanceof RList) {
-                    result[i] = RRuntime.INT_NA;
-                    seenNA = true;
-                } else {
-                    Object castEntry = castIntegerRecursive(entry);
-                    if (castEntry instanceof Integer) {
-                        int value = (Integer) castEntry;
+        SequentialIterator sIter = uAccess.access(list, getWarningContext());
+        while (uAccess.next(sIter)) {
+            int i = sIter.getIndex();
+            Object entry = uAccess.getListElement(sIter);
+            if (entry instanceof RList) {
+                result[i] = RRuntime.INT_NA;
+                seenNA = true;
+            } else {
+                Object castEntry = castIntegerRecursive(entry);
+                if (castEntry instanceof Integer) {
+                    int value = (Integer) castEntry;
+                    result[i] = value;
+                    seenNA = seenNA || RRuntime.isNA(value);
+                } else if (castEntry instanceof RIntVector) {
+                    RIntVector intVector = (RIntVector) castEntry;
+                    if (intVector.getLength() == 1) {
+                        int value = intVector.getDataAt(0);
                         result[i] = value;
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (castEntry instanceof RIntVector) {
-                        RIntVector intVector = (RIntVector) castEntry;
-                        if (intVector.getLength() == 1) {
-                            int value = intVector.getDataAt(0);
-                            result[i] = value;
-                            seenNA = seenNA || RRuntime.isNA(value);
-                        } else if (intVector.getLength() == 0) {
-                            result[i] = RRuntime.INT_NA;
-                            seenNA = true;
-                        } else {
-                            throw throwCannotCoerceListError("integer");
-                        }
+                    } else if (intVector.getLength() == 0) {
+                        result[i] = RRuntime.INT_NA;
+                        seenNA = true;
                     } else {
                         throw throwCannotCoerceListError("integer");
                     }
+                } else {
+                    throw throwCannotCoerceListError("integer");
                 }
             }
         }

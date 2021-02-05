@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
@@ -43,22 +43,27 @@ public abstract class CopyResizedToPreallocated extends RBaseNode {
     @Specialization(guards = "!fillWithNA", limit = "getCacheSize(1)")
     public void recycle(VectorDataLibrary dataLib, Object data, Object resultData, @SuppressWarnings("unused") boolean fillWithNA,
                     @CachedLibrary("resultData") VectorDataLibrary resultDataLib) {
-        try (SeqWriteIterator rIt = resultDataLib.writeIterator(resultData)) {
+        SeqWriteIterator rIt = resultDataLib.writeIterator(resultData);
+        boolean neverSeenNA = false;
+        try {
             SeqIterator xIt = dataLib.iterator(data);
             while (resultDataLib.nextLoopCondition(resultData, rIt)) {
                 dataLib.nextWithWrap(data, xIt);
                 resultDataLib.transferNext(resultData, rIt, dataLib, xIt, data);
             }
-            boolean neverSeenNA = dataLib.isComplete(data) || dataLib.getNACheck(data).neverSeenNA();
+            neverSeenNA = dataLib.isComplete(data) || dataLib.getNACheck(data).neverSeenNA();
+        } finally {
             resultDataLib.commitWriteIterator(resultData, rIt, neverSeenNA);
         }
     }
 
     @Specialization(guards = "fillWithNA", limit = "getCacheSize(1)")
     public void fillWithNAValues(VectorDataLibrary dataLib, Object data, Object resultData, @SuppressWarnings("unused") boolean fillWithNA,
-                    @Cached("createEqualityProfile()") ValueProfile writtenNAProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile writtenNAProfile,
                     @CachedLibrary("resultData") VectorDataLibrary resultDataLib) {
-        try (SeqWriteIterator rIt = resultDataLib.writeIterator(resultData)) {
+        SeqWriteIterator rIt = resultDataLib.writeIterator(resultData);
+        boolean neverSeenNA = false;
+        try {
             boolean writtenNA = false;
             SeqIterator xIt = dataLib.iterator(data);
             while (dataLib.nextLoopCondition(data, xIt)) {
@@ -69,7 +74,8 @@ public abstract class CopyResizedToPreallocated extends RBaseNode {
                 resultDataLib.setNextNA(resultData, rIt);
                 writtenNA = true;
             }
-            boolean neverSeenNA = !writtenNAProfile.profile(writtenNA) && (dataLib.isComplete(data) || dataLib.getNACheck(data).neverSeenNA());
+            neverSeenNA = !writtenNAProfile.profile(writtenNA) && (dataLib.isComplete(data) || dataLib.getNACheck(data).neverSeenNA());
+        } finally {
             resultDataLib.commitWriteIterator(resultData, rIt, neverSeenNA);
         }
     }

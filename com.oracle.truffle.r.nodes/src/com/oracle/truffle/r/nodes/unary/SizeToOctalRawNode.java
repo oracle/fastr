@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000-2013, The R Core Team
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,12 +58,11 @@ public abstract class SizeToOctalRawNode extends UnaryNode {
 
     private RRawVector toOctal(long size) {
         RRawVector ans = factory.createRawVector(11);
-        try (RandomIterator iter = resultAccess.randomAccess(ans)) {
-            long s = size;
-            for (int i = 0; i < 11; i++) {
-                resultAccess.setRaw(iter, 10 - i, (byte) (48.0 + (s % 8)));
-                s /= 8;
-            }
+        RandomIterator iter = resultAccess.randomAccess(ans);
+        long s = size;
+        for (int i = 0; i < 11; i++) {
+            resultAccess.setRaw(iter, 10 - i, (byte) (48.0 + (s % 8)));
+            s /= 8;
         }
         return ans;
     }

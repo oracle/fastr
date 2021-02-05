@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -484,17 +484,18 @@ public class FastRInterop {
                             notLogicalNA()).map(Predef.toBoolean());
         }
 
-        @SuppressWarnings("unused")
         @Specialization(guards = {"isClass(className)", "className.equals(cachedClazz)"}, limit = "getCacheSize(10)")
-        public TruffleObject javaClassCached(String className, boolean silent,
-                        @Cached("className") String cachedClazz,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+        @TruffleBoundary
+        public TruffleObject javaClassCached(String className, @SuppressWarnings("unused") boolean silent,
+                        @SuppressWarnings("unused") @Cached("className") String cachedClazz,
+                        @SuppressWarnings("unused") @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
                         @Cached("getJavaClass(ctxRef.get(), className, silent)") Object result,
                         @Cached("create()") BranchProfile interopExceptionProfile) {
             return javaClassToTruffleObject(className, result, interopExceptionProfile);
         }
 
         @Specialization(replaces = "javaClassCached")
+        @TruffleBoundary
         public TruffleObject javaClass(String className, boolean silent,
                         @Cached("create()") BranchProfile interopExceptionProfile,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
@@ -510,7 +511,6 @@ public class FastRInterop {
             return classForName(context, clazz, silent);
         }
 
-        @TruffleBoundary
         protected TruffleObject javaClassToTruffleObject(String clazz, Object result, BranchProfile interopExceptionProfile) {
             if (result == RNull.instance) {
                 return RNull.instance;
@@ -1174,6 +1174,7 @@ public class FastRInterop {
     }
 
     private static Object classForName(RContext context, String className, boolean silent) {
+        CompilerAsserts.neverPartOfCompilation();
         Env env = context.getEnv();
         if (env != null && env.isHostLookupAllowed()) {
             try {
@@ -1187,7 +1188,12 @@ public class FastRInterop {
             throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC,
                             "Java Interop is not available, please run FastR with --jvm, e.g. '$bin/R --jvm CMD INSTALL' or '$bin/Rscript --jvm myscript.R'");
         }
-        return silent ? RNull.instance : new ClassNotFoundException(className + " not found");
+        return silent ? RNull.instance : createClassNotFoundException(className);
+    }
+
+    @TruffleBoundary
+    private static ClassNotFoundException createClassNotFoundException(String className) {
+        return new ClassNotFoundException(className + " not found");
     }
 
     @TruffleBoundary

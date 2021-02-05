@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,27 @@ assertTrue <- function(value) {
 ignore <- function(...) {}
 
 library(testrffi)
+
+
+# ---------------------------------------------------------------------------------------
+# Rf_allocSExp
+
+assertTrue(is.environment(api.Rf_allocSExp(4))) # ENVSXP
+assertTrue(is.pairlist(api.Rf_allocSExp(2))) # LISTSXP
+assertTrue(is.function(api.Rf_allocSExp(3))) # CLOSXP
+assertTrue(is.language(api.Rf_allocSExp(6))) # LANGSXP
+
+# combined with SET_BODY, SET_FORMALS, SET_CLOENV
+q <- 42
+f2 <- function(a,b=2) a+b+q
+
+f <- api.Rf_allocSExp(3)
+# assertEquals("closure", typeof(f))
+api.SET_BODY(f, api.BODY(f2))
+api.SET_FORMALS(f, api.FORMALS(f2))
+api.SET_CLOENV(f, api.CLOENV(f2))
+assertEquals(42, f(-2))
+
 
 # ---------------------------------------------------------------------------------------
 # SET_ATTRIB

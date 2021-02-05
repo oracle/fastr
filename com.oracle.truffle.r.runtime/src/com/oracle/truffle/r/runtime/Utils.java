@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,9 +31,13 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CallTarget;
@@ -64,6 +68,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -74,6 +79,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
+import org.graalvm.collections.EconomicMap;
+
 public final class Utils {
 
     public static boolean isIsoLatinDigit(char c) {
@@ -82,6 +89,16 @@ public final class Utils {
 
     public static boolean isRomanLetter(char c) {
         return (/* lower case */c >= '\u00DF' && c <= '\u00FF') || (/* upper case */c >= '\u00C0' && c <= '\u00DE');
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static String toLowerCase(String s) {
+        return s.toLowerCase(Locale.ROOT);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static char toLowerCase(char c) {
+        return Character.toLowerCase(c);
     }
 
     /**
@@ -169,6 +186,106 @@ public final class Utils {
         // CheckStyle: stop system..print check
         System.err.println("FastR warning: " + msg);
         // CheckStyle: resume system..print check
+    }
+
+    @TruffleBoundary
+    public static String stringValueOf(Object value) {
+        return String.valueOf(value);
+    }
+
+    @TruffleBoundary
+    public static int hashCode(Object obj) {
+        return Objects.hashCode(obj);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static <T> ArrayList<T> createArrayList(int capacity) {
+        return new ArrayList<>(capacity);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static <T> boolean add(ArrayList<T> list, T obj) {
+        return list.add(obj);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static <T> boolean contains(ArrayList<T> list, T obj) {
+        return list.contains(obj);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static <T> T[] toArray(ArrayList<T> list, T[] arr) {
+        return list.toArray(arr);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static byte byteValue(Number value) {
+        return value.byteValue();
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static int intValue(Number num) {
+        return num.intValue();
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static double doubleValue(Number num) {
+        return num.doubleValue();
+    }
+
+    @TruffleBoundary
+    public static <K, T> void put(EconomicMap<K, T> map, K k, T t) {
+        map.put(k, t);
+    }
+
+    @TruffleBoundary
+    public static <K, T> T get(EconomicMap<K, T> map, K k) {
+        return map.get(k);
+    }
+
+    @TruffleBoundary
+    public static AtomicInteger get(EconomicMap<RBaseObject, AtomicInteger> preserveList, RBaseObject x) {
+        return preserveList.get(x);
+    }
+
+    @TruffleBoundary
+    public static String newString(char[] chars) {
+        return new String(chars);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static StringBuilder newStringBuilder(int capacity) {
+        return new StringBuilder(capacity);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static StringBuilder append(StringBuilder sb, String str) {
+        return sb.append(str);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static String toString(StringBuilder sb) {
+        return sb.toString();
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static void putByte(ByteBuffer buffer, byte b) {
+        buffer.put(b);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static void putBytes(ByteBuffer buffer, byte[] bytes) {
+        buffer.put(bytes);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static void putDouble(ByteBuffer buffer, double aDouble) {
+        buffer.putDouble(aDouble);
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    public static void putInt(ByteBuffer buffer, int anInt) {
+        buffer.putInt(anInt);
     }
 
     /**
@@ -944,6 +1061,7 @@ public final class Utils {
         return (s.toString());
     }
 
+    @TruffleBoundary(allowInlining = true)
     public static byte[] intArrayToByteArray(int[] intArr, ByteOrder o) {
         ByteBuffer byteBuffer = ByteBuffer.allocate(intArr.length * 4);
         byteBuffer.order(o);

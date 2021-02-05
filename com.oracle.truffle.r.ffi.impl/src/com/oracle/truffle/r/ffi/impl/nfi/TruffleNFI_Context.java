@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -190,10 +190,13 @@ public class TruffleNFI_Context extends RFFIContext {
                         } else if (value instanceof String) {
                             interop.execute(lookupNativeFunction(NativeFunction.initvar_string), i, value);
                         } else {
-                            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
+                            FFIDownCallWrap ffiWrap = new FFIDownCallWrap();
+                            try {
                                 interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, ffiWrap.wrapUncached(value));
                             } catch (Exception ex) {
                                 throw RInternalError.shouldNotReachHere(ex);
+                            } finally {
+                                ffiWrap.close();
                             }
                         }
                     } catch (InteropException ex) {
@@ -225,7 +228,7 @@ public class TruffleNFI_Context extends RFFIContext {
     private void initCallbacks(RContext context) {
         if (context.getKind() == ContextKind.SHARE_NOTHING) {
             // create and fill a new callbacks table
-            callbacks = NativeMemory.allocate(Callbacks.values().length * Long.BYTES, "callbacks");
+            callbacks = NativeMemory.allocate(Callbacks.values().length * (long) Long.BYTES, "callbacks");
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
             Object addCallback;
             try {
@@ -383,9 +386,14 @@ public class TruffleNFI_Context extends RFFIContext {
     @Override
     public Object beforeDowncall(MaterializedFrame frame, RFFIFactory.Type rffiType) {
         Object tokenFromSuper = super.beforeDowncall(frame, RFFIFactory.Type.NFI);
-        transientAllocations.push(new ArrayList<>());
+        addTransientAllocationsFrame();
         acquireLock();
         return new Object[]{tokenFromSuper, pushCallbacks()};
+    }
+
+    @TruffleBoundary
+    private void addTransientAllocationsFrame() {
+        transientAllocations.push(new ArrayList<>());
     }
 
     @Override
@@ -401,15 +409,20 @@ public class TruffleNFI_Context extends RFFIContext {
         Object[] tokens = (Object[]) beforeValue;
         super.afterDowncall(tokens[0], rffiType, profiles);
         popCallbacks((long) tokens[1]);
-        for (Long ptr : transientAllocations.pop()) {
-            NativeMemory.free(ptr, "Rf_alloc");
-        }
+        freeCurrentTransientAllocations();
         RuntimeException lastUpCallEx = getLastUpCallException();
         setLastUpCallException(null);
         releaseLock();
         if (lastUpCallEx != null) {
             CompilerDirectives.transferToInterpreter();
             throw lastUpCallEx;
+        }
+    }
+
+    @TruffleBoundary
+    private void freeCurrentTransientAllocations() {
+        for (Long ptr : transientAllocations.pop()) {
+            NativeMemory.free(ptr, "Rf_alloc");
         }
     }
 

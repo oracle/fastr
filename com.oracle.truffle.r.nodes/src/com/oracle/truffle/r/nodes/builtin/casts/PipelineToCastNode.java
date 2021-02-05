@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -464,7 +464,10 @@ public final class PipelineToCastNode {
                         case Logical:
                             return (Byte arg) -> arg == (byte) scalarValue.value;
                         case Any:
-                            return arg -> arg.equals(scalarValue.value);
+                            return arg -> (arg instanceof String && scalarValue.value instanceof String && ((String) arg).equals(scalarValue.value)) ||
+                                            (arg instanceof Integer && scalarValue.value instanceof Integer && ((Integer) arg).intValue() == ((Integer) scalarValue.value).intValue()) ||
+                                            (arg instanceof Double && scalarValue.value instanceof Double && ((Double) arg).doubleValue() == ((Double) scalarValue.value).doubleValue()) ||
+                                            (arg instanceof Byte && scalarValue.value instanceof Byte && ((Byte) arg).byteValue() == ((Byte) scalarValue.value).byteValue());
                         default:
                             throw RInternalError.unimplemented("TODO: more types here ");
                     }

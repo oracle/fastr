@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,20 +29,21 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 @RBuiltin(name = "rep.int", kind = INTERNAL, parameterNames = {"x", "times"}, behavior = PURE)
-@ReportPolymorphism
 public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile timesOneProfile = ConditionProfile.createBinaryProfile();
@@ -54,75 +55,89 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
         casts.arg("times").defaultError(RError.Message.INVALID_TYPE, typeName(), "times", "vector").mustBe(abstractVectorValue()).asIntegerVector();
     }
 
-    private RAbstractVector performRep(RAbstractVector value, RIntVector times, VectorFactory factory, VectorAccess valueAccess, VectorAccess timesAccess, VectorAccess resultAccess) {
-        try (SequentialIterator valueIter = valueAccess.access(value); SequentialIterator timesIter = timesAccess.access(times)) {
-            int valueLength = valueAccess.getLength(valueIter);
-            int timesLength = timesAccess.getLength(timesIter);
-            if (valueLen0Profile.profile(valueLength == 0)) {
-                return factory.createVector(valueAccess.getType(), 0, false);
-            }
-            if (timesLength == 0) {
+    private RAbstractVector performRep(RAbstractVector value, VectorDataLibrary valueDataLib, RIntVector times, VectorDataLibrary timesDataLib,
+                    VectorFactory factory, VectorDataLibrary resultDataLib) {
+        Object valueData = value.getData();
+        Object timesData = times.getData();
+        SeqIterator valueIter = valueDataLib.iterator(valueData);
+        SeqIterator timesIter = timesDataLib.iterator(timesData);
+        int valueLen = valueDataLib.getLength(valueData);
+        int timesLen = timesDataLib.getLength(timesData);
+        RType valueType = valueDataLib.getType(valueData);
+        if (valueLen0Profile.profile(valueLen == 0)) {
+            return factory.createVector(valueType, 0, false);
+        }
+        if (timesLen == 0) {
+            throw error(RError.Message.INVALID_VALUE, "times");
+        }
+        RAbstractVector result;
+        if (timesOneProfile.profile(timesLen == 1)) {
+            timesDataLib.next(timesData, timesIter);
+            int timesValue = timesDataLib.getNextInt(timesData, timesIter);
+            if (timesValue < 0) {
                 throw error(RError.Message.INVALID_VALUE, "times");
             }
-            RAbstractVector result;
-            if (timesOneProfile.profile(timesLength == 1)) {
-                timesAccess.next(timesIter);
-                int timesValue = timesAccess.getInt(timesIter);
-                if (timesValue < 0) {
+            int resultLen = timesValue * valueLen;
+            result = factory.createVector(valueType, resultLen, false);
+            Object resultData = result.getData();
+            SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData);
+            boolean neverSeenNA = false;
+            try {
+                while (resultDataLib.nextLoopCondition(resultData, resultIter)) {
+                    valueDataLib.nextWithWrap(valueData, valueIter);
+                    resultDataLib.transferNext(resultData, resultIter, valueDataLib, valueIter, valueData);
+                }
+                neverSeenNA = valueDataLib.getNACheck(valueData).neverSeenNA();
+            } finally {
+                resultDataLib.commitWriteIterator(resultData, resultIter, neverSeenNA);
+            }
+        } else if (timesLen == valueLen) {
+            int count = 0;
+            while (timesDataLib.nextLoopCondition(timesData, timesIter)) {
+                int num = timesDataLib.getNextInt(timesData, timesIter);
+                if (num < 0) {
                     throw error(RError.Message.INVALID_VALUE, "times");
                 }
-                result = factory.createVector(valueAccess.getType(), timesValue * valueLength, false);
-                try (SequentialIterator resultIter = resultAccess.access(result)) {
-                    for (int i = 0; i < timesValue; i++) {
-                        while (valueAccess.next(valueIter)) {
-                            resultAccess.next(resultIter);
-                            resultAccess.setFromSameType(resultIter, valueAccess, valueIter);
-                        }
-                        valueAccess.reset(valueIter);
-                    }
-                }
-            } else if (timesLength == valueLength) {
-                int count = 0;
-                while (timesAccess.next(timesIter)) {
-                    int num = timesAccess.getInt(timesIter);
-                    if (num < 0) {
-                        throw error(RError.Message.INVALID_VALUE, "times");
-                    }
-                    count += num;
-                }
-                result = factory.createVector(valueAccess.getType(), count, false);
-
-                timesAccess.reset(timesIter);
-                try (SequentialIterator resultIter = resultAccess.access(result)) {
-                    while (timesAccess.next(timesIter) && valueAccess.next(valueIter)) {
-                        int num = timesAccess.getInt(timesIter);
-                        for (int i = 0; i < num; i++) {
-                            resultAccess.next(resultIter);
-                            resultAccess.setFromSameType(resultIter, valueAccess, valueIter);
-                        }
-                    }
-                }
-            } else {
-                throw error(RError.Message.INVALID_VALUE, "times");
+                count += num;
             }
-            result.setComplete(!valueAccess.na.isEnabled());
-            return result;
+            result = factory.createVector(valueType, count, false);
+            Object resultData = result.getData();
+
+            timesIter.reset();
+            SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData);
+            boolean neverSeenNA = false;
+            try {
+                while (timesDataLib.nextLoopCondition(timesData, timesIter) && valueDataLib.nextLoopCondition(valueData, valueIter)) {
+                    int num = timesDataLib.getNextInt(timesData, timesIter);
+                    for (int i = 0; i < num; i++) {
+                        resultDataLib.next(resultData, resultIter);
+                        resultDataLib.transferNext(resultData, resultIter, valueDataLib, valueIter, valueData);
+                    }
+                }
+                neverSeenNA = valueDataLib.getNACheck(valueData).neverSeenNA();
+            } finally {
+                resultDataLib.commitWriteIterator(resultData, resultIter, neverSeenNA);
+            }
+        } else {
+            throw error(RError.Message.INVALID_VALUE, "times");
         }
+        return result;
     }
 
-    @Specialization(guards = {"valueAccess.supports(value)", "timesAccess.supports(times)"})
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
     protected RAbstractVector repCached(RAbstractVector value, RIntVector times,
                     @Cached("create()") VectorFactory factory,
-                    @Cached("value.access()") VectorAccess valueAccess,
-                    @Cached("times.access()") VectorAccess timesAccess,
-                    @Cached("createNew(value.getRType())") VectorAccess resultAccess) {
-        return performRep(value, times, factory, valueAccess, timesAccess, resultAccess);
+                    @CachedLibrary("value.getData()") VectorDataLibrary valueDataLib,
+                    @CachedLibrary("times.getData()") VectorDataLibrary timesDataLib,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary resultDataLib) {
+        return performRep(value, valueDataLib, times, timesDataLib, factory, resultDataLib);
     }
 
     @Specialization(replaces = "repCached")
     @TruffleBoundary
     protected RAbstractVector repGeneric(RAbstractVector value, RIntVector times,
                     @Cached("create()") VectorFactory factory) {
-        return performRep(value, times, factory, value.slowPathAccess(), times.slowPathAccess(), VectorAccess.createSlowPathNew(value.getRType()));
+        VectorDataLibrary uncachedDataLib = VectorDataLibrary.getFactory().getUncached();
+        return performRep(value, uncachedDataLib, times, uncachedDataLib, factory, uncachedDataLib);
     }
 }

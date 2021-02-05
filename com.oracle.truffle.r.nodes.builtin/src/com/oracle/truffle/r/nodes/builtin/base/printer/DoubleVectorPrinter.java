@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -381,10 +381,9 @@ public final class DoubleVectorPrinter extends VectorPrinter<RDoubleVector> {
     public static String encodeReal(double x, int digits, char cdec, int sciPen, String naString) {
         RDoubleVector value = RDataFactory.createDoubleVectorFromScalar(x);
         VectorAccess access = value.slowPathAccess();
-        try (RandomIterator iter = access.randomAccess(value)) {
-            DoubleVectorMetrics dm = formatDoubleVector(iter, access, 0, 1, 0, digits, sciPen, naString.length());
-            return encodeReal(x, dm.maxWidth, dm.d, dm.e, cdec, naString);
-        }
+        RandomIterator iter = access.randomAccess(value);
+        DoubleVectorMetrics dm = formatDoubleVector(iter, access, 0, 1, 0, digits, sciPen, naString.length());
+        return encodeReal(x, dm.maxWidth, dm.d, dm.e, cdec, naString);
     }
 
     @TruffleBoundary
@@ -579,16 +578,15 @@ public final class DoubleVectorPrinter extends VectorPrinter<RDoubleVector> {
 
     public static String[] format(RDoubleVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
-        try (RandomIterator iter = access.randomAccess(value)) {
-            int length = access.getLength(iter);
-            DoubleVectorMetrics dfm = formatDoubleVector(iter, access, 0, length, nsmall, pp);
-            int w = Math.max(trim ? 1 : dfm.maxWidth, width);
+        RandomIterator iter = access.randomAccess(value);
+        int length = access.getLength(iter);
+        DoubleVectorMetrics dfm = formatDoubleVector(iter, access, 0, length, nsmall, pp);
+        int w = Math.max(trim ? 1 : dfm.maxWidth, width);
 
-            String[] result = new String[length];
-            for (int i = 0; i < length; i++) {
-                result[i] = encodeReal(access.getDouble(iter, i), w, dfm.d, dfm.e, decimalMark, pp);
-            }
-            return result;
+        String[] result = new String[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = encodeReal(access.getDouble(iter, i), w, dfm.d, dfm.e, decimalMark, pp);
         }
+        return result;
     }
 }

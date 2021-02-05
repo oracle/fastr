@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -302,7 +302,7 @@ public final class FastRSession implements RSession {
                 testClass.addPolyglotSymbols(evalContext);
             }
             timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
-            REPL.readEvalPrint(evalContext.getContext(), new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false);
+            REPL.readEvalPrint(evalContext.getContext(), new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, null);
             String consoleInput = readLine();
             while (consoleInput != null) {
                 consoleInput = readLine();

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995--2015, The R Core Team
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -28,6 +27,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 
 public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
 
@@ -46,33 +46,31 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
             // Note: otherwise array index out of bounds
             throw error(Message.MUST_BE_SQUARE_MATRIX, "x");
         }
-        try (RandomIterator aIter = aAccess.randomAccess(a)) {
-            RDoubleVector result = reuse.getResult(a);
-            VectorAccess resultAccess = reuse.access(result);
-            try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
-                for (int i = 0; i < n; i++) {
-                    double sum = 0;
-                    for (int j = 0; j < n; j++) {
-                        sum += aAccess.getDouble(aIter, i + j * n);
-                    }
-                    sum /= n;
-                    for (int j = 0; j < n; j++) {
-                        resultAccess.setDouble(resultIter, i + j * n, aAccess.getDouble(aIter, i + j * n) - sum);
-                    }
-                }
-                for (int j = 0; j < n; j++) {
-                    double sum = 0;
-                    for (int i = 0; i < n; i++) {
-                        sum += resultAccess.getDouble(aIter, i + j * n);
-                    }
-                    sum /= n;
-                    for (int i = 0; i < n; i++) {
-                        resultAccess.setDouble(resultIter, i + j * n, resultAccess.getDouble(aIter, i + j * n) - sum);
-                    }
-                }
+        RandomIterator aIter = aAccess.randomAccess(a);
+        RDoubleVector result = reuse.getResult(a);
+        VectorAccess resultAccess = reuse.access(result);
+        RandomIterator resultIter = resultAccess.randomAccess(result);
+        for (int i = 0; i < n; i++) {
+            double sum = 0;
+            for (int j = 0; j < n; j++) {
+                sum += aAccess.getDouble(aIter, i + j * n);
             }
-            return result;
+            sum /= n;
+            for (int j = 0; j < n; j++) {
+                resultAccess.setDouble(resultIter, i + j * n, aAccess.getDouble(aIter, i + j * n) - sum);
+            }
         }
+        for (int j = 0; j < n; j++) {
+            double sum = 0;
+            for (int i = 0; i < n; i++) {
+                sum += resultAccess.getDouble(aIter, i + j * n);
+            }
+            sum /= n;
+            for (int i = 0; i < n; i++) {
+                resultAccess.setDouble(resultIter, i + j * n, resultAccess.getDouble(aIter, i + j * n) - sum);
+            }
+        }
+        return result;
     }
 
     @Specialization(replaces = "doubleCentre")

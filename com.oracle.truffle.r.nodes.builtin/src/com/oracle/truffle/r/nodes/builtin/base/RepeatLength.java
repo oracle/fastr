@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -135,11 +135,13 @@ public abstract class RepeatLength extends RBuiltinNode.Arg2 {
         SeqIterator xIt = xDataLib.iterator(xData);
         RAbstractVector result = xContainerLib.createEmptySameType(x, length, false);
         Object resultData = result.getData();
-        try (SeqWriteIterator resultIt = resultDataLib.writeIterator(resultData)) {
+        SeqWriteIterator resultIt = resultDataLib.writeIterator(resultData);
+        try {
             while (resultDataLib.next(resultData, resultIt)) {
                 xDataLib.nextWithWrap(xData, xIt);
                 resultDataLib.transferNext(resultData, resultIt, xDataLib, xIt, xData);
             }
+        } finally {
             resultDataLib.commitWriteIterator(resultData, resultIt, xDataLib.getNACheck(xData).neverSeenNA());
         }
         return result;

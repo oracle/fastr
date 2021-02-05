@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -114,7 +115,9 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] ap = new int[diml];
 
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData);
+        boolean neverSeenNA = false;
+        try {
             RandomAccessIterator vectorIt = vectorDataLib.randomAccessIterator(vectorData);
             for (int i = 0; i < resultLen; i++) {
                 for (int j = 0; j < ap.length; j++) {
@@ -130,7 +133,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     posV[j] = 0;
                 }
             }
-            boolean neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+            neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, neverSeenNA);
         }
 
@@ -180,7 +184,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     @Cached("create()") GetNamesAttributeNode getNames,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
 
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
@@ -196,7 +201,9 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         setDimsNode.setDimensions(result, resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData);
+        boolean neverSeenNA = false;
+        try {
             RandomAccessIterator vectorIt = vectorDataLib.randomAccessIterator(vectorData);
             // Move along the old array using stride
             for (int i = 0; i < resultLen; i++) {
@@ -204,7 +211,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                 resultDataLib.transfer(resultData, resultIt, i, vectorDataLib, vectorIt, vectorData, pos);
                 incArray(posV, pDim);
             }
-            boolean neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+            neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, neverSeenNA);
         }
 
@@ -220,14 +228,15 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
             }
             Object[] permData = new Object[dimNames.getLength()];
             RStringVector names = getNames.getNames(dimNames); // May be null for "list(NULL,NULL)"
+            Object namesData = names != null ? names.getData() : null;
             String[] permNames = (names != null) ? new String[permData.length] : null;
             for (int i = 0; i < permData.length; i++) {
                 permData[i] = extractListElement.execute(dimNames, perm[i]);
                 if (permNames != null) {
-                    permNames[i] = names.getDataAt(perm[i]);
+                    permNames[i] = namesDataLib.getStringAt(namesData, perm[i]);
                 }
             }
-            RList permDimNames = RDataFactory.createList(permData, (names != null) ? RDataFactory.createStringVector(permNames, names.isComplete()) : null);
+            RList permDimNames = RDataFactory.createList(permData, (names != null) ? RDataFactory.createStringVector(permNames, namesDataLib.isComplete(namesData)) : null);
             setDimNames.setDimNames(result, permDimNames);
         }
 
@@ -240,10 +249,11 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     @Cached("create()") GetNamesAttributeNode getNames,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
         AbstractContainerLibrary containerLib = AbstractContainerLibrary.getFactory().getUncached();
         VectorDataLibrary dataLib = VectorDataLibrary.getFactory().getUncached();
-        return doNonIdentity(vector, permVector, resize, containerLib, dataLib, dataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode);
+        return doNonIdentity(vector, permVector, resize, containerLib, dataLib, dataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode, namesDataLib);
     }
 
     protected boolean isIdentityPermutation(RAbstractVector v, RIntVector permVector, GetDimAttributeNode getDimAttributeNode) {
@@ -271,7 +281,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     @Cached("create()") SetDimAttributeNode setDimsNode,
                     @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
+                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
         RList dimNames = getDimNamesNode.getDimNames(vector);
         if (dimNames == null) {
             // TODO: this error is reported after IS_OF_WRONG_LENGTH in GnuR
@@ -281,7 +292,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] perm = new int[permVector.getLength()];
         for (int i = 0; i < perm.length; i++) {
             for (int dimNamesIdx = 0; dimNamesIdx < dimNames.getLength(); dimNamesIdx++) {
-                if (dimNames.getDataAt(dimNamesIdx).equals(permVector.getDataAt(i))) {
+                if (Utils.equals(dimNames.getDataAt(dimNamesIdx), permVector.getDataAt(i))) {
                     perm[i] = dimNamesIdx;
                     break;
                 }
@@ -295,7 +306,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         }
 
         // Note: if this turns out to be slow, we can cache the permutation
-        return doNonIdentity(vector, permIntVector, resize, vectorLib, vectorDataLib, resultDataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode);
+        return doNonIdentity(vector, permIntVector, resize, vectorLib, vectorDataLib, resultDataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode, namesDataLib);
     }
 
     @Specialization(replaces = "aPerm", limit = "getGenericVectorAccessCacheSize()")
@@ -309,9 +320,10 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     @Cached("create()") SetDimAttributeNode setDimsNode,
                     @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary namesDataLib) {
         return aPerm(vector, permVector, resize, vectorLib, vectorDataLib, resultDataLib, isIdentityProfile, getNames, getDimsNode, setDimsNode, removeClassAttrNode, getDimNamesNode,
-                        reuseNonSharedNode);
+                        reuseNonSharedNode, namesDataLib);
     }
 
     private static int[] getReverse(int[] dim) {

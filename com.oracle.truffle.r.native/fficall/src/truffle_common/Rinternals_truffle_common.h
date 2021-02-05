@@ -2019,34 +2019,38 @@ const SEXP *(STRING_PTR_RO)(SEXP x) {
     return ((const SEXP *) DATAPTR_RO(x));
 }
 
-// The ALTREP framework is not implemented on FastR yet
-// Dummy implementations:
+// The ALTREP framework
 
-#define ALTREP_UNIMPLEMENTED { UNIMPLEMENTED; }
+void* STDVEC_DATAPTR(SEXP x) {
+    return DATAPTR(x);
+}
 
+// these are defined in altrep.c
 int (ALTREP)(SEXP x);
-SEXP ALTREP_CLASS(SEXP x) ALTREP_UNIMPLEMENTED
-
 SEXP R_altrep_data1(SEXP x);
 SEXP R_altrep_data2(SEXP x);
 void R_set_altrep_data1(SEXP x, SEXP v);
 void R_set_altrep_data2(SEXP x, SEXP v);
 
+R_xlen_t INTEGER_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, int *buf);
+int INTEGER_IS_SORTED(SEXP x);
+int INTEGER_NO_NA(SEXP x);
+R_xlen_t REAL_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, double *buf);
+int REAL_IS_SORTED(SEXP x);
+int REAL_NO_NA(SEXP x);
+int STRING_IS_SORTED(SEXP x);
+int STRING_NO_NA(SEXP x);
+
+#define ALTREP_UNIMPLEMENTED { UNIMPLEMENTED; }
+
+SEXP ALTREP_CLASS(SEXP x) ALTREP_UNIMPLEMENTED
+// TODO: Remove IS_SCALAR?
+int (IS_SCALAR)(SEXP x, int type) ALTREP_UNIMPLEMENTED
+SEXP INTEGER_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
+SEXP REAL_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
+SEXP INTEGER_MATCH(SEXP a, SEXP b, int c, SEXP d, SEXP e, Rboolean f) ALTREP_UNIMPLEMENTED
+SEXP REAL_MATCH(SEXP a, SEXP b, int c, SEXP d, SEXP e, Rboolean f) ALTREP_UNIMPLEMENTED
 // These two functions should be hidden, although in GNU-R they are not hidden.
 SEXP ALTINTEGER_SUM(SEXP x, Rboolean narm) ALTREP_UNIMPLEMENTED
 SEXP ALTREAL_SUM(SEXP x, Rboolean narm) ALTREP_UNIMPLEMENTED
 
-// TODO: Remove IS_SCALAR?
-int (IS_SCALAR)(SEXP x, int type) ALTREP_UNIMPLEMENTED
-R_xlen_t INTEGER_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, int *buf);
-int INTEGER_IS_SORTED(SEXP x);
-int INTEGER_NO_NA(SEXP x);
-SEXP INTEGER_MATCH(SEXP a, SEXP b, int c, SEXP d, SEXP e, Rboolean f) ALTREP_UNIMPLEMENTED
-SEXP INTEGER_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
-SEXP REAL_MATCH(SEXP a, SEXP b, int c, SEXP d, SEXP e, Rboolean f) ALTREP_UNIMPLEMENTED
-R_xlen_t REAL_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, double *buf);
-int REAL_IS_SORTED(SEXP x);
-int REAL_NO_NA(SEXP x);
-SEXP REAL_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
-int STRING_IS_SORTED(SEXP x);
-int STRING_NO_NA(SEXP x);
