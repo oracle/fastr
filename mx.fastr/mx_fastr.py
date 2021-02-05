@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -257,7 +257,7 @@ def split_j_args(extraVmArgsList):
     extraVmArgs = []
     if extraVmArgsList:
         for e in extraVmArgsList:
-            extraVmArgs += [x for x in shlex.split(e.lstrip('@'))]
+            extraVmArgs += shlex.split(e.lstrip('@'))
     return extraVmArgs
 
 def rshell(args):
