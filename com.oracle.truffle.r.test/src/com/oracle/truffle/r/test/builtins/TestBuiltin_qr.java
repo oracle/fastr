@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -41,13 +41,13 @@ public class TestBuiltin_qr extends TestBase {
 
     @Test
     public void testQr() {
-        assertEval("{ qr(matrix(1:6,nrow=2), LAPACK=FALSE)$pivot }");
-        assertEval("{ qr(matrix(1:6,nrow=2), LAPACK=FALSE)$rank }");
-        assertEval("{ round( qr(matrix(1:6,nrow=2), LAPACK=FALSE)$qraux, digits=5 ) }");
-        assertEval("{ round( qr(matrix(c(3,2,-3,-4),nrow=2), LAPACK=FALSE)$qr, digits=5 ) }");
+        assertEval(Ignored.NewRVersionMigration, "{ qr(matrix(1:6,nrow=2), LAPACK=FALSE)$pivot }");
+        assertEval(Ignored.NewRVersionMigration, "{ qr(matrix(1:6,nrow=2), LAPACK=FALSE)$rank }");
+        assertEval(Ignored.NewRVersionMigration, "{ round( qr(matrix(1:6,nrow=2), LAPACK=FALSE)$qraux, digits=5 ) }");
+        assertEval(Ignored.NewRVersionMigration, "{ round( qr(matrix(c(3,2,-3,-4),nrow=2), LAPACK=FALSE)$qr, digits=5 ) }");
 
-        assertEval("{ m <- matrix(c(1,0,0,0,1,0,0,0,1),nrow=3) ; x <- qr(m, LAPACK=FALSE) ; qr.coef(x, 1:3) }");
-        assertEval("{ x <- qr(cbind(1:3,2:4), LAPACK=FALSE) ; round( qr.coef(x, 1:3), digits=5 ) }");
+        assertEval(Ignored.NewRVersionMigration, "{ m <- matrix(c(1,0,0,0,1,0,0,0,1),nrow=3) ; x <- qr(m, LAPACK=FALSE) ; qr.coef(x, 1:3) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x <- qr(cbind(1:3,2:4), LAPACK=FALSE) ; round( qr.coef(x, 1:3), digits=5 ) }");
 
         // FIXME
         // Expected output: [1] 1 NA NA NA NA NA NA NA NA 0
@@ -66,11 +66,11 @@ public class TestBuiltin_qr extends TestBase {
         assertEval(Ignored.ImplementationError, " { x <- qr(cbind(1:10,2:11), LAPACK=TRUE) ; round( qr.coef(x, 1:10), digits=5 ) }");
         assertEval(Ignored.ImplementationError, "{ x <- qr(c(3,1,2), LAPACK=TRUE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
         // FIXME: GNU-R will print negative zero as zero
-        assertEval("{ x <- qr(t(cbind(1:10,2:11)), LAPACK=FALSE) ; qr.coef(x, 1:2) }");
-        assertEval("{ x <- qr(c(3,1,2), LAPACK=FALSE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x <- qr(t(cbind(1:10,2:11)), LAPACK=FALSE) ; qr.coef(x, 1:2) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x <- qr(c(3,1,2), LAPACK=FALSE) ; round( qr.coef(x, c(1,3,2)), digits=5 ) }");
 
         // qr.solve
-        assertEval("{ round( qr.solve(qr(c(1,3,4,2)), c(1,2,3,4)), digits=5 ) }");
-        assertEval("{ round( qr.solve(c(1,3,4,2), c(1,2,3,4)), digits=5) }");
+        assertEval(Ignored.NewRVersionMigration, "{ round( qr.solve(qr(c(1,3,4,2)), c(1,2,3,4)), digits=5 ) }");
+        assertEval(Ignored.NewRVersionMigration, "{ round( qr.solve(c(1,3,4,2), c(1,2,3,4)), digits=5) }");
     }
 }

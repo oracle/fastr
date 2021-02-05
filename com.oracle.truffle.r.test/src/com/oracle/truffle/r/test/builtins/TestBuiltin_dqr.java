@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,26 +36,26 @@ public class TestBuiltin_dqr extends TestBase {
 
     @Test
     public void testdqrcf() {
-        assertEval(".Fortran(.F_dqrcf, 1, 1L, 1L, 1, 1, 1L, 1, 1L)");
+        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrcf, 1, 1L, 1L, 1, 1, 1L, 1, 1L)");
     }
 
     @Test
     public void testdqrqty() {
-        assertEval(".Fortran(.F_dqrqty, 1, 1L, 1L, 1, 1, 1L, qty=1)");
+        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrqty, 1, 1L, 1L, 1, 1, 1L, qty=1)");
     }
 
     @Test
     public void testdqrqy() {
-        assertEval(".Fortran(.F_dqrqy, 1, 1L, 1L, 1, 1, 1L, 1)");
+        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrqy, 1, 1L, 1L, 1, 1, 1L, 1)");
     }
 
     @Test
     public void testdqrrsd() {
-        assertEval(".Fortran(.F_dqrrsd, 1, 1L, 1L, 1, 1, 1L, 1)");
+        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrrsd, 1, 1L, 1L, 1, 1, 1L, 1)");
     }
 
     @Test
     public void testdqrxb() {
-        assertEval(".Fortran(.F_dqrxb, 1, 1L, 1L, 1, 1, 1L, 1)");
+        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrxb, 1, 1L, 1L, 1, 1, 1L, 1)");
     }
 }
