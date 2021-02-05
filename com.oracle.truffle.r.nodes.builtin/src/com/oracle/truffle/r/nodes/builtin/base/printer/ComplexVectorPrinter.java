@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -399,10 +399,9 @@ public final class ComplexVectorPrinter extends VectorPrinter<RComplexVector> {
     public static String encodeComplex(RComplex x, int digits, int sciPen, String naString) {
         RComplexVector xVec = RDataFactory.createComplexVectorFromScalar(x);
         VectorAccess access = xVec.slowPathAccess();
-        try (RandomIterator iter = access.randomAccess(xVec)) {
-            ComplexVectorMetrics cvm = formatComplexVector(iter, access, 0, 1, 0, digits, sciPen, naString.length());
-            return encodeComplex(x, cvm, '.', digits, naString);
-        }
+        RandomIterator iter = access.randomAccess(xVec);
+        ComplexVectorMetrics cvm = formatComplexVector(iter, access, 0, 1, 0, digits, sciPen, naString.length());
+        return encodeComplex(x, cvm, '.', digits, naString);
     }
 
     @TruffleBoundary
@@ -467,18 +466,17 @@ public final class ComplexVectorPrinter extends VectorPrinter<RComplexVector> {
 
     public static String[] format(RComplexVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
-        try (RandomIterator iter = access.randomAccess(value)) {
-            int length = access.getLength(iter);
-            ComplexVectorMetrics dfm = formatComplexVector(iter, access, 0, length, nsmall, pp);
-            int wr = Math.max(trim ? 1 : dfm.wr, width);
-            int wi = Math.max(trim ? 1 : dfm.wi, width);
-            ComplexVectorMetrics adjusted = new ComplexVectorMetrics(wr, dfm.dr, dfm.er, wi, dfm.di, dfm.ei);
+        RandomIterator iter = access.randomAccess(value);
+        int length = access.getLength(iter);
+        ComplexVectorMetrics dfm = formatComplexVector(iter, access, 0, length, nsmall, pp);
+        int wr = Math.max(trim ? 1 : dfm.wr, width);
+        int wi = Math.max(trim ? 1 : dfm.wi, width);
+        ComplexVectorMetrics adjusted = new ComplexVectorMetrics(wr, dfm.dr, dfm.er, wi, dfm.di, dfm.ei);
 
-            String[] result = new String[length];
-            for (int i = 0; i < length; i++) {
-                result[i] = encodeComplex(access.getComplex(iter, i), adjusted, decimalMark, pp);
-            }
-            return result;
+        String[] result = new String[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = encodeComplex(access.getComplex(iter, i), adjusted, decimalMark, pp);
         }
+        return result;
     }
 }

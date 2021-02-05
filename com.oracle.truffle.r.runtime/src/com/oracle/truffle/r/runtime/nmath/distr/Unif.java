@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000-2006, The R Core Team
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
@@ -45,8 +45,8 @@ public final class Unif {
         public double exec(double minIn, double maxIn, RandomNumberProvider rand,
                         @Cached() BranchProfile errorProfile,
                         @Cached("createBinaryProfile()") ConditionProfile minEqualsMaxProfile,
-                        @Cached("createEqualityProfile()") ValueProfile minValueProfile,
-                        @Cached("createEqualityProfile()") ValueProfile maxValueProfile) {
+                        @Cached("createEqualityProfile()") PrimitiveValueProfile minValueProfile,
+                        @Cached("createEqualityProfile()") PrimitiveValueProfile maxValueProfile) {
             double min = minValueProfile.profile(minIn);
             double max = maxValueProfile.profile(maxIn);
             if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {

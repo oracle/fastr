@@ -105,11 +105,10 @@ public abstract class CastStringNode extends CastStringBaseNode {
         String[] sdata = new String[operand.getLength()];
         // conversions to character will not introduce new NAs,
         // but lets pass the warning context anyway
-        try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
-            while (uAccess.next(sIter)) {
-                int i = sIter.getIndex();
-                sdata[i] = uAccess.getString(sIter);
-            }
+        VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext());
+        while (uAccess.next(sIter)) {
+            int i = sIter.getIndex();
+            sdata[i] = uAccess.getString(sIter);
         }
         return vectorCopy(operand, operandDataLib, sdata);
     }
@@ -129,15 +128,14 @@ public abstract class CastStringNode extends CastStringBaseNode {
                     @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
         RAbstractContainer operand = operandProfile.profile(x);
         String[] sdata = new String[operand.getLength()];
-        try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
-            while (uAccess.next(sIter)) {
-                int i = sIter.getIndex();
-                Object o = uAccess.getListElement(sIter);
-                if (isLanguageProfile.profile((o instanceof RPairList && ((RPairList) o).isLanguage()))) {
-                    sdata[i] = RDeparse.deparse(o);
-                } else {
-                    sdata[i] = toString(o);
-                }
+        VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext());
+        while (uAccess.next(sIter)) {
+            int i = sIter.getIndex();
+            Object o = uAccess.getListElement(sIter);
+            if (isLanguageProfile.profile((o instanceof RPairList && ((RPairList) o).isLanguage()))) {
+                sdata[i] = RDeparse.deparse(o);
+            } else {
+                sdata[i] = toString(o);
             }
         }
         return vectorCopy(operand, xDataLib, sdata);

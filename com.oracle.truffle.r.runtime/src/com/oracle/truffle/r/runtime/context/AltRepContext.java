@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.context;
 
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.r.runtime.RLogger;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.altrep.AltComplexClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor;
@@ -57,7 +58,7 @@ public final class AltRepContext implements RContext.ContextState {
 
     public AltRealClassDescriptor registerNewAltRealClass(String className, String packageName) {
         AltRealClassDescriptor altRealClassDescr = new AltRealClassDescriptor(className, packageName);
-        altRealDescriptors.put(altRealClassDescr.toString(), altRealClassDescr);
+        Utils.put(altRealDescriptors, altRealClassDescr.toString(), altRealClassDescr);
         logger.fine(() -> "Registered ALTREAL class: " + altRealClassDescr.toString());
         return altRealClassDescr;
     }

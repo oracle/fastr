@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN_SQRT_2PI;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_SQRT_PI;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.logspaceAdd;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -520,6 +521,7 @@ public final class TOMS708 {
                             break L_end;
 
                         default:
+                            CompilerDirectives.transferToInterpreter();
                             throw RInternalError.shouldNotReachHere("state: " + state);
                     }/* bratio */
                 }

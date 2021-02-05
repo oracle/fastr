@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,10 +111,9 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     protected int doComplex(@SuppressWarnings("unused") RComplex operand,
                     @Cached("getVector(operand)") RComplexVector vector,
                     @Cached("vector.access()") VectorAccess uAccess) {
-        try (SequentialIterator sIter = uAccess.access(vector, getWarningContext())) {
-            uAccess.next(sIter);
-            return uAccess.getInt(sIter);
-        }
+        SequentialIterator sIter = uAccess.access(vector, getWarningContext());
+        uAccess.next(sIter);
+        return uAccess.getInt(sIter);
     }
 
     @Specialization(replaces = "doComplex")

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
@@ -35,8 +35,8 @@ public abstract class Rnorm extends RandFunction2_Double {
     @Specialization
     public double exec(double muIn, double sigmaIn, RandomNumberProvider rand,
                     @Cached("createBinaryProfile()") ConditionProfile zeroSigmaProfile,
-                    @Cached("createEqualityProfile()") ValueProfile sigmaValueProfile,
-                    @Cached("createEqualityProfile()") ValueProfile muValueProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile sigmaValueProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile muValueProfile,
                     @Cached() BranchProfile errorProfile) {
         double sigma = sigmaValueProfile.profile(sigmaIn);
         double mu = muValueProfile.profile(muIn);

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -154,27 +154,26 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
         public final void print(T vector) throws IOException {
             access = vector.slowPathAccess();
-            try (RandomIterator iter = access.randomAccess(vector)) {
-                this.iterator = iter;
-                switch (jobMode) {
-                    case empty:
-                        printEmptyVector();
-                        break;
-                    case nonEmpty:
-                        printNonEmptyVector();
-                        break;
-                    case named:
-                        printNamedVector();
-                        break;
-                    case namedEmpty:
-                        printNamedEmptyVector();
-                        break;
-                    case matrix:
-                        printMatrix();
-                        break;
-                    case array:
-                        printArray();
-                }
+            RandomIterator iter = access.randomAccess(vector);
+            this.iterator = iter;
+            switch (jobMode) {
+                case empty:
+                    printEmptyVector();
+                    break;
+                case nonEmpty:
+                    printNonEmptyVector();
+                    break;
+                case named:
+                    printNamedVector();
+                    break;
+                case namedEmpty:
+                    printNamedEmptyVector();
+                    break;
+                case matrix:
+                    printMatrix();
+                    break;
+                case array:
+                    printArray();
             }
         }
 
@@ -225,9 +224,8 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             PrintParameters pp = printCtx.parameters();
 
             VectorAccess namesAccess = names.slowPathAccess();
-            try (RandomIterator namesIter = namesAccess.randomAccess(names)) {
-                wn = StringVectorPrinter.formatString(namesIter, namesAccess, 0, n, false, pp);
-            }
+            RandomIterator namesIter = namesAccess.randomAccess(names);
+            wn = StringVectorPrinter.formatString(namesIter, namesAccess, 0, n, false, pp);
             if (fm.maxWidth < wn) {
                 fm.maxWidth = wn;
             }
@@ -321,9 +319,8 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
             if (rl != null) {
                 VectorAccess rlAccess = rl.slowPathAccess();
-                try (RandomIterator rlIter = rlAccess.randomAccess(rl)) {
-                    rlabw = StringVectorPrinter.formatString(rlIter, rlAccess, 0, r, false, pp);
-                }
+                RandomIterator rlIter = rlAccess.randomAccess(rl);
+                rlabw = StringVectorPrinter.formatString(rlIter, rlAccess, 0, r, false, pp);
             } else {
                 rlabw = indexWidth(r + 1) + 3;
             }

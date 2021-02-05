@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
@@ -53,11 +54,11 @@ public abstract class PreserveObjectNode extends FFIUpCallNode.Arg1 {
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
         RContext ctx = ctxRef.get();
         EconomicMap<RBaseObject, AtomicInteger> preserveList = ctx.getStateRFFI().rffiContextState.preserveList;
-        AtomicInteger prevCnt = preserveList.get(x);
+        AtomicInteger prevCnt = Utils.get(preserveList, x);
         if (profile.profile(prevCnt != null)) {
             prevCnt.incrementAndGet();
         } else {
-            preserveList.put(x, new AtomicInteger(1));
+            Utils.put(preserveList, x, new AtomicInteger(1));
         }
         return x;
     }

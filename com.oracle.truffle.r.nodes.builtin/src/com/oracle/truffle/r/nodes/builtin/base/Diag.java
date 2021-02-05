@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,13 +94,15 @@ public abstract class Diag extends RBuiltinNode.Arg3 {
         SeqIterator xIt = xDataLib.iterator(xData);
         RAbstractVector result = xContainerLib.createEmptySameType(x, nrow * ncol, false);
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData);
+        try {
             int resultIndex = 0;
             for (int j = 0; j < mn; j++) {
                 xDataLib.nextWithWrap(xData, xIt);
                 resultDataLib.transferNextToRandom(resultData, resultIt, resultIndex, xDataLib, xIt, xData);
                 resultIndex += nrow + 1;
             }
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, xDataLib.getNACheck(xData).neverSeenNA());
         }
         setDimAttributeNode.setDimensions(result, new int[]{nrow, ncol});

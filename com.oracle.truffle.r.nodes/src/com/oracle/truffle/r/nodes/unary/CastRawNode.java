@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -205,10 +205,9 @@ public abstract class CastRawNode extends CastBaseNode {
 
     private RRawVector createResultVector(RAbstractVector operand, VectorAccess uAccess) {
         byte[] bdata = new byte[operand.getLength()];
-        try (SequentialIterator sIter = uAccess.access(operand, warningContext())) {
-            while (uAccess.next(sIter)) {
-                bdata[sIter.getIndex()] = uAccess.getRaw(sIter);
-            }
+        SequentialIterator sIter = uAccess.access(operand, warningContext());
+        while (uAccess.next(sIter)) {
+            bdata[sIter.getIndex()] = uAccess.getRaw(sIter);
         }
         return vectorCopy(operand, bdata);
     }
@@ -233,28 +232,27 @@ public abstract class CastRawNode extends CastBaseNode {
     protected RRawVector doList(RAbstractListVector value,
                     @Cached("value.access()") VectorAccess uAccess) {
         byte[] bdata = new byte[value.getLength()];
-        try (SequentialIterator sIter = uAccess.access(value, warningContext())) {
-            while (uAccess.next(sIter)) {
-                int i = sIter.getIndex();
-                Object entry = uAccess.getListElement(sIter);
-                if (entry instanceof RList) {
-                    bdata[i] = 0;
-                } else {
-                    Object castEntry = castRawRecursive(entry);
-                    if (castEntry instanceof RRaw) {
-                        bdata[i] = ((RRaw) castRawRecursive(castEntry)).getValue();
-                    } else if (castEntry instanceof RRawVector) {
-                        RRawVector rawVector = (RRawVector) castEntry;
-                        if (rawVector.getLength() == 1) {
-                            bdata[i] = rawVector.getRawDataAt(0);
-                        } else if (rawVector.getLength() == 0) {
-                            bdata[i] = 0;
-                        } else {
-                            throw throwCannotCoerceListError("object");
-                        }
+        SequentialIterator sIter = uAccess.access(value, warningContext());
+        while (uAccess.next(sIter)) {
+            int i = sIter.getIndex();
+            Object entry = uAccess.getListElement(sIter);
+            if (entry instanceof RList) {
+                bdata[i] = 0;
+            } else {
+                Object castEntry = castRawRecursive(entry);
+                if (castEntry instanceof RRaw) {
+                    bdata[i] = ((RRaw) castRawRecursive(castEntry)).getValue();
+                } else if (castEntry instanceof RRawVector) {
+                    RRawVector rawVector = (RRawVector) castEntry;
+                    if (rawVector.getLength() == 1) {
+                        bdata[i] = rawVector.getRawDataAt(0);
+                    } else if (rawVector.getLength() == 0) {
+                        bdata[i] = 0;
                     } else {
                         throw throwCannotCoerceListError("object");
                     }
+                } else {
+                    throw throwCannotCoerceListError("object");
                 }
             }
         }

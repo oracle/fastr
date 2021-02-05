@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
@@ -62,6 +63,7 @@ public class RAltRepData {
     }
 
     @Override
+    @TruffleBoundary
     public String toString() {
         return "data1=" + (data.car() == null ? "null" : data.car()) +
                         ", data2=" + (data.cdr() == null ? "null" : data.cdr());

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -198,7 +198,5 @@ def ed_rconfig(gnu_dir):
 
     with open(join('Rconfig.h'), 'w') as f:
         for line in lines:
-            if 'ENABLE_NLS' in line:
-                continue
-            else:
+            if 'ENABLE_NLS' not in line:
                 f.write(line)

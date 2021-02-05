@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.library.GenerateLibrary;
 import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
@@ -42,6 +43,7 @@ public abstract class AbstractContainerLibrary extends Library {
     public abstract RType getType(Object container);
 
     public int getLength(Object container) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere(container.getClass().getSimpleName());
     }
 
@@ -51,6 +53,7 @@ public abstract class AbstractContainerLibrary extends Library {
      * contain {@code NA} values.
      */
     public boolean isComplete(Object container) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere(container.getClass().getSimpleName());
     }
 
@@ -62,6 +65,7 @@ public abstract class AbstractContainerLibrary extends Library {
      * {@code true} and the new length is not zero.
      */
     public RAbstractVector createEmptySameType(Object container, @SuppressWarnings("unused") int newLength, @SuppressWarnings("unused") boolean fillWithNA) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.unimplemented("TODO:" + container.getClass().getSimpleName());
     }
 
@@ -89,6 +93,7 @@ public abstract class AbstractContainerLibrary extends Library {
      * into the vector data.
      */
     public void materializeData(@SuppressWarnings("unused") Object container) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.unimplemented("TODO:" + container.getClass().getSimpleName());
     }
 

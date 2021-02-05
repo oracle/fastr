@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -325,6 +325,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                     return false;
                 }
             } catch (UnsupportedMessageException | InvalidArrayIndexException ex) {
+                CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere(ex, "could not read foreign member: " + (index - 1));
             }
         }

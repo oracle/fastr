@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,10 +89,9 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     private RLogicalVector createResultVector(RAbstractVector operand, VectorAccess uAccess) {
         byte[] bdata = new byte[operand.getLength()];
-        try (SequentialIterator sIter = uAccess.access(operand, warningContext())) {
-            while (uAccess.next(sIter)) {
-                bdata[sIter.getIndex()] = uAccess.getLogical(sIter);
-            }
+        SequentialIterator sIter = uAccess.access(operand, warningContext());
+        while (uAccess.next(sIter)) {
+            bdata[sIter.getIndex()] = uAccess.getLogical(sIter);
         }
         return vectorCopy(operand, bdata, uAccess.na.neverSeenNAOrNaN());
     }
@@ -126,34 +125,33 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         int length = list.getLength();
         byte[] result = new byte[length];
         boolean seenNA = false;
-        try (SequentialIterator sIter = uAccess.access(list, warningContext())) {
-            while (uAccess.next(sIter)) {
-                int i = sIter.getIndex();
-                Object entry = uAccess.getListElement(sIter);
-                if (entry instanceof RList) {
-                    result[i] = RRuntime.LOGICAL_NA;
-                    seenNA = true;
-                } else {
-                    Object castEntry = castLogicalRecursive(entry);
-                    if (castEntry instanceof Byte) {
-                        byte value = (Byte) castEntry;
+        SequentialIterator sIter = uAccess.access(list, warningContext());
+        while (uAccess.next(sIter)) {
+            int i = sIter.getIndex();
+            Object entry = uAccess.getListElement(sIter);
+            if (entry instanceof RList) {
+                result[i] = RRuntime.LOGICAL_NA;
+                seenNA = true;
+            } else {
+                Object castEntry = castLogicalRecursive(entry);
+                if (castEntry instanceof Byte) {
+                    byte value = (Byte) castEntry;
+                    result[i] = value;
+                    seenNA = seenNA || RRuntime.isNA(value);
+                } else if (castEntry instanceof RLogicalVector) {
+                    RLogicalVector logicalVector = (RLogicalVector) castEntry;
+                    if (logicalVector.getLength() == 1) {
+                        byte value = logicalVector.getDataAt(0);
                         result[i] = value;
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (castEntry instanceof RLogicalVector) {
-                        RLogicalVector logicalVector = (RLogicalVector) castEntry;
-                        if (logicalVector.getLength() == 1) {
-                            byte value = logicalVector.getDataAt(0);
-                            result[i] = value;
-                            seenNA = seenNA || RRuntime.isNA(value);
-                        } else if (logicalVector.getLength() == 0) {
-                            result[i] = RRuntime.LOGICAL_NA;
-                            seenNA = true;
-                        } else {
-                            throw throwCannotCoerceListError("logical");
-                        }
+                    } else if (logicalVector.getLength() == 0) {
+                        result[i] = RRuntime.LOGICAL_NA;
+                        seenNA = true;
                     } else {
                         throw throwCannotCoerceListError("logical");
                     }
+                } else {
+                    throw throwCannotCoerceListError("logical");
                 }
             }
         }

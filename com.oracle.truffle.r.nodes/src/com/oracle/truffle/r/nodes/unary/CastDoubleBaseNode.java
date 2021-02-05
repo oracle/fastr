@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,10 +93,9 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
     protected double doComplex(@SuppressWarnings("unused") RComplex operand,
                     @Cached("getVector(operand)") RComplexVector vector,
                     @Cached("vector.access()") VectorAccess uAccess) {
-        try (VectorAccess.SequentialIterator sIter = uAccess.access(vector, warningContext())) {
-            uAccess.next(sIter);
-            return uAccess.getDouble(sIter);
-        }
+        VectorAccess.SequentialIterator sIter = uAccess.access(vector, warningContext());
+        uAccess.next(sIter);
+        return uAccess.getDouble(sIter);
     }
 
     @Specialization(replaces = "doComplex")

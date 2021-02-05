@@ -3,7 +3,7 @@
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -188,7 +188,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
     }
 
     @TruffleBoundary
-    private int[] probSampleReplace(int n, double[] probArray, int resultSize) {
+    private static int[] probSampleReplace(int n, double[] probArray, int resultSize) {
         // The following code is transcribed from GNU R src/main/random.c lines 309-335
         int[] result = new int[resultSize];
         int[] perm = new int[n];
@@ -214,7 +214,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
     }
 
     @TruffleBoundary
-    private int[] probSampleWithoutReplace(int n, double[] probArray, int resultSize) {
+    private static int[] probSampleWithoutReplace(int n, double[] probArray, int resultSize) {
         // The following code is transcribed from GNU R src/main/random.c lines 396-428
         int[] ans = new int[resultSize];
         int[] perm = new int[n];
@@ -244,14 +244,14 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
     }
 
     @TruffleBoundary
-    private void buildheap(double[] keys, int[] values) {
+    private static void buildheap(double[] keys, int[] values) {
         for (int i = (keys.length >> 1); i >= 0; i--) {
             minHeapify(keys, i, keys.length, values);
         }
     }
 
     @TruffleBoundary
-    private void minHeapify(double[] keys, int currentIndex, int heapSize, int[] values) {
+    private static void minHeapify(double[] keys, int currentIndex, int heapSize, int[] values) {
         int leftChildIndex = currentIndex << 1;
         int rightChildIndex = leftChildIndex + 1;
         int lowestElementIndex = currentIndex;
@@ -278,7 +278,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
     }
 
     @TruffleBoundary
-    private void heapSort(int[] values, double[] keys) {
+    private static void heapSort(int[] values, double[] keys) {
         buildheap(keys, values);
         for (int i = keys.length - 1; i > 0; i--) {
             exchange(keys, 0, i, values);

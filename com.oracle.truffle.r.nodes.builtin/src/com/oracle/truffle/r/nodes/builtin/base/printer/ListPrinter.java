@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,9 +120,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 if (sv.getLength() == 1) {
                     String ctmp;
                     VectorAccess access = sv.slowPathAccess();
-                    try (RandomIterator iter = access.randomAccess(sv)) {
-                        ctmp = RRuntime.escapeString(access.getString(iter, 0), true, true);
-                    }
+                    RandomIterator iter = access.randomAccess(sv);
+                    ctmp = RRuntime.escapeString(access.getString(iter, 0), true, true);
                     if (ctmp.length() < 100) {
                         pbuf = ctmp;
                     } else {

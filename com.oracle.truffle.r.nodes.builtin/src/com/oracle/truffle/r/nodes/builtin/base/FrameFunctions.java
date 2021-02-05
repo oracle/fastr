@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
@@ -728,11 +727,10 @@ public class FrameFunctions {
             return new Object[]{1};
         }
 
-        @Specialization
-        protected REnvironment parentFrame(VirtualFrame frame, int nIn,
-                        @Cached("createEqualityProfile()") ValueProfile nProfile,
+        @Specialization(guards = "nIn == n", limit = "1")
+        protected REnvironment parentFrame(VirtualFrame frame, @SuppressWarnings("unused") int nIn,
+                        @Cached("nIn") int n,
                         @Cached("new()") ParentFrameIterator iter) {
-            int n = nProfile.profile(nIn);
             if (n <= 0) {
                 throw error(RError.Message.INVALID_VALUE, "n");
             }
@@ -745,6 +743,12 @@ public class FrameFunctions {
                 i++;
             }
             return iter.environment(frame, iterState);
+        }
+
+        @Specialization(replaces = "parentFrame")
+        protected REnvironment parentFrameGeneric(VirtualFrame frame, int nIn,
+                        @Cached("new()") ParentFrameIterator iter) {
+            return parentFrame(frame, nIn, nIn, iter);
         }
     }
 

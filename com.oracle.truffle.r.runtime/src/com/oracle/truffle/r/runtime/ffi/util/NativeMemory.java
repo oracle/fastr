@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,14 +32,13 @@ import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.ffi.util.ResourcesCleaner.Releasable;
-import org.graalvm.collections.EconomicSet;
+
 import sun.misc.Unsafe;
 
 /**
@@ -160,6 +159,7 @@ public abstract class NativeMemory {
         return copyCString(address.getAddress(), maxLength, encoding);
     }
 
+    @TruffleBoundary
     public static String copyCString(long address, long maxLength, Charset encoding) {
         int length = 0;
         while (length < maxLength && NativeMemory.getByte(address, length) != 0) {
@@ -307,8 +307,7 @@ public abstract class NativeMemory {
          * the release method can be called. I.e., NativeMemoryWrapper must not be collected sooner
          * than the referent/owner.
          */
-        private static final EconomicSet<NativeMemoryWrapper> active = EconomicSet.create();
-        private static final ReentrantLock activeLock = new ReentrantLock();
+        private static final ConcurrentHashMap<NativeMemoryWrapper, NativeMemoryWrapper> active = new ConcurrentHashMap<>();
 
         private FreeingNativeMemoryWrapper(long address, Object owner) {
             super(address, owner, ResourcesCleaner.nativeReferenceQueue());
@@ -316,31 +315,25 @@ public abstract class NativeMemory {
             // NativeMemory.allocate
             assert ALLOCATED == null || ALLOCATED.get(getAddress()) != null : "MEMORY ERROR: " + Long.toHexString(getAddress()) + " " + owner.getClass().getSimpleName();
             this.ownerInfo = NEEDS_DEBUG_INFO ? owner.getClass().getSimpleName() : null;
-            try {
-                activeLock.lock();
-                addToActive();
-            } finally {
-                activeLock.unlock();
-            }
-        }
-
-        @TruffleBoundary
-        private void addToActive() {
-            // TODO: we should replace this with out PE safe hash-set implementation (GR-20634)
-            boolean wasNotIn = active.add(this);
-            assert wasNotIn : "MEMORY ERROR";
+            addToActive();
         }
 
         @Override
         public void release() {
             NativeMemory.free(getAddress(), ownerInfo);
-            try {
-                activeLock.lock();
-                assert active.contains(this) : "MEMORY ERROR";
-                active.remove(this);
-            } finally {
-                activeLock.unlock();
-            }
+            removeFromActive();
+        }
+
+        @TruffleBoundary
+        private void addToActive() {
+            NativeMemoryWrapper existing = active.put(this, this);
+            assert existing == null : "MEMORY ERROR (ALLOC)";
+        }
+
+        @TruffleBoundary
+        private void removeFromActive() {
+            NativeMemoryWrapper existing = active.remove(this);
+            assert existing == this : "MEMORY ERROR (FREE)";
         }
 
         @Override

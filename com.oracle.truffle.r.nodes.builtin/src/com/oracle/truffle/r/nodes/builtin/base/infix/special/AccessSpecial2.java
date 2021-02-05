@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -32,7 +31,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 /**
  * Subscript code for matrices minus list is the same as subset code, this class allows sharing it.
@@ -59,17 +57,10 @@ public abstract class AccessSpecial2 extends IndexingSpecial2Common implements S
         return dataLib.getDoubleAt(vector.getData(), matrixIndex(vector, index1, index2));
     }
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"}, limit = "getVectorAccessCacheSize()")
     protected String accessString(RStringVector vector, int index1, int index2,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            return access.getString(iter, matrixIndex(vector, index1, index2));
-        }
-    }
-
-    @Specialization(replaces = "accessString", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected String accessStringGeneric(RStringVector vector, int index1, int index2) {
-        return accessString(vector, index1, index2, vector.slowPathAccess());
+                    @CachedLibrary("vector.getData()") VectorDataLibrary lib) {
+        return lib.getStringAt(vector.getData(), matrixIndex(vector, index1, index2));
     }
 
     @SuppressWarnings("unused")

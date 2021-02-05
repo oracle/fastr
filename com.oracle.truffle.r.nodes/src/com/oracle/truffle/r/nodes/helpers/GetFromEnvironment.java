@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,7 +76,7 @@ public abstract class GetFromEnvironment extends RBaseNode {
         return frameProfile.profile(env.getFrame(frameAccessProfile)).getFrameDescriptor();
     }
 
-    @Specialization(guards = {"getFrameDescriptor(env) == envDesc", "read.getIdentifier().equals(name)"})
+    @Specialization(guards = {"getFrameDescriptor(env) == envDesc", "name.equals(read.getIdentifier())"})
     protected Object getCached(VirtualFrame frame, REnvironment env, @SuppressWarnings("unused") String name,
                     @Cached("env.getFrame().getFrameDescriptor()") @SuppressWarnings("unused") FrameDescriptor envDesc,
                     @Cached("createRead(name)") LocalReadVariableNode read) {

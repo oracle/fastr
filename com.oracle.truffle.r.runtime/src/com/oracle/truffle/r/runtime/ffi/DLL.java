@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -308,6 +308,7 @@ public class DLL {
             return create(name, path, dynamicLookup, handle, addToList, false);
         }
 
+        @TruffleBoundary
         private static DLLInfo create(String name, String path, boolean dynamicLookup, LibHandle handle, boolean addToList, boolean syntheticHandle) {
             DLLInfo result = new DLLInfo(name, path, dynamicLookup, handle, syntheticHandle);
             if (addToList) {
@@ -619,7 +620,7 @@ public class DLL {
 
     public static DLLInfo createSyntheticLib(RContext context, String library) {
         DLLInfo dllInfo = DLLInfo.create(library, library, true, new SynthLibHandle(), false, true);
-        context.stateDLL.list.add(dllInfo);
+        Utils.add(context.stateDLL.list, dllInfo);
         return dllInfo;
     }
 
@@ -922,6 +923,7 @@ public class DLL {
      * where {@code name} should be equivalent to having called {@link #libName} on the path to the
      * library.
      */
+    @TruffleBoundary
     public static DLLInfo findLibrary(String name) {
         ContextStateImpl contextState = getContextState();
         for (DLLInfo dllInfo : contextState.list) {

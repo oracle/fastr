@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -148,7 +148,7 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
             }
         }
         if (nameArray != null) {
-            newName = new String(nameArray);
+            newName = Utils.newString(nameArray);
         }
         if (Utils.isIsoLatinDigit(newName.charAt(0)) || (newName.length() > 1 && newName.charAt(0) == '.' && Utils.isIsoLatinDigit(newName.charAt(1))) ||
                         (newName.charAt(0) == '.' && name.charAt(0) != '.')) {
@@ -162,33 +162,32 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
     protected RStringVector makeNames(RStringVector names, byte allowUnderScoreArg,
                     @Cached("names.access()") VectorAccess namesAccess,
                     @Cached("createNonShared(names)") VectorReuse reuse) {
-        try (VectorAccess.SequentialIterator namesIter = namesAccess.access(names)) {
-            if (namesLengthZero.profile(namesAccess.getLength(namesIter) == 0)) {
-                return names;
-            } else {
-                boolean allowUnderscore = allowUnderScoreArg == RRuntime.LOGICAL_TRUE;
-                NewNames newNames = null;
-                try {
-                    while (namesAccess.next(namesIter)) {
-                        String name = namesAccess.getString(namesIter);
-                        String newName = getKeyword(name, allowUnderscore);
-                        if (newName != null) {
+        VectorAccess.SequentialIterator namesIter = namesAccess.access(names);
+        if (namesLengthZero.profile(namesAccess.getLength(namesIter) == 0)) {
+            return names;
+        } else {
+            boolean allowUnderscore = allowUnderScoreArg == RRuntime.LOGICAL_TRUE;
+            NewNames newNames = null;
+            try {
+                while (namesAccess.next(namesIter)) {
+                    String name = namesAccess.getString(namesIter);
+                    String newName = getKeyword(name, allowUnderscore);
+                    if (newName != null) {
+                        newNames = updateNewNames(names, reuse, namesIter.getIndex(), newName, newNames);
+                    } else {
+                        newName = getName(name, allowUnderscore);
+                        if (!Utils.fastPathIdentityEquals(newName, name)) {
+                            // getName returns "name" in case nothing's changed
                             newNames = updateNewNames(names, reuse, namesIter.getIndex(), newName, newNames);
-                        } else {
-                            newName = getName(name, allowUnderscore);
-                            if (!Utils.fastPathIdentityEquals(newName, name)) {
-                                // getName returns "name" in case nothing's changed
-                                newNames = updateNewNames(names, reuse, namesIter.getIndex(), newName, newNames);
-                            }
                         }
                     }
-                } finally {
-                    if (newNames != null) {
-                        newNames.iter.close();
-                    }
                 }
-                return newNames != null ? newNames.vector : names;
+            } finally {
+                if (newNames != null) {
+                    newNames.iter.close();
+                }
             }
+            return newNames != null ? newNames.vector : names;
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.api.CompilerDirectives;
 
 /**
  * This enum represents an information about sortedness of a vector and is transcribed from
@@ -57,7 +57,8 @@ public enum AltrepSortedness {
             case 0:
                 return KNOWN_UNSORTED;
         }
-        throw RInternalError.shouldNotReachHere("Got unexpected integer value: " + value);
+        assert false : value;
+        throw CompilerDirectives.shouldNotReachHere("Got unexpected integer value.");
     }
 
     public int getValue() {

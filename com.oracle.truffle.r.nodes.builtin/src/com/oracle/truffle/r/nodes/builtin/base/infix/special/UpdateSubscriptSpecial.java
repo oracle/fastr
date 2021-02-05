@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @ImportStatic(DSLConfig.class)
@@ -78,9 +77,12 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
     @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected RStringVector setString(RStringVector vector, int index, String value,
                     @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib) {
-        try (RandomAccessWriteIterator iter = vectorDataLib.randomAccessWriteIterator(vector.getData())) {
+        RandomAccessWriteIterator iter = vectorDataLib.randomAccessWriteIterator(vector.getData());
+        boolean neverSeenNA = false;
+        try {
             vectorDataLib.setStringAt(vector.getData(), index - 1, value);
-            boolean neverSeenNA = vectorDataLib.getNACheck(vector.getData()).neverSeenNA();
+            neverSeenNA = vectorDataLib.getNACheck(vector.getData()).neverSeenNA();
+        } finally {
             vectorDataLib.commitRandomAccessWriteIterator(vector.getData(), iter, neverSeenNA);
         }
         return vector;
@@ -92,18 +94,11 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         return setString(vector, index, value, VectorDataLibrary.getFactory().getUncached());
     }
 
-    @Specialization(guards = {"access.supports(list)", "simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
+    @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"}, limit = "getVectorAccessCacheSize()")
     protected static Object setList(RList list, int index, Object value,
-                    @Cached("list.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(list)) {
-            access.setListElement(iter, index - 1, value);
-            return list;
-        }
-    }
-
-    @Specialization(replaces = "setList", guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
-    protected static Object setListGeneric(RList list, int index, Object value) {
-        return setList(list, index, value, list.slowPathAccess());
+                    @CachedLibrary("list.getData()") VectorDataLibrary lib) {
+        lib.setElementAt(list.getData(), index - 1, value);
+        return list;
     }
 
     @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")

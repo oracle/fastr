@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -115,6 +116,7 @@ public abstract class ForeignArrayToVectorNode extends RBaseNode {
             return arrayElements;
 
         } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+            CompilerDirectives.transferToInterpreter();
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
     }

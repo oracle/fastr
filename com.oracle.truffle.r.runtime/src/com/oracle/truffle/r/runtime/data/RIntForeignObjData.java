@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -154,7 +155,7 @@ class RIntForeignObjData implements TruffleObject {
             }
 
             if (isIntProfile.profile(result instanceof Number)) {
-                int ir = ((Number) resultProfile.profile(result)).intValue();
+                int ir = Utils.intValue((Number) resultProfile.profile(result));
                 naCheck.check(ir);
                 return ir;
             } else {

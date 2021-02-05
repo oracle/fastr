@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,10 +103,9 @@ public abstract class CastExpressionNode extends CastBaseNode {
                     @Cached("obj.access()") VectorAccess uAccess) {
         int len = obj.getLength();
         Object[] data = new Object[len];
-        try (SequentialIterator sIter = uAccess.access(obj, warningContext())) {
-            while (uAccess.next(sIter)) {
-                data[sIter.getIndex()] = uAccess.getListElement(sIter);
-            }
+        SequentialIterator sIter = uAccess.access(obj, warningContext());
+        while (uAccess.next(sIter)) {
+            data[sIter.getIndex()] = uAccess.getListElement(sIter);
         }
         if (obj instanceof RList) {
             RList list = (RList) obj;

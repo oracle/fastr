@@ -25,12 +25,14 @@ package com.oracle.truffle.r.runtime.data.model;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -173,7 +175,7 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     @ExportMessage(name = "createEmptySameType", library = AbstractContainerLibrary.class)
     public RAbstractVector containerLibCreateEmptySameType(int newLength, boolean fillWithNA,
-                    @Cached("createEqualityProfile()") ValueProfile fillWithNAProfile,
+                    @Cached("createEqualityProfile()") PrimitiveValueProfile fillWithNAProfile,
                     @Shared("rtypeProfile") @Cached("createIdentityProfile()") ValueProfile typeProfile) {
         assert this instanceof RAbstractVector;
         return typeProfile.profile(getRType()).create(newLength, fillWithNAProfile.profile(fillWithNA));
@@ -216,6 +218,7 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
     public void containerLibToNativeDummyImpl() {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere(this.getClass().getSimpleName());
     }
 }

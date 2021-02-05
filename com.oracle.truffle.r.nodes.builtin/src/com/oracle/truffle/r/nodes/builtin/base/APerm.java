@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -114,7 +115,9 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] ap = new int[diml];
 
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData);
+        boolean neverSeenNA = false;
+        try {
             RandomAccessIterator vectorIt = vectorDataLib.randomAccessIterator(vectorData);
             for (int i = 0; i < resultLen; i++) {
                 for (int j = 0; j < ap.length; j++) {
@@ -130,7 +133,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                     posV[j] = 0;
                 }
             }
-            boolean neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+            neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, neverSeenNA);
         }
 
@@ -197,7 +201,9 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         setDimsNode.setDimensions(result, resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData);
+        boolean neverSeenNA = false;
+        try {
             RandomAccessIterator vectorIt = vectorDataLib.randomAccessIterator(vectorData);
             // Move along the old array using stride
             for (int i = 0; i < resultLen; i++) {
@@ -205,7 +211,8 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
                 resultDataLib.transfer(resultData, resultIt, i, vectorDataLib, vectorIt, vectorData, pos);
                 incArray(posV, pDim);
             }
-            boolean neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+            neverSeenNA = vectorDataLib.isComplete(vectorData) || vectorDataLib.getNACheck(vectorData).neverSeenNA();
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, neverSeenNA);
         }
 
@@ -285,7 +292,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] perm = new int[permVector.getLength()];
         for (int i = 0; i < perm.length; i++) {
             for (int dimNamesIdx = 0; dimNamesIdx < dimNames.getLength(); dimNamesIdx++) {
-                if (dimNames.getDataAt(dimNamesIdx).equals(permVector.getDataAt(i))) {
+                if (Utils.equals(dimNames.getDataAt(dimNamesIdx), permVector.getDataAt(i))) {
                     perm[i] = dimNamesIdx;
                     break;
                 }

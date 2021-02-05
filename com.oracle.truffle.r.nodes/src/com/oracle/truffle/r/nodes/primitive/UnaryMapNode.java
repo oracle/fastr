@@ -71,26 +71,25 @@ final class UnaryMapScalarNode extends UnaryMapNode {
         function.enable(operand);
         assert operand.getLength() == 1;
 
-        try (RandomIterator iter = operandAccess.randomAccess(operand)) {
-            switch (argumentType) {
-                case Logical:
-                    return function.applyLogical(operandAccess.getLogical(iter, 0));
-                case Integer:
-                    return function.applyInteger(operandAccess.getInt(iter, 0));
-                case Double:
-                    return function.applyDouble(operandAccess.getDouble(iter, 0));
-                case Complex:
-                    switch (resultType) {
-                        case Double:
-                            return function.applyDouble(operandAccess.getComplex(iter, 0));
-                        case Complex:
-                            return function.applyComplex(operandAccess.getComplex(iter, 0));
-                        default:
-                            throw RInternalError.shouldNotReachHere();
-                    }
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
+        RandomIterator iter = operandAccess.randomAccess(operand);
+        switch (argumentType) {
+            case Logical:
+                return function.applyLogical(operandAccess.getLogical(iter, 0));
+            case Integer:
+                return function.applyInteger(operandAccess.getInt(iter, 0));
+            case Double:
+                return function.applyDouble(operandAccess.getDouble(iter, 0));
+            case Complex:
+                switch (resultType) {
+                    case Double:
+                        return function.applyDouble(operandAccess.getComplex(iter, 0));
+                    case Complex:
+                        return function.applyComplex(operandAccess.getComplex(iter, 0));
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            default:
+                throw RInternalError.shouldNotReachHere();
         }
     }
 }
@@ -158,9 +157,12 @@ final class UnaryMapVectorNode extends UnaryMapNode {
             Object resultData = result.getData();
             SeqIterator operandIter = operandDataLib.iterator(operandData);
             assert resultDataLib != null;
-            try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+            SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData);
+            boolean neverSeenNA = false;
+            try {
                 vectorNode.execute(function, operandLength, resultDataLib, resultData, resultIter, operandDataLib, operandData, operandIter);
-                boolean neverSeenNA = operandLength == 0 || operandDataLib.getNACheck(operandData).neverSeenNA();
+                neverSeenNA = operandLength == 0 || operandDataLib.getNACheck(operandData).neverSeenNA();
+            } finally {
                 resultDataLib.commitWriteIterator(resultData, resultIter, neverSeenNA);
             }
             RBaseNode.reportWork(this, operandLength);

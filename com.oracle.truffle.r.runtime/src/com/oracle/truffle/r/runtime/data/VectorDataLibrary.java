@@ -226,50 +226,15 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
-    public static final class SeqWriteIterator extends SeqIterator implements AutoCloseable {
-        private boolean committed; // used for assertions only
-
+    public static final class SeqWriteIterator extends SeqIterator {
         public SeqWriteIterator(Object store, int length) {
             super(store, length);
         }
-
-        public void commit() {
-            assert setCommitted(true);
-        }
-
-        private boolean setCommitted(boolean b) {
-            return committed = b;
-        }
-
-        @Override
-        public void close() {
-            // commitWriteIterator was not called or the library impl. is not setting the
-            // 'committed' flag in the iterator
-            assert committed;
-        }
-
     }
 
-    public static final class RandomAccessWriteIterator extends RandomAccessIterator implements AutoCloseable {
-        private boolean committed; // used for assertions only
-
+    public static final class RandomAccessWriteIterator extends RandomAccessIterator {
         public RandomAccessWriteIterator(Object store) {
             super(store);
-        }
-
-        public void commit() {
-            assert setCommited(true);
-        }
-
-        private boolean setCommited(boolean b) {
-            return committed = b;
-        }
-
-        @Override
-        public void close() {
-            // commitWriteIterator was not called or the library impl. is not setting the
-            // 'committed' flag in the iterator
-            assert committed;
         }
     }
 
@@ -358,8 +323,8 @@ public abstract class VectorDataLibrary extends Library {
 
     /**
      * Writes using a write iterator must be committed using this method. Moreover, the iterators
-     * should be used with the try-with-resources pattern. The {@code close} method checks that
-     * {@link #commitWriteIterator(Object, SeqWriteIterator, boolean)} was invoked.
+     * should be used with the try-finally pattern where the finally block should call
+     * {@link #commitWriteIterator(Object, SeqWriteIterator, boolean)}.
      *
      * {@code neverSeenNA} set to {@code true} indicates that no {@code NA} value was written to the
      * vector. {@code neverSeenNA} set to {@code false} indicates that an {@code NA} value may or
@@ -379,25 +344,18 @@ public abstract class VectorDataLibrary extends Library {
      * </pre>
      *
      * Notes for implementors:
-     *
-     * Make sure to update the {@link SeqWriteIterator#committed} flag to {@code true}. It is
-     * checked with assertion in the {@link SeqWriteIterator#close()} method.
-     *
+     * 
      * Implementations that are not writeable, or that always return {@code false} from
      * {@link #isComplete(Object)} do not need to implement this message.
-     *
-     * Note: we cannot implement this in the {@link AutoCloseable#close()} method of
-     * {@link SeqWriteIterator}, because we need to pass in the {@code receiver} object.
      */
-    public void commitWriteIterator(@SuppressWarnings("unused") Object receiver, SeqWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
-        iterator.commit();
+    public void commitWriteIterator(@SuppressWarnings("unused") Object receiver, @SuppressWarnings("unused") SeqWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
     }
 
     /**
      * @see #commitWriteIterator(Object, SeqWriteIterator, boolean)
      */
-    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") Object receiver, RandomAccessWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
-        iterator.commit();
+    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") Object receiver, @SuppressWarnings("unused") RandomAccessWriteIterator iterator,
+                    @SuppressWarnings("unused") boolean neverSeenNA) {
     }
 
     /**
@@ -2450,6 +2408,7 @@ public abstract class VectorDataLibrary extends Library {
     // Private utility methods
 
     private static RInternalError notImplemented(Object receiver) {
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.unimplemented(receiver == null ? "null" : receiver.getClass().getSimpleName());
     }
 

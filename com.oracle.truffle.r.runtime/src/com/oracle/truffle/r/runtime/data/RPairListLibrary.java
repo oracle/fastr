@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,11 +47,11 @@ public abstract class RPairListLibrary extends Library {
 
     public abstract Object cdr(Object target);
 
+    public abstract void appendToEnd(Object target, RPairList newEnd);
+
     public abstract Object getTag(Object target);
 
     public abstract Closure getClosure(Object target);
-
-    public abstract Iterable<RPairList> iterable(Object target);
 
     public abstract int getLength(Object target);
 }

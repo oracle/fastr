@@ -177,9 +177,8 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
                     @Cached("createTemporary(x)") VectorReuse xReuse) {
         RAbstractVector result = xReuse.getResult(x);
         VectorAccess resultAccess = xReuse.access(result);
-        try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
-            transposeSquareMatrixInPlace(result, resultIter, resultAccess);
-        }
+        RandomIterator resultIter = resultAccess.randomAccess(result);
+        transposeSquareMatrixInPlace(result, resultIter, resultAccess);
         return result;
     }
 
@@ -199,7 +198,8 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         RandomAccessIterator xIter = xDataLib.randomAccessIterator(xData);
         RAbstractVector result = factory.createVector(xDataLib.getType(xData), xLen, false);
         Object resultData = result.getData();
-        try (RandomAccessWriteIterator resultIter = resultDataLib.randomAccessWriteIterator(resultData)) {
+        RandomAccessWriteIterator resultIter = resultDataLib.randomAccessWriteIterator(resultData);
+        try {
             int length = lengthProfile.profile(xLen);
             assert isMatrix(x);
             int[] dims = getDimNode.getDimensions(x);
@@ -220,6 +220,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
             copyRegAttributes.execute(x, result);
             // set new dimensions
             putNewDimsFromDimnames(x, result, new int[]{secondDim, firstDim});
+        } finally {
             resultDataLib.commitRandomAccessWriteIterator(resultData, resultIter, xDataLib.getNACheck(xData).neverSeenNA());
         }
         return result;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /**
  * See the documentation of {@link AltRepClassDescriptor}.
@@ -160,6 +161,7 @@ public class AltRealClassDescriptor extends AltVecClassDescriptor {
     }
 
     @Override
+    @TruffleBoundary
     public String toString() {
         return "ALTREAL class descriptor for " + super.toString();
     }

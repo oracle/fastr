@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -44,6 +43,7 @@ import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSetDouble;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -109,16 +109,16 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
             }
             return RDataFactory.createStringVector(Arrays.copyOf(data, ind), vecLib.isComplete(vecData));
         } else {
-            ArrayList<String> dataList = new ArrayList<>(vecLength);
+            ArrayList<String> dataList = Utils.createArrayList(vecLength);
             SeqIterator it = vecLib.iterator(vecData);
             while (vecLib.nextLoopCondition(vecData, it)) {
                 String s = vecLib.getNextString(vecData, it);
-                if (!dataList.contains(s)) {
-                    dataList.add(s);
+                if (!Utils.contains(dataList, s)) {
+                    Utils.add(dataList, s);
                 }
             }
             String[] data = new String[dataList.size()];
-            dataList.toArray(data);
+            Utils.toArray(dataList, data);
             return RDataFactory.createStringVector(data, vecLib.isComplete(vecData));
         }
     }
@@ -479,14 +479,15 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
         Object vecData = vec.getData();
         int vecLength = vecDataLib.getLength(vecData);
         reportWork(vecLength);
-        BitSet bitset = new BitSet(256);
+        boolean[] bitset = new boolean[Byte.MAX_VALUE - Byte.MIN_VALUE + 1];
         byte[] data = new byte[vecLength];
         int ind = 0;
         SeqIterator vecIter = vecDataLib.iterator(vecData);
         while (vecDataLib.nextLoopCondition(vecData, vecIter)) {
             byte val = vecDataLib.getNextRaw(vecData, vecIter);
-            if (!bitset.get(val)) {
-                bitset.set(val);
+            int idx = val - Byte.MIN_VALUE;
+            if (!bitset[idx]) {
+                bitset[idx] = true;
                 data[ind++] = val;
             }
         }

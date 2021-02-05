@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -162,11 +162,10 @@ public abstract class NonNANode extends CastNode {
     @Specialization(guards = {"access.supports(x)", "!x.isComplete()"})
     protected RAbstractAtomicVector onPossiblyIncompleteContainerCached(RAbstractAtomicVector x,
                     @Cached("x.access()") VectorAccess access) {
-        try (SequentialIterator iter = access.access(x)) {
-            while (access.next(iter)) {
-                if (access.isNA(iter)) {
-                    handleNA(x);
-                }
+        SequentialIterator iter = access.access(x);
+        while (access.next(iter)) {
+            if (access.isNA(iter)) {
+                handleNA(x);
             }
         }
         return x;

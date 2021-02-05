@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.RError.Message.X_LONGER_THAN_Y;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveRegAttributesNode;
@@ -64,25 +65,25 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
         RStringVector result = vectorReuse.getResult(values);
         VectorAccess resultAccess = vectorReuse.access(result);
         removeRegAttributesNode.execute(result);
-        try (SequentialIterator readIter = resultAccess.access(result); SequentialIterator writeIter = resultAccess.access(result)) {
-            while (resultAccess.next(readIter)) {
-                resultAccess.next(writeIter);
-                String value = resultAccess.getString(readIter);
-                if (RRuntime.isNA(value)) {
-                    continue;
-                }
-                int replaceIdx = 0;
-                while (replaceIdx < oldStr.length()) {
-                    if (replaceIdx + 2 < oldStr.length() && oldStr.charAt(replaceIdx + 1) == '-') {
-                        value = replaceRange(replaceIdx, oldStr, newStr, value);
-                        replaceIdx += 3;
-                    } else {
-                        value = value.replace(oldStr.charAt(replaceIdx), newStr.charAt(replaceIdx));
-                        replaceIdx++;
-                    }
-                }
-                resultAccess.setString(writeIter, value);
+        SequentialIterator readIter = resultAccess.access(result);
+        SequentialIterator writeIter = resultAccess.access(result);
+        while (resultAccess.next(readIter)) {
+            resultAccess.next(writeIter);
+            String value = resultAccess.getString(readIter);
+            if (RRuntime.isNA(value)) {
+                continue;
             }
+            int replaceIdx = 0;
+            while (replaceIdx < oldStr.length()) {
+                if (replaceIdx + 2 < oldStr.length() && oldStr.charAt(replaceIdx + 1) == '-') {
+                    value = replaceRange(replaceIdx, oldStr, newStr, value);
+                    replaceIdx += 3;
+                } else {
+                    value = replace(value, oldStr.charAt(replaceIdx), newStr.charAt(replaceIdx));
+                    replaceIdx++;
+                }
+            }
+            resultAccess.setString(writeIter, value);
         }
         return result;
     }
@@ -107,8 +108,13 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
         }
         String replacedValue = value;
         for (int rangeIdx = 0; rangeIdx <= oldEnd - oldStart; rangeIdx++) {
-            replacedValue = value.replace((char) (oldStart + rangeIdx), (char) (newStart + rangeIdx));
+            replacedValue = replace(value, (char) (oldStart + rangeIdx), (char) (newStart + rangeIdx));
         }
         return replacedValue;
+    }
+
+    @TruffleBoundary(allowInlining = true)
+    private static String replace(String s, char oldChar, char newChar) {
+        return s.replace(oldChar, newChar);
     }
 }

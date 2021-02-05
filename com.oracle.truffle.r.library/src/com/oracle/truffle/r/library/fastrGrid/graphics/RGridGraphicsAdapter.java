@@ -4,7 +4,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.library.fastrGrid.graphics;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RError;
@@ -146,7 +147,7 @@ public final class RGridGraphicsAdapter {
         REnvironment baseEnv = REnvironment.baseEnv();
         baseEnv.safePut(DOT_DEVICE, name);
         RPairList dotDevices = fixupDevicesVariable(rCtx);
-        dotDevices.appendToEnd(RDataFactory.createPairList(name));
+        dotDevices.appendToEnd(RDataFactory.createPairList(name), BranchProfile.getUncached());
     }
 
     public static String getDefaultDevice() {

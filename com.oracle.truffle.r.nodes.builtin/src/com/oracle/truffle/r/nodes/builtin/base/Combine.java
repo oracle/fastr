@@ -81,6 +81,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -338,15 +339,14 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             }
             if (hasNewNamesProfile.profile(newNames != null)) {
                 VectorAccess newNamesAccess = newNames.slowPathAccess();
-                try (VectorAccess.RandomIterator newNamesIter = newNamesAccess.randomAccess(newNames)) {
-                    for (int i1 = 0; i1 < length; i1++) {
-                        foldedNames.names[pos + i1] = newNamesAccess.getString(newNamesIter, i1);
-                    }
-                    VectorDataLibrary newNamesDataLib = getElemDataLib(index);
-                    if (!newNamesDataLib.isComplete(newNames.getData())) {
-                        naNameBranch.enter();
-                        foldedNames.complete = false;
-                    }
+                RandomIterator newNamesIter = newNamesAccess.randomAccess(newNames);
+                for (int i1 = 0; i1 < length; i1++) {
+                    foldedNames.names[pos + i1] = newNamesAccess.getString(newNamesIter, i1);
+                }
+                VectorDataLibrary newNamesDataLib = getElemDataLib(index);
+                if (!newNamesDataLib.isComplete(newNames.getData())) {
+                    naNameBranch.enter();
+                    foldedNames.complete = false;
                 }
             } else {
                 for (int i1 = 0; i1 < length; i1++) {
@@ -382,11 +382,13 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             VectorDataLibrary vDataLib = getElemDataLib(elementIndex);
             Object resultData = result.getData();
             Object vData = v.getData();
-            try (RandomAccessWriteIterator resultIt = resultDataLibrary.randomAccessWriteIterator(resultData)) {
+            RandomAccessWriteIterator resultIt = resultDataLibrary.randomAccessWriteIterator(resultData);
+            try {
                 RandomAccessIterator vIt = vDataLib.randomAccessIterator(vData);
                 for (int i = 0; i < v.getLength(); i++) {
                     resultDataLibrary.transfer(resultData, resultIt, pos + i, vDataLib, vIt, vData, i);
                 }
+            } finally {
                 resultDataLibrary.commitRandomAccessWriteIterator(resultData, resultIt, vDataLib.getNACheck(vData).neverSeenNA());
             }
             return vDataLib.getLength(vData);

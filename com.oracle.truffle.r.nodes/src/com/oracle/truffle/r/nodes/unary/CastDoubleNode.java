@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,10 +86,9 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     private RDoubleVector createResultVector(RAbstractAtomicVector operand, VectorAccess uAccess, CopyOfRegAttributesNode copyOfRegAttributesNode) {
         double[] idata = new double[operand.getLength()];
-        try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
-            while (uAccess.next(sIter)) {
-                idata[sIter.getIndex()] = uAccess.getDouble(sIter);
-            }
+        SequentialIterator sIter = uAccess.access(operand, warningContext());
+        while (uAccess.next(sIter)) {
+            idata[sIter.getIndex()] = uAccess.getDouble(sIter);
         }
         return vectorCopy(operand, idata, uAccess.na.neverSeenNAOrNaN(), copyOfRegAttributesNode);
     }
@@ -129,34 +128,33 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         int length = list.getLength();
         double[] result = new double[length];
         boolean seenNA = false;
-        try (SequentialIterator sIter = uAccess.access(list, warningContext())) {
-            while (uAccess.next(sIter)) {
-                int i = sIter.getIndex();
-                Object entry = uAccess.getListElement(sIter);
-                if (entry instanceof RList) {
-                    result[i] = RRuntime.DOUBLE_NA;
-                    seenNA = true;
-                } else {
-                    Object castEntry = castDoubleRecursive(entry);
-                    if (castEntry instanceof Double) {
-                        double value = (Double) castEntry;
+        SequentialIterator sIter = uAccess.access(list, warningContext());
+        while (uAccess.next(sIter)) {
+            int i = sIter.getIndex();
+            Object entry = uAccess.getListElement(sIter);
+            if (entry instanceof RList) {
+                result[i] = RRuntime.DOUBLE_NA;
+                seenNA = true;
+            } else {
+                Object castEntry = castDoubleRecursive(entry);
+                if (castEntry instanceof Double) {
+                    double value = (Double) castEntry;
+                    result[i] = value;
+                    seenNA = seenNA || RRuntime.isNA(value);
+                } else if (castEntry instanceof RDoubleVector) {
+                    RDoubleVector doubleVector = (RDoubleVector) castEntry;
+                    if (doubleVector.getLength() == 1) {
+                        double value = doubleVector.getDataAt(0);
                         result[i] = value;
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (castEntry instanceof RDoubleVector) {
-                        RDoubleVector doubleVector = (RDoubleVector) castEntry;
-                        if (doubleVector.getLength() == 1) {
-                            double value = doubleVector.getDataAt(0);
-                            result[i] = value;
-                            seenNA = seenNA || RRuntime.isNA(value);
-                        } else if (doubleVector.getLength() == 0) {
-                            result[i] = RRuntime.DOUBLE_NA;
-                            seenNA = true;
-                        } else {
-                            throw throwCannotCoerceListError("numeric");
-                        }
+                    } else if (doubleVector.getLength() == 0) {
+                        result[i] = RRuntime.DOUBLE_NA;
+                        seenNA = true;
                     } else {
                         throw throwCannotCoerceListError("numeric");
                     }
+                } else {
+                    throw throwCannotCoerceListError("numeric");
                 }
             }
         }

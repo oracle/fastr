@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
+import static com.oracle.truffle.r.runtime.Utils.intValue;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -40,6 +42,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
@@ -233,7 +236,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
             case Logical:
                 WriteArray<byte[]> wba = (byte[] array, int resultIdx, int sourceIdx, boolean[] complete) -> {
                     Object value = elements[sourceIdx];
-                    array[resultIdx] = value == RNull.instance ? RRuntime.LOGICAL_NA : ((Number) value).byteValue();
+                    array[resultIdx] = value == RNull.instance ? RRuntime.LOGICAL_NA : Utils.byteValue((Number) value);
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 byte[] byteArray = new byte[size];
@@ -245,7 +248,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
             case Double:
                 WriteArray<double[]> wda = (array, resultIdx, sourceIdx, complete) -> {
                     Object value = elements[sourceIdx];
-                    array[resultIdx] = value == RNull.instance ? RRuntime.DOUBLE_NA : ((Number) value).doubleValue();
+                    array[resultIdx] = value == RNull.instance ? RRuntime.DOUBLE_NA : Utils.doubleValue((Number) value);
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 double[] doubleArray = new double[size];
@@ -257,7 +260,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
             case Integer:
                 WriteArray<int[]> wia = (array, resultIdx, sourceIdx, complete) -> {
                     Object value = elements[sourceIdx];
-                    array[resultIdx] = value == RNull.instance ? RRuntime.INT_NA : ((Number) value).intValue();
+                    array[resultIdx] = value == RNull.instance ? RRuntime.INT_NA : intValue(((Number) value));
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 int[] intArray = new int[size];
@@ -269,7 +272,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
             case Character:
                 WriteArray<String[]> wsa = (array, resultIdx, sourceIdx, complete) -> {
                     Object value = elements[sourceIdx];
-                    array[resultIdx] = value == RNull.instance ? RRuntime.STRING_NA : String.valueOf(value);
+                    array[resultIdx] = value == RNull.instance ? RRuntime.STRING_NA : Utils.stringValueOf(value);
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 String[] stringArray = new String[size];
@@ -281,7 +284,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
             case Raw:
                 wba = (byte[] array, int resultIdx, int sourceIdx, boolean[] complete) -> {
                     Object value = elements[sourceIdx];
-                    array[resultIdx] = value == RNull.instance ? 0 : ((Number) value).byteValue();
+                    array[resultIdx] = value == RNull.instance ? 0 : Utils.byteValue((Number) value);
                 };
                 byteArray = new byte[size];
                 if (dims != null) {
@@ -429,6 +432,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
             case Null:
                 return getArrayToListNode().toList(truffleObject, recursive);
             default:
+                CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("did not handle properly: " + inspectedType);
         }
     }
@@ -466,6 +470,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                     elementNames.add(name);
                 }
             } catch (UnknownIdentifierException | UnsupportedMessageException ex) {
+                CompilerDirectives.transferToInterpreter();
                 throw error(RError.Message.GENERIC, "error while converting truffle object to list: " + ex.getMessage());
             }
         }

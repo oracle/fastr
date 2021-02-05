@@ -171,14 +171,13 @@ class RLogicalArrayVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public void commitWriteIterator(SeqWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
-        iterator.commit();
+    public void commitWriteIterator(@SuppressWarnings("unused") SeqWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         commitWrites(neverSeenNA, setCompleteProfile);
     }
 
     @ExportMessage
-    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
-        iterator.commit();
+    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") RandomAccessWriteIterator iterator, boolean neverSeenNA,
+                    @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         commitWrites(neverSeenNA, setCompleteProfile);
     }
 

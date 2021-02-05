@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.r.runtime.RLogger;
@@ -200,6 +201,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         return lengthMethodDescriptor != null;
     }
 
+    @TruffleBoundary
     @Override
     public String toString() {
         return packageName + ":" + className;

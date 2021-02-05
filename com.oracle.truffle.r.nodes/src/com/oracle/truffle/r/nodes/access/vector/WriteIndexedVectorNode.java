@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,9 +95,11 @@ abstract class WriteIndexedVectorNode extends Node {
                     @Cached("createWrite()") WriteIndexedVectorAccessNode write) {
         Object rightData = right.getData();
         Object leftData = left.getData();
-        try (RandomAccessWriteIterator leftIter = leftDataLib.randomAccessWriteIterator(leftData)) {
+        RandomAccessWriteIterator leftIter = leftDataLib.randomAccessWriteIterator(leftData);
+        try {
             RandomAccessIterator rightIter = rightDataLib.randomAccessIterator(rightData);
             write.apply(positionContainerLibrary, leftIter, leftDataLib, leftData, positions, rightIter, rightDataLib, rightData, right, positionTargetDimensions);
+        } finally {
             leftDataLib.commitRandomAccessWriteIterator(leftData, leftIter, rightDataLib.getNACheck(rightData).neverSeenNA());
         }
     }

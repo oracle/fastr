@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         assert methodInterop.isExecutable(altrepMethodDescriptor.method);
         RContext ctx = ctxRef.get();
 
-        Object before = null;
+        Object before;
         if (isLLVMProfile.profile(altrepMethodDescriptor.rffiType == Type.LLVM)) {
             before = ctx.getRFFI(TruffleLLVM_Context.class).beforeDowncall(null, altrepMethodDescriptor.rffiType);
         } else {
@@ -88,7 +88,8 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         }
 
         Object ret;
-        try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
+        FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length);
+        try {
             Object[] wrappedArgs = ffiWrap.wrapSome(args, materializeNodes, toNativeNodes, wrapArguments);
             ret = methodInterop.execute(altrepMethodDescriptor.method, wrappedArgs);
             if (unwrapResult) {
@@ -97,6 +98,8 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
             }
         } catch (Exception ex) {
             throw RInternalError.shouldNotReachHere(ex);
+        } finally {
+            ffiWrap.close();
         }
 
         if (isLLVMProfile.profile(altrepMethodDescriptor.rffiType == Type.LLVM)) {

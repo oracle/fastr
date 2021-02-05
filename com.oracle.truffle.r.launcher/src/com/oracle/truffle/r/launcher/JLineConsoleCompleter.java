@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -123,7 +123,7 @@ public class JLineConsoleCompleter implements Completer {
         }
     }
 
-    private String getValue(String res, int leftBracketIdx, int quoteIdx, String word, int wordCursor) {
+    private static String getValue(String res, int leftBracketIdx, int quoteIdx, String word, int wordCursor) {
         if (quoteIdx > leftBracketIdx) {
             return merge(word, res, wordCursor, true);
         }
@@ -133,7 +133,7 @@ public class JLineConsoleCompleter implements Completer {
         return res;
     }
 
-    private String merge(String word, String result, int wordCursor, boolean isPaths) {
+    private static String merge(String word, String result, int wordCursor, boolean isPaths) {
         if (result.startsWith(word)) {
             return result;
         }
@@ -229,7 +229,7 @@ public class JLineConsoleCompleter implements Completer {
             }
             if (idx > -1) {
                 idx += subs.length();
-                return idx > start ? idx : start;
+                return Math.max(idx, start);
             }
         }
         return start;

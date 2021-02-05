@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -43,9 +46,6 @@ import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
-
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 public class TruffleNFI_Call implements CallRFFI {
 
@@ -106,8 +106,9 @@ public class TruffleNFI_Call implements CallRFFI {
 
         private static Object doInvoke(NativeCallInfo nativeCallInfo, TruffleObject address, TruffleObject function, Object[] args, int cachedArgsLength, FFIMaterializeNode[] ffiMaterializeNode,
                         FFIToNativeMirrorNode[] ffiToNativeMirrorNodes, InteropLibrary interop, FFIUnwrapNode unwrap) throws RuntimeException {
-            Object result = null;
-            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
+            Object result;
+            FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length);
+            try {
                 logCall(nativeCallInfo.name, args);
                 Object[] wrappedArgs = ffiWrap.wrapAll(args, ffiMaterializeNode, ffiToNativeMirrorNodes);
                 Object[] realArgs = new Object[cachedArgsLength + 1];
@@ -117,6 +118,8 @@ public class TruffleNFI_Call implements CallRFFI {
                 return unwrap.execute(result);
             } catch (Exception ex) {
                 throw RInternalError.shouldNotReachHere(ex);
+            } finally {
+                ffiWrap.close();
             }
         }
 
@@ -142,7 +145,8 @@ public class TruffleNFI_Call implements CallRFFI {
 
         @Override
         public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
-            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
+            FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length);
+            try {
                 Object[] wrappedArgs;
                 switch (args.length) {
                     case 0:
@@ -161,6 +165,8 @@ public class TruffleNFI_Call implements CallRFFI {
                 }
             } catch (Exception ex) {
                 throw RInternalError.shouldNotReachHere(ex);
+            } finally {
+                ffiWrap.close();
             }
         }
     }

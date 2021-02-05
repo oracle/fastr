@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -128,7 +128,7 @@ public final class MemAllocProfilerPaths {
         return targetPaths;
     }
 
-    private void groupBySrcSection(MemAllocProfilerPaths targetPaths, Entry newParent, Collection<Entry> nonGroupedEntries) {
+    private static void groupBySrcSection(MemAllocProfilerPaths targetPaths, Entry newParent, Collection<Entry> nonGroupedEntries) {
         Map<SourceSection, List<Entry>> entriesBySection = new HashMap<>();
 
         for (Entry nonGroupedEntry : nonGroupedEntries) {
@@ -175,7 +175,7 @@ public final class MemAllocProfilerPaths {
         traverseEntry(se, consumer, childrenEntriesComparator, levels, prependParentEntries);
     }
 
-    private void traverseEntry(Entry rootEntry, Consumer<Deque<Entry>> consumer, Comparator<Entry> childrenEntriesComparator, int levels, boolean prependParentEntries) {
+    private static void traverseEntry(Entry rootEntry, Consumer<Deque<Entry>> consumer, Comparator<Entry> childrenEntriesComparator, int levels, boolean prependParentEntries) {
         ArrayDeque<Entry> stack = new ArrayDeque<>();
         if (prependParentEntries) {
             Entry e = rootEntry;
@@ -189,7 +189,7 @@ public final class MemAllocProfilerPaths {
         traverseStack(stack, consumer, childrenEntriesComparator, levels);
     }
 
-    private void traverseStack(Deque<Entry> stack, Consumer<Deque<Entry>> consumer, Comparator<Entry> childrenEntriesComparator, int levels) {
+    private static void traverseStack(Deque<Entry> stack, Consumer<Deque<Entry>> consumer, Comparator<Entry> childrenEntriesComparator, int levels) {
         if (levels <= 0) {
             return;
         }

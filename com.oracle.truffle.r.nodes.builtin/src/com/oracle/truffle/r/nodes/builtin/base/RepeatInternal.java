@@ -80,12 +80,15 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
             int resultLen = timesValue * valueLen;
             result = factory.createVector(valueType, resultLen, false);
             Object resultData = result.getData();
-            try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+            SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData);
+            boolean neverSeenNA = false;
+            try {
                 while (resultDataLib.nextLoopCondition(resultData, resultIter)) {
                     valueDataLib.nextWithWrap(valueData, valueIter);
                     resultDataLib.transferNext(resultData, resultIter, valueDataLib, valueIter, valueData);
                 }
-                boolean neverSeenNA = valueDataLib.getNACheck(valueData).neverSeenNA();
+                neverSeenNA = valueDataLib.getNACheck(valueData).neverSeenNA();
+            } finally {
                 resultDataLib.commitWriteIterator(resultData, resultIter, neverSeenNA);
             }
         } else if (timesLen == valueLen) {
@@ -101,7 +104,9 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
             Object resultData = result.getData();
 
             timesIter.reset();
-            try (SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData)) {
+            SeqWriteIterator resultIter = resultDataLib.writeIterator(resultData);
+            boolean neverSeenNA = false;
+            try {
                 while (timesDataLib.nextLoopCondition(timesData, timesIter) && valueDataLib.nextLoopCondition(valueData, valueIter)) {
                     int num = timesDataLib.getNextInt(timesData, timesIter);
                     for (int i = 0; i < num; i++) {
@@ -109,7 +114,8 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
                         resultDataLib.transferNext(resultData, resultIter, valueDataLib, valueIter, valueData);
                     }
                 }
-                boolean neverSeenNA = valueDataLib.getNACheck(valueData).neverSeenNA();
+                neverSeenNA = valueDataLib.getNACheck(valueData).neverSeenNA();
+            } finally {
                 resultDataLib.commitWriteIterator(resultData, resultIter, neverSeenNA);
             }
         } else {

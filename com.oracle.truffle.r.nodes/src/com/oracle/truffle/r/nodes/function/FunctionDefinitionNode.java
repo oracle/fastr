@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,6 +73,8 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairList.PairListIterator;
+import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
@@ -115,6 +117,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @Child private FrameSlotNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
     @Child private InteropLibrary exceptionInterop;
+    @Child private RPairListLibrary exitSlotsPlLib;
     private final ConditionProfile onExitProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile resetArgs = BranchProfile.create();
     private final BranchProfile normalExit = BranchProfile.create();
@@ -385,7 +388,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                      * was already called.
                      */
                     try {
-                        for (RPairList expr : current) {
+                        RPairListLibrary plib = getExitSlotsPlLib();
+                        PairListIterator it = current.iterator();
+                        while (it.hasNext()) {
+                            RPairList expr = it.next(plib);
                             if (expr.car() != RNull.instance) {
                                 if (!(expr.car() instanceof RNode)) {
                                     CompilerDirectives.transferToInterpreter();
@@ -506,6 +512,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             exceptionInterop = insert(InteropLibrary.getFactory().createDispatched(3));
         }
         return exceptionInterop;
+    }
+
+    public RPairListLibrary getExitSlotsPlLib() {
+        if (exitSlotsPlLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            exitSlotsPlLib = insert(RPairListLibrary.getFactory().createDispatched(1));
+        }
+        return exitSlotsPlLib;
     }
 
     @Override
