@@ -785,6 +785,7 @@ public class BasePackage extends RBuiltinPackage {
         add(StartsEndsWithFunctions.StartsWith.class, StartsEndsWithFunctionsFactory.StartsWithNodeGen::create);
         add(StartsEndsWithFunctions.EndsWith.class, StartsEndsWithFunctionsFactory.EndsWithNodeGen::create);
         add(Stop.class, StopNodeGen::create);
+        add(Str2Expression.class, Str2ExpressionNodeGen::create);
         add(Strtoi.class, StrtoiNodeGen::create);
         add(Strrep.class, StrrepNodeGen::create);
         add(Strtrim.class, StrtrimNodeGen::create);
