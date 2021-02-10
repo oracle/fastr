@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -447,7 +447,7 @@ public abstract class InternalNode extends OperatorNode {
                     "qweibull", "dnchisq", "pnchisq", "qnchisq", "dnt", "pnt", "qnt", "dwilcox", "pwilcox", "qwilcox", "dnbinom_mu", "pnbinom_mu", "qnbinom_mu", "dhyper",
                     "phyper", "qhyper", "dnbeta", "pnbeta", "qnbeta", "dnf", "pnf", "qnf", "dtukey", "ptukey", "qtukey", "rchisq", "rexp", "rgeom", "rpois", "rt", "rsignrank", "rbeta", "rbinom",
                     "rcauchy", "rf", "rgamma", "rlnorm", "rlogis", "rnbinom", "rnbinom_mu", "rnchisq", "rnorm", "runif", "rweibull", "rwilcox", "rhyper",
-                    "grepRaw", "regexec", "adist", "aregexec", "chartr", "strtrim", "eapply", "machine", "save", "dump", "prmatrix", "gcinfo",
+                    "regexec", "adist", "aregexec", "chartr", "strtrim", "eapply", "machine", "save", "dump", "prmatrix", "gcinfo",
                     "memory.profile", "sys.on.exit", "builtins", "bodyCode", "rapply",
                     "mem.limits", "capabilitiesX11", "Cstack_info", "file.choose",
                     "setNumMathThreads", "setMaxNumMathThreads", "isatty", "isIncomplete", "pipe", "fifo", "unz", "truncate", "rawConnection",
