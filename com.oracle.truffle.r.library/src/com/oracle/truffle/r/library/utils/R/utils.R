@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -76,8 +76,8 @@ eval(expression({
 	options(available_packages_filters = list(add = TRUE, fastRPkgFilter))
 	
 	getDependencies.original <- getDependencies
-	getDependencies <- function(pkgs, dependencies = NA, available = NULL, lib = .libPaths()[1L], binary = FALSE) {
-		res <- getDependencies.original(pkgs, dependencies, available, lib, binary)
+	getDependencies <- function(pkgs, dependencies = NA, available = NULL, lib = .libPaths()[1L], binary = FALSE, av2 = NULL) {
+		res <- getDependencies.original(pkgs, dependencies, available, lib, binary, av2)
 		found <- names(pkgWarnings) %in% pkgs
 		if (any(found)) {
 			for (w in pkgWarnings[found]) {
