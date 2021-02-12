@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -786,6 +786,7 @@ public class BasePackage extends RBuiltinPackage {
         add(StartsEndsWithFunctions.EndsWith.class, StartsEndsWithFunctionsFactory.EndsWithNodeGen::create);
         add(Stop.class, StopNodeGen::create);
         add(Str2Expression.class, Str2ExpressionNodeGen::create);
+        add(Str2Lang.class, Str2LangNodeGen::create);
         add(Strtoi.class, StrtoiNodeGen::create);
         add(Strrep.class, StrrepNodeGen::create);
         add(Strtrim.class, StrtrimNodeGen::create);
