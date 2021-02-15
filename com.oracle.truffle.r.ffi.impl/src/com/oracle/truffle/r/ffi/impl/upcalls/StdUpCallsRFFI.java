@@ -588,6 +588,8 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(RMakeExternalPtrNode.class)
     Object R_MakeExternalPtr(@RFFICpointer Object addr, Object tag, Object prot);
 
+    long EXTPTR_PTR(Object x);
+
     long R_ExternalPtrAddr(Object x);
 
     Object R_ExternalPtrTag(Object x);

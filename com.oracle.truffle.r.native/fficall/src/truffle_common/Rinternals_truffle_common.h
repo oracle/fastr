@@ -1668,6 +1668,13 @@ void *R_ExternalPtrAddr(SEXP s) {
     return (void *)result;
 }
 
+void *EXTPTR_PTR(SEXP s) {
+    TRACE0();
+    long result = ((call_EXTPTR_PTR) callbacks[EXTPTR_PTR_x])(s);
+    checkExitCall();
+    return (void *)result;
+}
+
 SEXP R_ExternalPtrTag(SEXP s) {
     TRACE0();
     SEXP result = ((call_R_ExternalPtrTag) callbacks[R_ExternalPtrTag_x])(s);

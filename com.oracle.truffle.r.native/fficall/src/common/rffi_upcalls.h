@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -253,6 +253,7 @@ typedef SEXP (*call_R_PromiseExpr)(SEXP x);
 typedef SEXP (*call_R_ClosureExpr)(SEXP x);
 typedef SEXP (*call_R_forceAndCall)(SEXP e, SEXP f, int n, SEXP rho);
 typedef SEXP (*call_R_MakeExternalPtr)(void *p, SEXP tag, SEXP prot);
+typedef long (*call_EXTPTR_PTR)(SEXP s);
 typedef long (*call_R_ExternalPtrAddr)(SEXP s);
 typedef SEXP (*call_R_ExternalPtrTag)(SEXP s);
 typedef SEXP (*call_R_ExternalPtrProtected)(SEXP s);

@@ -1711,6 +1711,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public long EXTPTR_PTR(Object x) {
+        return R_ExternalPtrAddr(x);
+    }
+
+    @Override
     public long R_ExternalPtrAddr(Object x) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         return p.getAddr().asAddress();
