@@ -1245,7 +1245,7 @@ public class FileFunctions {
         // TODO: NewVersionMigration - expand parameter
         @Specialization
         @TruffleBoundary
-        protected static int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, boolean expand,
+        protected static int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, @SuppressWarnings("unused") boolean expand,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             int result = 1;
             for (int i = -0; i < vec.getLength(); i++) {

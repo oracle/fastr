@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -258,9 +258,12 @@ public class TestBuiltin_identical extends TestBase {
         assertEval("{ x<-quote(f()); attr(x, \"foo\")<-\"foo\"; y<-quote(f()); attr(y, \"bar\")<-\"bar\"; identical(x, y) }");
         assertEval("{ x<-quote(f()); attr(x, \"foo\")<-\"foo\"; y<-quote(f()); identical(x, y) }");
         assertEval("{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"foo\")<-\"foo\"; identical(x, y) }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"bar\")<-\"foo\"; identical(x, y) }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"foo\")<-\"bar\"; identical(x, y) }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"bar\")<-\"bar\"; identical(x, y) }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"bar\")<-\"foo\"; identical(x, y) }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"foo\")<-\"bar\"; identical(x, y) }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); attr(y, \"bar\")<-\"bar\"; identical(x, y) }");
         assertEval(Ignored.NewRVersionMigration, "{ setClass(\"c\", representation(d=\"numeric\")); x<-new(\"c\", d=42); attr(x, \"foo\")<-\"foo\"; y<-new(\"c\", d=42); identical(x, y) }");
         assertEval("{ x<-expression(1 + 0:9); y<-expression(1 + 0:9); identical(x, y) }");
 

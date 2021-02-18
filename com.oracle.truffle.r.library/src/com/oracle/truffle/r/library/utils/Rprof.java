@@ -104,7 +104,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg9 implements MemoryC
     @Specialization
     @TruffleBoundary
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "RprofState.get never returns null")
-    public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling, boolean gcProfiling, boolean lineProfiling, boolean filterCallFrames,
+    public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling, boolean gcProfiling, boolean lineProfiling, @SuppressWarnings("unused") boolean filterCallFrames,
                     @SuppressWarnings("unused") int numFiles, @SuppressWarnings("unused") int bufSize,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
 

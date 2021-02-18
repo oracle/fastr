@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -126,7 +126,8 @@ public class TestBuiltin_rbind extends TestBase {
         assertEval("{ v <- 1; class(v) <- c('foo1', 'foo2'); rbind.foo2 <- function(...) 'foo2'; rbind(v) }");
         assertEval("{ v <- 1; class(v) <- c('foo1', 'foo2'); rbind.foo1 <- function(...) 'foo1'; rbind.foo2 <- function(...) 'foo2'; rbind(v) }");
 
-        assertEval(Ignored.NewRVersionMigration, "{ v1 <- 1; class(v1) <- 'foo1'; rbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; rbind.foo2 <- function(...) 'foo2'; rbind(v1, v2) }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ v1 <- 1; class(v1) <- 'foo1'; rbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; rbind.foo2 <- function(...) 'foo2'; rbind(v1, v2) }");
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; rbind.foo1 <- function(...) 'foo1'; v2 <- 2; class(v2) <- 'foo2'; rbind(v1, v2) }");
         assertEval("{ v1 <- 1; class(v1) <- 'foo1'; v2 <- 2; class(v2) <- 'foo2'; rbind.foo2 <- function(...) 'foo2'; rbind(v1, v2) }");
 

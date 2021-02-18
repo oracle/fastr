@@ -88,7 +88,6 @@ com.oracle.truffle.r.native/fficall/src/include/Rgraphics.h,gnu_r_gentleman_ihak
 com.oracle.truffle.r.native/fficall/src/include/rlocale.h,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/truffle_llvm/Memory.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/truffle_nfi/Memory.c,gnu_r.copyright
-com.oracle.truffle.r.native/gnur/patch/src/library/base/src/registration.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/grDevices/src/gzio.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/methods/src/methods_dummy.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/parallel/src/glpi.h,no.copyright
@@ -959,6 +958,7 @@ com.oracle.truffle.r.native/gnur/patch/src/main/gzio.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/plot.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/plotmath.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/plot3d.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/main/registration.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/rlocale.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/rlocale_data.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/sort.c,no.copyright
