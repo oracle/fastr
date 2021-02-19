@@ -463,6 +463,10 @@ def gnur_packages_test(args):
     '''
     package = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.pkgs/fastRCluster')
     gnur_binary = os.path.join(gnur_path(), 'bin', 'R')
+    if not os.path.exists(gnur_binary):
+        # FastR is not build yet, or GNUR_HOME_BINARY env variable is not set.
+        mx.log("Ignoring gnur_packages_test - fastr is either not build or GNUR_HOME_BINARY env var unset")
+        return
     mx.run([gnur_binary, 'CMD', 'build', package])
     result = glob.glob('fastRCluster*.tar.gz')
     if len(result) != 1:
