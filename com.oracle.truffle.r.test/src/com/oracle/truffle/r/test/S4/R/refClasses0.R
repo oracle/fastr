@@ -18,7 +18,6 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-#Ignored.NewRVersionMigration
 #IgnoreErrorContext
 # Create a new reference class, and an instance of it
 gen <- setRefClass("myRefClass", fields=list(aa="integer", bb="ANY"))

@@ -222,8 +222,8 @@ public class TestBuiltin_unclass extends TestBase {
 
     @Test
     public void testOther() {
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); unclass(x) }");
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); unclass(x) }");
         // before S4 objects became shareable, the test below was merging two class representations
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"foo\", representation(j=\"numeric\")); setClass(\"foo\", representation(d=\"numeric\")); x<-new(\"foo\", d=42); unclass(x) }");
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); setClass(\"foo\", representation(d=\"numeric\")); x<-new(\"foo\", d=42); unclass(x) }");
     }
 }
