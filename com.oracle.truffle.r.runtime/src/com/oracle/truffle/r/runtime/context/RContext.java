@@ -847,6 +847,10 @@ public final class RContext {
         s4ExtendsTable.put(key, value);
     }
 
+    public void removeS4Extends(String key) {
+        s4ExtendsTable.remove(key);
+    }
+
     public PrimitiveMethodsInfo getPrimitiveMethodsInfo() {
         if (primitiveMethodsInfo == null) {
             // shared contexts do not run concurrently with their parent and re-use primitive
