@@ -690,8 +690,6 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     if (r != null) {
                         if (result == null) {
                             result = r;
-                        } else if (!result.targetFunctionName.equals(r.targetFunctionName)) {
-                            return null;
                         }
                     }
                 }
