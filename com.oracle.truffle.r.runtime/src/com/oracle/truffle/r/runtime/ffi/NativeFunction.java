@@ -85,7 +85,7 @@ public enum NativeFunction {
     // stats
     fft_factor("(sint32, [sint32], [sint32]): void", "", "stats"),
     fft_setup_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", "", "stats"),
-    lminfl("([double], sint32, sint32, sint32, sint32, sint32, [double], [double], [double], [double], [double], double): void", "call_stats_", "stats"),
+    lminfl("([double], sint32, sint32, sint32, sint32, [double], [double], [double], [double], double): void", "call_stats_", "stats"),
     // FastR helpers
     set_exception_flag("(): void"),
     // FastR internal helper for R embedded mode
