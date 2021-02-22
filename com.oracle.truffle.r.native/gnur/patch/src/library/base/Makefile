@@ -29,6 +29,9 @@ LIB_PKG_POST = post.done
 CLEAN_PKG = clean.done
 endif
 
+# This is necessary so that #include Defn.h works
+PKG_INCLUDES := -I$(TOPDIR)/fficall/src/include
+
 include ../lib.mk
 
 ifeq ($(FASTR_RFFI),managed)

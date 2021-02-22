@@ -56,25 +56,9 @@
     are (currently) within extern "C" blocks.
 */
 #include <R_ext/Callbacks.h>
-#include <Rdynpriv.h>
-
-#include "basedecl.h"
 
 
-
-#define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
-
-static R_CallMethodDef callMethods [] = {
-    /* Top-level task callbacks: .Call as .Internal does not work */
-    CALLDEF(R_addTaskCallback, 4),
-    CALLDEF(R_getTaskCallbackNames, 0),
-    CALLDEF(R_removeTaskCallback, 1),
-
-    {NULL, NULL, 0}
-};
-
-
-#define FDEF(name, n)  {#name, (DL_FUNC) &F77_SYMBOL(name), n, NULL}
+#define FDEF(name, n)  {#name, (DL_FUNC) &(name##_), n, NULL}
 static R_FortranMethodDef fortranMethods[] = {
     /* LINPACK */
     FDEF(dqrcf, 8), // qr and auxiliaries
@@ -92,6 +76,6 @@ static R_FortranMethodDef fortranMethods[] = {
 void attribute_hidden
 R_init_base(DllInfo *dll)
 {
-    R_registerRoutines(dll, NULL, callMethods, fortranMethods, NULL);
+    R_registerRoutines(dll, NULL, NULL, fortranMethods, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
