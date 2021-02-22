@@ -36,26 +36,26 @@ public class TestBuiltin_dqr extends TestBase {
 
     @Test
     public void testdqrcf() {
-        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrcf, 1, 1L, 1L, 1, 1, 1L, 1, 1L)");
+        assertEval(".Fortran(.F_dqrcf, 1, 1L, 1L, 1, 1, 1L, 1, 1L)");
     }
 
     @Test
     public void testdqrqty() {
-        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrqty, 1, 1L, 1L, 1, 1, 1L, qty=1)");
+        assertEval(".Fortran(.F_dqrqty, 1, 1L, 1L, 1, 1, 1L, qty=1)");
     }
 
     @Test
     public void testdqrqy() {
-        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrqy, 1, 1L, 1L, 1, 1, 1L, 1)");
+        assertEval(".Fortran(.F_dqrqy, 1, 1L, 1L, 1, 1, 1L, 1)");
     }
 
     @Test
     public void testdqrrsd() {
-        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrrsd, 1, 1L, 1L, 1, 1, 1L, 1)");
+        assertEval(".Fortran(.F_dqrrsd, 1, 1L, 1L, 1, 1, 1L, 1)");
     }
 
     @Test
     public void testdqrxb() {
-        assertEval(Ignored.NewRVersionMigration, ".Fortran(.F_dqrxb, 1, 1L, 1L, 1, 1, 1L, 1)");
+        assertEval(".Fortran(.F_dqrxb, 1, 1L, 1L, 1, 1, 1L, 1)");
     }
 }
