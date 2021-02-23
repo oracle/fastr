@@ -20,6 +20,14 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -49,14 +57,36 @@ public class TestBuiltin_unlink extends TestBase {
 
     @Test
     public void testunlink() {
-        assertEval(Ignored.NewRVersionMigration, "{ unlink('abcnonexistentxyz*') }");
+        assertEval("{ unlink('abcnonexistentxyz*') }");
 
-        assertEval(Ignored.NewRVersionMigration, "{ td <- tempfile(pattern='r-test-unlink'); dir.exists(td); dir.create(td); dir.exists(td); unlink(td, recursive=F); dir.exists(td) }");
-        assertEval(Ignored.NewRVersionMigration, "{ td <- tempfile(pattern='r-test-unlink'); dir.exists(td); dir.create(td); dir.exists(td); unlink(td, recursive=T); dir.exists(td) }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ td <- tempfile(pattern='r-test-unlink'); td <- paste0(td, '/dir1/dir2'); dir.exists(td); dir.create(td, recursive=T); dir.exists(td); unlink(td, recursive=F); dir.exists(td) }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ td <- tempfile(pattern='r-test-unlink'); td <- paste0(td, '/dir1/dir2'); dir.exists(td); dir.create(td, recursive=T); dir.exists(td); unlink(td, recursive=T); dir.exists(td) }");
+        assertEval("{ td <- tempfile(pattern='r-test-unlink'); dir.exists(td); dir.create(td); dir.exists(td); unlink(td, recursive=F); dir.exists(td) }");
+        assertEval("{ td <- tempfile(pattern='r-test-unlink'); dir.exists(td); dir.create(td); dir.exists(td); unlink(td, recursive=T); dir.exists(td) }");
+        assertEval("{ td <- tempfile(pattern='r-test-unlink'); td <- paste0(td, '/dir1/dir2'); dir.exists(td); dir.create(td, recursive=T); dir.exists(td); unlink(td, recursive=F); dir.exists(td) }");
+        assertEval("{ td <- tempfile(pattern='r-test-unlink'); td <- paste0(td, '/dir1/dir2'); dir.exists(td); dir.create(td, recursive=T); dir.exists(td); unlink(td, recursive=T); dir.exists(td) }");
     }
 
+    @Test
+    public void testUnlinkExpandParameter() throws IOException {
+        String fileName = "tmp_file77845610.txt";
+
+        Path fileInHomeDir = Paths.get(System.getProperty("user.home"), fileName);
+        Files.createFile(fileInHomeDir);
+        if (!Files.exists(Paths.get("~"))) {
+            Files.createDirectory(Paths.get("~"));
+        }
+        Path fileInTildeDir = Paths.get("~", fileName);
+        Files.createFile(fileInTildeDir);
+
+        Assume.assumeTrue(Files.exists(fileInHomeDir));
+        Assume.assumeTrue(Files.exists(fileInTildeDir));
+
+        String filePath = "~" + File.separator + fileName;
+        assertEvalFastR(String.format("{ res <- unlink('%s', expand=TRUE); res }", filePath), "0");
+        Assert.assertTrue(!Files.exists(fileInHomeDir) && Files.exists(fileInTildeDir));
+
+        assertEvalFastR(String.format("{ res <- unlink('%s', expand=FALSE); res }", filePath), "0");
+        Assert.assertTrue(!Files.exists(fileInHomeDir) && !Files.exists(fileInTildeDir));
+
+        Files.delete(Paths.get("~"));
+    }
 }
