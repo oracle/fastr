@@ -32,7 +32,7 @@ public class TestBuiltin_tempdir extends TestBase {
     @Test
     public void testTempdir() {
         // checking error messages; other tests not possible due to random nature of the builtin
-        assertEval(Ignored.NewRVersionMigration, "{ d <- tempdir(); unlink(d); print(identical(d, tempdir())); unused<-tempdir(TRUE)  }");
-        assertEval(Ignored.NewRVersionMigration, "{ d <- tempdir(); unlink(d); print(!identical(d, tempdir(TRUE))) }");
+        assertEval("{ d <- tempdir(); unlink(d); print(identical(d, tempdir())); unused<-tempdir(TRUE)  }");
+        assertEval("{ d <- tempdir(); unlink(d); print(!identical(d, tempdir(TRUE))) }");
     }
 }

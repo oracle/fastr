@@ -43,13 +43,10 @@ public class TestBuiltin_dircreate extends TestBase {
         assertEval("dir.create('" + dirPath + "', showWarnings=F, recursive=F)");
 
         // now create some that do not exist
-        assertEval(Ignored.NewRVersionMigration, "unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath1 + "'); dir.exists('" + dirPath1 + "');");
+        assertEval("unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath1 + "'); dir.exists('" + dirPath1 + "');");
 
-        assertEval(Ignored.NewRVersionMigration,
-                        "unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', showWarnings=T, recursive=F); dir.exists('" + dirPath2 + "')");
-        assertEval(Ignored.NewRVersionMigration,
-                        "unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', showWarnings=F, recursive=F); dir.exists('" + dirPath2 + "')");
-        assertEval(Ignored.NewRVersionMigration,
-                        "unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', recursive=T); dir.exists('" + dirPath2 + "')");
+        assertEval("unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', showWarnings=T, recursive=F); dir.exists('" + dirPath2 + "')");
+        assertEval("unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', showWarnings=F, recursive=F); dir.exists('" + dirPath2 + "')");
+        assertEval("unlink('" + dirPath1 + "', recursive=T); dir.exists('" + dirPath1 + "'); dir.create('" + dirPath2 + "', recursive=T); dir.exists('" + dirPath2 + "')");
     }
 }
