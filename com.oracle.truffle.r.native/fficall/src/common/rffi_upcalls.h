@@ -296,6 +296,7 @@ typedef SEXP (*call_R_CHAR)(SEXP x);
 typedef char *(*call_R_HomeDir)();
 typedef void (*call_R_CleanUp)(int sa, int status, int runlast);
 typedef void (*call_Rf_gsetVar)(SEXP symbol, SEXP value, SEXP rho);
+typedef void (*call_R_removeVarFromFrame)(SEXP symbol, SEXP env);
 typedef double (*call_unif_rand)();
 typedef double (*call_norm_rand)();
 typedef double (*call_exp_rand)();

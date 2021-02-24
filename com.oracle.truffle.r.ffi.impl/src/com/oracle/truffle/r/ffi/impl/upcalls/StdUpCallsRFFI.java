@@ -1069,6 +1069,8 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(MakeActiveBindingNode.class)
     void R_MakeActiveBinding(Object sym, Object fun, Object env);
 
+    void R_removeVarFromFrame(Object sym, Object env);
+
     /**
      * <code>PRIMFUN(op)</code> returns a function pointer for the given function object (SEXP)
      * argument identifying a primitive builtin. Its main purpose is to be stored in a display list.

@@ -279,6 +279,12 @@ void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho) {
     checkExitCall();
 }
 
+void R_removeVarFromFrame(SEXP symbol, SEXP env) {
+    TRACE0();
+    ((call_R_removeVarFromFrame) callbacks[R_removeVarFromFrame_x])(symbol, env);
+    checkExitCall();
+}
+
 SEXP Rf_coerceVector(SEXP x, SEXPTYPE mode) {
     TRACE(TARGpp, x, mode);
     SEXP result = ((call_Rf_coerceVector) callbacks[Rf_coerceVector_x])(x, mode);

@@ -3039,6 +3039,20 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public void R_removeVarFromFrame(Object sym, Object env) {
+        if (!(env instanceof REnvironment && sym instanceof RSymbol)) {
+            throw RInternalError.shouldNotReachHere();
+        }
+        RSymbol symbol = (RSymbol) sym;
+        REnvironment envir = (REnvironment) env;
+        try {
+            envir.rm(symbol.getName());
+        } catch (PutException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+    }
+
+    @Override
     public Object DispatchPRIMFUN(Object call, Object op, Object args, Object rho) {
         throw implementedAsNode();
     }
