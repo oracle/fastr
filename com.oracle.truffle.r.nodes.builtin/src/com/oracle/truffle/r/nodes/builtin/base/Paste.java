@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
@@ -43,8 +45,10 @@ import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitBaseEnvCallDispatcher;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -53,30 +57,34 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
-@RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
-public abstract class Paste extends RBuiltinNode.Arg3 {
+@RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse", "recycle0"}, behavior = PURE)
+public abstract class Paste extends RBuiltinNode.Arg4 {
 
     private static final String[] ONE_EMPTY_STRING = new String[]{""};
 
-    public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse);
+    public abstract Object executeList(VirtualFrame frame, RList value, String sep, Object collapse, Object recycle0);
 
     @Child private ClassHierarchyNode classHierarchyNode;
     @Child private CastNode asCharacterNode;
     @Child private CastNode castAsCharacterResultNode;
     @Child private RExplicitBaseEnvCallDispatcher asCharacterDispatcher;
     @Child private BoxPrimitiveNode boxPrimitiveNode = BoxPrimitiveNode.create();
+    @Child private RLengthNode elementLengthNode = RLengthNode.create();
 
     private final ValueProfile lengthProfile = PrimitiveValueProfile.createEqualityProfile();
     private final ConditionProfile reusedResultProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonNullElementsProfile = BranchProfile.create();
     private final BranchProfile onlyNullElementsProfile = BranchProfile.create();
+    private final BranchProfile hasZeroLengthElementProfile = BranchProfile.create();
     private final ConditionProfile isNotStringProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNoClassProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile convertedEmptyProfile = ConditionProfile.createBinaryProfile();
@@ -87,6 +95,8 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         casts.arg(0).mustBe(RAbstractListVector.class);
         casts.arg("sep").asStringVector().findFirst(Message.INVALID_SEPARATOR);
         casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();
+        // recycle0 parameter might be missing in .Internal call from baseloader.R
+        casts.arg("recycle0").allowNullAndMissing().mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
     }
 
     private RStringVector castCharacterVector(VirtualFrame frame, Object o) {
@@ -112,9 +122,13 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(limit = "getGenericDataLibraryCacheSize()")
-    protected RStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse,
+    protected RStringVector pasteListNullCollapse(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse, boolean recycle0,
                     @CachedLibrary("values.getData()") VectorDataLibrary valuesDataLib) {
         int length = lengthProfile.profile(valuesDataLib.getLength(values.getData()));
+        if (recycle0 && hasZeroLengthElement(values, valuesDataLib)) {
+            return RDataFactory.createEmptyStringVector();
+        }
+
         if (hasNonNullElements(values, length)) {
             int seqPos = isStringSequence(values, valuesDataLib, length);
             if (seqPos != -1) {
@@ -133,14 +147,33 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(limit = "getGenericDataLibraryCacheSize()")
-    protected String pasteList(VirtualFrame frame, RAbstractListVector values, String sep, String collapse,
+    protected String pasteList(VirtualFrame frame, RAbstractListVector values, String sep, String collapse, boolean recycle0,
                     @CachedLibrary("values.getData()") VectorDataLibrary valuesDataLib) {
         int length = lengthProfile.profile(valuesDataLib.getLength(values.getData()));
+        if (recycle0 && hasZeroLengthElement(values, valuesDataLib)) {
+            return "";
+        }
+
         if (hasNonNullElements(values, length)) {
             String[] result = pasteListElements(frame, values, valuesDataLib, sep, length);
             return collapseString(result, collapse);
         } else {
             return "";
+        }
+    }
+
+    /**
+     * Missing recycle0 argument is, e.g., in baseloader.R (as of GNU-R version 4.0.3)
+     */
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
+    protected Object pasteListMissingRecycle(VirtualFrame frame, RAbstractListVector values, String sep, Object collapse, @SuppressWarnings("unused") RMissing recycle0,
+                     @CachedLibrary("values.getData()") VectorDataLibrary valuesDataLib) {
+        if (collapse instanceof String) {
+            return pasteList(frame, values, sep, (String) collapse, false, valuesDataLib);
+        } else if (RRuntime.isNull(collapse)) {
+            return pasteListNullCollapse(frame, values, sep, RNull.instance, false, valuesDataLib);
+        } else {
+            throw RError.nyi(RError.NO_CALLER, "collapse not String or NULL");
         }
     }
 
@@ -152,6 +185,22 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
             }
         }
         onlyNullElementsProfile.enter();
+        return false;
+    }
+
+    private boolean hasZeroLengthElement(RAbstractListVector values, VectorDataLibrary valuesDataLib) {
+        Object valuesData = values.getData();
+        SeqIterator iterator = valuesDataLib.iterator(valuesData);
+        int i = 0;
+        while (valuesDataLib.nextLoopCondition(valuesData, iterator)) {
+            Object element = valuesDataLib.getNextElement(valuesData, iterator);
+            int elementLength = elementLengthNode.executeInteger(element);
+            if (elementLength == 0) {
+                hasZeroLengthElementProfile.enter();
+                return true;
+            }
+            i++;
+        }
         return false;
     }
 

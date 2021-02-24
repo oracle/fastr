@@ -107,12 +107,13 @@ public class TestBuiltin_paste extends TestBase {
         // Note the catch: class on strings is ignored....
         assertEval("{ as.character.myc <- function(x) '42'; val <- 'hello'; class(val) <- 'myc'; paste(val, 'world') }");
         // Next 2 tests should show error since 42, nor NULL is not character
-        assertEval(Ignored.NewRVersionMigration, "{ as.character.myc <- function(x) 42; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
-        assertEval(Ignored.NewRVersionMigration, "{ as.character.myc <- function(x) NULL; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
+        assertEval("{ as.character.myc <- function(x) 42; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
+        assertEval("{ as.character.myc <- function(x) NULL; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
         assertEval("{ as.character.myc <- function(x) '42'; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
         assertEval("{ assign('as.character.myc', function(x) '42', envir=.__S3MethodsTable__.); val <- 3.14; class(val) <- 'myc'; res <- paste(val, 'world'); rm('as.character.myc', envir=.__S3MethodsTable__.); res }");
     }
 
+    @Test
     public void testStringSequence() {
         assertEval("{ paste(\"a\", 1, TRUE, 1:4, 1.2) }");
         assertEval("{ paste(\"a\", 1, TRUE, 1:4) }");
@@ -120,5 +121,28 @@ public class TestBuiltin_paste extends TestBase {
 
         // ISOdate utilizes paste
         assertEval("{ ISOdate(2010, 01, 01, 1:10) }");
+    }
+
+    /**
+     * recycle0 optional parameter was added to GNU-R version 4.0.1
+     */
+    @Test
+    public void testRecycleParameter() {
+        assertEval("{ paste('hello', c(), recycle0=FALSE) }");
+        assertEval("{ paste('hello', c(), recycle0=TRUE) }");
+        assertEval("{ paste(1:3, 11:13, c(), sep=':', collapse='-', recycle0=FALSE) }");
+        assertEval("{ paste(1:3, 11:13, c(), sep=':', collapse='-', recycle0=TRUE) }");
+        assertEval("{ paste(1:3, 11:13, c(), sep=':', collapse=NULL, recycle0=FALSE) }");
+        assertEval("{ paste(1:3, 11:13, c(), sep=':', collapse=NULL, recycle0=TRUE) }");
+    }
+
+    @Test
+    public void testRecycleParameterWrongValues() {
+        assertEval("{ paste('hello', recycle0=NA) }");
+        assertEval("{ paste('hello', recycle0=NULL) }");
+        assertEval("{ paste('hello', recycle0=42) }");
+        assertEval("{ paste('hello', recycle0=':') }");
+        assertEval("{ paste('hello', recycle0=c(TRUE, FALSE)) }");
+        assertEval("{ paste('hello', recycle0=c(FALSE, TRUE)) }");
     }
 }
