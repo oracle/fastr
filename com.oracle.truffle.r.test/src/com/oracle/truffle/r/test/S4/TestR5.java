@@ -39,7 +39,7 @@ public class TestR5 extends TestBase {
     }
 
     private void assertSuppressAndIgnoreWarnings(String test) {
-        assertEval(Output.MayIgnoreWarningMessage, "print(suppressMessages({" + test + "}))");
+        assertEval(Output.IgnoreWarningMessage, "print(suppressMessages({" + test + "}))");
     }
 
     private void assertSuppress(TestTrait trait, String test) {
