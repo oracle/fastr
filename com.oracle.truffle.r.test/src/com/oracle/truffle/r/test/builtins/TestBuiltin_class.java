@@ -201,4 +201,30 @@ public class TestBuiltin_class extends TestBase {
 
         assertEval("{  gen<-function(object) 0; setGeneric(\"gen\"); class(gen) }");
     }
+
+    @Test
+    public void testSetClass() {
+        assertEval("{ x <- c(1,2,3); class(x) <- NULL; attributes(x); x }");
+        assertEval("{ x <- c(1,2,3); class(x) <- 'X'; attributes(x); x }");
+        assertEval("{ x <- c(1,2,3); class(x) <- c('X', 'Y'); attributes(x); x }");
+    }
+
+    /**
+     * Tests setting class attribute on different objects than containers, i.e., environments, functions, S4 objects, ...
+     */
+    @Test
+    public void testSetClassOnOtherObjects() {
+        assertEval("{ set_class <- function(object, new_class) { class(object) <- new_class; object }; MyClass <- setClass('MyClass', slots=c(data='numeric')); a <- MyClass(); x <- set_class(a, 'X'); class(a); class(x) }");
+        assertEval("{ set_class <- function(object, new_class) { class(object) <- new_class; object }; MyOtherClass <- setClass('MyOtherClass', slots=c(data='numeric')); b <- MyOtherClass(data=42); x <- set_class(b, 'X'); class(b); class(x) }");
+        assertEval("{ f <- function() NULL; class(f) }");
+        assertEval("{ f <- function() NULL; class(f) <- NULL; class(f) }");
+        assertEval("{ f <- function() NULL; class(f) <- 'X'; class(f) }");
+        assertEval("{ f <- function() NULL; class(f) <- c('X', 'Y'); class(f) }");
+        assertEval("{ f <- function() NULL; class(f) <- 42; class(f) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) <- NULL; class(e) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) <- 'X'; class(e) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) <- c('X', 'Y'); class(e) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) <- 42; class(e) }");
+    }
 }
