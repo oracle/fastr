@@ -36,6 +36,8 @@ public interface FastRUpCalls {
 
     int FASTR_getConnectionChar(Object obj);
 
+    int FASTR_getSerializeVersion();
+
     Object getSummaryDescription(Object x);
 
     Object getConnectionClassString(Object x);

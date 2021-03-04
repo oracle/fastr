@@ -1500,7 +1500,10 @@ Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
 SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
                void (*cleanfun)(void *), void *cleandata) {
     TRACE0();
-    return unimplemented("R_ExecWithCleanup");
+    // TODO: NewRVersionMigration - implement properly
+    SEXP result = fun(data);
+    cleanfun(cleandata);
+    return result;
 }
 
 /* Environment and Binding Features */
@@ -1628,6 +1631,19 @@ double R_strtod(const char *c, char **end) {
     unimplemented("R_strtod");
     return 0;
 }*/
+
+void R_InitOutPStream(R_outpstream_t stream, R_pstream_data_t data, R_pstream_format_t type, int version,
+		 void (*outchar)(R_outpstream_t, int), void (*outbytes)(R_outpstream_t, void *, int),
+		 SEXP (*phook)(SEXP, SEXP), SEXP pdata)
+{
+    stream->data = data;
+    stream->type = type;
+    stream->version = version != 0 ? version : FASTR_getSerializeVersion();
+    stream->OutChar = outchar;
+    stream->OutBytes = outbytes;
+    stream->OutPersistHookFunc = phook;
+    stream->OutPersistHookData = pdata;
+}
 
 SEXP R_PromiseExpr(SEXP x) {
     TRACE0();
@@ -1867,6 +1883,13 @@ void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
 int FASTR_getConnectionChar(SEXP conn) {
     TRACE0();
     int result = ((call_FASTR_getConnectionChar) callbacks[FASTR_getConnectionChar_x])(conn);
+    checkExitCall();
+    return result;
+}
+
+int FASTR_getSerializeVersion() {
+    TRACE0();
+    int result = ((call_FASTR_getSerializeVersion) callbacks[FASTR_getSerializeVersion_x])();
     checkExitCall();
     return result;
 }

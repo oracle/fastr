@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RType;
@@ -1968,6 +1969,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } catch (IOException e) {
             return -1;
         }
+    }
+
+    @Override
+    public int FASTR_getSerializeVersion() {
+        return RSerialize.DEFAULT_VERSION;
     }
 
     @Override

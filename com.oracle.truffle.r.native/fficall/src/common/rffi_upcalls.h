@@ -585,4 +585,6 @@ typedef void (*call_gdText)(int gdId, double, double, const char*, double, doubl
 typedef double* (*call_gdMetricInfo)(int gdId, int);
 typedef SEXP (*call_DispatchPRIMFUN)(SEXP call, SEXP op, SEXP args, SEXP env);
 
+// Upcalls specific to FastR
+typedef int (*call_FASTR_getSerializeVersion)();
 #endif
