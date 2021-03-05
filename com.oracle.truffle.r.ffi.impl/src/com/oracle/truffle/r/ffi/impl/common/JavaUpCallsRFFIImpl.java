@@ -1977,6 +1977,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public void FASTR_serialize(Object object, int type, int version, Object stream, Object outBytesFunc) {
+        throw implementedAsNode();
+    }
+
+    @Override
     @TruffleBoundary
     public int Rf_str2type(String name) {
         throw implementedAsNode();

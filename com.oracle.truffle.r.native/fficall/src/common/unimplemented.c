@@ -112,11 +112,6 @@ void R_InitInPStream(R_inpstream_t stream, R_pstream_data_t data, R_pstream_form
 	unimplemented("R_InitInPStream");
 }
 
-void R_Serialize(SEXP s, R_outpstream_t stream)
-{
-	unimplemented("R_Serialize");
-}
-
 SEXP R_Unserialize(R_inpstream_t stream)
 {
 	unimplemented("R_Unserialize");

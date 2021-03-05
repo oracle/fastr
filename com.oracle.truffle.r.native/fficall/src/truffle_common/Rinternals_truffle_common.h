@@ -1645,6 +1645,17 @@ void R_InitOutPStream(R_outpstream_t stream, R_pstream_data_t data, R_pstream_fo
     stream->OutPersistHookData = pdata;
 }
 
+void FASTR_serialize(SEXP object, int type, int version, R_outpstream_t stream, void (*outbytes)(R_outpstream_t, void *, int))
+{
+    ((call_FASTR_serialize) callbacks[FASTR_serialize_x])(object, type, version, stream, outbytes);
+    checkExitCall();
+}
+
+void R_Serialize(SEXP object, R_outpstream_t stream)
+{
+    FASTR_serialize(object, stream->type, stream->version, stream, stream->OutBytes);
+}
+
 SEXP R_PromiseExpr(SEXP x) {
     TRACE0();
     SEXP result = ((call_R_PromiseExpr) callbacks[R_PromiseExpr_x])(x);

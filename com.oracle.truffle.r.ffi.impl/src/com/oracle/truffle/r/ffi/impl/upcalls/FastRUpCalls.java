@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
 import com.oracle.truffle.r.ffi.impl.nodes.FASTR_DATAPTRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.FASTR_serializeNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
@@ -37,6 +38,9 @@ public interface FastRUpCalls {
     int FASTR_getConnectionChar(Object obj);
 
     int FASTR_getSerializeVersion();
+
+    @RFFIUpCallNode(FASTR_serializeNode.class)
+    void FASTR_serialize(Object object, int type, int version, @RFFICpointer Object stream, @RFFICpointer Object outBytesFunc);
 
     Object getSummaryDescription(Object x);
 

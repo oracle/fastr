@@ -587,4 +587,5 @@ typedef SEXP (*call_DispatchPRIMFUN)(SEXP call, SEXP op, SEXP args, SEXP env);
 
 // Upcalls specific to FastR
 typedef int (*call_FASTR_getSerializeVersion)();
+typedef void (*call_FASTR_serialize)(SEXP object, int type, int version, R_outpstream_t stream, void(*OutBytes)(R_outpstream_t, void*, int));
 #endif
