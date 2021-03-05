@@ -25,6 +25,7 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include "testrffi.h"
+#include "serialization.h"
 #include "rapi_helpers.h"
 #include "rffiwrappers.h"
 
@@ -124,6 +125,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(rapi_dotCall, 2),
         CALLDEF(testMissingArgWithATTRIB, 0),
         CALLDEF(testPRIMFUN, 2),
+        CALLDEF(serialize, 1),
         #include "init_api.h"
         {NULL, NULL, 0}
 };
