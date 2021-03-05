@@ -628,7 +628,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 	result <- TRUE
 	for (pkgname in pkgnames) {
 		if (log) {
-			log.message.always("BEGIN processing:", pkgname, "\n")
+			log.message.always("BEGIN processing: ", pkgname, "\n")
 			log.timestamp()
 		}
 		dependent.install.ok <- T
@@ -643,12 +643,12 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 				# 3. a mixture of TRUE and NA: ok, but some more to install (the NAs)
 				if (any(!dep.status, na.rm=T)) {
 					# case 2
-					log.message.always("not installing dependents of:", pkgname, ", one or more previously failed", "\n")
+					log.message.always("not installing dependents of: ", pkgname, ", one or more previously failed", "\n")
 					dependent.install.ok <- F
 				} else {
 					if (anyNA(dep.status)) {
 						# case 3
-						log.message.always("installing dependents of:", pkgname, "\n")
+						log.message.always("installing dependents of: ", pkgname, "\n")
 						dependent.install.ok <- install.pkgs(dependents, dependents.install=T)
 					} else {
 						# case 1
@@ -661,7 +661,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 			cat("would install:", pkgname, "\n")
 		} else {
 			if (!dependent.install.ok) {
-				log.message.always("not installing:", pkgname, "dependent install failure","\n")
+				log.message.always("not installing: ", pkgname, "dependent install failure","\n")
 			} else {
 				should.install <- T
 				if (pkgname %in% names(install.status)) {
@@ -678,7 +678,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 					}
 				}
 				if (should.install) {
-					log.message.always("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
+					log.message.always("installing: ", pkgname, "(", install.count, "of", install.total, ")", "\n")
 					log.timestamp()
 					this.result <- install.pkg(pkgname)
 					result <- result && this.result
@@ -688,12 +688,12 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 					}
 				} else {
 					msg <- if (install.status[pkgname]) "already installed" else "failed earlier"
-					log.message.always("not installing:", pkgname, "(", install.count, "of", install.total, ")", msg)
+					log.message.always("not installing: ", pkgname, "(", install.count, "of", install.total, ")", msg)
 				}
 			}
 		}
 		if (log) {
-			log.message.always("END processing:", pkgname, "\n")
+			log.message.always("END processing: ", pkgname, "\n")
 		}
 
 		install.count = install.count + 1
@@ -711,7 +711,7 @@ install.suggests <- function(pkgnames) {
 				ignore <- c(ignore, suggests[grepl(ignore.pattern[[i]], suggests)])
 			}
 			suggests <- if (class(ignore.pattern) == 'negation') ignore else setdiff(suggests, ignore)
-			log.message("NOTE: ignoring suggested:", paste(ignore, collapse=','))
+			log.message("NOTE: ignoring suggested: ", paste(ignore, collapse=','))
 		}
 		if (length(suggests) > 0) {
 			if (is.fastr() && !ignore.blacklist) {
@@ -719,7 +719,7 @@ install.suggests <- function(pkgnames) {
 				blacklist <- get.blacklist()
 				nsuggests <- suggests[!suggests %in% blacklist]
 				if (length(nsuggests) != length(suggests)) {
-					log.message("not installing Suggests of:", pkgname, ", one or more is blacklisted: ", paste0(suggests[suggests %in% blacklist], collapse=","))
+					log.message("not installing Suggests of: ", pkgname, ", one or more is blacklisted: ", paste0(suggests[suggests %in% blacklist], collapse=","))
 					return()
 				}
 			}
@@ -730,11 +730,11 @@ install.suggests <- function(pkgnames) {
 			# 3. a mixture of TRUE and NA: ok, but some more to install (the NAs)
 			if (any(!dep.status, na.rm=T)) {
 				# case 2
-				log.message("not installing Suggests of:", pkgname, ", one or more previously failed")
+				log.message("not installing Suggests of: ", pkgname, ", one or more previously failed")
 			} else {
 				if (anyNA(dep.status)) {
 					# case 3
-					log.message("installing Suggests of:", pkgname,":",paste(suggests[is.na(dep.status)], sep=", "))
+					log.message("installing Suggests of: ", pkgname, ": ", paste(suggests[is.na(dep.status)], sep=", "))
 					dependent.install.ok <- install.pkgs(suggests[is.na(dep.status)], dependents.install=F, log=F)
 				} else {
 					# case 1
@@ -785,7 +785,7 @@ show.install.status <- function(test.pkgnames) {
 do.it <- function() {
 	log.message("Getting the list of packages to install", level = 2)
 	test.pkgnames <- get.pkgs()
-	log.message("List of packages to install:", paste0(test.pkgnames, collapse=","), level = 2)
+	log.message("List of packages to install: ", paste0(test.pkgnames, collapse=","), level = 2)
 
 	if (list.versions) {
 		for (pkgname in test.pkgnames) {
@@ -837,12 +837,12 @@ do.it <- function() {
 				if (dry.run) {
 					cat("would test:", pkgname, "\n")
 				} else {
-					log.message.always("BEGIN testing:", pkgname, "(", test.count, "of", test.total, ")")
+					log.message.always("BEGIN testing: ", pkgname, "(", test.count, "of", test.total, ")")
 					test.package(pkgname)
-					log.message.always("END testing:", pkgname)
+					log.message.always("END testing: ", pkgname)
 				}
 			} else {
-				log.message.always("install failed, not testing:", pkgname)
+				log.message.always("install failed, not testing: ", pkgname)
 			}
 			test.count = test.count + 1
 		}
@@ -936,7 +936,7 @@ test.package <- function(pkgname) {
         res <- 1L
     }
 	end.time <- proc.time()[[3]]
-	log.message("TEST_TIME:", pkgname, end.time - start.time)
+	log.message("TEST_TIME: ", pkgname, end.time - start.time)
     return (res)
 }
 
@@ -1147,7 +1147,7 @@ quiet <- F
 verbose <- F
 very.verbose <- F
 log.file <- file.path(getwd(), 'install.packages.R.log')
-cat("The output is also logged into:", log.file, "\n")
+cat("The output is also logged into: ", log.file, "\n")
 
 loggable <- function(level) {
 	result <- T
