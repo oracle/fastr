@@ -195,9 +195,9 @@ def _get_next_line(prompt, content, content_len, line_idx):
     while i < content_len:
         line = content[i]
         if prompt is not None:
-            line = line.replace(prompt, "", 1);
-        line = line.strip();
-        if line is not "":
+            line = line.replace(prompt, "", 1)
+        line = line.strip()
+        if line != "":
             return line, i
         i = i + 1
     return None, i
@@ -264,10 +264,10 @@ def _is_ignored_function(fun_name, gnur_content, gnur_stmt, fastr_content, fastr
 
 def _is_statement_begin(captured_prompt, line):
     if captured_prompt is None:
-        return False;
-    if not line is None:
+        return False
+    if line is not None:
         line_wo_prompt = line.replace(captured_prompt, "").strip()
-        return line.startswith(captured_prompt) and line_wo_prompt is not "" and not line_wo_prompt.startswith("#")
+        return line.startswith(captured_prompt) and line_wo_prompt != "" and not line_wo_prompt.startswith("#")
     return False
 
 
