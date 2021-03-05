@@ -111,12 +111,10 @@ public class TestS4 extends TestRBase {
 
     @Test
     public void testPrototype() {
-        assertEval(Ignored.NewRVersionMigration, "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); A() }");
-        assertEval(Ignored.NewRVersionMigration, "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); A(data=42) }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'A', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); A() }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'A', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); A(data=42) }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); C11() }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); C11(data=42) }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'C11', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); C11() }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'C11', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); C11(data=42) }");
     }
 
     @Test
@@ -217,9 +215,8 @@ public class TestS4 extends TestRBase {
 
     @Test
     public void testAs() {
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ my_as <- function(object, to) { class(object) <- to; object }; A <- setClass('A', slots=c(data='numeric')); a <- A(); x <- my_as(a, 'X'); class(a) }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass('A', slots=c(data='numeric')); B <- setClass('B', contains='A'); b <- B(data=42); as(b, 'A') }");
+        assertEval("{ my_as <- function(object, to) { class(object) <- to; object }; A12 <- setClass('A12', slots=c(data='numeric')); a <- A12(); x <- my_as(a, 'X'); class(a) }");
+        assertEval("{ setClass('A13', slots=c(data='numeric')); B13 <- setClass('B13', contains='A13'); b <- B13(data=42); as(b, 'A13') }");
     }
 
     /**
@@ -229,6 +226,6 @@ public class TestS4 extends TestRBase {
      */
     @Test
     public void testValidityFunction() {
-        assertEval("{ setClass('A', slots=c(data='numeric'), validity=function(object) {class(object); TRUE}); B <- setClass('B', contains='A'); B(data=42) }");
+        assertEval("{ setClass('A11', slots=c(data='numeric'), validity=function(object) {class(object); TRUE}); B11 <- setClass('B11', contains='A11'); B11(data=42) }");
     }
 }
