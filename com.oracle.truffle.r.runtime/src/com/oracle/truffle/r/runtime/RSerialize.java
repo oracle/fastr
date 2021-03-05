@@ -19,8 +19,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.r.runtime.context.FastROptions;
+import static com.oracle.truffle.r.runtime.gnur.SEXPTYPE.ALTREP_SXP;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -40,11 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -60,35 +62,36 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
-import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -97,7 +100,6 @@ import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import static com.oracle.truffle.r.runtime.gnur.SEXPTYPE.ALTREP_SXP;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -106,7 +108,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
-import java.util.logging.Level;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -1561,10 +1562,11 @@ public class RSerialize {
         }
     }
 
-    public static final int XDR = 0; // actually any value other than the following
+    public static final int ANY = 0;
     public static final int ASCII = 1;
-    public static final int ASCII_HEX = 2;
-    public static final int BINARY = 3;
+    public static final int BINARY = 2;
+    public static final int XDR = 3;
+    public static final int ASCII_HEX = 4;
 
     private static final class Output extends Common {
 
@@ -1579,13 +1581,12 @@ public class RSerialize {
             this.state = new PLState(context, hook != null ? hook.getSessionRef() : null);
             this.version = version;
             switch (format) {
-                case ASCII:
-                case ASCII_HEX:
-                case BINARY:
-                    throw formatError((byte) format, true);
-                default:
+                case ANY:
+                case XDR:
                     stream = new XdrOutputFormat(os);
                     break;
+                default:
+                    throw formatError((byte) format, true);
             }
         }
 

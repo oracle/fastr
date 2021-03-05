@@ -45,7 +45,7 @@ SEXP serialize(SEXP object) {
 
     struct R_outpstream_st stream = {
         .data = &sdata,
-        .type = R_pstream_any_format,
+        .type = R_pstream_xdr_format,
         .version = 3,
         .OutChar = &out_char,
         .OutBytes = &out_bytes,
