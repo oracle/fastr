@@ -210,7 +210,8 @@ public class TestBuiltin_class extends TestBase {
     }
 
     /**
-     * Tests setting class attribute on different objects than containers, i.e., environments, functions, S4 objects, ...
+     * Tests setting class attribute on different objects than containers, i.e., environments,
+     * functions, S4 objects, ...
      */
     @Test
     public void testSetClassOnOtherObjects() {

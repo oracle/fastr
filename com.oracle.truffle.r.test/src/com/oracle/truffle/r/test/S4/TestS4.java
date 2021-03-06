@@ -113,8 +113,10 @@ public class TestS4 extends TestRBase {
     public void testPrototype() {
         assertEval(Ignored.NewRVersionMigration, "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); A() }");
         assertEval(Ignored.NewRVersionMigration, "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); A(data=42) }");
-        assertEval(Ignored.NewRVersionMigration, "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'A', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); A() }");
-        assertEval(Ignored.NewRVersionMigration, "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'A', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); A(data=42) }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'A', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); A() }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'A', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); A(data=42) }");
     }
 
     @Test
@@ -223,13 +225,15 @@ public class TestS4 extends TestRBase {
 
     @Test
     public void testAs() {
-        assertEval(Ignored.NewRVersionMigration, "{ my_as <- function(object, to) { class(object) <- to; object }; A <- setClass('A', slots=c(data='numeric')); a <- A(); x <- my_as(a, 'X'); class(a) }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ my_as <- function(object, to) { class(object) <- to; object }; A <- setClass('A', slots=c(data='numeric')); a <- A(); x <- my_as(a, 'X'); class(a) }");
         assertEval(Ignored.NewRVersionMigration, "{ setClass('A', slots=c(data='numeric')); B <- setClass('B', contains='A'); b <- B(data=42); as(b, 'A') }");
     }
 
     /**
-     * The following snippet is a simplified excerpt from diffobj package. The idea behind this test is that getting
-     * a class definition of an object in the validity function should not cause any errors.
+     * The following snippet is a simplified excerpt from diffobj package. The idea behind this test
+     * is that getting a class definition of an object in the validity function should not cause any
+     * errors.
      */
     @Test
     public void testValidityFunction() {

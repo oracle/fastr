@@ -94,7 +94,6 @@ com.oracle.truffle.r.native/gnur/patch/src/library/parallel/src/glpi.h,no.copyri
 com.oracle.truffle.r.native/gnur/patch/src/library/parallel/src/parallel_dummy.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/parallel/src/rngstream.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/splines/src/splines.c,no.copyright
-com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/gnur_extracts.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/modreg.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/nls.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/port.h,no.copyright

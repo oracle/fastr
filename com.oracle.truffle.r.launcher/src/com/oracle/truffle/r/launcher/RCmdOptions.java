@@ -312,8 +312,8 @@ public final class RCmdOptions {
     }
 
     private static MatchResult matchOption(String arg) {
-        // --slave option is currently an undocumented alias for --no-echo option (GNU-R silently treats --slave as
-        // --no-echo, and provides no help for it)
+        // --slave option is currently an undocumented alias for --no-echo option (GNU-R silently
+        // treats --slave as --no-echo, and provides no help for it)
         if (arg.equals("--slave")) {
             return new MatchResult(RCmdOption.NO_ECHO, false);
         }

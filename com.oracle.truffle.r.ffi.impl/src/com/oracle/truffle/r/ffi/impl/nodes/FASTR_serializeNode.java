@@ -52,8 +52,8 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
 
     @Specialization
     protected Object doIt(Object object, int type, int version, Object stream, Object outBytesFunc,
-                          @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                          @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interopLibrary) {
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interopLibrary) {
 
         TruffleObject outBytesFuncExecutable = null;
         if (interopLibrary.isMemberInvocable(outBytesFunc, "bind")) {
