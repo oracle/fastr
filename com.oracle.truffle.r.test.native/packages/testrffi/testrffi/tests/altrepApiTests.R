@@ -21,6 +21,8 @@
 
 # Contains tests for some ALTREP API functions for standard vectors.
 
+stopifnot( require(testrffi))
+
 # Integer API
 integer_api_tests <- function(int_vec) {
     for (i in 1:length(int_vec)) {
