@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import java.io.OutputStream;
-import sun.net.www.protocol.ftp.FtpURLConnection;
+import java.util.Locale;
 
 /**
  * Support for the "internal"method of "utils::download.file". TODO take note of "quiet", "mode" and
@@ -72,11 +72,14 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
     protected int download(String urlString, String destFile, boolean quiet, @SuppressWarnings("unused") String mode, @SuppressWarnings("unused") boolean cacheOK,
                     @SuppressWarnings("unused") Object headers,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        String protocol;
         try {
             String urlStr = urlString;
             URLConnection con;
             while (true) {
-                con = new URL(urlStr).openConnection();
+                URL url = new URL(urlStr);
+                protocol = url.getProtocol();
+                con = url.openConnection();
                 if (con instanceof HttpURLConnection) {
                     HttpURLConnection httpCon = (HttpURLConnection) con;
                     httpCon.setInstanceFollowRedirects(false);
@@ -124,7 +127,7 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
                             StdConnections.getStderr().writeString(" length unknown", true);
                         }
                         StdConnections.getStderr().flush();
-                    } else if (con instanceof FtpURLConnection) {
+                    } else if (protocol != null && protocol.toLowerCase(Locale.ROOT).equals("ftp")) {
                         if (len >= 0) {
                             StdConnections.getStderr().writeString(String.format(" ftp data connection made, file length %d bytes", len), true);
                         } else {
