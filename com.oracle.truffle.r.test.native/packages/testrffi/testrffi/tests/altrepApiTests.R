@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,35 +21,42 @@
 
 # Contains tests for some ALTREP API functions for standard vectors.
 
+# Note that for api.*_IS_SORTED we do not care about the return value because there may be
+# different internal representation of data in FastR and GNU-R for the same vector, and both can
+# correctly claim that the data is sorted or that they do not know.
+# The same applies for api.*_NO_NA functions.
+
+stopifnot( require(testrffi))
+
 # Integer API
 integer_api_tests <- function(int_vec) {
-    for (i in 1:length(int_vec)) {
-        api.INTEGER_ELT(int_vec, i)
+    for (i in 0:(length(int_vec) - 1)) {
+        print(api.INTEGER_ELT(int_vec, i))
     }
-    api.INTEGER_IS_SORTED(int_vec)
-    api.INTEGER_NO_NA(int_vec)
+    invisible(api.INTEGER_IS_SORTED(int_vec))
+    invisible(api.INTEGER_NO_NA(int_vec))
 }
 integer_api_tests(1:10)
 integer_api_tests(as.integer(c(14, 51, 157, 42, 20, 15, 15)))
 
 # Real API
 real_api_tests <- function(real_vec) {
-    for (i in 1:length(real_vec)) {
-        api.REAL_ELT(real_vec, i)
+    for (i in 0:(length(real_vec) - 1)) {
+        print(api.REAL_ELT(real_vec, i))
     }
-    api.REAL_IS_SORTED(real_vec)
-    api.REAL_NO_NA(real_vec)
+    invisible(api.REAL_IS_SORTED(real_vec))
+    invisible(api.REAL_NO_NA(real_vec))
 }
-real_api_tests(as.double(1:100))
+real_api_tests(as.double(1:8))
 real_api_tests(as.double(c(0, 0, 0, 0, 1)))
 
 # Logical API
 logical_api_tests <- function(lgl_vec) {
-    for (i in 1:length(lgl_vec)) {
-        api.LOGICAL_ELT(lgl_vec, i)
+    for (i in 0:(length(lgl_vec) - 1)) {
+        print(api.LOGICAL_ELT(lgl_vec, i))
     }
-    api.LOGICAL_IS_SORTED(lgl_vec)
-    api.LOGICAL_NO_NA(lgl_vec)
+    invisible(api.LOGICAL_IS_SORTED(lgl_vec))
+    invisible(api.LOGICAL_NO_NA(lgl_vec))
 }
 logical_api_tests(c(TRUE, TRUE, FALSE, TRUE))
 logical_api_tests(c(TRUE, FALSE))
@@ -57,11 +64,15 @@ logical_api_tests(TRUE)
 
 # String API
 string_api_tests <- function(str_vec) {
-    for (i in 1:length(str_vec)) {
-        api.STRING_ELT(str_vec, i)
+    for (i in 0:(length(str_vec) - 1)) {
+        # api.STRING_ELT returns CHARSXP, which is not correctly handled by GNU-R's print, thus
+        # we wrap it in ScalarString and then print it instead.
+        string_elt <- api.STRING_ELT(str_vec, i)
+        string <- api.Rf_ScalarString(string_elt)
+        print(string)
     }
-    api.STRING_IS_SORTED(str_vec)
-    api.STRING_NO_NA(str_vec)
+    invisible(api.STRING_IS_SORTED(str_vec))
+    invisible(api.STRING_NO_NA(str_vec))
 }
 string_api_tests(c("hello", "world"))
 string_api_tests(c(""))
@@ -70,6 +81,6 @@ string_api_tests(c("a", "b", "c"))
 
 # Raw API
 raw_vec <- as.raw(c(12, 117, 45, 0, 1))
-for (i in 1:length(raw_vec)) {
-    api.RAW_ELT(raw_vec, i)
+for (i in 0:(length(raw_vec) - 1)) {
+    print(api.RAW_ELT(raw_vec, i))
 }

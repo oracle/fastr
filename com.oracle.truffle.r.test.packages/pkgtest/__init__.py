@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -188,7 +188,7 @@ def _run_install_packages_script(rscript_path, args, kwargs):
 
 def _fastr_installpkgs(args, **kwargs):
     """
-    Runs 'install.packages.R' script with GnuR.
+    Runs 'install.packages.R' script with fastr.
     """
     if "FASTR_WORKING_DIR" in os.environ:
         env["TMPDIR"] = os.environ["FASTR_WORKING_DIR"]
@@ -362,10 +362,10 @@ class OutputCapture:
         self.install_data = None
         self.pkg = None
         self.mode = None
-        self.start_install_pattern = re.compile(r"^BEGIN processing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
-        self.test_pattern = re.compile(r"^(?P<status>BEGIN|END) testing: (?P<package>[a-zA-Z0-9\.\-]+) .*")
-        self.time_pattern = re.compile(r"^TEST_TIME: (?P<package>[a-zA-Z0-9\.\-]+) (?P<time>[0-9\.\-]+) .*")
-        self.status_pattern = re.compile(r"^(?P<package>[a-zA-Z0-9\.\-]+): (?P<status>OK|FAILED).*")
+        self.start_install_pattern = re.compile(r"^BEGIN processing:\s*(?P<package>[a-zA-Z0-9.-]+)")
+        self.test_pattern = re.compile(r"^(?P<status>BEGIN|END) testing:\s*(?P<package>[a-zA-Z0-9.-]+)")
+        self.time_pattern = re.compile(r"^TEST_TIME:\s*(?P<package>[a-zA-Z0-9.-]+) (?P<time>[0-9.-]+)")
+        self.status_pattern = re.compile(r"^(?P<package>[a-zA-Z0-9.-]+):\s*(?P<status>OK|FAILED)")
         self.install_data = dict()
         self.install_status = dict()
         self.test_info = dict()
