@@ -55,16 +55,15 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
      * callback.
      *
      * FIXME: We serialize to XDR format no matter what the caller specified, therefore type
-     *        parameter is intentionally ignored.
+     * parameter is intentionally ignored.
      *
      * @param object Object to be serialized.
      * @param type Type of serialization, e.g., XDR or BINARY. Currently, only XDR is supported.
      * @param version Version of serialization. Can be either 2 or 3.
      * @param stream A native object of type R_outpstream_t. Defined in Rinternals.h. Contains
-     *               pointers to various callback functions into which we pass serialized byte
-     *               array.
+     *            pointers to various callback functions into which we pass serialized byte array.
      * @param outBytesFunc Pointer to native function callback. This is a member of R_outpstream_t
-     *                     struct.
+     *            struct.
      * @return RNull, bytes are passed into outBytesFunc native function.
      */
     @Specialization
