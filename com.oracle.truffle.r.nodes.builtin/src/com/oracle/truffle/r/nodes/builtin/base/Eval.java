@@ -39,6 +39,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -378,6 +379,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             return resultValue;
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "evalFastPath", guards = "callInfo.argsLen <= MAX_ARITY")
         Object evalSlowPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller, RPairList expr,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
@@ -398,6 +400,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             return resultValue;
         }
 
+        @ReportPolymorphism.Megamorphic
         @Specialization(replaces = "evalFastPath")
         Object evalSlowPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller, RPairList expr,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,

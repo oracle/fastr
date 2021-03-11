@@ -174,7 +174,6 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
     }
 
     pkg.name <- as.character(pkg["Package"])
-    pkg.version <- as.character(pkg["Version"])
 
     log.message("using package cache directory ", version.dir, level=1)
     cache.entry.name <- pkg.cache.entry.filename(pkg)
@@ -251,7 +250,6 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     }
 
     tryCatch({
-        pkg.version <- as.character(pkg["Version"])
         fromPath <- file.path(lib, pkgname)
         cache.entry.name <- pkg.cache.entry.filename(pkg)
         toPath <- pkg.cache.file.path(pkg.cache.env, version.dir, cache.entry.name)
@@ -263,6 +261,9 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         # cleanup older package versions
         pkg.cache.cleanup.pkg.versions(pkg.cache.env, version.dir, pkgname)
 
+        if (file.exists(toPath)) {
+            file.remove(toPath)
+        }
         if(zip(toPath, pkgname, flags="-r9Xq") != 0L) {
             pkg.cache.unlock(pkg.cache.env, version.dir)
             log.message("could not compress package dir ", fromPath , " and store it to ", toPath, level=1)

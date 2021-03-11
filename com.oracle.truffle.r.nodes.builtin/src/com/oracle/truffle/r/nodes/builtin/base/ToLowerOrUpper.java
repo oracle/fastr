@@ -26,8 +26,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.util.function.BiFunction;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -66,16 +64,16 @@ public abstract class ToLowerOrUpper {
             return new StringMapNode();
         }
 
-        private String elementFunction(String value, int i, BiFunction<String, Integer, String> function) {
+        private String elementFunction(String value, int i, Mapper function) {
             return na.check(value) ? RRuntime.STRING_NA : function.apply(value, i);
         }
 
-        public String apply(String value, BiFunction<String, Integer, String> function) {
+        public String apply(String value, Mapper function) {
             na.enable(value);
             return elementFunction(value, 0, function);
         }
 
-        public RStringVector apply(RStringVector vector, VectorDataLibrary vectorDataLib, BiFunction<String, Integer, String> function) {
+        public RStringVector apply(RStringVector vector, VectorDataLibrary vectorDataLib, Mapper function) {
             na.enable(vector);
             int length = lengthProfile.profile(vectorDataLib.getLength(vector.getData()));
             String[] stringVector = new String[length];
@@ -88,6 +86,11 @@ public abstract class ToLowerOrUpper {
             copyAttributes.execute(vector, result);
             return result;
         }
+    }
+
+    @FunctionalInterface
+    interface Mapper {
+        String apply(String t, int u);
     }
 
     @RBuiltin(name = "tolower", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)

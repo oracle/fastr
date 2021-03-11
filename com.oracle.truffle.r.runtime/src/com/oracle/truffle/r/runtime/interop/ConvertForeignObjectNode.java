@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.Utils.intValue;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -313,23 +312,28 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         void apply(A array, int resultIdx, int sourceIdx, boolean[] complete);
     }
 
-    private static <A> RAbstractVector createFlatVector(int length, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RAbstractVector> createResult) {
+    @FunctionalInterface
+    private interface VectorFactory {
+        RAbstractVector create(boolean complete);
+    }
+
+    private static <A> RAbstractVector createFlatVector(int length, A resultArray, WriteArray<A> writeResultArray, VectorFactory createResult) {
         boolean[] complete = new boolean[]{true};
         for (int i = 0; i < length; i++) {
             writeResultArray.apply(resultArray, i, i, complete);
         }
-        return createResult.apply(complete[0]);
+        return createResult.create(complete[0]);
     }
 
     /**
      * Creates a vector where the elements are positioned 'by collumn' according to the provided
      * dimensions, no matter if dim attribute is set or not.
      */
-    private static <A> RAbstractVector createByColVector(int[] dims, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RAbstractVector> createResult) {
+    private static <A> RAbstractVector createByColVector(int[] dims, A resultArray, WriteArray<A> writeResultArray, VectorFactory createResult) {
         boolean[] complete = new boolean[]{true};
         assert dims.length > 1;
         populateResultArray(dims, new int[dims.length], 0, new int[]{0}, resultArray, writeResultArray, complete);
-        return createResult.apply(complete[0]);
+        return createResult.create(complete[0]);
     }
 
     @TruffleBoundary

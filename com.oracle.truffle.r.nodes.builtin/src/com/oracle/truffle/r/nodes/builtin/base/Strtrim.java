@@ -25,8 +25,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.util.function.BiFunction;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -34,6 +32,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.ToLowerOrUpper.Mapper;
 import com.oracle.truffle.r.nodes.builtin.base.ToLowerOrUpper.StringMapNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -70,7 +69,7 @@ public abstract class Strtrim extends RBuiltinNode.Arg2 {
                 throw error(RError.Message.INVALID_ARGUMENT, "width");
             }
         }
-        BiFunction<String, Integer, String> function = (element, i) -> {
+        Mapper function = (element, i) -> {
             // TODO multibyte character handling
             int w = width.getDataAt(i % nw);
             if (fitsProfile.profile(w >= element.length())) {

@@ -75,12 +75,6 @@ assertEquals(NULL, api.SET_ATTRIB(x, as.pairlist(list(names=c('a','b')))))
 assertEquals(c('a','b'), names(x))
 # note: printing x on GNU-R causes segfault
 
-# ---------------------------------------------------------------------------------------
-# Rf_mkCharLenCE, note: last arg is encoding and 0 ~ native encoding
-
-assertEquals("hello world", api.Rf_mkCharLenCE("hello world", 11, 0))
-ignore("FastR bug", assertEquals("hello", api.Rf_mkCharLenCE("hello this will be cut away", 5, 0)))
-
 
 # ----------------------------------------------------------------------------------------
 # Rf_eval
