@@ -50,8 +50,25 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
         return FASTR_serializeNodeGen.create();
     }
 
+    /**
+     * Serializes object into buffer of bytes and passes this buffer into outBytesFunc native
+     * callback.
+     *
+     * FIXME: We serialize to XDR format no matter what the caller specified, therefore type
+     *        parameter is intentionally ignored.
+     *
+     * @param object Object to be serialized.
+     * @param type Type of serialization, e.g., XDR or BINARY. Currently, only XDR is supported.
+     * @param version Version of serialization. Can be either 2 or 3.
+     * @param stream A native object of type R_outpstream_t. Defined in Rinternals.h. Contains
+     *               pointers to various callback functions into which we pass serialized byte
+     *               array.
+     * @param outBytesFunc Pointer to native function callback. This is a member of R_outpstream_t
+     *                     struct.
+     * @return RNull, bytes are passed into outBytesFunc native function.
+     */
     @Specialization
-    protected Object doIt(Object object, int type, int version, Object stream, Object outBytesFunc,
+    protected Object doIt(Object object, @SuppressWarnings("unused") int type, int version, Object stream, Object outBytesFunc,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interopLibrary) {
 
@@ -63,13 +80,13 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
                 e.printStackTrace();
             }
         } else {
-            // TODO: LLVM case
             outBytesFuncExecutable = (TruffleObject) outBytesFunc;
         }
         assert outBytesFuncExecutable != null;
         assert interopLibrary.isExecutable(outBytesFuncExecutable);
 
-        byte[] serializedBuff = RSerialize.serialize(ctxRef.get(), object, type, version, null);
+        // TODO: Pass type instead of RSerialize.XDR
+        byte[] serializedBuff = RSerialize.serialize(ctxRef.get(), object, RSerialize.XDR, version, null);
         NativeCharArray nativeBuff = new NativeCharArray(serializedBuff);
 
         try {
