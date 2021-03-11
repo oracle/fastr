@@ -119,7 +119,7 @@ public final class CoerceNodes {
 
         @Specialization
         protected Object convert(RPairList list) {
-            if (list.isLanguage() || type == SEXPTYPE.LISTSXP) {
+            if (!list.isLanguage()) {
                 return list;
             } else {
                 return doFallback(list);
