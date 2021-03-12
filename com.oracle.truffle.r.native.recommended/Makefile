@@ -60,13 +60,12 @@ ifdef FASTR_RELEASE
 ifdef FASTR_NO_RECOMMENDED
 GNUR_RECOMMENDED_PKGNAMES := codetools
 else
-GNUR_RECOMMENDED_PKGNAMES := codetools MASS boot class cluster lattice nnet spatial KernSmooth foreign nlme rpart
+GNUR_RECOMMENDED_PKGNAMES := codetools MASS boot class cluster lattice nnet spatial Matrix survival KernSmooth foreign nlme rpart
 endif
 else
 # codetools must always be installed because of S4
 GNUR_RECOMMENDED_PKGNAMES := codetools
 endif # FASTR_RELEASE
-$(info GNUR_RECOMMENDED_PKGNAMES = $(GNUR_RECOMMENDED_PKGNAMES))
 GNUR_RECOMMENDED_PKGNAMES_TS = $(GNUR_RECOMMENDED_PKGNAMES:=.ts)
 
 GNUR_RECOMMENDED_TAR_DIR = $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended/
@@ -121,9 +120,13 @@ ifeq ($(OS_NAME),Darwin)
 endif
 	touch install.recommended
 
+Matrix.ts: lattice.ts
+mgcv.ts: nlme.ts MASS.ts Matrix.ts
 nlme.ts: lattice.ts
 class.ts: MASS.ts
+survival.ts: Matrix.ts
 ## and for static html links
+boot.ts: MASS.ts survival.ts
 cluster.ts: MASS.ts
 
 endif # FASTR_RECOMMENDED_BINARY
