@@ -76,12 +76,12 @@ suite = {
         "version" : "1.8",
       },
     },
-    "BATIK-ALL-1.11" : {
-      "sha1" : "5fbd444c4160b9017bf107622347a12624d2749d",
+    "BATIK-ALL-1.14" : {
+      "sha1" : "a8d228e4ae2c21efb833fdfcdfe5446fa672974a",
       "maven" : {
         "groupId" : "org.apache.xmlgraphics",
         "artifactId" : "batik-all",
-        "version" : "1.11",
+        "version" : "1.14",
       },
     },
   },
@@ -254,7 +254,7 @@ suite = {
          "com.oracle.truffle.r.ffi.processor",
          "com.oracle.truffle.r.nodes",
          "org.rosuda.javaGD",
-         'BATIK-ALL-1.11',
+         'BATIK-ALL-1.14',
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
