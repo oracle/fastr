@@ -279,6 +279,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             default_symlinks=False,
         )
     ],
+    stability="experimental",
     post_install_msg="NOTES:\n---------------\n" +
             "FastR should work out of the box on most Linux distributions and recent MacOS versions. " +
             "Run the following script to check FastR requirements and create a personal R packages library directory: \n" +
