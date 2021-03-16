@@ -905,10 +905,6 @@ def build_binary_pkgs(args_in, **kwargs):
     mx.run(['ls', '-R', dest_dir])
     return 0
 
-def checkout_downstream_revision(args):
-    mx.mx_downstream.checkout_downstream(args)
-
-
 COPYRIGHT_HEADER_GPL3 = """\
 /*
  * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
@@ -988,7 +984,6 @@ _commands = {
     'rfficodegen' : [run_rfficodegen, '[]'],
     'gnur-packages-test': [gnur_packages_test, '[]'],
     'build-binary-pkgs': [build_binary_pkgs, '[]'],
-    'checkout-downstream-revision': [checkout_downstream_revision, '[]'],
     'generate-r-parser': [generate_parser],
     }
 
