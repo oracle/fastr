@@ -3050,6 +3050,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public void R_removeVarFromFrame(Object sym, Object env) {
         if (!(env instanceof REnvironment && sym instanceof RSymbol)) {
             throw RInternalError.shouldNotReachHere();
