@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,7 +113,9 @@ public final class Unit {
     // attributes in the unit object and unit classes
     private static final String UNIT_ATTR_DATA = "data";
     private static final String UNIT_ATTR_UNIT_ID = "valid.unit";
+    private static final String UNIT_V2_ATTR_UNIT_ID = "unit";
     private static final String UNIT_CLASS = "unit";
+    private static final String UNIT_V2_CLASS = "unit_v2";
     private static final String UNIT_ARITHMETIC_CLASS = "unit.arithmetic";
     private static final String UNIT_LIST_CLASS = "unit.list";
 
@@ -304,7 +306,7 @@ public final class Unit {
         }
 
         @Override
-        protected Double visitSimpleUnit(RAbstractVector unit, Integer index) {
+        protected Double visitSimpleUnit(RAbstractVector unit, Integer index, @SuppressWarnings("unused") boolean v2) {
             return GridUtils.getDoubleAt(unit, index);
         }
     }
@@ -368,7 +370,14 @@ public final class Unit {
         public T visit(RAbstractContainer unit, R arg) {
             RStringVector clazz = unit.getClassAttr();
             if (clazz == null || clazz.getLength() == 0) {
-                return visitSimpleUnit((RAbstractVector) unit, arg);
+                return visitSimpleUnit((RAbstractVector) unit, arg, false);
+            }
+            boolean v2 = false;
+            for (int i = 0; i < clazz.getLength(); i++) {
+                String className = clazz.getDataAt(i);
+                if (UNIT_V2_CLASS.equals(className)) {
+                    v2 = true;
+                }
             }
             for (int i = 0; i < clazz.getLength(); i++) {
                 String className = clazz.getDataAt(i);
@@ -379,7 +388,7 @@ public final class Unit {
                     return visitListUnit(asList(unit), arg);
                 }
             }
-            return visitSimpleUnit((RAbstractVector) unit, arg);
+            return visitSimpleUnit((RAbstractVector) unit, arg, v2);
         }
 
         public T visit(RAbstractContainer unit) {
@@ -394,7 +403,7 @@ public final class Unit {
             throw RInternalError.shouldNotReachHere();
         }
 
-        protected T visitSimpleUnit(@SuppressWarnings("unused") RAbstractVector unit) {
+        protected T visitSimpleUnit(@SuppressWarnings("unused") RAbstractVector unit, @SuppressWarnings("unused") boolean v2) {
             throw RInternalError.shouldNotReachHere();
         }
 
@@ -406,8 +415,8 @@ public final class Unit {
             return visitArithmeticUnit(unit);
         }
 
-        protected T visitSimpleUnit(RAbstractVector unit, @SuppressWarnings("unused") R arg) {
-            return visitSimpleUnit(unit);
+        protected T visitSimpleUnit(RAbstractVector unit, @SuppressWarnings("unused") R arg, boolean v2) {
+            return visitSimpleUnit(unit, v2);
         }
     }
 
@@ -426,7 +435,7 @@ public final class Unit {
         }
 
         @Override
-        protected Integer visitSimpleUnit(RAbstractVector unit) {
+        protected Integer visitSimpleUnit(RAbstractVector unit, @SuppressWarnings("unused") boolean v2) {
             return unit.getLength();
         }
     }
@@ -536,8 +545,9 @@ public final class Unit {
         private static final UnitConvertVisitor INSTANCE = new UnitConvertVisitor();
 
         @Override
-        protected Double visitSimpleUnit(RAbstractVector value, UnitConversionArgs args) {
-            int unitId = getDataAtMod(asIntVector(value.getAttr(UNIT_ATTR_UNIT_ID)), args.index);
+        protected Double visitSimpleUnit(RAbstractVector value, UnitConversionArgs args, boolean v2) {
+            String unitAttrName = v2 ? UNIT_V2_ATTR_UNIT_ID : UNIT_ATTR_UNIT_ID;
+            int unitId = getDataAtMod(asIntVector(value.getAttr(unitAttrName)), args.index);
             double scalarValue = getDoubleAt(value, args.index % value.getLength());
             if (isGrobUnit(unitId)) {
                 RList grobList = asList(value.getAttr(UNIT_ATTR_DATA));
