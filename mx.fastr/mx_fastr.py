@@ -413,6 +413,10 @@ def _fastr_gate_runner(args, tasks):
         list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.packages/gated' + str(i))
         if not os.path.exists(list_file):
             break
+        is_file_empty = False
+        with open(list_file, 'r') as file:
+            if len(file.read().strip()) == 0:
+                is_file_empty = True
         with mx_gate.Task('CRAN pkg test: ' + str(i), tasks, tags=[FastRGateTags.cran_pkgs_test + str(i)]) as t:
             if t:
                 check_last = False if mx_gate.Task.tags is None else FastRGateTags.cran_pkgs_test_check_last in mx_gate.Task.tags # pylint: disable=unsupported-membership-test
@@ -420,7 +424,10 @@ def _fastr_gate_runner(args, tasks):
                     next_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.packages/gated' + str(i + 1))
                     if os.path.exists(next_file):
                         mx.abort("File %s exists, but the gate thinks that %s is the last file. Did you forget to update the gate configuration?" % (next_file, list_file))
-                cran_pkg_tests(list_file)
+                if not is_file_empty:
+                    cran_pkg_tests(list_file)
+                else:
+                    mx.warn('File %s is empty, skipping cran_pkg_test' % list_file)
 
 def common_pkg_tests_args(graalvm_home):
     gvm_home_arg = [] if graalvm_home is None else ['--graalvm-home', graalvm_home]
