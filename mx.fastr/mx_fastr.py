@@ -414,8 +414,8 @@ def _fastr_gate_runner(args, tasks):
         if not os.path.exists(list_file):
             break
         is_file_empty = False
-        with open(list_file, 'r') as file:
-            if len(file.read().strip()) == 0:
+        with open(list_file, 'r') as f:
+            if len(f.read().strip()) == 0:
                 is_file_empty = True
         with mx_gate.Task('CRAN pkg test: ' + str(i), tasks, tags=[FastRGateTags.cran_pkgs_test + str(i)]) as t:
             if t:
