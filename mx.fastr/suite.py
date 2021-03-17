@@ -1,5 +1,5 @@
 suite = {
-  "mxversion" : "5.210.4",
+  "mxversion" : "5.282.0",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
   "imports" : {
@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "d895395d06edacbe1d3a307f392aa31526ce7b6a",
+               "version" : "ee82da58e48325981af1832ab33a46de2610b29a",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "d895395d06edacbe1d3a307f392aa31526ce7b6a",
+               "version" : "ee82da58e48325981af1832ab33a46de2610b29a",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
