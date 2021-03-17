@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.tck;
 
 import static org.graalvm.polyglot.tck.TypeDescriptor.array;
+import static org.graalvm.polyglot.tck.TypeDescriptor.intersection;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,19 +35,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.SourceSection;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.tck.InlineSnippet;
+import org.graalvm.polyglot.tck.LanguageProvider;
+import org.graalvm.polyglot.tck.ResultVerifier;
 import org.graalvm.polyglot.tck.Snippet;
 import org.graalvm.polyglot.tck.TypeDescriptor;
 import org.junit.Assert;
-import org.graalvm.polyglot.tck.LanguageProvider;
-import org.graalvm.polyglot.tck.ResultVerifier;
-import static org.graalvm.polyglot.tck.TypeDescriptor.intersection;
 
 public final class RTCKLanguageProvider implements LanguageProvider {
 
@@ -147,41 +149,42 @@ public final class RTCKLanguageProvider implements LanguageProvider {
 
         // +
         ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
         // -
         ops.add(createBinaryOperator(context, "-", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
         // *
         ops.add(createBinaryOperator(context, "*", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
         // /
         ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
 
         acceptedParameterTypes = new TypeDescriptor[]{TypeDescriptor.ANY, TypeDescriptor.ANY};
         // <
         ops.add(createBinaryOperator(context, "<", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
         // >
         ops.add(createBinaryOperator(context, ">", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
         // <=
         ops.add(createBinaryOperator(context, "<=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
         // >=
         ops.add(createBinaryOperator(context, ">=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
         // ==
         ops.add(createBinaryOperator(context, "==", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
         // !=
         ops.add(createBinaryOperator(context, "!=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
         // // TODO &, |, &&, ||
 
         // !
         ops.add(createPrefixOperator(context, "!", boolOrArrBool, numOrBoolOrArray,
-                        RResultVerifier.newBuilder(new TypeDescriptor[]{numOrBoolOrNullOrArrNumBool}, new TypeDescriptor[]{numOrBoolOrArray}).emptyArrayCheck().build()));
+                        RResultVerifier.newBuilder(new TypeDescriptor[]{numOrBoolOrNullOrArrNumBool},
+                                        new TypeDescriptor[]{numOrBoolOrArray}).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
 
         // TODO unary +, -, ...
 
@@ -201,13 +204,13 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         // if
         String ifStatement = "if ({1}) '{'\n{0}<-TRUE\n'}' else '{'\n{0}<-FALSE\n'}'";
         res.add(createStatement(context, "if", ifStatement,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, new TypeDescriptor[]{numOrBoolOrArray}).emptyArrayCheck().build(),
+                        RResultVerifier.newBuilder(acceptedParameterTypes, new TypeDescriptor[]{numOrBoolOrArray}).primitiveAndArrayMismatchCheck().emptyArrayCheck().build(),
                         TypeDescriptor.BOOLEAN, numOrBoolOrArray));
 
         // while
         String whileStatement = "while ({1})'{'\nbreak\n'}'";
         res.add(createStatement(context, "while", whileStatement,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build(),
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build(),
                         TypeDescriptor.NULL, numOrBoolOrArray));
 
         // for
@@ -455,8 +458,6 @@ public final class RTCKLanguageProvider implements LanguageProvider {
             if (hasValidDeclaredTypes) {
                 if (hasValidArgumentTypes) {
                     next.apply(hasValidArgumentTypes, snippetRun);
-                } else {
-                    return;
                 }
             } else {
                 next.apply(hasValidArgumentTypes, snippetRun);
@@ -522,6 +523,48 @@ public final class RTCKLanguageProvider implements LanguageProvider {
                             }
                         }
                         return false;
+                    }
+                };
+                return this;
+            }
+
+            /**
+             * Ignores errors from interop values that unbox to a different type than what is their
+             * array type from FastR default conversions point of view. Example: object that
+             * {@code isString}, but its array elements are bytes. Another example: object that
+             * looks like integer, but is also an integer array of size > 1.
+             *
+             * @return the Builder
+             */
+            Builder primitiveAndArrayMismatchCheck() {
+                chain = new BiFunction<Boolean, SnippetRun, Void>() {
+                    private final BiFunction<Boolean, SnippetRun, Void> next = chain;
+
+                    @Override
+                    public Void apply(Boolean valid, SnippetRun sr) {
+                        if (valid && sr.getException() != null && hasMismatchingArgs(sr.getParameters())) {
+                            return null;
+                        }
+                        return next.apply(valid, sr);
+                    }
+
+                    private boolean hasMismatchingArgs(List<? extends Value> args) {
+                        for (Value arg : args) {
+                            if (checkPrimitive(arg, Value::isString) ||
+                                            checkPrimitive(arg, Value::fitsInByte) ||
+                                            checkPrimitive(arg, Value::fitsInShort) ||
+                                            checkPrimitive(arg, Value::fitsInInt) ||
+                                            checkPrimitive(arg, Value::fitsInLong) ||
+                                            checkPrimitive(arg, Value::fitsInDouble) ||
+                                            checkPrimitive(arg, Value::fitsInFloat)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    private boolean checkPrimitive(Value arg, Function<Value, Boolean> fitsIn) {
+                        return fitsIn.apply(arg) && arg.hasArrayElements() && (arg.getArraySize() != 1 || !fitsIn.apply(arg.getArrayElement(0)));
                     }
                 };
                 return this;
