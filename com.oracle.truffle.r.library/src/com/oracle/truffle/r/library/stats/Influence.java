@@ -77,7 +77,8 @@ public abstract class Influence extends RExternalBuiltinNode.Arg3 {
         double[] residData = getReadonlyData.execute(resid.materialize());
         double[] qrData = getReadonlyData.execute(qr.materialize());
         double[] qrauxData = getReadonlyData.execute(qraux.materialize());
-        // Note: it is OK to override data in "e" ("residData") regardless of its sharing status, GNUR does it too
+        // Note: it is OK to override data in "e" ("residData") regardless of its sharing status,
+        // GNUR does it too
         lminflNode.execute(qrData, n, n, k, q, qrauxData, residData, hat, sigma, tol);
         for (int i = 0; i < n; i++) {
             if (hat[i] > 1. - tol) {

@@ -86,14 +86,14 @@ public abstract class InternalNode extends OperatorNode {
     }
 
     /**
-     * Checks whether the given builtin may be called with different arguments through .Internal than its
-     * signature, i.e., checks whether some arguments may be missing in .Internal call.
-     * Normally, we expect that arguments and signatures of functions called via .Internal match, but there
-     * are some exceptions, e.g., paste and paste0 builtins.
+     * Checks whether the given builtin may be called with different arguments through .Internal
+     * than its signature, i.e., checks whether some arguments may be missing in .Internal call.
+     * Normally, we expect that arguments and signatures of functions called via .Internal match,
+     * but there are some exceptions, e.g., paste and paste0 builtins.
      *
-     * We had to create this method during the migration to GNU-R 4.0.3 because there was a new argument
-     * introduced to paste and paste0 builtins, but the ".Internal(paste(...))" call in baseloader
-     * still used the older signature.
+     * We had to create this method during the migration to GNU-R 4.0.3 because there was a new
+     * argument introduced to paste and paste0 builtins, but the ".Internal(paste(...))" call in
+     * baseloader still used the older signature.
      */
     public static boolean allowDifferentSignature(String name) {
         switch (name) {

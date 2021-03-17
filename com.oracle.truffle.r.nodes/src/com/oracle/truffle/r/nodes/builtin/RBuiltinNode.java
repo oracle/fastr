@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -136,7 +136,7 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
                 value = RMissing.instance;
             } else {
                 throw RInternalError.shouldNotReachHere("index out of bounds during castArg - the corresponding builtin should be" +
-                        " listed in RInternal.ALLOW_DIFFERENT_SIGNATURE");
+                                " listed in RInternal.ALLOW_DIFFERENT_SIGNATURE");
             }
         } else if (index < argumentCasts.length && argumentCasts[index] != null) {
             value = argumentCasts[index].doCast(args[index]);

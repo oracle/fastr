@@ -167,7 +167,7 @@ public abstract class Paste extends RBuiltinNode.Arg4 {
      */
     @Specialization(limit = "getGenericDataLibraryCacheSize()")
     protected Object pasteListMissingRecycle(VirtualFrame frame, RAbstractListVector values, String sep, Object collapse, @SuppressWarnings("unused") RMissing recycle0,
-                     @CachedLibrary("values.getData()") VectorDataLibrary valuesDataLib) {
+                    @CachedLibrary("values.getData()") VectorDataLibrary valuesDataLib) {
         if (collapse instanceof String) {
             return pasteList(frame, values, sep, (String) collapse, false, valuesDataLib);
         } else if (RRuntime.isNull(collapse)) {
@@ -191,7 +191,6 @@ public abstract class Paste extends RBuiltinNode.Arg4 {
     private boolean hasZeroLengthElement(RAbstractListVector values, VectorDataLibrary valuesDataLib) {
         Object valuesData = values.getData();
         SeqIterator iterator = valuesDataLib.iterator(valuesData);
-        int i = 0;
         while (valuesDataLib.nextLoopCondition(valuesData, iterator)) {
             Object element = valuesDataLib.getNextElement(valuesData, iterator);
             int elementLength = elementLengthNode.executeInteger(element);
@@ -199,7 +198,6 @@ public abstract class Paste extends RBuiltinNode.Arg4 {
                 hasZeroLengthElementProfile.enter();
                 return true;
             }
-            i++;
         }
         return false;
     }
