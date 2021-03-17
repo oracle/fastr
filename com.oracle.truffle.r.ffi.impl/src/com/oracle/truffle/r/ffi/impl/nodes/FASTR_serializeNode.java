@@ -23,6 +23,7 @@
 
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -76,7 +77,7 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
             try {
                 outBytesFuncExecutable = (TruffleObject) interopLibrary.invokeMember(outBytesFunc, "bind", outBytesFuncSignature);
             } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
-                e.printStackTrace();
+                throw RInternalError.shouldNotReachHere(e);
             }
         } else {
             outBytesFuncExecutable = (TruffleObject) outBytesFunc;
