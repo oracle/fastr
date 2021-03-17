@@ -23,7 +23,6 @@
 
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
