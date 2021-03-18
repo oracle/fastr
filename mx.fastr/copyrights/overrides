@@ -968,7 +968,7 @@ com.oracle.truffle.r.native/gnur/patch/src/main/gzio.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/plot.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/plotmath.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/plot3d.c,no.copyright
-com.oracle.truffle.r.native/gnur/patch/src/main/registration.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/base/src/registration.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/rlocale.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/rlocale_data.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/sort.c,no.copyright
