@@ -1242,12 +1242,11 @@ public class FileFunctions {
             casts.arg("expand").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
-        // TODO: NewVersionMigration - expand parameter
         @Specialization
         @TruffleBoundary
-        protected static int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, @SuppressWarnings("unused") boolean expand,
+        protected static int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, boolean expand,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            int result = 1;
+            int result = 0;
             for (int i = -0; i < vec.getLength(); i++) {
                 String pathPattern = vec.getDataAt(i);
                 if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
@@ -1257,7 +1256,13 @@ public class FileFunctions {
                 if (firstGlobCharIdx >= 0) {
                     result = removeGlob(ctxRef.get(), pathPattern, recursive, firstGlobCharIdx, result);
                 } else {
-                    result = removeFile(ctxRef.get().getSafeTruffleFile(pathPattern), recursive, result);
+                    TruffleFile file;
+                    if (!expand && pathPattern.startsWith("~")) {
+                        file = ctxRef.get().getEnv().getInternalTruffleFile(pathPattern);
+                    } else {
+                        file = ctxRef.get().getSafeTruffleFile(Utils.tildeExpand(pathPattern));
+                    }
+                    result = removeFile(file, recursive, result);
                 }
             }
             return result;
@@ -1273,7 +1278,7 @@ public class FileFunctions {
                 final Pattern globRegex = Pattern.compile(FileSystemUtils.toUnixRegexPattern(pathPattern));
                 FileSystemUtils.walkFileTree(context.getSafeTruffleFile(searchRoot), new SimpleFileVisitor<TruffleFile>() {
                     @Override
-                    public FileVisitResult visitFile(TruffleFile file, BasicFileAttributes attrs) throws IOException {
+                    public FileVisitResult visitFile(TruffleFile file, BasicFileAttributes attrs) {
                         if (globRegex.matcher(file.getName()).matches()) {
                             tmpResult[0] = removeFile(context.getSafeTruffleFile(file.toString()), recursive, tmpResult[0]);
                             return recursive ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
@@ -1298,8 +1303,11 @@ public class FileFunctions {
             }
             try {
                 file.delete();
-            } catch (IOException ex) {
+            } catch (NoSuchFileException ex) {
+                // Not deleting a non-existent file is not a failure.
                 result = 0;
+            } catch (IOException ex) {
+                result = 1;
             }
             return result;
         }

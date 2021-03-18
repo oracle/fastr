@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,8 +67,8 @@ public final class StatsRFFI {
             super(factory.createDownCallNode());
         }
 
-        public void execute(double[] x, int ldx, int n, int k, int q, int docoef, double[] qraux, double[] resid, double[] hat, double[] coef, double[] sigma, double tol) {
-            call(NativeFunction.lminfl, x, ldx, n, k, q, docoef, qraux, resid, hat, coef, sigma, tol);
+        public void execute(double[] x, int ldx, int n, int k, int q, double[] qraux, double[] resid, double[] hat, double[] sigma, double tol) {
+            call(NativeFunction.lminfl, x, ldx, n, k, q, qraux, resid, hat, sigma, tol);
         }
 
         public static LminflNode create() {

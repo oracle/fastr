@@ -253,7 +253,7 @@ public class TestConnections extends TestRBase {
         assertEval(template("conn <- rawConnection(raw(0), 'wb'); value <- list(a=c(1,2,3), b='foo'); save(value, file=conn, version=%0); rawConnectionValue(conn)", SAVE_VERSIONS));
         // ignored because save refuses to write to a rawConnection that is not configured to binary
         assertEval(template("conn <- rawConnection(raw(0), 'w'); value <- c(1,2,3); save(value, file=conn, version=%0); rawConnectionValue(conn)", SAVE_VERSIONS));
-        assertEval(Ignored.NewRVersionMigration, template("f <- tempfile(); unlink(f); x <- 1:10; save(x, file=f, version=%0); con <- file(f, 'rb'); dput(class(con))", SAVE_VERSIONS));
+        assertEval(template("f <- tempfile(); unlink(f); x <- 1:10; save(x, file=f, version=%0); con <- file(f, 'rb'); dput(class(con))", SAVE_VERSIONS));
     }
 
     @Test

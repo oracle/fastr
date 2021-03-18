@@ -33,6 +33,11 @@ public class TestBuiltin_internal extends TestBase {
     public void testIndirectInternalInvocation() {
         assertEval("is.environment((get('.Internal', envir = baseenv(), mode = 'function'))(getNamespaceRegistry()))");
         assertEval("attr((get('.Internal', envir = baseenv(), mode = 'function'))(getNamespaceRegistry()), 'name')");
-        assertEval(Ignored.NewRVersionMigration, "(get('.Internal', envir = baseenv(), mode = 'function')(paste0(1,2,3)))");
+        // .Internal(paste0) and .Internal(paste) behave differently in GNU-R (version 4.0.3) during
+        // loading of base package - they expect
+        // different number of arguments. We ignore error message for now because we handle calls to
+        // .Internal(paste) the same
+        // both during loading of base package and afterwards.
+        assertEval(Output.IgnoreErrorMessage, "(get('.Internal', envir = baseenv(), mode = 'function')(paste0(1,2,3,4,5)))");
     }
 }

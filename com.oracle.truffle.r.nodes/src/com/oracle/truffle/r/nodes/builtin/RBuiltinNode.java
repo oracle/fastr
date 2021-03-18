@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
@@ -129,7 +130,15 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
 
     protected Object castArg(Object[] args, int index) {
         Object value;
-        if (index < argumentCasts.length && argumentCasts[index] != null) {
+        if (index >= args.length) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (InternalNode.allowDifferentSignature(getRBuiltin().name())) {
+                value = RMissing.instance;
+            } else {
+                throw RInternalError.shouldNotReachHere("index out of bounds during castArg - the corresponding builtin should be" +
+                                " listed in RInternal.ALLOW_DIFFERENT_SIGNATURE");
+            }
+        } else if (index < argumentCasts.length && argumentCasts[index] != null) {
             value = argumentCasts[index].doCast(args[index]);
         } else {
             value = args[index];
