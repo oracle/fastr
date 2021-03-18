@@ -543,7 +543,7 @@ public class TestBuiltin_c extends TestBase {
         assertEval(Output.ContainsReferences, "{ e1 <- new.env(); e2 <- new.env(); c(e1, e2) }");
         assertEval(Output.ContainsReferences, "{ e1 <- new.env(); c(e1, 3) }");
 
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"foo\", representation(d=\"numeric\")); x<-new(\"foo\", d=42); y<-c(x, 7); y[[1]] }");
+        assertEval("{ setClass(\"foo\", representation(d=\"numeric\")); x<-new(\"foo\", d=42); y<-c(x, 7); y[[1]] }");
 
         assertEval("{ typeof(c(as.symbol(\"foo\"), 42)) }");
 
@@ -562,8 +562,8 @@ public class TestBuiltin_c extends TestBase {
         assertEval("c(as.expression(1), as.expression(1))");
         assertEval("c(as.symbol(1))");
         assertEval("c(as.symbol(1), as.symbol(1))");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass('foo', representation(bar = 'ANY')); c(new('foo', bar=1)) }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass('foo', representation(bar = 'ANY')); c(new('foo', bar=1), new('foo', bar=1)) }");
+        assertEval("{ setClass('foo', representation(bar = 'ANY')); c(new('foo', bar=1)) }");
+        assertEval("{ setClass('foo', representation(bar = 'ANY')); c(new('foo', bar=1), new('foo', bar=1)) }");
 
         assertEval("c(1,2,)");
 

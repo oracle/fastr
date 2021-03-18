@@ -91,32 +91,30 @@ public class TestS4 extends TestRBase {
         assertEval("{ x<-42; y<-asS4(x); isS4(y) }");
         assertEval("{ isS4(NULL) }");
         assertEval("{ asS4(NULL); isS4(NULL) }");
-        assertEval(Ignored.NewRVersionMigration, "{  asS4(7:42) }");
+        assertEval("{  asS4(7:42) }");
     }
 
     @Test
     public void testAllocation() {
         assertEval("{ new(\"numeric\") }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j=42) }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j='text') }");
-        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", inexisting=42) }");
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j=42) }");
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", j='text') }");
+        assertEval(Output.IgnoreErrorContext, "{ setClass(\"foo\", representation(j=\"numeric\")); new(\"foo\", inexisting=42) }");
     }
 
     @Test
     public void testClassCreation() {
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"foo\", representation(j=\"numeric\")); getClass(\"foo\") }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"foo\"); setClass(\"bar\", representation(j = \"numeric\"), contains = \"foo\"); is.null(getClass(\"foo\")@prototype) }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass('foo', contains='standardGeneric'); getClass('foo') }");
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); getClass(\"foo\") }");
+        assertEval("{ setClass(\"foo\"); setClass(\"bar\", representation(j = \"numeric\"), contains = \"foo\"); is.null(getClass(\"foo\")@prototype) }");
+        assertEval("{ setClass('foo', contains='standardGeneric'); getClass('foo') }");
     }
 
     @Test
     public void testPrototype() {
-        assertEval(Ignored.NewRVersionMigration, "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); A() }");
-        assertEval(Ignored.NewRVersionMigration, "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); A(data=42) }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'A', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); A() }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ A <- setClass('A', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'A', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); A(data=42) }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); C11() }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); C11(data=42) }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'C11', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); C11() }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'C11', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); C11(data=42) }");
     }
 
     @Test
@@ -128,26 +126,21 @@ public class TestS4 extends TestRBase {
         assertEval(Ignored.OutputFormatting, "{ setGeneric(\"gen\", function(object) standardGeneric(\"gen\")); res<-print(gen); removeGeneric(\"gen\"); res }");
         assertEval(Ignored.OutputFormatting, "{ gen<-function(object) 0; setGeneric(\"gen\"); res<-print(gen); removeGeneric(\"gen\"); res }");
 
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ gen<-function(object) 0; setGeneric(\"gen\"); setClass(\"foo\", representation(d=\"numeric\")); setMethod(\"gen\", signature(object=\"foo\"), function(object) object@d); res<-print(gen(new(\"foo\", d=42))); removeGeneric(\"gen\"); res }");
+        assertEval("{ gen<-function(object) 0; setGeneric(\"gen\"); setClass(\"foo\", representation(d=\"numeric\")); setMethod(\"gen\", signature(object=\"foo\"), function(object) object@d); res<-print(gen(new(\"foo\", d=42))); removeGeneric(\"gen\"); res }");
 
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ setClass(\"foo\", representation(d=\"numeric\")); setClass(\"bar\",  contains=\"foo\"); setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); setMethod(\"gen\", signature(o=\"foo\"), function(o) \"FOO\"); setMethod(\"gen\", signature(o=\"bar\"), function(o) \"BAR\"); res<-print(c(gen(new(\"foo\", d=7)), gen(new(\"bar\", d=42)))); removeGeneric(\"gen\"); res }");
+        assertEval("{ setClass(\"foo\", representation(d=\"numeric\")); setClass(\"bar\",  contains=\"foo\"); setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); setMethod(\"gen\", signature(o=\"foo\"), function(o) \"FOO\"); setMethod(\"gen\", signature(o=\"bar\"), function(o) \"BAR\"); res<-print(c(gen(new(\"foo\", d=7)), gen(new(\"bar\", d=42)))); removeGeneric(\"gen\"); res }");
 
         assertEval("{ setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); res<-print(setGeneric(\"gen\", function(o) standardGeneric(\"gen\"))); removeGeneric(\"gen\"); res }");
 
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
+        assertEval("{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
 
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ setClass('A'); setClass('A1', contains = 'A'); setClass('A2', contains = 'A1'); setGeneric('foo', function(a, b) standardGeneric('foo')); setMethod('foo', signature('A1', 'A2'), function(a, b) '1-2'); setMethod('foo', signature('A2', 'A1'), function(a, b) '2-1'); foo(new('A2'), new('A2')) }");
+        assertEval("{ setClass('A'); setClass('A1', contains = 'A'); setClass('A2', contains = 'A1'); setGeneric('foo', function(a, b) standardGeneric('foo')); setMethod('foo', signature('A1', 'A2'), function(a, b) '1-2'); setMethod('foo', signature('A2', 'A1'), function(a, b) '2-1'); foo(new('A2'), new('A2')) }");
 
         assertEval("setGeneric('do.call', signature = c('what', 'args'))");
 
-        assertEval(Ignored.NewRVersionMigration, "{ setClass('A1', representation(a='numeric')); setMethod('length', 'A1', function(x) x@a); obj <- new('A1'); obj@a <- 10; length(obj) }");
+        assertEval("{ setClass('A1', representation(a='numeric')); setMethod('length', 'A1', function(x) x@a); obj <- new('A1'); obj@a <- 10; length(obj) }");
 
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ setClass('A2', representation(a = 'numeric')); setMethod('rep', 'A2', function(x, a, b, c) { c(x@a, a, b, c) }); setMethod('ifelse', c(yes = 'A2'), function(test, yes, no) print(test)) }");
+        assertEval("{ setClass('A2', representation(a = 'numeric')); setMethod('rep', 'A2', function(x, a, b, c) { c(x@a, a, b, c) }); setMethod('ifelse', c(yes = 'A2'), function(test, yes, no) print(test)) }");
     }
 
     @Test
@@ -171,8 +164,7 @@ public class TestS4 extends TestRBase {
     @Test
     public void testObjectValidity() {
         assertEval("{ check <- function(object) length(object@n) == 1; setClass('SingleInt', representation(n = 'numeric'), validity = check); new('SingleInt', n = c(1, 2)) }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ check <- function(object) length(object@n) == 1; setClass('SingleInt', representation(n = 'numeric'), validity = check); new('SingleInt', n = 1) }");
+        assertEval("{ check <- function(object) length(object@n) == 1; setClass('SingleInt', representation(n = 'numeric'), validity = check); new('SingleInt', n = 1) }");
     }
 
     @Test
@@ -210,12 +202,10 @@ public class TestS4 extends TestRBase {
     @Test
     public void testRegularFieldAssign() {
         assertEval(Output.IgnoreErrorContext, "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); obj$fld2 <- 'value'; }");
-        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext,
+        assertEval(Output.IgnoreErrorContext,
                         "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); obj$fld2; }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); attr(obj, '.Data') <- new.env(); obj$fld2 <- 'value'; list(obj, as.list(attr(obj, '.Data')), obj$fld2); }");
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); attr(obj, '.xData') <- new.env(); obj$fld2 <- 'value'; list(obj, as.list(attr(obj, '.xData')), obj$fld2); }");
+        assertEval("{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); attr(obj, '.Data') <- new.env(); obj$fld2 <- 'value'; list(obj, as.list(attr(obj, '.Data')), obj$fld2); }");
+        assertEval("{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); attr(obj, '.xData') <- new.env(); obj$fld2 <- 'value'; list(obj, as.list(attr(obj, '.xData')), obj$fld2); }");
     }
 
     @Test
@@ -225,9 +215,8 @@ public class TestS4 extends TestRBase {
 
     @Test
     public void testAs() {
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ my_as <- function(object, to) { class(object) <- to; object }; A <- setClass('A', slots=c(data='numeric')); a <- A(); x <- my_as(a, 'X'); class(a) }");
-        assertEval(Ignored.NewRVersionMigration, "{ setClass('A', slots=c(data='numeric')); B <- setClass('B', contains='A'); b <- B(data=42); as(b, 'A') }");
+        assertEval("{ my_as <- function(object, to) { class(object) <- to; object }; A12 <- setClass('A12', slots=c(data='numeric')); a <- A12(); x <- my_as(a, 'X'); class(a) }");
+        assertEval("{ setClass('A13', slots=c(data='numeric')); B13 <- setClass('B13', contains='A13'); b <- B13(data=42); as(b, 'A13') }");
     }
 
     /**
@@ -237,6 +226,6 @@ public class TestS4 extends TestRBase {
      */
     @Test
     public void testValidityFunction() {
-        assertEval("{ setClass('A', slots=c(data='numeric'), validity=function(object) {class(object); TRUE}); B <- setClass('B', contains='A'); B(data=42) }");
+        assertEval("{ setClass('A11', slots=c(data='numeric'), validity=function(object) {class(object); TRUE}); B11 <- setClass('B11', contains='A11'); B11(data=42) }");
     }
 }

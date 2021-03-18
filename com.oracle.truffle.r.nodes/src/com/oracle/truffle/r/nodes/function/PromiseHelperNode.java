@@ -360,7 +360,14 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                 evalFrame = wrapPromiseFrame(frame, promise.getFrame(), frame != null ? frame.materialize() : null);
                 res = promise.getClosure().eval(evalFrame);
             }
-            if (visibleExec && evalFrame != null) {
+
+            if (res instanceof RPromise) {
+                RPromise nestedPromise = (RPromise) res;
+                res = evaluateSlowPath(frame, nestedPromise, visibleExec);
+            }
+
+            assert evalFrame != null;
+            if (visibleExec) {
                 SetVisibilityNode.executeSlowPath(frame, getVisibilitySlowPath(evalFrame));
             }
             return res;

@@ -57,7 +57,7 @@ public class TestSimpleAttributes extends TestBase {
 
         assertEval("{ f<-function(y) attr(y, \"foo\")<-NULL; x<-function() 42; attr(x, \"foo\")<-\"foo\"; s<-\"bar\"; switch(s, f(x)); x }");
 
-        assertEval(Ignored.NewRVersionMigration, "{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(y)<-NULL; x }");
+        assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); attr(x, \"foo\")<-\"foo\"; y<-x; attributes(y)<-NULL; x }");
 
         assertEval("{ x<-42; attributes(x)<-list(.Environment=globalenv()); environment(x) }");
         assertEval("{ x<-42; attributes(x)<-list(.Environment=globalenv()); attributes(x) }");

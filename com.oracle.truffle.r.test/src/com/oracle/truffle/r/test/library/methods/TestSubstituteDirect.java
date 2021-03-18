@@ -57,7 +57,7 @@ public class TestSubstituteDirect extends TestBase {
         assertEval("a<-substituteDirect(quote(x+y), c(list(x=1), list(y=1))); a");
         assertEval("substituteDirect(quote(x+1), frame=environment())");
         assertEval("f<-function() {}; substituteDirect(quote(x+1), frame=f)");
-        assertEval(Ignored.NewRVersionMigration, "substituteDirect(quote(x+1), frame=setClass('a'))");
+        assertEval("substituteDirect(quote(x+1), frame=setClass('a'))");
 
         assertEval("substituteDirect(quote(x+1), list(x=1), cleanFunction=TRUE)");
         assertEval("substituteDirect(quote(x+1), list(x=1), cleanFunction=c(TRUE, 'breakme'))");

@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = ".cache_class", kind = PRIMITIVE, parameterNames = {"class", "extends"}, behavior = COMPLEX)
@@ -41,14 +42,21 @@ public abstract class CacheClass extends RBuiltinNode.Arg2 {
         // apparently, "extends" does not have to be a string vector (GNU R will not signal this
         // error) - but it does not seem to make much sense and it's doubtful if it's worth
         // supporting since this is internal function
-        casts.arg("extends").defaultError(RError.Message.GENERIC, "invalid extends argument to internal .class_cache").mustBe(stringValue()).asStringVector();
+        casts.arg("extends").defaultError(RError.Message.GENERIC, "invalid extends argument to internal .class_cache").allowNull().mustBe(stringValue()).asStringVector();
 
     }
 
     @TruffleBoundary
     @Specialization
-    protected RStringVector getClass(String cl, RStringVector ext) {
+    protected RStringVector cacheClass(String cl, RStringVector ext) {
         RContext.getInstance().putS4Extends(cl, ext.materialize());
         return ext;
+    }
+
+    @TruffleBoundary
+    @Specialization
+    protected RNull uncacheClass(String klass, RNull rNull) {
+        RContext.getInstance().removeS4Extends(klass);
+        return rNull;
     }
 }

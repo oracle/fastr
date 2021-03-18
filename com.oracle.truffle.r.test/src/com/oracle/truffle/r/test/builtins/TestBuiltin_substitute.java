@@ -96,8 +96,7 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("f<-function(x,name) substitute(x$name); f(foo, bar); foo <- new.env(); foo$bar <- 1; eval(f(foo,bar))");
         assertEval("f<-function(x,name) substitute(x$name <- 5); f(foo, bar); foo <- new.env(); eval(f(foo,bar)); foo$bar");
         assertEval("f<-function(x,name) substitute(x@name); f(foo, bar); setClass('cl', representation(bar='numeric')); foo <- new('cl'); foo@bar <- 1; eval(f(foo,bar))");
-        assertEval(Ignored.NewRVersionMigration,
-                        "f<-function(x,name) substitute(x@name <- 5); f(foo, bar); setClass('cl', representation(bar='numeric')); foo <- new('cl'); eval(f(foo,bar)); foo@bar");
+        assertEval("f<-function(x,name) substitute(x@name <- 5); f(foo, bar); setClass('cl', representation(bar='numeric')); foo <- new('cl'); eval(f(foo,bar)); foo@bar");
 
         assertEval("substitute(1, 1)");
         assertEval("substitute(1, 1, 1)");
