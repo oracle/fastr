@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI.LminflNode;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 /**
- * Transcribed from GNU-R's src/library/stats/src/influence.c
+ * Transcribed from GNU-R's src/library/stats/src/influence.c.
  */
 public abstract class Influence extends RExternalBuiltinNode.Arg3 {
 

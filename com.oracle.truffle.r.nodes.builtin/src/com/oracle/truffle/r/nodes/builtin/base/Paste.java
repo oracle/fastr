@@ -163,7 +163,7 @@ public abstract class Paste extends RBuiltinNode.Arg4 {
     }
 
     /**
-     * Missing recycle0 argument is, e.g., in baseloader.R (as of GNU-R version 4.0.3)
+     * Missing recycle0 argument is, e.g., in baseloader.R (as of GNU-R version 4.0.3).
      */
     @Specialization(limit = "getGenericDataLibraryCacheSize()")
     protected Object pasteListMissingRecycle(VirtualFrame frame, RAbstractListVector values, String sep, Object collapse, @SuppressWarnings("unused") RMissing recycle0,
