@@ -1,0 +1,114 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the grid package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: grid 3.6.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-03-29 07:06-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: grid.c:212
+msgid "cannot clip to rotated viewport"
+msgstr ""
+
+#: grid.c:697 grid.c:702 grid.c:792 grid.c:797
+msgid "cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)"
+msgstr ""
+
+#: grid.c:977
+msgid "attempt to plot on null device"
+msgstr ""
+
+#: grid.c:1309
+msgid "there is no layout defined"
+msgstr ""
+
+#: grid.c:1529
+msgid "polygon edge not found (zero-width or zero-height?)"
+msgstr ""
+
+#: grid.c:1538
+msgid "polygon edge not found"
+msgstr ""
+
+#: grid.c:1692
+msgid "require at least two points to draw arrow"
+msgstr ""
+
+#: grid.c:2008
+msgid "non-finite control point in Xspline"
+msgstr ""
+
+#: grid.c:2873
+msgid "non-finite x or y in graphics path"
+msgstr ""
+
+#: grid.c:2914
+msgid "Empty raster"
+msgstr ""
+
+#: grid.c:3368
+msgid "invalid plotting symbol"
+msgstr ""
+
+#: grid.c:3454
+msgid "unable to clip to rotated rectangle"
+msgstr ""
+
+#: layout.c:589
+msgid "invalid 'layout.pos.row'"
+msgstr ""
+
+#: layout.c:593
+msgid "invalid 'layout.pos.col'"
+msgstr ""
+
+#: matrix.c:50
+msgid "singular transformation matrix"
+msgstr ""
+
+#: state.c:170
+msgid "unable to store 'grid' state.  Too many devices open?"
+msgstr ""
+
+#: unit.c:260 unit.c:410 unit.c:1210 unit.c:1290 unit.c:1370 unit.c:1450
+msgid "unimplemented unit function"
+msgstr ""
+
+#: unit.c:893 unit.c:1645
+msgid "invalid unit or unit not yet implemented"
+msgstr ""
+
+#: unit.c:1702 unit.c:1733
+msgid "Viewport has zero dimension(s)"
+msgstr ""
+
+#: unit.c:1765 unit.c:1780 unit.c:1795 unit.c:1810
+msgid "Unsupported unit conversion"
+msgstr ""
+
+#: unit.c:1898
+msgid "Invalid unit"
+msgstr ""
+
+#: unit.c:1914
+msgid "'units' must be character"
+msgstr ""
+
+#: unit.c:1917
+msgid "'units' must be of length > 0"
+msgstr ""
+
+#: viewport.c:315
+msgid "non-finite location and/or size for viewport"
+msgstr ""

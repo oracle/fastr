@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,35 @@
 # questions.
 #
 
-# This is necessary so that #include "grid.h" works
-PKG_INCLUDES = -I src 
+# For grid, we need some more patches including patches in the R code (revert
+# the "new style" units internal improvement that does not work with our
+# re-implementation of grid internals).
+#
+# Therefore we do not reuse the grid installed in GNU-R, but we build grid
+# from scratch from our own patched version that lives next to this Makefile
 
-include ../lib.mk
+ifneq ($(MAKECMDGOALS),clean)
+include $(TOPDIR)/platform.mk
+endif
+
+.PHONY: all clean
+
+# Note: FASTR_LIBRARY_DIR is defined by the upper level Makefile that calls us
+PKGNAME := grid
+PKGDIR := $(FASTR_LIBRARY_DIR)/$(PKGNAME)
+
+$(PKGDIR): $(PKGNAME)
+	$(GNUR_HOME_BINARY)/bin/R CMD INSTALL --library=$(FASTR_LIBRARY_DIR) $(PKGNAME)
+
+all: $(PKGDIR)
+
+clean:
+	rm -rf $(PKGDIR)
+	rm $(PKGNAME)/src/*.o
+	rm $(PKGNAME)/src/*.so
+
+# Original version that builds grid from GNU-R:
+# This is necessary so that #include "grid.h" works
+# PKG_INCLUDES = -I src
+#
+# include ../lib.mk

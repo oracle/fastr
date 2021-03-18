@@ -893,6 +893,17 @@ com.oracle.truffle.r.native/gnur/patch/src/library/grid/src/state.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/grid/src/unit.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/grid/src/util.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/grid/src/viewport.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/gpar.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/grid.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/just.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/layout.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/matrix.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/register.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/state.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/unit.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/util.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/viewport.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/grid/grid/src/grid.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/methods/src/init.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/methods/src/methods.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/parallel/src/glpi.h,no.copyright

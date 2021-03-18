@@ -3,7 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
- *  Copyright (c) 2020, Oracle and/or its affiliates
+ *  Copyright (c) 2020, 2021, Oracle and/or its affiliates
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -132,6 +132,10 @@ Rf_setNewJavaGDDeviceData(NewDevDesc *dd, double gamma_fac, newJavaGDDesc *xd)
     dd->startgamma = gamma_fac;
 
     dd->deviceSpecific = (void *) xd;
+
+#if R_GE_version >= 13
+    dd->deviceVersion = R_GE_definitions;
+#endif
 
     dd->displayListOn = TRUE;
 
