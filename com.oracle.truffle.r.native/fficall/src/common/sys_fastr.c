@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,11 +30,6 @@
 static char newFileName[PATH_MAX];
 static int HaveHOME=-1;
 static char UserHOME[PATH_MAX];
-
-SEXP installTrChar(SEXP x) {
-	// TODO implement correctly (see sysutils.c)
-	return installChar(x);
-}
 
 /* Only interpret inputs of the form ~ and ~/... */
 const char *R_ExpandFileName_unix(const char *s, char *buff)
