@@ -896,12 +896,16 @@ def build_binary_pkgs(args_in, **kwargs):
     for pkg_name in args.recommended_list.split(','):
         shutil.copytree(os.path.join(_fastr_suite.dir, 'library', pkg_name), os.path.join(pkgs_pkgs_path, pkg_name))
     # add file with API digest
+    import io
+    string_io = io.StringIO()
     try:
-        with open(os.path.join(pkgs_path, 'api-checksum.txt'), 'w') as f:
-            sys.stdout = f
-            pkgcache(['--print-api-checksum', '--vm', 'fastr'])
+        sys.stdout = string_io
+        pkgcache(['--print-api-checksum', '--vm', 'fastr'])
     finally:
         sys.stdout = sys.__stdout__
+    with open(os.path.join(pkgs_path, 'api-checksum.txt'), 'w') as f:
+        checksum = string_io.getvalue().splitlines(keepends=False)[-1]
+        print(checksum, f)
     # creates the tarball
     result_tarball = os.path.join(dest_dir, pkgs_name + '.tar.gz')
     with tarfile.open(result_tarball, "w:gz") as tar:
