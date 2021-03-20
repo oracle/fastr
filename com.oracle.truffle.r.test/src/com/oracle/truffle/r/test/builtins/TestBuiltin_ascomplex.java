@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -112,7 +112,8 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval(Ignored.ImplementationError, "{ as.complex(\"+.1e+2-3i\") }");
 
         assertEval("{ as.complex(list(42)) }");
-        assertEval(Output.IgnoreErrorContext, "{ as.complex(list(NULL)) }");
+        // TODO: Wrong IgnoreErrorContext
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ as.complex(list(NULL)) }");
         assertEval(Output.IgnoreWarningContext, "{ as.complex(list(\"foo\")) }");
         assertEval("{ as.complex.cls <- function(x) 42; as.complex(structure(c(1,2), class='cls')); }");
 

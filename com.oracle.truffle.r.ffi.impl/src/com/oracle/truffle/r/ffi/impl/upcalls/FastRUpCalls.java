@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
 import com.oracle.truffle.r.ffi.impl.nodes.FASTR_DATAPTRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.FASTR_serializeNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
@@ -35,6 +36,11 @@ public interface FastRUpCalls {
     Object R_MethodsNamespace();
 
     int FASTR_getConnectionChar(Object obj);
+
+    int FASTR_getSerializeVersion();
+
+    @RFFIUpCallNode(FASTR_serializeNode.class)
+    void FASTR_serialize(Object object, int type, int version, @RFFICpointer Object stream, @RFFICpointer Object outBytesFunc);
 
     Object getSummaryDescription(Object x);
 

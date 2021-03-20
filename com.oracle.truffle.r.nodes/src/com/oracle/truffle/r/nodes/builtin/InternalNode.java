@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,6 +86,26 @@ public abstract class InternalNode extends OperatorNode {
     }
 
     /**
+     * Checks whether the given builtin may be called with different arguments through .Internal
+     * than its signature, i.e., checks whether some arguments may be missing in .Internal call.
+     * Normally, we expect that arguments and signatures of functions called via .Internal match,
+     * but there are some exceptions, e.g., paste and paste0 builtins.
+     *
+     * We had to create this method during the migration to GNU-R 4.0.3 because there was a new
+     * argument introduced to paste and paste0 builtins, but the ".Internal(paste(...))" call in
+     * baseloader still used the older signature.
+     */
+    public static boolean allowDifferentSignature(String name) {
+        switch (name) {
+            case "paste":
+            case "paste0":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Represents an uninitialized .Internal call, executing will replace it with a more specific
      * implementation.
      */
@@ -156,7 +176,7 @@ public abstract class InternalNode extends OperatorNode {
 
             // verify the number of arguments
             if (factory.getSignature().getVarArgCount() == 0) {
-                if (callArgs.length != factory.getSignature().getLength()) {
+                if (!allowDifferentSignature(name) && callArgs.length != factory.getSignature().getLength()) {
                     throw RError.error(RError.SHOW_CALLER, callArgs.length == 1 ? Message.ARGUMENT_PASSED : Message.ARGUMENTS_PASSED, callArgs.length, ".Internal(" + name + ")",
                                     factory.getSignature().getLength());
                 }
@@ -277,7 +297,10 @@ public abstract class InternalNode extends OperatorNode {
 
         InternalCallDefaultNode(SourceSection src, RSyntaxLookup operator, ArgumentsSignature outerSignature, RSyntaxNode[] outerArgs, RBuiltinFactory factory, RSyntaxElement[] args) {
             super(src, operator, outerSignature, outerArgs, factory, args);
-            assert args.length == factory.getSignature().getLength();
+            String builtinName = factory.getName();
+            if (!allowDifferentSignature(builtinName)) {
+                assert args.length == factory.getSignature().getLength();
+            }
         }
 
         @Override
@@ -447,7 +470,7 @@ public abstract class InternalNode extends OperatorNode {
                     "qweibull", "dnchisq", "pnchisq", "qnchisq", "dnt", "pnt", "qnt", "dwilcox", "pwilcox", "qwilcox", "dnbinom_mu", "pnbinom_mu", "qnbinom_mu", "dhyper",
                     "phyper", "qhyper", "dnbeta", "pnbeta", "qnbeta", "dnf", "pnf", "qnf", "dtukey", "ptukey", "qtukey", "rchisq", "rexp", "rgeom", "rpois", "rt", "rsignrank", "rbeta", "rbinom",
                     "rcauchy", "rf", "rgamma", "rlnorm", "rlogis", "rnbinom", "rnbinom_mu", "rnchisq", "rnorm", "runif", "rweibull", "rwilcox", "rhyper",
-                    "grepRaw", "regexec", "adist", "aregexec", "chartr", "strtrim", "eapply", "machine", "save", "dump", "prmatrix", "gcinfo",
+                    "regexec", "adist", "aregexec", "chartr", "strtrim", "eapply", "machine", "save", "dump", "prmatrix", "gcinfo",
                     "memory.profile", "sys.on.exit", "builtins", "bodyCode", "rapply",
                     "mem.limits", "capabilitiesX11", "Cstack_info", "file.choose",
                     "setNumMathThreads", "setMaxNumMathThreads", "isatty", "isIncomplete", "pipe", "fifo", "unz", "truncate", "rawConnection",

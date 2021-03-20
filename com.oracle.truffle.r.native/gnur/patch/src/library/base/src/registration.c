@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002-2012	The R Core Team.
+ *  Copyright (C) 2002-2014 The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  *
  */
 /*
@@ -44,27 +44,18 @@
 # include <config.h>
 #endif
 
-//#include <Defn.h>
+#include <Defn.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
 #include <R_ext/Linpack.h>
 
 
-/*  These get the declarations of some routines refernced here but
+/*  These get the declarations of some routines referenced here but
     not explicitly declared.    This is necessary when we link with
     a C++ compiler because the linkage changes as the declarations
     are (currently) within extern "C" blocks.
 */
 #include <R_ext/Callbacks.h>
-//#include <Rdynpriv.h>
-
-extern void dqrdc2_(double *x, int *ldx, int *n, int *p, double *tol, int *rank, double *qraux, int* pivot, double *work);
-extern void dqrcf_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *b, int* info);
-extern void dqrls_(double *x, int *n, int *p, double *y, int *ny, double *tol, double *b, double *rsd, double *qty, int *k, int *jpvt, double *qraux, double *work);
-extern void dqrqty_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *qty);
-extern void dqrqy_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *qy);
-extern void dqrrsd_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *rsd);
-extern void dqrxb_(double *x, int *n, int *k, double *qraux, double *y, int *ny, double *xb);
 
 
 #define FDEF(name, n)  {#name, (DL_FUNC) &(name##_), n, NULL}
@@ -81,8 +72,10 @@ static R_FortranMethodDef fortranMethods[] = {
     {NULL, NULL, 0}
 };
 
-void R_init_base(DllInfo *dll)
+
+void attribute_hidden
+R_init_base(DllInfo *dll)
 {
-	R_registerRoutines(dll, NULL, NULL, fortranMethods, NULL);
+    R_registerRoutines(dll, NULL, NULL, fortranMethods, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,14 @@
 
 package com.oracle.truffle.r.test.builtins;
 
+import java.io.File;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
-import java.io.File;
-import org.junit.Before;
 
 public class TestBuiltin_unserialize extends TestBase {
     private static final String[] BASIC_TYPE_VALUES = new String[]{
@@ -155,7 +156,7 @@ public class TestBuiltin_unserialize extends TestBase {
         assertEval(template("options(keep.source=FALSE); unserialize(serialize(quote(if (a * 2 < 199) b + foo(x,y,foo=z+1,bar=)), connection=NULL, version=%0))", VERSIONS));
         assertEval(template("options(keep.source=FALSE); unserialize(serialize(quote(\"bar\"), connection=NULL, version=%0))", VERSIONS));
         assertEval(template("options(keep.source=FALSE); unserialize(serialize(quote('baz'), connection=NULL, version=%0))", VERSIONS));
-        assertEval(template(
+        assertEval(Ignored.NewRVersionMigration, template(
                         "setClass('foo', slots = c(x='numeric', y='numeric')); t1 <- new('foo', x=4, y=c(77,88)); options(keep.source=FALSE); unserialize(serialize(t1, connection=NULL, version=%0))",
                         VERSIONS));
         assertEval(Output.IgnoreWhitespace, template("options(keep.source=FALSE); unserialize(serialize(quote(a(b(c(d(function (e, ...) { f(g)$h.i}))))), connection=NULL, version=%0))", VERSIONS));

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -79,8 +79,8 @@ public class TestBuiltin_cummin extends TestBase {
         assertEval("{ cummin(c(1+1i,2-3i,4+5i)) }");
         assertEval("{ cummin(c(1+1i, NA, 2+3i)) }");
 
-        assertEval("values <- c(1,2,NaN,1, NA); cummin(values); cummin(as.integer(values))");
-        assertEval("values <- c(1,2,NA,1, NaN); cummin(values); cummin(as.integer(values))");
+        assertEval(Ignored.NewRVersionMigration, "values <- c(1,2,NaN,1, NA); cummin(values); cummin(as.integer(values))");
+        assertEval(Ignored.NewRVersionMigration, "values <- c(1,2,NA,1, NaN); cummin(values); cummin(as.integer(values))");
 
         assertEval("a <- structure(1:3, names=c('a1','a2','a3')); b<-cummin(a); names(b)[1]<-'x'; a; ");
     }

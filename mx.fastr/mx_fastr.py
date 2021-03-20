@@ -59,7 +59,7 @@ def r_path():
 
 def r_version():
     # Could figure this out dynamically?
-    return 'R-3.6.1'
+    return 'R-4.0.3'
 
 def gnur_path():
     if 'GNUR_HOME_BINARY' in os.environ:
@@ -413,6 +413,10 @@ def _fastr_gate_runner(args, tasks):
         list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.packages/gated' + str(i))
         if not os.path.exists(list_file):
             break
+        is_file_empty = False
+        with open(list_file, 'r') as f:
+            if len(f.read().strip()) == 0:
+                is_file_empty = True
         with mx_gate.Task('CRAN pkg test: ' + str(i), tasks, tags=[FastRGateTags.cran_pkgs_test + str(i)]) as t:
             if t:
                 check_last = False if mx_gate.Task.tags is None else FastRGateTags.cran_pkgs_test_check_last in mx_gate.Task.tags # pylint: disable=unsupported-membership-test
@@ -420,7 +424,10 @@ def _fastr_gate_runner(args, tasks):
                     next_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.packages/gated' + str(i + 1))
                     if os.path.exists(next_file):
                         mx.abort("File %s exists, but the gate thinks that %s is the last file. Did you forget to update the gate configuration?" % (next_file, list_file))
-                cran_pkg_tests(list_file)
+                if not is_file_empty:
+                    cran_pkg_tests(list_file)
+                else:
+                    mx.warn('File %s is empty, skipping cran_pkg_test' % list_file)
 
 def common_pkg_tests_args(graalvm_home):
     gvm_home_arg = [] if graalvm_home is None else ['--graalvm-home', graalvm_home]
@@ -463,6 +470,10 @@ def gnur_packages_test(args):
     '''
     package = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.pkgs/fastRCluster')
     gnur_binary = os.path.join(gnur_path(), 'bin', 'R')
+    if not os.path.exists(gnur_binary):
+        # FastR is not build yet, or GNUR_HOME_BINARY env variable is not set.
+        mx.log("Ignoring gnur_packages_test - fastr is either not build or GNUR_HOME_BINARY env var unset")
+        return
     mx.run([gnur_binary, 'CMD', 'build', package])
     result = glob.glob('fastRCluster*.tar.gz')
     if len(result) != 1:
@@ -885,12 +896,16 @@ def build_binary_pkgs(args_in, **kwargs):
     for pkg_name in args.recommended_list.split(','):
         shutil.copytree(os.path.join(_fastr_suite.dir, 'library', pkg_name), os.path.join(pkgs_pkgs_path, pkg_name))
     # add file with API digest
+    import io
+    string_io = io.StringIO()
     try:
-        with open(os.path.join(pkgs_path, 'api-checksum.txt'), 'w') as f:
-            sys.stdout = f
-            pkgcache(['--print-api-checksum', '--vm', 'fastr'])
+        sys.stdout = string_io
+        pkgcache(['--print-api-checksum', '--vm', 'fastr'])
     finally:
         sys.stdout = sys.__stdout__
+    with open(os.path.join(pkgs_path, 'api-checksum.txt'), 'w') as f:
+        checksum = string_io.getvalue().splitlines(keepends=False)[-1]
+        print(checksum, f)
     # creates the tarball
     result_tarball = os.path.join(dest_dir, pkgs_name + '.tar.gz')
     with tarfile.open(result_tarball, "w:gz") as tar:

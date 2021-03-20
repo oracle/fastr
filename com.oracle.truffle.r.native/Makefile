@@ -32,9 +32,9 @@ export TOPDIR = $(CURDIR)
 export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
 export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
 export FASTR_NATIVE_DIR = $(TOPDIR)
-export R_VERSION = 3.6.1
-export R_VERSION_MAJ_MIN = 3.6
-export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2019-11-03"
+export R_VERSION = 4.0.3
+export R_VERSION_MAJ_MIN = 4.0
+export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2021-02-01"
 export GNUR_HOME = $(TOPDIR)/gnur/patch-build
 export F2C_HOME= $(FASTR_R_HOME)/f2c
 

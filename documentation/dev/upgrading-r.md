@@ -4,7 +4,7 @@ Files where to update the version:
 * `mx.fastr/suite.py` ("GNUR" library)
 * `mx.fastr/mx_fastr.py` (function `r_version`)
 * `com.oracle.truffle.r.native/Makefile` (variable `R_VERSION`)
-* `documentation/README.md`
+* `documentation/user/Compatibility.md`
 * `RVersionNumber` (use `R.Version()`, also update `INTERNALS_UID` from `Rinternals.h`)
 
 Updating GNU-R sources patched by FastR (make sure you have up to date `gnur` and `master` branches):
@@ -12,7 +12,9 @@ Updating GNU-R sources patched by FastR (make sure you have up to date `gnur` an
 R_VERSION=3.5.1
 git checkout gnur
 cd com.oracle.truffle.r.native/gnur/patch/src
-for f in `find . -type f`; do cp {GNUR_SOURCES}/src/$f $f; done
+for f in `find . -type f`; do cp ${GNUR_SOURCES}/src/$f $f; done
+cd com.oracle.truffle.r.native/gnur/patch/tests/src
+for f in `find . -type f`; do cp ${GNUR_SOURCES}/tests/$f $f; done
 git commit -m "Upgrading to R-$R_VERSION"
 git checkout master
 git checkout -b "upgrade-r-$R_VERSION"

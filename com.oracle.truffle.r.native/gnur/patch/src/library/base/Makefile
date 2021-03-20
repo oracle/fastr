@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,9 @@ LIB_PKG_PRE = pre.done
 LIB_PKG_POST = post.done
 CLEAN_PKG = clean.done
 endif
+
+# This is necessary so that #include Defn.h works
+PKG_INCLUDES := -I$(TOPDIR)/fficall/src/include
 
 include ../lib.mk
 

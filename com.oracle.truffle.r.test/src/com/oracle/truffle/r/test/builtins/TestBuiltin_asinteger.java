@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -146,7 +146,8 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer(list(integer(),2,3)) }");
         assertEval("{ as.integer(list(list(1),2,3)) }");
         assertEval("{ as.integer(list(1,2,3,list())) }");
-        assertEval(Output.IgnoreErrorContext, "{ as.integer(list(c(1L, 2L))) }");
+        // TODO: Wrong IgnoreErrorContext
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ as.integer(list(c(1L, 2L))) }");
         assertEval("{ as.integer(10000000000) }");
         assertEval("{ as.integer(c(1, 10000000000)) }");
         assertEval("{ as.integer(-10000000000) }");

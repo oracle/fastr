@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.CastPairListNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.DropAttributesNodeGen;
@@ -50,7 +48,6 @@ import com.oracle.truffle.r.nodes.unary.CastExpressionNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastSymbolNode;
@@ -77,9 +74,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 @ImportStatic(RRuntime.class)
 @RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
@@ -295,13 +295,17 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
         }
 
         @Specialization
-        protected Object doRLanguage(RPairList pairlist) {
-            return pairlist;
+        protected Object castPairlistFromPairlist(RPairList pairlist) {
+            if (!pairlist.isLanguage()) {
+                return pairlist;
+            } else {
+                return fallback(pairlist);
+            }
         }
 
         @Fallback
         @TruffleBoundary
-        protected Object castPairlist(Object x) {
+        protected Object fallback(Object x) {
             throw error(Message.CANNOT_COERCE, RRuntime.getRTypeName(x), RType.PairList.getName());
         }
 

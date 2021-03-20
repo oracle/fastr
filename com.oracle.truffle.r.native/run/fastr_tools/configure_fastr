@@ -109,7 +109,7 @@ done
   fi
 
   export R_DEFAULT_PACKAGES=base
-  R_LIBS_USER=`"$FASTR_HOME_DIR/bin/R" --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
+  R_LIBS_USER=`"$FASTR_HOME_DIR/bin/R" --no-echo -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
   if [ ! -d "$R_LIBS_USER" ]; then
     echo
     echo "Default personal library directory ($R_LIBS_USER) does not exist."

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -59,7 +59,7 @@ public class TestBuiltin_intToBits extends TestBase {
         assertEval(Output.IgnoreErrorMessage, "intToBits(new.env())");
         assertEval("intToBits(environment)");
         assertEval("intToBits(stdout())");
-        assertEval("intToBits(list(c(5,5,7,8),88,6L))");
+        assertEval(Ignored.NewRVersionMigration, "intToBits(list(c(5,5,7,8),88,6L))");
         assertEval("intToBits(list(5,5,7,8))");
         assertEval("intToBits(2147483648)");
         assertEval("intToBits(c(2147483648, 2147483648))");

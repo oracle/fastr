@@ -360,3 +360,7 @@ rffi.div_zero <- function() {
     .Call("testdiv", 0)
 }
 
+rffi.serialize <- function(object) {
+    .Call("serialize", object)
+}
+

@@ -14,13 +14,14 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.foreign;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -30,12 +31,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.foreign;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -47,10 +44,14 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @ImportStatic(DSLConfig.class)
@@ -209,18 +210,26 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object setClass(RS4Object arg, RStringVector className) {
-        setClassAttrNode.setAttr(arg, className.materialize());
-        return arg;
+        return setClassOnObject(arg, className);
     }
 
     @Specialization
     protected Object setClass(RS4Object arg, @SuppressWarnings("unused") RNull className) {
-        setClassAttrNode.reset(arg);
-        return arg;
+        return setClassOnObject(arg, null);
+    }
+
+    private RS4Object setClassOnObject(RS4Object object, RStringVector classNames) {
+        RS4Object result = reuseNonShared(object);
+        if (classNames != null) {
+            setClassAttrNode.setAttr(result, classNames.materialize());
+        } else {
+            setClassAttrNode.reset(result);
+        }
+        return result;
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends RAbstractContainer> T reuseNonShared(T obj) {
+    private static <T extends RSharingAttributeStorage> T reuseNonShared(T obj) {
         return (T) obj.getNonShared();
     }
 

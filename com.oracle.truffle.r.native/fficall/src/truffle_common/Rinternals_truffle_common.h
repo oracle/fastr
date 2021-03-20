@@ -279,6 +279,12 @@ void Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho) {
     checkExitCall();
 }
 
+void R_removeVarFromFrame(SEXP symbol, SEXP env) {
+    TRACE0();
+    ((call_R_removeVarFromFrame) callbacks[R_removeVarFromFrame_x])(symbol, env);
+    checkExitCall();
+}
+
 SEXP Rf_coerceVector(SEXP x, SEXPTYPE mode) {
     TRACE(TARGpp, x, mode);
     SEXP result = ((call_Rf_coerceVector) callbacks[Rf_coerceVector_x])(x, mode);
@@ -779,6 +785,13 @@ const char *Rf_translateChar0(SEXP x) {
 }
 
 const char *Rf_translateCharUTF8(SEXP x) {
+    TRACE1(x);
+    // TODO: proper implementation
+    const char *result = CHAR(x);
+    return result;
+}
+
+const char *Rf_translateCharFP(SEXP x) {
     TRACE1(x);
     // TODO: proper implementation
     const char *result = CHAR(x);
@@ -1411,8 +1424,11 @@ int NAMED(SEXP x) {
 
 int REFCNT(SEXP x) {
     TRACE0();
-    unimplemented("REFCNT");
-    return 0;
+    // TODO: This is a quick fix for the purpose of migration to GNU-R 4.0.3, but we
+    // might want to leave it here as GNU-R also considers NAMED and REFCNT as synonyms.
+    int result = (int) ((call_NAMED) callbacks[NAMED_x])(x);
+    checkExitCall();
+    return result;
 }
 
 void SET_OBJECT(SEXP x, int v) {
@@ -1484,7 +1500,10 @@ Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
 SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
                void (*cleanfun)(void *), void *cleandata) {
     TRACE0();
-    return unimplemented("R_ExecWithCleanup");
+    // TODO: NewRVersionMigration - implement properly
+    SEXP result = fun(data);
+    cleanfun(cleandata);
+    return result;
 }
 
 /* Environment and Binding Features */
@@ -1613,6 +1632,30 @@ double R_strtod(const char *c, char **end) {
     return 0;
 }*/
 
+void R_InitOutPStream(R_outpstream_t stream, R_pstream_data_t data, R_pstream_format_t type, int version,
+		 void (*outchar)(R_outpstream_t, int), void (*outbytes)(R_outpstream_t, void *, int),
+		 SEXP (*phook)(SEXP, SEXP), SEXP pdata)
+{
+    stream->data = data;
+    stream->type = type;
+    stream->version = version != 0 ? version : FASTR_getSerializeVersion();
+    stream->OutChar = outchar;
+    stream->OutBytes = outbytes;
+    stream->OutPersistHookFunc = phook;
+    stream->OutPersistHookData = pdata;
+}
+
+void FASTR_serialize(SEXP object, int type, int version, R_outpstream_t stream, void (*outbytes)(R_outpstream_t, void *, int))
+{
+    ((call_FASTR_serialize) callbacks[FASTR_serialize_x])(object, type, version, stream, outbytes);
+    checkExitCall();
+}
+
+void R_Serialize(SEXP object, R_outpstream_t stream)
+{
+    FASTR_serialize(object, stream->type, stream->version, stream, stream->OutBytes);
+}
+
 SEXP R_PromiseExpr(SEXP x) {
     TRACE0();
     SEXP result = ((call_R_PromiseExpr) callbacks[R_PromiseExpr_x])(x);
@@ -1654,6 +1697,13 @@ SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 void *R_ExternalPtrAddr(SEXP s) {
     TRACE0();
     long result = ((call_R_ExternalPtrAddr) callbacks[R_ExternalPtrAddr_x])(s);
+    checkExitCall();
+    return (void *)result;
+}
+
+void *EXTPTR_PTR(SEXP s) {
+    TRACE0();
+    long result = ((call_EXTPTR_PTR) callbacks[EXTPTR_PTR_x])(s);
     checkExitCall();
     return (void *)result;
 }
@@ -1844,6 +1894,13 @@ void Rf_copyMatrix(SEXP s, SEXP t, Rboolean byrow) {
 int FASTR_getConnectionChar(SEXP conn) {
     TRACE0();
     int result = ((call_FASTR_getConnectionChar) callbacks[FASTR_getConnectionChar_x])(conn);
+    checkExitCall();
+    return result;
+}
+
+int FASTR_getSerializeVersion() {
+    TRACE0();
+    int result = ((call_FASTR_getSerializeVersion) callbacks[FASTR_getSerializeVersion_x])();
     checkExitCall();
     return result;
 }

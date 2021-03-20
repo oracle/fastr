@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -421,7 +421,7 @@ public final class RContext {
         this.language = language;
         String[] args;
         if (env.getApplicationArguments().length == 0) {
-            args = new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"};
+            args = new String[]{"R", "--vanilla", "--no-echo", "--silent", "--no-restore"};
         } else {
             args = env.getApplicationArguments();
         }
@@ -845,6 +845,10 @@ public final class RContext {
 
     public void putS4Extends(String key, RStringVector value) {
         s4ExtendsTable.put(key, value);
+    }
+
+    public void removeS4Extends(String key) {
+        s4ExtendsTable.remove(key);
     }
 
     public PrimitiveMethodsInfo getPrimitiveMethodsInfo() {

@@ -1,4 +1,6 @@
 C
+C     Copyright (C) 1998--2020  The R Core Team
+
 C  The authors of this software are Cleveland, Grosse, and Shyu.
 C  Copyright (c) 1989, 1992 by AT&T.
 C  Permission to use, copy, modify, and distribute this software for any
@@ -17,12 +19,14 @@ C       remove unused variables
 C       make phi in ehg139 double precision to match calling sequence
 C       pass integer not logical from C
 C
-C       Note that  ehg182(errormsg_code)  is in ./loessc.c
+C       by M. Maechler, renaming ehg182() to loesswarn()
+
+C     Note that  loesswarn(errormsg_code)  is in ./loessc.c
 
       subroutine ehg126(d,n,vc,x,v,nvmax)
       integer d,execnt,i,j,k,n,nvmax,vc
       DOUBLE PRECISION machin,alpha,beta,mu,t
-      DOUBLE PRECISION v(nvmax,d),x(n,d)
+      DOUBLE PRECISION v(nvmax,d), x(n,d)
 
       DOUBLE PRECISION D1MACH
       external D1MACH
@@ -57,7 +61,8 @@ c     remaining vertices
          j=i-1
          do 6 k=1,d
             v(i,k)=v(1+mod(j,2)*(vc-1),k)
-            j=DBLE(j)/2.D0
+c    Integer division would do here
+            j=INT(DBLE(j)/2.D0)
     6    continue
     5 continue
       return
@@ -69,7 +74,7 @@ c     remaining vertices
       integer f(r,0:1,s),l(r,0:1,s),u(r,0:1,s),vhit(nvmax)
       DOUBLE PRECISION t
       DOUBLE PRECISION v(nvmax,d)
-      external ehg182
+      external loesswarn
       h=nv
       do 3 i=1,r
          do 4 j=1,s
@@ -121,7 +126,7 @@ c           bottom of while loop
     3 continue
       nv=h
       if(.not.(nv.le.nvmax))then
-         call ehg182(180)
+         call loesswarn(180)
       end if
       return
       end
@@ -244,7 +249,7 @@ c     bottom of while loop
       integer idamax
       double precision d1mach, ddot
 
-      external ehg106,ehg182,ehg184,dqrdc,dqrsl,dsvdc
+      external ehg106,loesswarn,ehg184,dqrdc,dqrsl,dsvdc
       external idamax, d1mach, ddot
 
       save machep,execnt
@@ -272,7 +277,7 @@ c     sort by distance
       call ehg106(1,n,nf,1,dist,psi,n)
       rho=dist(psi(nf))*max(1.d0,f)
       if(rho .le. 0)then
-         call ehg182(120)
+         call loesswarn(120)
       end if
 c     compute neighborhood weights
       if(kernel.eq.2)then
@@ -296,7 +301,7 @@ c     compute neighborhood weights
          call ehg184('at ',q(1),dd,1)
          call ehg184('radius ',rho,1,1)
          if(.not..false.)then
-            call ehg182(121)
+            call loesswarn(121)
          end if
       end if
 c     fill design matrix
@@ -375,7 +380,7 @@ c FIXME: this has i = 3 vs bound 2 in a ggplot2 test
    22 continue
       call dsvdc(u,15,k,k,sigma,g,u,15,e,15,work,21,info)
       if(.not.(info.eq.0))then
-         call ehg182(182)
+         call loesswarn(182)
       end if
       tol=sigma(1)*(100*machep)
       rcond=min(rcond,sigma(k)/sigma(1))
@@ -431,13 +436,13 @@ c        bug fix 2006-07-04 for k=1, od>1.   (thanks btyner@gmail.com)
       double precision lf(0:d,nvmax,nf),b(*),delta(8),diagl(n),dist(n),
      +     eta(nf),rw(n),v(nvmax,d),vval(0:d,nvmax),vval2(0:d,nvmax),
      +     w(nf),x(n,d),xi(ncmax),y(n)
-      external ehg126,ehg182,ehg139,ehg124
+      external ehg126,loesswarn,ehg139,ehg124
       double precision dnrm2
       external dnrm2
 c     Identity -> identi
 c     X -> b
       if(.not.(d.le.8))then
-         call ehg182(101)
+         call loesswarn(101)
       end if
 c     build $k$-d tree
       call ehg126(d,n,vc,x,v,nvmax)
@@ -465,13 +470,14 @@ c     smooth
     6    continue
       end if
       call ehg139(v,nvmax,nv,n,d,nf,f,x,pi,psi,y,rw,trl,kernel,k,dist,
-     +     dist,eta,b,d,w,diagl,vval2,nc,vc,a,xi,lo,hi,c,vhit,rcond,
+     +     dist,eta,b,d,w,diagl,vval2,nc,vc,a,xi,lo,hi,c,rcond,
      +     sing,dd,tdeg,cdeg,lq,lf,setlf,vval)
       return
       end
 
-      subroutine ehg133(n,d,vc,nvmax,nc,ncmax,a,c,hi,lo,v,vval,xi,m,z,s)
-      integer           n,d,vc,nvmax,nc,ncmax, m
+c called from  lowese()  only :
+      subroutine ehg133(d,vc,nvmax,ncmax, a,c,hi,lo, v,vval,xi,m,z,s)
+      integer           d,vc,nvmax,ncmax,                      m
       integer           a(ncmax),c(vc,ncmax),hi(ncmax),lo(ncmax)
       double precision v(nvmax,d),vval(0:d,nvmax),xi(ncmax),z(m,d),s(m)
 c Var
@@ -520,12 +526,14 @@ c     coef, d, deg, del
 
       if(deg.eq.0) dk=1
       if(deg.eq.1) dk=d+1
-      if(deg.eq.2) dk=dble((d+2)*(d+1))/2.d0
+      if(deg.eq.2) dk=int(dble((d+2)*(d+1))/2.d0)
       corx=dsqrt(k/dble(n))
       z=(dsqrt(k/trl)-corx)/(1-corx)
-      if(nsing .eq. 0 .and. 1 .lt. z)   call ehg184('Chernobyl! trL<k',t
-     +rl,1,1)
-      if(z .lt. 0) call ehg184('Chernobyl! trL>n',trl,1,1)
+      if(nsing .eq. 0 .and. 1 .lt. z) then
+         call ehg184('Chernobyl! trL<k',trl,1,1)
+      else if(z .lt. 0) then
+         call ehg184('Chernobyl! trL>n',trl,1,1)
+      endif
       z=min(1.0d0,max(0.0d0,z))
 c R fix
       zz(1)=z
@@ -599,7 +607,7 @@ c     $delta sub 2 = "tr" LL sup 2$
       DOUBLE PRECISION v(nvmax,d),xi(ncmax)
 
       integer novhit(1),i,j,k,mc,mv,p
-      external ehg125,ehg182
+      external ehg125,loesswarn
       integer ifloor
       external ifloor
 
@@ -638,10 +646,10 @@ c           right son
          goto 6
 c     bottom of while loop
     7 if(.not.(mc.eq.nc))then
-         call ehg182(193)
+         call loesswarn(193)
       end if
       if(.not.(mv.eq.nv))then
-         call ehg182(193)
+         call loesswarn(193)
       end if
       return
       end
@@ -818,21 +826,21 @@ c           bottom of while loop
       integer d,dka,dkb,tau
       double precision alpha,f,trl,trla,trlb
       external ehg197
-      call ehg197(1,tau,d,f,dka,trla)
-      call ehg197(2,tau,d,f,dkb,trlb)
+      call ehg197(1,d,f,dka,trla)
+      call ehg197(2,d,f,dkb,trlb)
       alpha=dble(tau-dka)/dble(dkb-dka)
       trl=(1-alpha)*trla+alpha*trlb
       return
       end
 
-      subroutine ehg197(deg,tau,d,f,dk,trl)
-      integer deg,tau,d,dk
+      subroutine ehg197(deg,d,f,dk,trl)
+      integer deg,d,dk
       double precision f, trl
 
       double precision g1
       dk = 0
       if(deg.eq.1) dk=d+1
-      if(deg.eq.2) dk=dble((d+2)*(d+1))/2.d0
+      if(deg.eq.2) dk=int(dble((d+2)*(d+1))/2.d0)
       g1 = (-0.08125d0*d+0.13d0)*d+1.05d0
       trl = dk*(1+max(0.d0,(g1-f)/f))
       return
@@ -876,7 +884,7 @@ c Vars
      +     psi0,psi1,s,sew,sns,v0,v1,xibar
       DOUBLE PRECISION g(0:8,256),g0(0:8),g1(0:8)
 
-      external ehg182,ehg184
+      external loesswarn,ehg184
 c     locate enclosing cell
       nt=1
       t(nt)=1
@@ -891,7 +899,7 @@ c     top of while loop
          end if
          t(nt)=i1
          if(.not.(nt.lt.20))then
-            call ehg182(181)
+            call loesswarn(181)
          end if
          j=t(nt)
          goto 3
@@ -923,9 +931,9 @@ c     tensor
             i2=.false.
          end if
          if(.not.i2)then
-            call ehg182(122)
+            call loesswarn(122)
          end if
-         lg=DBLE(lg)/2.D0
+         lg=int(DBLE(lg)/2.D0)
          do 8 ig=1,lg
 c           Hermite basis
             phi0=(1-h)**2*(1+2*h)
@@ -1202,7 +1210,7 @@ c        Hermite basis
 
       integer function ifloor(x)
       DOUBLE PRECISION x
-      ifloor=x
+      ifloor=int(x)
       if(ifloor.gt.x) ifloor=ifloor-1
       end
 
@@ -1229,7 +1237,7 @@ c     nf = min(n, floor(f * n))
      $     dist(n),eta(nf),dgamma(15),q(8),qraux(15),rw(n),s(0:od,m),
      $     u(lm,d),w(nf),work(15),x(n,d),y(n)
 
-      external ehg127,ehg182,dqrsl
+      external ehg127,loesswarn,dqrsl
       double precision ddot
       external ddot
 
@@ -1238,8 +1246,8 @@ c     U -> e
 c     Identity -> identi
 c     L -> o
 c     X -> b
-      if(k .gt. nf-1) call ehg182(104)
-      if(k .gt. 15)   call ehg182(105)
+      if(k .gt. nf-1) call loesswarn(104)
+      if(k .gt. 15)   call loesswarn(105)
       do 3 identi=1,n
          psi(identi)=identi
     3 continue
@@ -1255,7 +1263,7 @@ c           $L sub {l,l} =
 c           V sub {1,:} SIGMA sup {+} U sup T
 c           (Q sup T W e sub i )$
             if(.not.(m.eq.n))then
-               call ehg182(123)
+               call loesswarn(123)
             end if
 c           find $i$ such that $l = psi sub i$
             i=1
@@ -1263,7 +1271,7 @@ c           top of while loop
     6       if(.not.(l.ne.psi(i)))goto 7
                i=i+1
                if(.not.(i.lt.nf))then
-                  call ehg182(123)
+                  call loesswarn(123)
 c next line is not in current dloess
                   goto 7
                end if
@@ -1335,13 +1343,13 @@ c              ( U sup T Q sup T ) W $
 c called from lowesb() ... compute fit ..?..?...
 c somewhat similar to ehg136
       subroutine ehg139(v,nvmax,nv,n,d,nf,f,x,pi,psi,y,rw,trl,kernel,k,
-     +     dist,phi,eta,b,od,w,diagl,vval2,ncmax,vc,a,xi,lo,hi,c,vhit,
+     +     dist,phi,eta,b,od,w,diagl,vval2,ncmax,vc,a,xi,lo,hi,c,
      +     rcond,sing,dd,tdeg,cdeg,lq,lf,setlf,s)
       logical setlf
       integer identi,d,dd,i,i2,i3,i5,i6,ii,ileaf,info,j,k,kernel,
      +     l,n,ncmax,nf,nleaf,nv,nvmax,od,sing,tdeg,vc
       integer lq(nvmax,nf),a(ncmax),c(vc,ncmax),cdeg(8),hi(ncmax),
-     +     leaf(256),lo(ncmax),pi(n),psi(n),vhit(nvmax)
+     +     leaf(256),lo(ncmax),pi(n),psi(n)
       DOUBLE PRECISION f,i1,i4,i7,rcond,scale,term,tol,trl
       DOUBLE PRECISION lf(0:d,nvmax,nf),sigma(15),u(15,15),e(15,15),
      +     b(nf,k),diagl(n),dist(n),eta(nf),DGAMMA(15),q(8),qraux(15),
@@ -1349,7 +1357,7 @@ c somewhat similar to ehg136
      +     x(n,d),xi(ncmax),y(n),z(8)
       DOUBLE PRECISION phi(n)
 
-      external ehg127,ehg182,DQRSL,ehg137
+      external ehg127,loesswarn,DQRSL,ehg137
       DOUBLE PRECISION ehg128
       external ehg128
       DOUBLE PRECISION DDOT
@@ -1359,8 +1367,8 @@ c     V -> e
 c     Identity -> identi
 c     X -> b
 c     l2fit with trace(L)
-      if(k .gt. nf-1) call ehg182(104)
-      if(k .gt. 15)   call ehg182(105)
+      if(k .gt. nf-1) call loesswarn(104)
+      if(k .gt. 15)   call loesswarn(105)
       if(trl.ne.0)then
          do 3 i5=1,n
             diagl(i5)=0
@@ -1392,14 +1400,14 @@ c           invert $psi$
             do 11 i5=1,d
                z(i5)=v(l,i5)
    11       continue
-            call ehg137(z,vhit(l),leaf,nleaf,d,nv,nvmax,ncmax,a,xi,
+            call ehg137(z,leaf,nleaf,d,ncmax,a,xi,
      +           lo,hi)
             do 12 ileaf=1,nleaf
                do 13 ii=lo(leaf(ileaf)),hi(leaf(ileaf))
-                  i=phi(pi(ii))
+                  i=int(phi(pi(ii)))
                   if(i.ne.0)then
                      if(.not.(psi(i).eq.pi(ii)))then
-                        call ehg182(194)
+                        call loesswarn(194)
                      end if
                      do 14 i5=1,nf
                         eta(i5)=0
@@ -1440,7 +1448,7 @@ c                       bug fix 2006-07-15 for k=1, od>1.   (thanks btyner@gmail
          if(setlf)then
 c           $Lf sub {:,l,:} = V SIGMA sup {+} U sup T Q sup T W$
             if(.not.(k.ge.d+1))then
-               call ehg182(196)
+               call loesswarn(196)
             end if
             do 19 i5=1,nf
                lq(l,i5)=psi(i5)
@@ -1495,9 +1503,8 @@ c           $Lf sub {:,l,:} = V SIGMA sup {+} U sup T Q sup T W$
       return
       end
 
-      subroutine lowesb(xx,yy,ww,diagl,infl,iv,liv,lv,wv)
+      subroutine lowesb(xx,yy,ww,diagl,infl,iv,wv)
       integer infl
-      integer liv, lv
       integer iv(*)
       DOUBLE PRECISION xx(*),yy(*),ww(*),diagl(*),wv(*)
 c Var
@@ -1506,14 +1513,14 @@ c Var
 
       integer ifloor
       external ifloor
-      external ehg131,ehg182,ehg183
+      external ehg131,loesswarn,ehg183
 
       if(.not.(iv(28).ne.173))then
-         call ehg182(174)
+         call loesswarn(174)
       end if
       if(iv(28).ne.172)then
          if(.not.(iv(28).eq.171))then
-            call ehg182(171)
+            call loesswarn(171)
          end if
       end if
       iv(28)=173
@@ -1544,33 +1551,35 @@ c Var
 
 c lowesd() : Initialize iv(*) and v(1:4)
 c ------     called only by loess_workspace()  in ./loessc.c
-      subroutine lowesd(versio,iv,liv,lv,v,d,n,f,ideg,nvmax,setlf)
-      integer versio,liv,lv,d,n,ideg,nvmax
+      subroutine lowesd(iv, liv,lv, v, d,n,f,ideg,nf,nvmax, setlf)
+      integer               liv,lv,    d,n,  ideg,nf,nvmax, setlf
+c           setlf {Rboolean}: if(true) need  L [nf x nvmax] matrices
       integer iv(liv)
-      integer setlf
       double precision f, v(lv)
 
-      integer bound,i,i1,i2,j,ncmax,nf,vc
-      external ehg182
+c  had  nf = min(n,ifloor(n*f))
+
+      integer bound,i,i1,i2,j,ncmax,vc
+      external loesswarn
       integer ifloor
       external ifloor
 c
 c     unnecessary initialization of i1 to keep g77 -Wall happy
 c
       i1 = 0
-c     version -> versio
-      if(.not.(versio.eq.106))then
-         call ehg182(100)
-      end if
+cc    version -> versio
+c     if(.not.(versio.eq.106))then
+c        call loesswarn(100)
+c     end if
       iv(28)=171
       iv(2)=d
       iv(3)=n
       vc=2**d
       iv(4)=vc
       if(.not.(0.lt.f))then
-         call ehg182(120)
+         call loesswarn(120)
       end if
-      nf=min(n,ifloor(n*f))
+
       iv(19)=nf
       iv(20)=1
       if(ideg.eq.0)then
@@ -1580,7 +1589,7 @@ c     version -> versio
             i1=d+1
          else
             if(ideg.eq.2)then
-               i1=dble((d+2)*(d+1))/2.d0
+               i1=int(dble((d+2)*(d+1))/2.d0)
             end if
          end if
       end if
@@ -1592,10 +1601,10 @@ c     version -> versio
       iv(30)=0
       iv(32)=ideg
       if(.not.(ideg.ge.0))then
-         call ehg182(195)
+         call loesswarn(195)
       end if
       if(.not.(ideg.le.2))then
-         call ehg182(195)
+         call loesswarn(195)
       end if
       iv(33)=d
       do 3 i2=41,49
@@ -1620,7 +1629,7 @@ c     initialize permutation
       end if
       bound=iv(27)+n
       if(.not.(bound-1.le.liv))then
-         call ehg182(102)
+         call loesswarn(102)
       end if
       iv(11)=50
       iv(13)=iv(11)+nvmax*d
@@ -1637,7 +1646,7 @@ c     initialize permutation
       end if
       bound=iv(26)+nf
       if(.not.(bound-1.le.lv))then
-         call ehg182(103)
+         call loesswarn(103)
       end if
       v(1)=f
       v(2)=0.05d0
@@ -1646,45 +1655,45 @@ c     initialize permutation
       return
       end
 
-      subroutine lowese(iv,liv,lv,wv,m,z,s)
-      integer liv,lv,m
+      subroutine lowese(iv,wv,m,z,s)
+      integer m
       integer iv(*)
       double precision s(m),wv(*),z(m,1)
 
-      external ehg133,ehg182
+      external ehg133,loesswarn
 
       if(.not.(iv(28).ne.172))then
-         call ehg182(172)
+         call loesswarn(172)
       end if
       if(.not.(iv(28).eq.173))then
-         call ehg182(173)
+         call loesswarn(173)
       end if
-      call ehg133(iv(3),iv(2),iv(4),iv(14),iv(5),iv(17),iv(iv(7)),iv(iv(
+      call ehg133(iv(2),iv(4),iv(14),iv(17),iv(iv(7)),iv(iv(
      +8)),iv(iv(9)),iv(iv(10)),wv(iv(11)),wv(iv(13)),wv(iv(12)),m,z,s)
       return
       end
 
 c "direct" (non-"interpolate") fit aka predict() :
-      subroutine lowesf(xx,yy,ww,iv,liv,lv,wv,m,z,l,ihat,s)
-      integer liv,lv,m,ihat
+      subroutine lowesf(xx,yy,ww,iv,wv,m,z,l,ihat,s)
+      integer m,ihat
 c     m = number of x values at which to evaluate
       integer iv(*)
       double precision xx(*),yy(*),ww(*),wv(*),z(m,1),l(m,*),s(m)
 
       logical i1
 
-      external ehg182,ehg136
+      external loesswarn,ehg136
       if(171.le.iv(28))then
          i1=(iv(28).le.174)
       else
          i1=.false.
       end if
       if(.not.i1)then
-         call ehg182(171)
+         call loesswarn(171)
       end if
       iv(28)=172
       if(.not.(iv(14).ge.iv(19)))then
-         call ehg182(186)
+         call loesswarn(186)
       end if
 
 c do the work; in ehg136()  give the argument names as they are there:
@@ -1697,21 +1706,23 @@ c              w,     rcond,sing,    dd,    tdeg,cdeg,  s)
       return
       end
 
-      subroutine lowesl(iv,liv,lv,wv,m,z,l)
-      integer liv,lv,m
+c Called either from loess_raw() only for case [surf_stat = "interpolate/exact"], or
+c               from loess_ise() {used only when 'se = TRUE' and surface = "interpolate"}
+      subroutine lowesl(iv,wv,m,z,l)
+      integer m
       integer iv(*)
-      double precision l(m,*),wv(*),z(m,1)
+      double precision l(m,*), wv(*), z(m,1)
 
-      external ehg182,ehg191
+      external loesswarn,ehg191
 
       if(.not.(iv(28).ne.172))then
-         call ehg182(172)
+         call loesswarn(172)
       end if
       if(.not.(iv(28).eq.173))then
-         call ehg182(173)
+         call loesswarn(173)
       end if
       if(.not.(iv(26).ne.iv(34)))then
-         call ehg182(175)
+         call loesswarn(175)
       end if
       call ehg191(m,z,l,iv(2),iv(3),iv(19),iv(6),iv(17),iv(4),iv(iv(7)),
      +     wv(iv(12)),iv(iv(10)),iv(iv(9)),iv(iv(8)),wv(iv(11)),iv(14),
@@ -1719,30 +1730,32 @@ c              w,     rcond,sing,    dd,    tdeg,cdeg,  s)
       return
       end
 
-      subroutine lowesr(yy,iv,liv,lv,wv)
-      integer liv,lv
+c  Not used
+      subroutine lowesr(yy,iv,wv)
       integer iv(*)
       DOUBLE PRECISION yy(*),wv(*)
 
-      external ehg182,ehg192
+      external loesswarn,ehg192
       if(.not.(iv(28).ne.172))then
-         call ehg182(172)
+         call loesswarn(172)
       end if
       if(.not.(iv(28).eq.173))then
-         call ehg182(173)
+         call loesswarn(173)
       end if
       call ehg192(yy,iv(2),iv(3),iv(19),iv(6),iv(14),wv(iv(13)),
      +     wv(iv(34)),iv(iv(25)))
       return
       end
 
+c Update Robustness Weights -- called via .Fortran() from R's simpleLoess() in ../R/loess.R
+c
       subroutine lowesw(res,n,rw,pi)
 c Tranliterated from Devlin's ratfor
 
 c     implicit none
 c Args
       integer n
-      double precision res(n),rw(n)
+      double precision res(n), rw(n)
       integer pi(n)
 c Var
       integer identi,i,i1,nh
@@ -1794,6 +1807,8 @@ c     partial sort to find 6*mad
       return
       end
 
+c Compute Pseudovalues -- called via .Fortran() from R's simpleLoess() in ../R/loess.R
+c                         in the case of robustness iterations
       subroutine lowesp(n,y,yhat,pwgts,rwgts,pi,ytilde)
       integer n
       integer pi(n)
@@ -1891,7 +1906,7 @@ c     top of while loop
          if(.not.leaf)then
             call ehg129(l,u,dd,x,pi,n,sigma)
             k=IDAMAX(dd,sigma,1)
-            m=DBLE(l+u)/2.D0
+            m=int(DBLE(l+u)/2.D0)
             call ehg106(l,u,m,1,x(1,k),pi,n)
 
 c           all ties go with hi son
@@ -1982,14 +1997,14 @@ c     initialize  d1mach(2) === DBL_MAX:
       end
 
 c {called only from ehg127}  purpose...?...
-      subroutine ehg137(z,kappa,leaf,nleaf,d,nv,nvmax,ncmax,a,xi,lo,hi)
-      integer kappa,d,nv,nvmax,ncmax,nleaf
+      subroutine ehg137(z,leaf,nleaf,d,ncmax,a,xi,lo,hi)
+      integer d,nleaf
       integer leaf(256),a(ncmax),hi(ncmax),lo(ncmax),pstack(20)
       DOUBLE PRECISION z(d),xi(ncmax)
 
       integer p,stackt
 
-      external ehg182
+      external loesswarn
 c     stacktop -> stackt
 c     find leaf cells affected by $z$
       stackt=0
@@ -2013,7 +2028,7 @@ c           Pop
 c              Push
                stackt=stackt+1
                if(.not.(stackt.le.20))then
-                  call ehg182(187)
+                  call loesswarn(187)
                end if
                pstack(stackt)=hi(p)
                p=lo(p)
@@ -2028,7 +2043,7 @@ c              Push
          goto 3
 c     bottom of while loop
     4 if(.not.(nleaf.le.256))then
-         call ehg182(185)
+         call loesswarn(185)
       end if
       return
       end

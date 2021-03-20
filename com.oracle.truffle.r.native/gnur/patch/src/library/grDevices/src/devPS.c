@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998--2018  The R Core Team
+ *  Copyright (C) 1998--2020  The R Core Team
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -494,7 +494,7 @@ LoadEncoding(const char *encpath, char *encname,
 	     char *encconvname, CNAME *encnames,
 	     char *enccode, Rboolean isPDF)
 {
-    char buf[BUFSIZE];
+    char buf[BUFSIZE]; // BUFSIZE is 512
     int i;
     FILE *fp;
     EncodingInputState state;
@@ -513,14 +513,14 @@ LoadEncoding(const char *encpath, char *encname,
 	if (!(fp = R_fopen(R_ExpandFileName(buf), "r"))) return 0;
     }
     if (GetNextItem(fp, buf, -1, &state)) { fclose(fp); return 0;} /* encoding name */
-    strncpy(encname, buf+1, 99); 
+    memcpy(encname, buf+1, 99); // was strncpy, deliberate truncation
     encname[99] = '\0';
     if (!isPDF) snprintf(enccode, 5000, "/%s [\n", encname);
     else enccode[0] = '\0';
     if (GetNextItem(fp, buf, 0, &state)) { fclose(fp); return 0;} /* [ */
     for(i = 0; i < 256; i++) {
 	if (GetNextItem(fp, buf, i, &state)) { fclose(fp); return 0; }
-	strncpy(encnames[i].cname, buf+1, 39);
+	memcpy(encnames[i].cname, buf+1, 39); // was strncpy, gcc10 warned
 	encnames[i].cname[39] = '\0';
 	strcat(enccode, " /"); strcat(enccode, encnames[i].cname);
 	if(i%8 == 7) strcat(enccode, "\n");
@@ -1270,7 +1270,8 @@ findEncoding(const char *encpath, encodinglist deviceEncodings, Rboolean isPDF)
      */
     if (!strcmp(encpath, "default")) {
 	found = 1;
-	encoding = deviceEncodings->encoding;
+	// called from PDFDeviceDriver with null deviceEncodings as last resort
+	if (deviceEncodings) encoding = deviceEncodings->encoding;
     } else {
 	while (enclist && !found) {
 	    found = !strcmp(encpath, enclist->encoding->encpath);
@@ -1425,10 +1426,16 @@ findLoadedFont(const char *name, const char *encoding, Rboolean isPDF)
 	    if (encoding) {
 		char encconvname[50];
 		const char *encname = getFontEncoding(name, fontdbname);
-		seticonvName(encoding, encconvname);
-		if (!strcmp(encname, "default") &&
-		    strcmp(fontlist->family->encoding->convname,
-			   encconvname)) {
+		// encname could be NULL
+		if(encname) {
+		    seticonvName(encoding, encconvname);
+		    if (!strcmp(encname, "default") &&
+			strcmp(fontlist->family->encoding->convname,
+			       encconvname)) {
+			font = NULL;
+			found = 0;
+		    }
+		} else {
 		    font = NULL;
 		    found = 0;
 		}
@@ -8257,7 +8264,7 @@ SEXP PostScript(SEXP args)
 
     vmax = vmaxget();
     args = CDR(args); /* skip entry point name */
-    file = translateChar(asChar(CAR(args)));  args = CDR(args);
+    file = translateCharFP(asChar(CAR(args)));  args = CDR(args);
     paper = CHAR(asChar(CAR(args))); args = CDR(args);
 
     /* 'family' can be either one string or a 5-vector of afmpaths. */
@@ -8346,7 +8353,7 @@ SEXP XFig(SEXP args)
 
     vmax = vmaxget();
     args = CDR(args); /* skip entry point name */
-    file = translateChar(asChar(CAR(args)));  args = CDR(args);
+    file = translateCharFP(asChar(CAR(args)));  args = CDR(args);
     paper = CHAR(asChar(CAR(args))); args = CDR(args);
     family = CHAR(asChar(CAR(args)));  args = CDR(args);
     bg = CHAR(asChar(CAR(args)));    args = CDR(args);
@@ -8423,7 +8430,7 @@ SEXP PDF(SEXP args)
     if (isNull(CAR(args)))
         file = NULL;
     else
-        file = translateChar(asChar(CAR(args)));  
+        file = translateCharFP(asChar(CAR(args)));  
     args = CDR(args);
     paper = CHAR(asChar(CAR(args))); args = CDR(args);
     fam = CAR(args); args = CDR(args);

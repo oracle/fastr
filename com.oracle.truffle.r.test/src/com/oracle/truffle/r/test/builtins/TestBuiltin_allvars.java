@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -35,6 +35,6 @@ public class TestBuiltin_allvars extends TestBase {
 
     @Test
     public void testallvars2() {
-        assertEval("{ fml <- as.formula('v ~ a + b'); fml[[2]] <- NULL; all.vars(fml) }");
+        assertEval(Ignored.NewRVersionMigration, "{ fml <- as.formula('v ~ a + b'); fml[[2]] <- NULL; all.vars(fml) }");
     }
 }

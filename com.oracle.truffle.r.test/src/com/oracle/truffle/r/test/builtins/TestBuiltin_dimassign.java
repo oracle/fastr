@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -91,7 +91,7 @@ public class TestBuiltin_dimassign extends TestBase {
     @Test
     public void testDimAssignError() {
         assertEval("dim(environment()) <- c(1,2)");
-        assertEval("f <- function() {}; dim(f) <- c(1,2)");
+        assertEval(Ignored.NewRVersionMigration, "f <- function() {}; dim(f) <- c(1,2)");
     }
 
     @Test

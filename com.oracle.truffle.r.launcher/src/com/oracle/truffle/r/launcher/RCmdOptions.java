@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.launcher;
 
-import com.oracle.truffle.r.launcher.RMain.PrintHelp;
-import com.oracle.truffle.r.launcher.RMain.PrintVersion;
-
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+
+import com.oracle.truffle.r.launcher.RMain.PrintHelp;
+import com.oracle.truffle.r.launcher.RMain.PrintVersion;
 
 /**
  * (Abstract) definition of the standard R command line options. The setting of the values from the
@@ -139,7 +139,7 @@ public final class RCmdOptions {
         MAX_PPSIZE(RCmdOptionType.STRING, false, "max-ppsize", null, "Set max size of protect stack to N"),
         QUIET(RCmdOptionType.BOOLEAN, true, "q", "quiet", false, "Don't print startup message"),
         SILENT(RCmdOptionType.BOOLEAN, true, "silent", false, "Same as --quiet"),
-        SLAVE(RCmdOptionType.BOOLEAN, true, "slave", false, "Make R run as quietly as possible"),
+        NO_ECHO(RCmdOptionType.BOOLEAN, true, "s", "no-echo", false, "Make R run as quietly as possible"),
         INTERACTIVE(RCmdOptionType.BOOLEAN, true, "interactive", false, "Force an interactive session"),
         VERBOSE(RCmdOptionType.BOOLEAN, true, "verbose", false, "Print more information about progress"),
         ARGS(RCmdOptionType.BOOLEAN, true, "args", false, "Skip the rest of the command line"),
@@ -312,6 +312,12 @@ public final class RCmdOptions {
     }
 
     private static MatchResult matchOption(String arg) {
+        // --slave option is currently an undocumented alias for --no-echo option (GNU-R silently
+        // treats --slave as --no-echo, and provides no help for it)
+        if (arg.equals("--slave")) {
+            return new MatchResult(RCmdOption.NO_ECHO, false);
+        }
+
         for (RCmdOption option : RCmdOption.values()) {
             switch (option.type) {
                 case BOOLEAN:
@@ -493,11 +499,11 @@ public final class RCmdOptions {
         String[] arguments = options.getArguments();
         int resultArgsLength = arguments.length;
         int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
-        // Now reformat the args, setting --slave and --no-restore as per the spec
+        // Now reformat the args, setting --no-echo and --no-restore as per the spec
         ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
         adjArgs.add(arguments[0]);
-        adjArgs.add("--slave");
-        options.setValue(RCmdOption.SLAVE, true);
+        adjArgs.add("--no-echo");
+        options.setValue(RCmdOption.NO_ECHO, true);
         adjArgs.add("--no-restore");
         options.setValue(RCmdOption.NO_RESTORE, true);
         // Either -e options are set or first non-option arg is a file

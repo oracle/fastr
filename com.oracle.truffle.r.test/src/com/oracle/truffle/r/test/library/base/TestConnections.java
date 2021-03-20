@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -179,7 +179,7 @@ public class TestConnections extends TestRBase {
     public void testFileOpenRaw() {
         Assert.assertTrue("Could not create required temp file for test.", Files.exists(tempFileGzip));
         assertEval("{ zz <- file(\"" + tempFileGzip + "\", \"r\", raw=T); res <- readBin(zz, raw(), 4); close(zz); res }");
-        assertEval("{ zz <- rawConnection(as.raw(c(65, 66, 67, 0, 97, 98, 99))); readChar(zz, 6) }");
+        assertEval(Ignored.NewRVersionMigration, "{ zz <- rawConnection(as.raw(c(65, 66, 67, 0, 97, 98, 99))); readChar(zz, 6) }");
     }
 
     @Test

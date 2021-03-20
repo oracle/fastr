@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RType;
@@ -1711,6 +1712,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public long EXTPTR_PTR(Object x) {
+        return R_ExternalPtrAddr(x);
+    }
+
+    @Override
     public long R_ExternalPtrAddr(Object x) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         return p.getAddr().asAddress();
@@ -1963,6 +1969,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } catch (IOException e) {
             return -1;
         }
+    }
+
+    @Override
+    public int FASTR_getSerializeVersion() {
+        return RSerialize.DEFAULT_VERSION;
+    }
+
+    @Override
+    public void FASTR_serialize(Object object, int type, int version, Object stream, Object outBytesFunc) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -3031,6 +3047,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object gdMetricInfo(int gdId, int ch, RContext ctx) {
         return getJavaGDContext(ctx).getGD(gdId).gdMetricInfo(ch);
+    }
+
+    @Override
+    @TruffleBoundary
+    public void R_removeVarFromFrame(Object sym, Object env) {
+        if (!(env instanceof REnvironment && sym instanceof RSymbol)) {
+            throw RInternalError.shouldNotReachHere();
+        }
+        RSymbol symbol = (RSymbol) sym;
+        REnvironment envir = (REnvironment) env;
+        try {
+            envir.rm(symbol.getName());
+        } catch (PutException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
     }
 
     @Override

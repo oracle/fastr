@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,6 +103,7 @@ typedef SEXP (*call_Rf_classgets)(SEXP vec, SEXP klass);
 typedef const char *(*call_Rf_translateChar)(SEXP x);
 typedef const char *(*call_Rf_translateChar0)(SEXP x);
 typedef const char *(*call_Rf_translateCharUTF8)(SEXP x);
+typedef const char *(*call_Rf_translateCharFP)(SEXP x);
 typedef SEXP (*call_Rf_lengthgets)(SEXP x, R_len_t y);
 typedef SEXP (*call_Rf_xlengthgets)(SEXP x, R_xlen_t y);
 typedef SEXP (*call_R_lsInternal)(SEXP env, Rboolean all);
@@ -252,6 +253,7 @@ typedef SEXP (*call_R_PromiseExpr)(SEXP x);
 typedef SEXP (*call_R_ClosureExpr)(SEXP x);
 typedef SEXP (*call_R_forceAndCall)(SEXP e, SEXP f, int n, SEXP rho);
 typedef SEXP (*call_R_MakeExternalPtr)(void *p, SEXP tag, SEXP prot);
+typedef long (*call_EXTPTR_PTR)(SEXP s);
 typedef long (*call_R_ExternalPtrAddr)(SEXP s);
 typedef SEXP (*call_R_ExternalPtrTag)(SEXP s);
 typedef SEXP (*call_R_ExternalPtrProtected)(SEXP s);
@@ -294,6 +296,7 @@ typedef SEXP (*call_R_CHAR)(SEXP x);
 typedef char *(*call_R_HomeDir)();
 typedef void (*call_R_CleanUp)(int sa, int status, int runlast);
 typedef void (*call_Rf_gsetVar)(SEXP symbol, SEXP value, SEXP rho);
+typedef void (*call_R_removeVarFromFrame)(SEXP symbol, SEXP env);
 typedef double (*call_unif_rand)();
 typedef double (*call_norm_rand)();
 typedef double (*call_exp_rand)();
@@ -582,4 +585,7 @@ typedef void (*call_gdText)(int gdId, double, double, const char*, double, doubl
 typedef double* (*call_gdMetricInfo)(int gdId, int);
 typedef SEXP (*call_DispatchPRIMFUN)(SEXP call, SEXP op, SEXP args, SEXP env);
 
+// Upcalls specific to FastR
+typedef int (*call_FASTR_getSerializeVersion)();
+typedef void (*call_FASTR_serialize)(SEXP object, int type, int version, R_outpstream_t stream, void(*OutBytes)(R_outpstream_t, void*, int));
 #endif

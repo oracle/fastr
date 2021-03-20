@@ -67,10 +67,14 @@ CXX17 = "$(LABS_TOOLCHAIN_CXX)"
 CXX17FLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CXX17PICFLAGS = -fpic
 CXX17STD = -std=gnu++17
+CXX20 = "$(LABS_TOOLCHAIN_CXX)"
+CXX20FLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX20PICFLAGS = -fpic
+CXX20STD = -std=gnu++20
 CXX_VISIBILITY = -fvisibility=hidden
 DYLIB_EXT = .so
 DYLIB_LD = $(CC)
-DYLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -shared # $(CFLAGS) $(CPICFLAGS)
+DYLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c # $(CFLAGS) $(CPICFLAGS)
 DYLIB_LINK = $(DYLIB_LD) $(DYLIB_LDFLAGS) $(LDFLAGS)
 ECHO = echo
 ECHO_C = 
@@ -110,7 +114,7 @@ JAR = "$(JAVA_HOME)/bin/jar"
 ## JAVA_HOME might be used in the next three.
 ## They are for packages 'JavaGD' and 'rJava'
 LAPACK_LIBS = -L"$(R_HOME)/lib$(R_ARCH)" -lRlapack
-LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c $(PKG_LDFLAGS_OVERRIDE)
+LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -shared $(PKG_LDFLAGS_OVERRIDE)
 ## we only need this is if it is external, as otherwise link to R
 LIBM = -lm
 LIBR0 = -lR 

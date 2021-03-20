@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,11 @@ public class TestBuiltin_internal extends TestBase {
     public void testIndirectInternalInvocation() {
         assertEval("is.environment((get('.Internal', envir = baseenv(), mode = 'function'))(getNamespaceRegistry()))");
         assertEval("attr((get('.Internal', envir = baseenv(), mode = 'function'))(getNamespaceRegistry()), 'name')");
-        assertEval("(get('.Internal', envir = baseenv(), mode = 'function')(paste0(1,2,3)))");
+        // .Internal(paste0) and .Internal(paste) behave differently in GNU-R (version 4.0.3) during
+        // loading of base package - they expect
+        // different number of arguments. We ignore error message for now because we handle calls to
+        // .Internal(paste) the same
+        // both during loading of base package and afterwards.
+        assertEval(Output.IgnoreErrorMessage, "(get('.Internal', envir = baseenv(), mode = 'function')(paste0(1,2,3,4,5)))");
     }
 }

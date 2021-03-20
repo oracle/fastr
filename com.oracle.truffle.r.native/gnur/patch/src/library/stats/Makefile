@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,8 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
 
+# Trunmed.c is excluded because it is included by Srunmed.c
+C_SOURCES_EXCLUDED := src/Trunmed.c
 PKG_LIBS := $(LAPACK_LIBS) $(BLAS_LIBS) -L$(FASTR_LIB_DIR) $(FLIBS)
 PKG_INCLUDES = -I src
 include ../lib.mk

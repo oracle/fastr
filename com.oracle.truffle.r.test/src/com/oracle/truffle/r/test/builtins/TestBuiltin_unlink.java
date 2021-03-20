@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -26,7 +26,6 @@ import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_unlink extends TestBase {
-
     @Test
     public void testunlink1() {
         assertEval(Ignored.SideEffects, "argv <- list('/tmp/RtmptPgrXI/Pkgs', TRUE, FALSE); .Internal(unlink(argv[[1]], argv[[2]], argv[[3]]))");
@@ -56,5 +55,4 @@ public class TestBuiltin_unlink extends TestBase {
         assertEval("{ td <- tempfile(pattern='r-test-unlink'); td <- paste0(td, '/dir1/dir2'); dir.exists(td); dir.create(td, recursive=T); dir.exists(td); unlink(td, recursive=F); dir.exists(td) }");
         assertEval("{ td <- tempfile(pattern='r-test-unlink'); td <- paste0(td, '/dir1/dir2'); dir.exists(td); dir.create(td, recursive=T); dir.exists(td); unlink(td, recursive=T); dir.exists(td) }");
     }
-
 }

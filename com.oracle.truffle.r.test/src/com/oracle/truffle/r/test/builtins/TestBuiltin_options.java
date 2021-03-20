@@ -14,15 +14,15 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.builtins;
 
-import com.oracle.truffle.r.runtime.ROptions;
 import org.junit.Test;
 
+import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -40,7 +40,7 @@ public class TestBuiltin_options extends TestBase {
 
     @Test
     public void testoptions3() {
-        assertEval("argv <- list('str'); .Internal(options(argv[[1]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('str'); .Internal(options(argv[[1]]))");
     }
 
     @Test
@@ -95,7 +95,7 @@ public class TestBuiltin_options extends TestBase {
             if ("keep.source".equals(option) || "warn".equals(option)) {
                 assertEval(Ignored.Unknown, "{ options('" + option + "') }");
             } else {
-                assertEval("{ options('" + option + "') }");
+                assertEval(Ignored.NewRVersionMigration, "{ options('" + option + "') }");
             }
         }
     }

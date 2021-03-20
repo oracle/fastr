@@ -4,7 +4,7 @@
 pdf("reg-tests-2.pdf", encoding = "ISOLatin1.enc")
 
 ## force standard handling for data frames
-options(stringsAsFactors=TRUE)
+options(stringsAsFactors=FALSE) # R >= 4.0.0
 options(useFancyQuotes=FALSE)
 
 ### moved from various .Rd files
@@ -36,7 +36,6 @@ for(m in marg) print(apply(arr, print(m), sum))
 for(m in marg) ## 75% of the time here was spent on the names
   print(dim(apply(arr, print(m), quantile, names=FALSE)) == c(5,d.arr[m]))
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since legend() and besselY() use graphics package
 ## Bessel
 nus <- c(0:5,10,20)
 
@@ -59,12 +58,12 @@ which(bY >= 0)
 summary(bY <- besselY(2,nu = nu <- seq(3,300,len=51)))
 summary(bI <- besselI(x = x <- 10:700, 1))
 ## end of moved from Bessel.Rd
-} # [FastR] END Test snippet disabled since legend() and besselY() use graphics package
 
 ## data.frame
 set.seed(123)
 L3 <- LETTERS[1:3]
-d <- data.frame(cbind(x=1, y=1:10), fac = sample(L3, 10, replace=TRUE))
+d <- data.frame(cbind(x=1, y=1:10), fac = sample(L3, 10, replace=TRUE),
+                stringsAsFactors=TRUE)
 str(d)
 (d0  <- d[, FALSE]) # NULL dataframe with 10 rows
 (d.0 <- d[FALSE, ]) # <0 rows> dataframe  (3 cols)
@@ -176,7 +175,7 @@ kronecker(fred, bill, make=TRUE)
 authors <- data.frame(
     surname = c("Tukey", "Venables", "Tierney", "Ripley", "McNeil"),
     nationality = c("US", "Australia", "US", "UK", "Australia"),
-    deceased = c("yes", rep("no", 4)))
+    deceased = c("yes", rep("no", 4)), stringsAsFactors=TRUE)
 books <- data.frame(
     name = c("Tukey", "Venables", "Tierney",
              "Ripley", "Ripley", "McNeil", "R Core"),
@@ -187,7 +186,8 @@ books <- data.frame(
               "Interactive Data Analysis",
               "An Introduction to R"),
     other.author = c(NA, "Ripley", NA, NA, NA, NA,
-                     "Venables & Smith"))
+		     "Venables & Smith"),
+	   stringsAsFactors=TRUE)
 b2 <- books; names(b2)[1] <- names(authors)[1]
 
 merge(authors, b2, all.x = TRUE)
@@ -225,7 +225,8 @@ tabulate(numeric(0))
 ## end of moved from tabulate.Rd
 
 ## ts
-# Ensure working arithmetic for `ts' objects :
+# Ensure working arithmetic for 'ts' objects :
+z <- ts(matrix(1:900, 100, 3), start = c(1961, 1), frequency = 12)
 stopifnot(z == z)
 stopifnot(z-z == 0)
 
@@ -624,14 +625,6 @@ f
 ## was  [1] C A; Levels:  C A  in 1.4.1
 
 
-## PR#1408 Inconsistencies in sum()
-x <- as.integer(2^30)
-sum(x, x)    # did not warn in 1.4.1
-sum(c(x, x)) # did warn
-(z <- sum(x, x, 0.0)) # was NA in 1.4.1
-typeof(z)
-
-
 ## NA levels in factors
 (x <- factor(c("a", "NA", "b"), exclude=NULL))
 ## 1.4.1 had wrong order for levels
@@ -923,7 +916,7 @@ aa[["row.names"]] <- A
 aa
 ## wrong printed names in 1.7.1
 
-## assigning to NULL
+## assigning to NULL --- now consistently behaves as if assigning to list() !
 a <- NULL
 a[["a"]] <- 1
 a
@@ -980,7 +973,9 @@ dat[3, 1] <- dat[4, 2] <- NA
 lm.influence(lm(y ~ x1 + x2, data=dat, weights=wt, na.action=na.omit))
 lm.influence(lm(y ~ x1 + x2, data=dat, weights=wt, na.action=na.exclude))
 lm.influence(lm(y ~ 0, data=dat, weights=wt, na.action=na.omit))
+print(width = 99,
 lm.influence(lm(y ~ 0, data=dat, weights=wt, na.action=na.exclude))
+) ; stopifnot(getOption("width") == 80)
 lm.influence(lm(y ~ 0 + x3, data=dat, weights=wt, na.action=na.omit))
 lm.influence(lm(y ~ 0 + x3, data=dat, weights=wt, na.action=na.exclude))
 lm.influence(lm(y ~ 0, data=dat, na.action=na.exclude))
@@ -1174,7 +1169,6 @@ summary(sample.aov)
 ## failed in 1.8.1
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since stem() uses graphics package
 ## PR#6645  stem() with near-constant values
 stem(rep(1, 100))
 stem(rep(0.1, 10))
@@ -1182,7 +1176,6 @@ stem(c(rep(1, 10), 1+1.e-8))
 stem(c(rep(1, 10), 1+1.e-9))
 stem(c(rep(1, 10), 1+1.e-10), atom=0) # integer-overflow is avoided.
 ##  had integer overflows in 1.8.1, and silly shifts of decimal point
-} # [FastR] END Test snippet disabled since stem() uses graphics package
 
 
 ## PR#6633 warnings with vector op matrix, and more
@@ -1236,11 +1229,9 @@ try(x[-c(1, NA)])
 ## worked on some platforms, segfaulted on others in 1.8.1
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since boxplot() uses graphics package
 ## vector 'border' (and no 'pch', 'cex' nor 'bg'):
 boxplot(count ~ spray, data = InsectSprays, border=2:7)
 ## gave warnings in 1.9.0
-} # [FastR] END Test snippet disabled since boxplot() uses graphics package
 
 summary(as.Date(paste("2002-12", 26:31, sep="-")))
 ## printed all "2002.-12-29" in 1.9.1 {because digits was too small}
@@ -1333,11 +1324,13 @@ Mat <- matrix(c(1:3, letters[1:3], 1:3, LETTERS[1:3],
               3, 6)
 foo <- tempfile()
 write.table(Mat, foo, col.names = FALSE, row.names = FALSE)
-read.table(foo, colClasses = c(NA, NA, "NULL", "character", "Date", "POSIXct"))
+read.table(foo, colClasses = c(NA, NA, "NULL", "character", "Date", "POSIXct"),
+           stringsAsFactors=TRUE)
 unlist(sapply(.Last.value, class))
-read.table(foo, colClasses = c("factor",NA,"NULL","factor","Date","POSIXct"))
+read.table(foo, colClasses = c("factor",NA,"NULL","factor","Date","POSIXct"),
+           stringsAsFactors=TRUE)
 unlist(sapply(.Last.value, class))
-read.table(foo, colClasses = c(V4="character"))
+read.table(foo, colClasses = c(V4="character"), stringsAsFactors=TRUE)
 unlist(sapply(.Last.value, class))
 unlink(foo)
 ## added in 2.0.0
@@ -1619,10 +1612,10 @@ m21[which(m21 == 0, arr.ind = TRUE)]
 ## tests of indexing as quoted in Extract.Rd
 x <- NULL
 x$foo <- 2
-x # length-1 vector
+x # now, a list
 x <- NULL
 x[[2]] <- pi
-x # numeric vector
+x # now, a list, too
 x <- NULL
 x[[1]] <- 1:3
 x # list
@@ -1688,11 +1681,9 @@ a.frame
 ### end of tests added in 2.2.0 patched ###
 
 
-if(FALSE) { # [FastR] BEGIN Test snippet disabled since pairs() uses graphics package
 ## test of fix of trivial warning PR#8252
 pairs(iris[1:4], oma=rep(3,4))
 ## warned in 2.2.0 only
-} # [FastR] END Test snippet disabled since pairs() uses graphics package
 
 
 ## str(<dendrogram>)
@@ -1756,7 +1747,7 @@ f <- function(...) browser()
 do.call(f, mtcars)
 c
 
-options(error = expression(NULL))
+op <- c(op, options(error = expression(NULL)))
 f <- function(...) stop()
 do.call(f, mtcars)
 traceback()
@@ -1896,10 +1887,11 @@ d.AD <- data.frame(treatment = gl(3,3), outcome = gl(3,1,9),
                    counts = c(18,17,15,20,10,20,25,13,12))
 fit <- glm(counts ~ outcome + treatment, family = poisson,
            data = d.AD, weights = c(0, rep(1,8)))
-residuals(fit, type="working") # first was NA < 2.4.0
+print(residuals(fit, type="working"),
+      width = 37) # first was NA < 2.4.0 //  using new 'width'
 ## working residuals were NA for zero-weight cases.
 fit2 <- glm(counts ~ outcome + treatment, family = poisson,
-           data = d.AD, weights = c(0, rep(1,8)), y = FALSE)
+            data = d.AD, weights = c(0, rep(1,8)), y = FALSE)
 for(z in c("response", "working", "deviance", "pearson"))
     stopifnot(all.equal(residuals(fit, type=z), residuals(fit2, type=z),
                         scale = 1, tolerance = 1e-10))
@@ -2360,12 +2352,19 @@ attr(foo, "srcref") <- NULL
 foo
 (f <- structure(function(){}, note = "just a note",
                 yada = function() "not the same"))
+print(f, useSource = TRUE)
 print(f, useSource = FALSE) # must print attributes
-print.function <- function(x, ...) { str(x,...); invisible(x) }
+print.function <- function(x, ...) {
+    cat("my print(<function>): "); str(x, give.attr=FALSE); invisible(x) }
 print.function
-f
+print(print.function)
 rm(print.function)
-## auto-printing and printing differed up to R 2.9.x
+## auto-printing and printing differed up to R 2.9.x -- and then *AGAIN* in R 3.6.0
+
+
+## Make sure deparsing does not reset parameters
+print(list(f, expression(foo), f, quote(foo), f, base::list, f),
+      useSource = FALSE)
 
 printCoefmat(cbind(0,1))
 ## would print NaN up to R 2.9.0
@@ -2431,7 +2430,7 @@ try(complete.cases(list(), list()))
 
 ## error messages from (C-level) evalList
 tst <- function(y) { stopifnot(is.numeric(y)); y+ 1 }
-try(tst())
+try(tst()) # even nicer since R 3.5.0's change to sequential stopifnot()
 try(c(1,,2))
 ## change in 2.8.0 made these less clear
 
@@ -2623,8 +2622,9 @@ is.unsorted(data.frame(x=3:4, y=1:2))
 
 library("methods")# (not needed here)
 assertError <- tools::assertError
-assertError( getMethod(ls, "bar", fdef=ls), verbose=TRUE)
-assertError( getMethod(show, "bar"), verbose=TRUE)
+assertErrorV <- function(expr) assertError(expr, verbose=TRUE)
+assertErrorV( getMethod(ls, "bar", fdef=ls) )
+assertErrorV( getMethod(show, "bar") )
 ## R < 2.15.1 gave
 ##   cannot coerce type 'closure' to vector of type 'character'
 
@@ -2702,7 +2702,8 @@ substitute(f(x), list(f = quote(g(y))))
 
 
 ## PR#15247 : str() on invalid data frame names (where print() works):
-d <- data.frame(1:3, "B", 4); names(d) <- c("A", "B\xba","C\xabcd")
+d <- data.frame(1:3, "B", 4, stringsAsFactors=TRUE)
+names(d) <- c("A", "B\xba","C\xabcd")
 str(d)
 ## gave an error in R <= 3.0.0
 
@@ -2808,12 +2809,12 @@ str(max(NA_character_, "bla"))
 
 ## When two entries needed to be cut to width, str() mixed up
 ## the values (reported by Gerrit Eichner)
-oldopts <- options(width=70, stringsAsFactors=TRUE)
+oldopts <- options(width=70)
 n <- 11      # number of rows of data frame
 M <- 10000   # order of magnitude of numerical values
 longer.char.string <- "zjtvorkmoydsepnxkabmeondrjaanutjmfxlgzmrbjp"
 X <- data.frame( A = 1:n * M,
-                 B = rep( longer.char.string, n))
+                 B = factor(rep(longer.char.string, n)))
 str( X, strict.width = "cut")
 options(oldopts)
 ## The first row of the str() result was duplicated.
@@ -3014,6 +3015,15 @@ a <- alist(one = 1, two = )
 dput(a)
 ## deparsed two to quote()
 
+## Deparsing of repeated unary operators; the first 3 were "always" ok:
+quote(~~x)
+quote(++x)
+quote(--x)
+quote(!!x) # was `!(!x)`
+quote(??x) # Suboptimal
+quote(~+-!?x) # ditto: ....`?`(x)
+## `!` no longer produces parentheses now
+
 
 ## summary.data.frame() with NAs in columns of class "Date" -- PR#16709
 x <- c(18000000, 18810924, 19091227, 19027233, 19310526, 19691228, NA)
@@ -3054,3 +3064,95 @@ summary(1L)
 ## str.default() for "AsIs" arrays
 str(I(m <- matrix(pi*1:4, 2)))
 ## did look ugly (because of toString() for numbers) in R <= 3.3.1
+
+
+## check automatic coercions from double to integer
+##
+## these should work due to coercion
+sprintf("%d", 1)
+sprintf("%d", NA_real_)
+sprintf("%d", c(1,2))
+sprintf("%d", c(1,NA))
+sprintf("%d", c(NA,1))
+##
+## these should fail
+assertErrorV( sprintf("%d", 1.1) )
+assertErrorV( sprintf("%d", c(1.1,1)) )
+assertErrorV( sprintf("%d", c(1,1.1)) )
+assertErrorV( sprintf("%d", NaN) )
+assertErrorV( sprintf("%d", c(1,NaN)) )
+
+
+## formatting of named raws:
+setNames(as.raw(1:3), c("a", "bbbb", "c"))
+## was quite ugly for R <= 3.4.2
+
+
+## str(x) when is.vector(x) is false :
+str(structure(c(a = 1, b = 2:7), color = "blue"))
+## did print " atomic [1:7] ..." in R <= 3.4.x
+
+
+## check stopifnot(exprs = ....)
+tryCatch(stopifnot(exprs = {
+  all.equal(pi, 3.1415927)
+  2 < 2
+  cat("Kilroy was here!\n")
+  all(1:10 < 12)
+  "a" < "b"
+}), error = function(e) e$message) -> M ; cat("Error: ", M, "\n")
+
+tryCatch(stopifnot(exprs = {
+  all.equal(pi, 3.1415927)
+  { cat("Kilroy was here!\n"); TRUE }
+  pi < 3
+  cat("whereas I won't be printed ...\n")
+  all(1:10 < 12)
+  "a" < "b"
+}), error = function(e) e$message) -> M2 ; cat("Error: ", M2, "\n")
+
+stopifnot(exprs = {
+  all.equal(pi, 3.1415927)
+  { cat("\nKilroy was here! ... "); TRUE }
+  pi > 3
+  all(1:10 < 12)
+  "a" < "b"
+  { cat("and I'm printed as well ...\n"); TRUE}
+})
+## without "{ .. }" :
+stopifnot(exprs = 2 == 2)
+try(stopifnot(exprs = 1 > 2))
+## passing an expression object:
+stopifnot(exprObject = expression(2 == 2, pi < 4))
+tryCatch(stopifnot(exprObject = expression(
+                       2 == 2,
+                       { cat("\n Kilroy again .."); TRUE },
+                       pi < 4,
+                       0 == 1,
+                       { cat("\n no way..\n"); TRUE })),
+         error = function(e) e$message) -> M3
+cat("Error: ", M3, "\n")
+## was partly not ok for many weeks in R-devel, early 2018
+
+
+## print.htest() with small 'digits'
+print(t.test(1:28), digits = 3)
+## showed 'df = 30' from signif(*, digits=1) and too many digits for CI, in R <= 3.5.1
+
+
+## str(<d.frame w/ attrib>):
+treeA <- trees
+attr(treeA, "someA") <- 1:77
+str(treeA)
+## now shows the *length* of "someA"
+
+
+## summaryRprof() bug PR#15886 :
+Rprof(tf <- tempfile("Rprof.out"), memory.profiling=TRUE, line.profiling=FALSE)
+out <- lapply(1:10000, rnorm, n= 512)
+Rprof(NULL)
+if(interactive())
+    print(length(readLines(tf))) # ca. 10 .. 20 lines
+op <- options(warn = 2) # no warnings, even !
+for (cs in 1:21) s <- summaryRprof(tf, memory="tseries", chunksize=cs)
+options(op) ## "always" triggered an error (or a warning) in R <= 3.6.3

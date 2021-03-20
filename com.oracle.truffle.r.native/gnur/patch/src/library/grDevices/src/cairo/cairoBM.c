@@ -393,7 +393,7 @@ static Rboolean
 BMDeviceDriver(pDevDesc dd, int kind, SEXP filename,
 	       int quality, int width, int height, int ps,
 	       int bg, int res, int antialias, const char *family,
-	       double dpi)
+	       double dpi, const char *symbolfamily, Rboolean usePUA)
 {
     pX11Desc xd;
     int res0 = (res > 0) ? res : 72;
@@ -401,19 +401,31 @@ BMDeviceDriver(pDevDesc dd, int kind, SEXP filename,
 
     /* allocate new device description */
     if (!(xd = (pX11Desc) calloc(1, sizeof(X11Desc)))) return FALSE;
-    strncpy(xd->filename, R_ExpandFileName(translateChar(filename)),
+    strncpy(xd->filename, R_ExpandFileName(translateCharFP(filename)),
             PATH_MAX - 1);
     xd->filename[PATH_MAX - 1] = '\0';
 #ifdef R_CAIRO_UTF8_FILENAMES
+    // not currently in use
+    strncpy(xd->filename, R_ExpandFileName(translateChar(filename)),
+            PATH_MAX - 1);
+    xd->filename[PATH_MAX - 1] = '\0';
     strncpy(xd->filenameUTF8, R_ExpandFileNameUTF8(translateCharUTF8(filename)),
             PATH_MAX - 1);
     xd->filenameUTF8[PATH_MAX - 1] = '\0';
+#else
+    // thow error if cannot be translated.
+    strncpy(xd->filename, R_ExpandFileName(translateCharFP(filename)),
+            PATH_MAX - 1);
+    xd->filename[PATH_MAX - 1] = '\0';
 #endif
     xd->quality = quality;
     xd->windowWidth = width;
     xd->windowHeight = height;
     strncpy(xd->basefontfamily, family, 499);
     xd->basefontfamily[499] = '\0';
+    strncpy(xd->symbolfamily, symbolfamily, 499);
+    xd->symbolfamily[499] = '\0';
+    xd->usePUA = usePUA;
 #ifdef HAVE_PANGOCAIRO
     /* Pango's default resolution is 96 dpi */
     dps *= res0/96.0;
@@ -541,13 +553,18 @@ const static struct {
 
 /*
    cairo(filename, type, width, height, pointsize, bg, res, antialias, 
-         quality, family)
+         quality, family, dpi, symbolfamily)
 */
 SEXP in_Cairo(SEXP args)
 {
     pGEDevDesc gdd;
     SEXP sc;
+<<<<<<< HEAD
     const char *family;
+=======
+    const char *family, *symbolfamily;
+    Rboolean usePUA;
+>>>>>>> gnur
     int type, quality, width, height, pointsize, bgcolor, res, antialias;
     double dpi;
     SEXP filename;
@@ -596,6 +613,12 @@ SEXP in_Cairo(SEXP args)
     dpi = asReal(CAR(args));
     if(ISNAN(dpi) || dpi <= 0)
 	error(_("invalid '%s' argument"), "dpi");
+    args = CDR(args);
+    if (!isString(CAR(args)) || LENGTH(CAR(args)) < 1)
+	error(_("invalid '%s' argument"), "symbolfamily");
+    symbolfamily = translateChar(STRING_ELT(CAR(args), 0));
+    /* scsymbol forced to have "usePUA" attribute in R code */
+    usePUA = LOGICAL(getAttrib(CAR(args), install("usePUA")))[0];
 
     R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
@@ -605,7 +628,8 @@ SEXP in_Cairo(SEXP args)
 	if (!(dev = (pDevDesc) calloc(1, sizeof(DevDesc)))) return 0;
 	if (!BMDeviceDriver(dev, devtable[type].gtype, filename, quality,
 			    width, height, pointsize,
-			    bgcolor, res, antialias, family, dpi)) {
+			    bgcolor, res, antialias, family, dpi,
+                            symbolfamily, usePUA)) {
 	    free(dev);
 	    error(_("unable to start device '%s'"), devtable[type].name);
 	}
@@ -625,4 +649,16 @@ SEXP in_CairoVersion(void)
     SET_STRING_ELT(ans, 0, mkChar(cairo_version_string()));
     UNPROTECT(1);
     return ans;
+}
+
+SEXP in_PangoVersion(void)
+{
+#ifdef HAVE_PANGOCAIRO
+    SEXP ans = PROTECT(allocVector(STRSXP, 1));
+    SET_STRING_ELT(ans, 0, mkChar(pango_version_string()));
+    UNPROTECT(1);
+    return ans;
+#else
+    return mkString("");
+#endif
 }

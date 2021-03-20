@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -113,6 +113,7 @@ public class TestBuiltin_paste extends TestBase {
         assertEval("{ assign('as.character.myc', function(x) '42', envir=.__S3MethodsTable__.); val <- 3.14; class(val) <- 'myc'; res <- paste(val, 'world'); rm('as.character.myc', envir=.__S3MethodsTable__.); res }");
     }
 
+    @Test
     public void testStringSequence() {
         assertEval("{ paste(\"a\", 1, TRUE, 1:4, 1.2) }");
         assertEval("{ paste(\"a\", 1, TRUE, 1:4) }");
@@ -120,5 +121,28 @@ public class TestBuiltin_paste extends TestBase {
 
         // ISOdate utilizes paste
         assertEval("{ ISOdate(2010, 01, 01, 1:10) }");
+    }
+
+    /**
+     * recycle0 optional parameter was added to GNU-R version 4.0.1
+     */
+    @Test
+    public void testRecycleParameter() {
+        assertEval("{ paste('hello', c(), recycle0=FALSE) }");
+        assertEval("{ paste('hello', c(), recycle0=TRUE) }");
+        assertEval("{ paste(1:3, 11:13, c(), sep=':', collapse='-', recycle0=FALSE) }");
+        assertEval("{ paste(1:3, 11:13, c(), sep=':', collapse='-', recycle0=TRUE) }");
+        assertEval("{ paste(1:3, 11:13, c(), sep=':', collapse=NULL, recycle0=FALSE) }");
+        assertEval("{ paste(1:3, 11:13, c(), sep=':', collapse=NULL, recycle0=TRUE) }");
+    }
+
+    @Test
+    public void testRecycleParameterWrongValues() {
+        assertEval("{ paste('hello', recycle0=NA) }");
+        assertEval("{ paste('hello', recycle0=NULL) }");
+        assertEval("{ paste('hello', recycle0=42) }");
+        assertEval("{ paste('hello', recycle0=':') }");
+        assertEval("{ paste('hello', recycle0=c(TRUE, FALSE)) }");
+        assertEval("{ paste('hello', recycle0=c(FALSE, TRUE)) }");
     }
 }

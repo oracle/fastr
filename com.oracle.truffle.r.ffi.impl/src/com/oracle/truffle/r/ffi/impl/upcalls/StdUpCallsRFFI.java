@@ -588,6 +588,8 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(RMakeExternalPtrNode.class)
     Object R_MakeExternalPtr(@RFFICpointer Object addr, Object tag, Object prot);
 
+    long EXTPTR_PTR(Object x);
+
     long R_ExternalPtrAddr(Object x);
 
     Object R_ExternalPtrTag(Object x);
@@ -1066,6 +1068,8 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(MakeActiveBindingNode.class)
     void R_MakeActiveBinding(Object sym, Object fun, Object env);
+
+    void R_removeVarFromFrame(Object sym, Object env);
 
     /**
      * <code>PRIMFUN(op)</code> returns a function pointer for the given function object (SEXP)

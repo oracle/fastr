@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.test.Utils;
  */
 public class GnuROneShotRSession implements RSession {
 
-    private static final String[] GNUR_COMMANDLINE = new String[]{"<R>", "--vanilla", "--slave", "--silent", "--no-restore"};
+    private static final String[] GNUR_COMMANDLINE = new String[]{"<R>", "--vanilla", "--no-echo", "--silent", "--no-restore"};
     private static final String FASTR_TESTGEN_GNUR = "FASTR_TESTGEN_GNUR";
     private static final int DEFAULT_TIMEOUT = 5000;
     private static int timeoutValue = DEFAULT_TIMEOUT;

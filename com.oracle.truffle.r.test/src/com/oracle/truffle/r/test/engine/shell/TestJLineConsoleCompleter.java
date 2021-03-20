@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,27 @@
  */
 package com.oracle.truffle.r.test.engine.shell;
 
-import com.oracle.truffle.api.interop.TruffleObject;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import org.graalvm.shadowed.org.jline.reader.Candidate;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import java.util.List;
-import org.graalvm.shadowed.org.jline.reader.Candidate;
 
 public class TestJLineConsoleCompleter {
 
@@ -84,7 +85,8 @@ public class TestJLineConsoleCompleter {
         }
     }
 
-    // disabled because it uses Engine, which clashes with other tests that use PolyglotEngine
+    // TODO: NewRVersionMigration
+    @Ignore
     @Test
     public void testCompl() {
         assertCompl("", 0, "", 0);
@@ -187,6 +189,8 @@ public class TestJLineConsoleCompleter {
         assertCompl("tjo@n", 5, "tjo@n", 5, "tjo@name");
     }
 
+    // TODO: NewRVersionMigration
+    @Ignore
     @Test
     public void testPathCompl() {
         testPathCompl('"');

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,7 +91,7 @@ public class TestS4 extends TestRBase {
         assertEval("{ x<-42; y<-asS4(x); isS4(y) }");
         assertEval("{ isS4(NULL) }");
         assertEval("{ asS4(NULL); isS4(NULL) }");
-        assertEval(Ignored.NewRVersionMigration, "{  asS4(7:42) }");
+        assertEval("{  asS4(7:42) }");
     }
 
     @Test
@@ -110,6 +110,14 @@ public class TestS4 extends TestRBase {
     }
 
     @Test
+    public void testPrototype() {
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); C11() }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); C11(data=42) }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'C11', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); C11() }");
+        assertEval("{ C11 <- setClass('C11', slots=c(data='numeric'), prototype=list(data=1)); setMethod('initialize', 'C11', function(.Object, ...) {print(.Object@data); callNextMethod(.Object, ...)}); C11(data=42) }");
+    }
+
+    @Test
     public void testMethods() {
         // output slightly different from GNU R even though we use R's "show" method to print it
         // GNU R shows environment info:
@@ -124,8 +132,7 @@ public class TestS4 extends TestRBase {
 
         assertEval("{ setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); res<-print(setGeneric(\"gen\", function(o) standardGeneric(\"gen\"))); removeGeneric(\"gen\"); res }");
 
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
+        assertEval("{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
 
         assertEval("{ setClass('A'); setClass('A1', contains = 'A'); setClass('A2', contains = 'A1'); setGeneric('foo', function(a, b) standardGeneric('foo')); setMethod('foo', signature('A1', 'A2'), function(a, b) '1-2'); setMethod('foo', signature('A2', 'A1'), function(a, b) '2-1'); foo(new('A2'), new('A2')) }");
 
@@ -133,8 +140,7 @@ public class TestS4 extends TestRBase {
 
         assertEval("{ setClass('A1', representation(a='numeric')); setMethod('length', 'A1', function(x) x@a); obj <- new('A1'); obj@a <- 10; length(obj) }");
 
-        assertEval(Ignored.NewRVersionMigration,
-                        "{ setClass('A2', representation(a = 'numeric')); setMethod('rep', 'A2', function(x, a, b, c) { c(x@a, a, b, c) }); setMethod('ifelse', c(yes = 'A2'), function(test, yes, no) print(test)) }");
+        assertEval("{ setClass('A2', representation(a = 'numeric')); setMethod('rep', 'A2', function(x, a, b, c) { c(x@a, a, b, c) }); setMethod('ifelse', c(yes = 'A2'), function(test, yes, no) print(test)) }");
     }
 
     @Test
@@ -169,7 +175,7 @@ public class TestS4 extends TestRBase {
     @Test
     public void testActiveBindings() {
         assertEval("someSymbol0 <- 1; makeActiveBinding('someSymbol0', function(x) { x }, .GlobalEnv)");
-        assertEval(Output.IgnoreErrorContext, "lockEnvironment(.GlobalEnv); makeActiveBinding('someSymbol1', function(x) { x }, .GlobalEnv)");
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "lockEnvironment(.GlobalEnv); makeActiveBinding('someSymbol1', function(x) { x }, .GlobalEnv)");
         assertEval("makeActiveBinding('someSymbol2', function(x) { x }, .GlobalEnv); bindingIsActive('someSymbol2', .GlobalEnv)");
         assertEval("bindingIsActive('someSymbol3', .GlobalEnv)");
         assertEval(".Internal(bindingIsActive(as.name('someSymbol4'), .GlobalEnv))");
@@ -196,7 +202,8 @@ public class TestS4 extends TestRBase {
     @Test
     public void testRegularFieldAssign() {
         assertEval(Output.IgnoreErrorContext, "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); obj$fld2 <- 'value'; }");
-        assertEval(Output.IgnoreErrorContext, "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); obj$fld2; }");
+        assertEval(Output.IgnoreErrorContext,
+                        "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); obj$fld2; }");
         assertEval("{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); attr(obj, '.Data') <- new.env(); obj$fld2 <- 'value'; list(obj, as.list(attr(obj, '.Data')), obj$fld2); }");
         assertEval("{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); attr(obj, '.xData') <- new.env(); obj$fld2 <- 'value'; list(obj, as.list(attr(obj, '.xData')), obj$fld2); }");
     }
@@ -204,5 +211,21 @@ public class TestS4 extends TestRBase {
     @Test
     public void testDispatchToS3ForBuiltins() {
         assertEval("{ setClass('TestS4S31', representation(f = 'numeric')); p <- new('TestS4S31', f = 2); `$.TestS4S31` <- function(...) 42; p$field }");
+    }
+
+    @Test
+    public void testAs() {
+        assertEval("{ my_as <- function(object, to) { class(object) <- to; object }; A12 <- setClass('A12', slots=c(data='numeric')); a <- A12(); x <- my_as(a, 'X'); class(a) }");
+        assertEval("{ setClass('A13', slots=c(data='numeric')); B13 <- setClass('B13', contains='A13'); b <- B13(data=42); as(b, 'A13') }");
+    }
+
+    /**
+     * The following snippet is a simplified excerpt from diffobj package. The idea behind this test
+     * is that getting a class definition of an object in the validity function should not cause any
+     * errors.
+     */
+    @Test
+    public void testValidityFunction() {
+        assertEval("{ setClass('A11', slots=c(data='numeric'), validity=function(object) {class(object); TRUE}); B11 <- setClass('B11', contains='A11'); B11(data=42) }");
     }
 }

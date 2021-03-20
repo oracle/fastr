@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997--2019  The R Core Team
+ *  Copyright (C) 1997--2020  The R Core Team
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ SEXP do_X11(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abbrev(SEXP, SEXP, SEXP, SEXP);
 SEXP do_abs(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addCondHands(SEXP, SEXP, SEXP, SEXP);
+SEXP do_addGlobHands(SEXP, SEXP, SEXP, SEXP);
 SEXP do_address(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addRestart(SEXP, SEXP, SEXP, SEXP);
 SEXP do_addTryHandlers(SEXP, SEXP, SEXP, SEXP);
@@ -359,6 +360,7 @@ SEXP do_search(SEXP, SEXP, SEXP, SEXP);
 SEXP do_seq(SEXP, SEXP, SEXP, SEXP);
 SEXP do_seq_along(SEXP, SEXP, SEXP, SEXP);
 SEXP do_seq_len(SEXP, SEXP, SEXP, SEXP);
+SEXP do_sequence(SEXP, SEXP, SEXP, SEXP);
 SEXP do_serialize(SEXP, SEXP, SEXP, SEXP);
 SEXP do_serializeToConn(SEXP, SEXP, SEXP, SEXP);
 SEXP do_serializeInfoFromConn(SEXP, SEXP, SEXP, SEXP);
@@ -501,6 +503,8 @@ SEXP do_getconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_getallconnections(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sumconnection(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sockconn(SEXP, SEXP, SEXP, SEXP);
+SEXP do_serversocket(SEXP, SEXP, SEXP, SEXP);
+SEXP do_socktimeout(SEXP, SEXP, SEXP, SEXP);
 SEXP do_sockselect(SEXP, SEXP, SEXP, SEXP);
 SEXP do_gzcon(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memCompress(SEXP, SEXP, SEXP, SEXP);
@@ -512,6 +516,7 @@ SEXP do_lockBnd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bndIsLocked(SEXP, SEXP, SEXP, SEXP);
 SEXP do_mkActiveBnd(SEXP, SEXP, SEXP, SEXP);
 SEXP do_bndIsActive(SEXP, SEXP, SEXP, SEXP);
+SEXP do_activeBndFun(SEXP, SEXP, SEXP, SEXP);
 SEXP do_mkUnbound(SEXP, SEXP, SEXP, SEXP);
 SEXP do_isNSEnv(SEXP call, SEXP op, SEXP args, SEXP rho);
 SEXP do_regNS(SEXP call, SEXP op, SEXP args, SEXP rho);

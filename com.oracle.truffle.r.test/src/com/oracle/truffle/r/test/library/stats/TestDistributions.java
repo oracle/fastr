@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -213,7 +213,7 @@ public class TestDistributions extends TestBase {
             String[] newParams = Arrays.copyOf(validParams, validParams.length);
             for (String errVal : errorParamValues) {
                 newParams[i] = errVal;
-                assertEval(Output.MayIgnoreWarningContext, func + "(0, " + String.join(", ", newParams) + ")");
+                assertEval(Ignored.NewRVersionMigration, Output.MayIgnoreWarningContext, func + "(0, " + String.join(", ", newParams) + ")");
             }
         }
     }

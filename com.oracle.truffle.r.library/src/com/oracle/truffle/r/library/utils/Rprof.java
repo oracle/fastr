@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Function;
@@ -67,7 +68,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import java.nio.file.StandardOpenOption;
 
 /**
  * Implements the {@code Rprof} external.
@@ -85,7 +85,7 @@ import java.nio.file.StandardOpenOption;
  * the function name.
  *
  */
-public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryCopyTracer.Listener {
+public abstract class Rprof extends RExternalBuiltinNode.Arg9 implements MemoryCopyTracer.Listener {
 
     static {
         Casts casts = new Casts(Rprof.class);
@@ -95,15 +95,17 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
         casts.arg(3, "mem_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         casts.arg(4, "gc_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         casts.arg(5, "line_profiling").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-        casts.arg(6, "numfiles").asIntegerVector().findFirst().mustBe(gte(0));
-        casts.arg(7, "bufsize").asIntegerVector().findFirst().mustBe(gte(0));
+        // TODO: Implement handling of filter_callframes argument
+        casts.arg(6, "filter_callframes").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        casts.arg(7, "numfiles").asIntegerVector().findFirst().mustBe(gte(0));
+        casts.arg(8, "bufsize").asIntegerVector().findFirst().mustBe(gte(0));
     }
 
     @Specialization
     @TruffleBoundary
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "RprofState.get never returns null")
-    public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling, boolean gcProfiling, boolean lineProfiling, @SuppressWarnings("unused") int numFiles,
-                    @SuppressWarnings("unused") int bufSize,
+    public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling, boolean gcProfiling, boolean lineProfiling, @SuppressWarnings("unused") boolean filterCallFrames,
+                    @SuppressWarnings("unused") int numFiles, @SuppressWarnings("unused") int bufSize,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
 
         RprofState profState = RprofState.get();

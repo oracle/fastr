@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -90,7 +90,7 @@ public class TestBuiltin_rowSums extends TestBase {
         assertEval("{rowSums(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
 
         // Whichever value(NA or NaN) is first in the row will be returned for that row.
-        assertEval("{rowSums(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+        assertEval(Ignored.NewRVersionMigration, "{rowSums(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
 
         // rowSums on matrix drop dimension
         assertEval("{ a = rowSums(matrix(1:12,3,4)); is.null(dim(a)) }");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -36,8 +37,8 @@ import com.oracle.truffle.r.runtime.data.RList;
  * A straightforward implementation in terms of {@code paste} that doesn't attempt to be more
  * efficient.
  */
-@RBuiltin(name = "paste0", kind = INTERNAL, parameterNames = {"list", "collapse"}, behavior = PURE)
-public abstract class Paste0 extends RBuiltinNode.Arg2 {
+@RBuiltin(name = "paste0", kind = INTERNAL, parameterNames = {"list", "collapse", "recycle0"}, behavior = PURE)
+public abstract class Paste0 extends RBuiltinNode.Arg3 {
 
     @Child private Paste pasteNode = PasteNodeGen.create();
 
@@ -45,10 +46,11 @@ public abstract class Paste0 extends RBuiltinNode.Arg2 {
         Casts casts = new Casts(Paste0.class);
         casts.arg("list").mustBe(RList.class);
         casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg("recycle0").allowNullAndMissing().mustBe(logicalValue()).asLogicalVector().findFirst();
     }
 
     @Specialization
-    protected Object paste0(VirtualFrame frame, RList values, Object collapse) {
-        return pasteNode.executeList(frame, values, "", collapse);
+    protected Object paste0(VirtualFrame frame, RList values, Object collapse, Object recycle0) {
+        return pasteNode.executeList(frame, values, "", collapse, recycle0);
     }
 }

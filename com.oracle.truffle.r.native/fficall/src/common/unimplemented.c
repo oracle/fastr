@@ -64,7 +64,7 @@ SEXP do_getGraphicsEventEnv(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
-void *Rf_AdobeSymbol2utf8(char *work, const char *c0, size_t nwork) {
+void *Rf_AdobeSymbol2utf8(char *out, const char *in, size_t nwork, Rboolean usePUA) {
     unimplemented("Rf_AdobeSymbol2utf8");
     return NULL;
 }
@@ -110,18 +110,6 @@ void R_InitInPStream(R_inpstream_t stream, R_pstream_data_t data, R_pstream_form
 		int (*inchar)(R_inpstream_t), void (*inbytes)(R_inpstream_t, void *, int), SEXP (*phook)(SEXP, SEXP), SEXP pdata)
 {
 	unimplemented("R_InitInPStream");
-}
-
-void R_InitOutPStream(R_outpstream_t stream, R_pstream_data_t data, R_pstream_format_t type, int version,
-		 void (*outchar)(R_outpstream_t, int), void (*outbytes)(R_outpstream_t, void *, int),
-		 SEXP (*phook)(SEXP, SEXP), SEXP pdata)
-{
-	unimplemented("R_InitOutPStream");
-}
-
-void R_Serialize(SEXP s, R_outpstream_t stream)
-{
-	unimplemented("R_Serialize");
 }
 
 SEXP R_Unserialize(R_inpstream_t stream)
@@ -210,7 +198,7 @@ double LOG(double x) {
     return 0;
 }
 
-Rwchar_t Rf_utf8toucs32(wchar_t high, const char *s) {
+R_wchar_t Rf_utf8toucs32(wchar_t high, const char *s) {
     unimplemented("Rf_utf8toucs32");	
 	return 0;
 }

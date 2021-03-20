@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995--2018  The R Core Team.
- *  Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ *  Copyright (C) 1995--2020  The R Core Team.
+ *  Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 // #ifdef HAVE_CONFIG_H
 // #include <config.h>
 // #endif
-// 
+//
  #define R_USE_SIGNALS 1
  #include <Defn.h>
 

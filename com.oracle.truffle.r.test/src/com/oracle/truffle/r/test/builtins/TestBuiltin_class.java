@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -124,7 +124,8 @@ public class TestBuiltin_class extends TestBase {
 
     @Test
     public void testclass20() {
-        assertEval("argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), .Dim = c(24L, 13L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24'), c('(Intercept)', 'block2', 'block3', 'block4', 'block5', 'block6', 'N1', 'P1', 'K1', 'N1:P1', 'N1:K1', 'P1:K1', 'N1:P1:K1')), assign = c(0L, 1L, 1L, 1L, 1L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L), contrasts = structure(list(block = 'contr.treatment', N = 'contr.treatment', P = 'contr.treatment', K = 'contr.treatment'), .Names = c('block', 'N', 'P', 'K'))));class(argv[[1]]);");
+        assertEval(Ignored.NewRVersionMigration,
+                        "argv <- list(structure(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), .Dim = c(24L, 13L), .Dimnames = list(c('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24'), c('(Intercept)', 'block2', 'block3', 'block4', 'block5', 'block6', 'N1', 'P1', 'K1', 'N1:P1', 'N1:K1', 'P1:K1', 'N1:P1:K1')), assign = c(0L, 1L, 1L, 1L, 1L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L), contrasts = structure(list(block = 'contr.treatment', N = 'contr.treatment', P = 'contr.treatment', K = 'contr.treatment'), .Names = c('block', 'N', 'P', 'K'))));class(argv[[1]]);");
     }
 
     @Test
@@ -199,5 +200,32 @@ public class TestBuiltin_class extends TestBase {
         assertEval("{x<-seq(1,10);class(x)}");
 
         assertEval("{  gen<-function(object) 0; setGeneric(\"gen\"); class(gen) }");
+    }
+
+    @Test
+    public void testSetClass() {
+        assertEval("{ x <- c(1,2,3); class(x) <- NULL; attributes(x); x }");
+        assertEval("{ x <- c(1,2,3); class(x) <- 'X'; attributes(x); x }");
+        assertEval("{ x <- c(1,2,3); class(x) <- c('X', 'Y'); attributes(x); x }");
+    }
+
+    /**
+     * Tests setting class attribute on different objects than containers, i.e., environments,
+     * functions, S4 objects, ...
+     */
+    @Test
+    public void testSetClassOnOtherObjects() {
+        assertEval("{ set_class <- function(object, new_class) { class(object) <- new_class; object }; MyClass <- setClass('MyClass', slots=c(data='numeric')); a <- MyClass(); x <- set_class(a, 'X'); class(a); class(x) }");
+        assertEval("{ set_class <- function(object, new_class) { class(object) <- new_class; object }; MyOtherClass <- setClass('MyOtherClass', slots=c(data='numeric')); b <- MyOtherClass(data=42); x <- set_class(b, 'X'); class(b); class(x) }");
+        assertEval("{ f <- function() NULL; class(f) }");
+        assertEval("{ f <- function() NULL; class(f) <- NULL; class(f) }");
+        assertEval("{ f <- function() NULL; class(f) <- 'X'; class(f) }");
+        assertEval("{ f <- function() NULL; class(f) <- c('X', 'Y'); class(f) }");
+        assertEval("{ f <- function() NULL; class(f) <- 42; class(f) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) <- NULL; class(e) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) <- 'X'; class(e) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) <- c('X', 'Y'); class(e) }");
+        assertEval("{ e <- new.env(); e$x <- 1:10; class(e) <- 42; class(e) }");
     }
 }

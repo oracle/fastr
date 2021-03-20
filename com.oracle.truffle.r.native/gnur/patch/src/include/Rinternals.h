@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999--2018  The R Core Team.
+ *  Copyright (C) 1999--2020  The R Core Team.
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This header file is free software; you can redistribute it and/or modify
@@ -184,9 +184,11 @@ typedef enum {
 typedef struct SEXPREC *SEXP;
 
 
-/* Define SWITH_TO_REFCNT to use reference counting instead of the
-   'NAMED' mechanism. */
-//#define SWITCH_TO_REFCNT
+/* Define SWITCH_TO_NAMED to use the 'NAMED' mechanism instead of
+   reference counting. */
+#if ! defined(SWITCH_TO_NAMED) && ! defined(SWITCH_TO_REFCNT)
+# define SWITCH_TO_REFCNT
+#endif
 
 #if defined(SWITCH_TO_REFCNT) && ! defined(COMPUTE_REFCNT_VALUES)
 # define COMPUTE_REFCNT_VALUES
@@ -226,7 +228,7 @@ struct sxpinfo_struct {
     unsigned int gcgen :  1;  /* old generation number */
     unsigned int gccls :  3;  /* node class */
     unsigned int named : NAMED_BITS;
-    unsigned int extra : 32 - NAMED_BITS;
+    unsigned int extra : 32 - NAMED_BITS; /* used for immediate bindings */
 }; /*		    Tot: 64 */
 
 struct vecsxp_struct {
@@ -359,29 +361,83 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 #define ENABLE_REFCNT(x) SET_TRACKREFS(x, TRUE)
 #define DISABLE_REFCNT(x) SET_TRACKREFS(x, FALSE)
 
+/* To make complex assignments a bit safer, in particular with
+   reference counting, a bit is set on the LHS binding cell or symbol
+   at the beginning of the complex assignment process and unset at the
+   end.
+
+   - When the assignment bit is set and a new value is assigned to the
+     binding then the reference count on the old value is not
+     decremented. This prevents moving a single binding from the LHS
+     variable of the assignment to another variable during the
+     assignment process.
+
+  - If a complex assignment tries to update a binding that already has
+    its bit set then, the value of the binding is shallow-duplicated
+    before proceeding. This ensures that the structure involved in the
+    original complex assignment will not be mutated by further R level
+    assignments during the original assignment process.
+
+  For now, no attempt is made to unset the bit if the end of an
+  assignment is not reached because of a jump. This may result in some
+  unnecessary duplications. This could be prevented by maintaining a
+  stack of pending assignments to resent the bits on jump, but that
+  seems like overkill.
+
+  It might also be useful to use this bit to communicate to functions
+  when they are used in a getter/setter context.
+
+  The bit used is bit 11 in the 'gp' field. An alternative would be to
+  take a bit from the 'extra' field.
+
+  LT
+*/
+
+#define ASSIGNMENT_PENDING_MASK (1 << 11)
+#define ASSIGNMENT_PENDING(x) ((x)->sxpinfo.gp & ASSIGNMENT_PENDING_MASK)
+#define SET_ASSIGNMENT_PENDING(x, v) do {			\
+	if (v) (((x)->sxpinfo.gp) |= ASSIGNMENT_PENDING_MASK);	\
+	else (((x)->sxpinfo.gp) &= ~ASSIGNMENT_PENDING_MASK);	\
+    } while (0)
+
+/* The same bit can be used to mark calls used in complex assignments
+   to allow replacement functions to determine when they are being
+   called in an assignment context and can modify an object with one
+   refrence */
+#define MARK_ASSIGNMENT_CALL(call) SET_ASSIGNMENT_PENDING(call, TRUE)
+#define IS_ASSIGNMENT_CALL(call) ASSIGNMENT_PENDING(call)
+
 #ifdef SWITCH_TO_REFCNT
 # undef NAMED
 # undef SET_NAMED
 # define NAMED(x) REFCNT(x)
-# define SET_NAMED(x, v) do {} while (0)
-#endif
-
-#define ENSURE_NAMEDMAX(v) do {			\
+/* no definition for SET_NAMED; any calls will use the one in memory.c */
+# define ENSURE_NAMEDMAX(v) do { } while (0)
+# define ENSURE_NAMED(v) do { } while (0)
+#else
+# define ENSURE_NAMEDMAX(v) do {		\
 	SEXP __enm_v__ = (v);			\
 	if (NAMED(__enm_v__) < NAMEDMAX)	\
 	    SET_NAMED( __enm_v__, NAMEDMAX);	\
     } while (0)
-#define ENSURE_NAMED(v) do { if (NAMED(v) == 0) SET_NAMED(v, 1); } while (0)
-#define SETTER_CLEAR_NAMED(x) do {				\
+# define ENSURE_NAMED(v) do { if (NAMED(v) == 0) SET_NAMED(v, 1); } while (0)
+#endif
+
+#ifdef SWITCH_TO_REFCNT
+# define SETTER_CLEAR_NAMED(x) do { } while (0)
+# define RAISE_NAMED(x, n) do { } while (0)
+#else
+# define SETTER_CLEAR_NAMED(x) do {			\
 	SEXP __x__ = (x);				\
 	if (NAMED(__x__) == 1) SET_NAMED(__x__, 0);	\
     } while (0)
-#define RAISE_NAMED(x, n) do {			\
+# define RAISE_NAMED(x, n) do {			\
 	SEXP __x__ = (x);			\
 	int __n__ = (n);			\
 	if (NAMED(__x__) < __n__)		\
 	    SET_NAMED(__x__, __n__);		\
     } while (0)
+#endif
 
 /* S4 object bit, set by R_do_new_object for all new() calls */
 #define S4_OBJECT_MASK ((unsigned short)(1<<4))
@@ -459,7 +515,8 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
 /* These also work for ... objects */
 #define LISTVAL(x)	((x)->u.listsxp)
 #define TAG(e)		((e)->u.listsxp.tagval)
-#define CAR(e)		((e)->u.listsxp.carval)
+#define CAR0(e)		((e)->u.listsxp.carval)
+#define EXTPTR_PTR(e)	((e)->u.listsxp.carval)
 #define CDR(e)		((e)->u.listsxp.cdrval)
 #define CAAR(e)		CAR(CAR(e))
 #define CDAR(e)		CDR(CAR(e))
@@ -477,6 +534,59 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
   int __other_flags__ = __x__->sxpinfo.gp & ~MISSING_MASK; \
   __x__->sxpinfo.gp = __other_flags__ | __v__; \
 } while (0)
+#define BNDCELL_TAG(e)	((e)->sxpinfo.extra)
+#define SET_BNDCELL_TAG(e, v) ((e)->sxpinfo.extra = (v))
+
+#if ( SIZEOF_SIZE_T < SIZEOF_DOUBLE )
+# define BOXED_BINDING_CELLS 1
+#else
+# define BOXED_BINDING_CELLS 0
+#endif
+#if BOXED_BINDING_CELLS
+/* Use allocated scalars to hold immediate binding values. A little
+   less efficient but does not change memory layout or use. These
+   allocated scalars must not escape their bindings. */
+#define BNDCELL_DVAL(v) SCALAR_DVAL(CAR0(v))
+#define BNDCELL_IVAL(v) SCALAR_IVAL(CAR0(v))
+#define BNDCELL_LVAL(v) SCALAR_LVAL(CAR0(v))
+
+#define SET_BNDCELL_DVAL(cell, dval) SET_SCALAR_DVAL(CAR0(cell), dval)
+#define SET_BNDCELL_IVAL(cell, ival) SET_SCALAR_IVAL(CAR0(cell), ival)
+#define SET_BNDCELL_LVAL(cell, lval) SET_SCALAR_LVAL(CAR0(cell), lval)
+
+#define INIT_BNDCELL(cell, type) do {		\
+	SEXP val = allocVector(type, 1);	\
+	SETCAR(cell, val);			\
+	INCREMENT_NAMED(val);			\
+	SET_BNDCELL_TAG(cell, type);		\
+	SET_MISSING(cell, 0);			\
+    } while (0)
+#else
+/* Use a union in the CAR field to represent an SEXP or an immediate
+   value.  More efficient, but changes the menory layout on 32 bit
+   platforms since the size of the union is larger than the size of a
+   pointer. The layout should not change on 64 bit platforms. */
+typedef union {
+    SEXP sxpval;
+    double dval;
+    int ival;
+} R_bndval_t;
+
+#define BNDCELL_DVAL(v) ((R_bndval_t *) &CAR0(v))->dval
+#define BNDCELL_IVAL(v) ((R_bndval_t *) &CAR0(v))->ival
+#define BNDCELL_LVAL(v) ((R_bndval_t *) &CAR0(v))->ival
+
+#define SET_BNDCELL_DVAL(cell, dval) (BNDCELL_DVAL(cell) = (dval))
+#define SET_BNDCELL_IVAL(cell, ival) (BNDCELL_IVAL(cell) = (ival))
+#define SET_BNDCELL_LVAL(cell, lval) (BNDCELL_LVAL(cell) = (lval))
+
+#define INIT_BNDCELL(cell, type) do {		\
+	if (BNDCELL_TAG(cell) == 0)		\
+	    SETCAR(cell, R_NilValue);		\
+	SET_BNDCELL_TAG(cell, type);		\
+	SET_MISSING(cell, 0);			\
+    } while (0)
+#endif
 
 /* Closure Access Macros */
 #define FORMALS(x)	((x)->u.closxp.formals)
@@ -529,17 +639,22 @@ Rboolean (Rf_isObject)(SEXP s);
     (((x)->sxpinfo.scalar && ATTRIB(x) == R_NilValue) ? TYPEOF(x) : 0)
 
 #define NAMEDMAX 7
-#define INCREMENT_NAMED(x) do {				\
+#ifdef SWITCH_TO_REFCNT
+# define INCREMENT_NAMED(x) do { } while (0)
+# define DECREMENT_NAMED(x) do { } while (0)
+#else
+# define INCREMENT_NAMED(x) do {			\
 	SEXP __x__ = (x);				\
 	if (NAMED(__x__) != NAMEDMAX)			\
 	    SET_NAMED(__x__, NAMED(__x__) + 1);		\
     } while (0)
-#define DECREMENT_NAMED(x) do {				    \
+# define DECREMENT_NAMED(x) do {			    \
 	SEXP __x__ = (x);				    \
 	int __n__ = NAMED(__x__);			    \
 	if (__n__ > 0 && __n__ < NAMEDMAX)		    \
 	    SET_NAMED(__x__, __n__ - 1);		    \
     } while (0)
+#endif
 
 #define INCREMENT_LINKS(x) do {			\
 	SEXP il__x__ = (x);			\
@@ -624,6 +739,11 @@ void (INCREMENT_REFCNT)(SEXP x);
 void (DISABLE_REFCNT)(SEXP x);
 void (ENABLE_REFCNT)(SEXP x);
 void (MARK_NOT_MUTABLE)(SEXP x);
+
+int (ASSIGNMENT_PENDING)(SEXP x);
+void (SET_ASSIGNMENT_PENDING)(SEXP x, int v);
+int (IS_ASSIGNMENT_CALL)(SEXP x);
+void (MARK_ASSIGNMENT_CALL)(SEXP x);
 
 /* S4 object testing */
 int (IS_S4_OBJECT)(SEXP x);
@@ -765,8 +885,19 @@ void R_check_thread(const char *s);
 /* These also work for ... objects */
 #define CONS(a, b)	cons((a), (b))		/* data lists */
 #define LCONS(a, b)	lcons((a), (b))		/* language lists */
+int (BNDCELL_TAG)(SEXP e);
+void (SET_BNDCELL_TAG)(SEXP e, int v);
+double (BNDCELL_DVAL)(SEXP cell);
+int (BNDCELL_IVAL)(SEXP cell);
+int (BNDCELL_LVAL)(SEXP cell);
+void (SET_BNDCELL_DVAL)(SEXP cell, double v);
+void (SET_BNDCELL_IVAL)(SEXP cell, int v);
+void (SET_BNDCELL_LVAL)(SEXP cell, int v);
+void (INIT_BNDCELL)(SEXP cell, int type);
+void SET_BNDCELL(SEXP cell, SEXP val);
+
 SEXP (TAG)(SEXP e);
-SEXP (CAR)(SEXP e);
+SEXP (CAR0)(SEXP e);
 SEXP (CDR)(SEXP e);
 SEXP (CAAR)(SEXP e);
 SEXP (CDAR)(SEXP e);
@@ -785,6 +916,7 @@ SEXP SETCADR(SEXP x, SEXP y);
 SEXP SETCADDR(SEXP x, SEXP y);
 SEXP SETCADDDR(SEXP x, SEXP y);
 SEXP SETCAD4R(SEXP e, SEXP y);
+void *(EXTPTR_PTR)(SEXP);
 
 SEXP CONS_NR(SEXP a, SEXP b);
 
@@ -843,9 +975,9 @@ void (SET_HASHVALUE)(SEXP x, int v);
 
 
 /* External pointer access macros */
-#define EXTPTR_PTR(x)	CAR(x)
 #define EXTPTR_PROT(x)	CDR(x)
 #define EXTPTR_TAG(x)	TAG(x)
+/* EXTPTR_PTR is defined above within USE_RINTERNALS */
 
 /* Bytecode access macros */
 #define BCODE_CODE(x)	CAR(x)
@@ -906,6 +1038,7 @@ LibExtern SEXP	R_DollarSymbol;	    /* "$" */
 LibExtern SEXP	R_DotsSymbol;	    /* "..." */
 LibExtern SEXP	R_DoubleColonSymbol;// "::"
 LibExtern SEXP	R_DropSymbol;	    /* "drop" */
+LibExtern SEXP	R_EvalSymbol;	    /* "eval" */
 LibExtern SEXP	R_LastvalueSymbol;  /* ".Last.value" */
 LibExtern SEXP	R_LevelsSymbol;	    /* "levels" */
 LibExtern SEXP	R_ModeSymbol;	    /* "mode" */
@@ -961,6 +1094,9 @@ Rcomplex Rf_asComplex(SEXP x);
 typedef struct R_allocator R_allocator_t;
 #endif
 
+typedef enum { iSILENT, iWARN, iERROR } warn_type;
+
+
 /* Other Internally Used Functions, excluding those which are inline-able*/
 
 char * Rf_acopy_string(const char *);
@@ -1011,12 +1147,15 @@ void Rf_findFunctionForBody(SEXP);
 SEXP Rf_findVar(SEXP, SEXP);
 SEXP Rf_findVarInFrame(SEXP, SEXP);
 SEXP Rf_findVarInFrame3(SEXP, SEXP, Rboolean);
+void R_removeVarFromFrame(SEXP, SEXP);
 SEXP Rf_getAttrib(SEXP, SEXP);
 SEXP Rf_GetArrayDimnames(SEXP);
 SEXP Rf_GetColNames(SEXP);
 void Rf_GetMatrixDimnames(SEXP, SEXP*, SEXP*, const char**, const char**);
 SEXP Rf_GetOption(SEXP, SEXP); /* pre-2.13.0 compatibility */
 SEXP Rf_GetOption1(SEXP);
+int Rf_FixupDigits(SEXP, warn_type);
+int Rf_FixupWidth (SEXP, warn_type);
 int Rf_GetOptionDigits(void);
 int Rf_GetOptionWidth(void);
 SEXP Rf_GetRowNames(SEXP);
@@ -1024,6 +1163,7 @@ void Rf_gsetVar(SEXP, SEXP, SEXP);
 SEXP Rf_install(const char *);
 SEXP Rf_installChar(SEXP);
 SEXP Rf_installNoTrChar(SEXP);
+SEXP Rf_installTrChar(SEXP);
 SEXP Rf_installDDVAL(int i);
 SEXP Rf_installS3Signature(const char *, const char *);
 Rboolean Rf_isFree(SEXP);
@@ -1099,6 +1239,8 @@ int Rf_isBasicClass(const char *);
 
 Rboolean R_cycle_detected(SEXP s, SEXP child);
 
+/* cetype_t is an identifier reseved by POSIX, but it is
+   well established as public.  Could remap by a #define though */
 typedef enum {
     CE_NATIVE = 0,
     CE_UTF8   = 1,
@@ -1178,6 +1320,8 @@ SEXP R_tryCatch(SEXP (*)(void *), void *,       /* body closure*/
 		void (*)(void *), void *);      /* finally closure */
 SEXP R_tryCatchError(SEXP (*)(void *), void *,        /* body closure*/
 		     SEXP (*)(SEXP, void *), void *); /* handler closure */
+SEXP R_withCallingErrorHandler(SEXP (*)(void *), void *, /* body closure*/
+			       SEXP (*)(SEXP, void *), void *); /* handler closure */
 SEXP R_MakeUnwindCont();
 void NORET R_ContinueUnwind(SEXP cont);
 SEXP R_UnwindProtect(SEXP (*fun)(void *data), void *data,
@@ -1199,6 +1343,7 @@ void R_unLockBinding(SEXP sym, SEXP env);
 void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env);
 Rboolean R_BindingIsLocked(SEXP sym, SEXP env);
 Rboolean R_BindingIsActive(SEXP sym, SEXP env);
+SEXP R_ActiveBindingFunction(SEXP sym, SEXP env);
 Rboolean R_HasFancyBindings(SEXP rho);
 
 
@@ -1420,6 +1565,8 @@ void R_orderVector1(int *indx, int n, SEXP x,       Rboolean nalast, Rboolean de
 #define findVar			Rf_findVar
 #define findVarInFrame		Rf_findVarInFrame
 #define findVarInFrame3		Rf_findVarInFrame3
+#define FixupDigits		Rf_FixupDigits
+#define FixupWidth		Rf_FixupWidth
 #define GetArrayDimnames	Rf_GetArrayDimnames
 #define getAttrib		Rf_getAttrib
 #define getCharCE		Rf_getCharCE
@@ -1433,8 +1580,9 @@ void R_orderVector1(int *indx, int n, SEXP x,       Rboolean nalast, Rboolean de
 #define gsetVar			Rf_gsetVar
 #define inherits		Rf_inherits
 #define install			Rf_install
-#define installChar		Rf_installChar
+#define installChar		Rf_installTrChar
 #define installNoTrChar		Rf_installNoTrChar
+#define installTrChar		Rf_installTrChar
 #define installDDVAL		Rf_installDDVAL
 #define installS3Signature	Rf_installS3Signature
 #define isArray			Rf_isArray
@@ -1535,6 +1683,7 @@ void R_orderVector1(int *indx, int n, SEXP x,       Rboolean nalast, Rboolean de
 #define translateChar		Rf_translateChar
 #define translateChar0		Rf_translateChar0
 #define translateCharUTF8      	Rf_translateCharUTF8
+#define translateCharFP		Rf_translateCharFP
 #define type2char		Rf_type2char
 #define type2rstr		Rf_type2rstr
 #define type2str		Rf_type2str
@@ -1624,6 +1773,7 @@ void R_ProtectWithIndex(SEXP, PROTECT_INDEX *);
 void R_Reprotect(SEXP, PROTECT_INDEX);
 # endif
 SEXP R_FixupRHS(SEXP x, SEXP y);
+SEXP (CAR)(SEXP e);
 void *(DATAPTR)(SEXP x);
 const void *(DATAPTR_RO)(SEXP x);
 const void *(DATAPTR_OR_NULL)(SEXP x);

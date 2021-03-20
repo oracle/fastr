@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -100,6 +100,6 @@ public class TestBuiltin_parse extends TestBase {
                         "tmp$id <- 1:nrow(tmp); " +
                         "rownames(tmp) <- 1:nrow(tmp); tmp }";
         // TODO: remove IgnoreWhitespace (GR-18943)
-        assertEval(Output.IgnoreWhitespace, template(testTemplate, PARSE_DATA_TESTS));
+        assertEval(Ignored.NewRVersionMigration, Output.IgnoreWhitespace, template(testTemplate, PARSE_DATA_TESTS));
     }
 }

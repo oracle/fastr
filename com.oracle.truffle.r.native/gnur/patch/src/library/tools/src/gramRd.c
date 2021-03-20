@@ -67,7 +67,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2018  The R Core Team
+ *  Copyright (C) 1997--2019  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -131,10 +131,16 @@ int imax2(int x, int y)
 }
 // FastR patch end
 
-/* bison creates a non-static symbol yylloc in both gramLatex.o and gramRd.o,
-   so remap */
+/* bison creates a non-static symbol yylloc (and other) in both gramLatex.o
+   and gramRd.o, so remap */   
 
 #define yylloc yyllocR
+#undef yynerrs /* from Defn.h */
+#define yynerrs yynerrsR
+#undef yychar /* from Defn.h */
+#define yychar yycharR
+#undef yylval /* from Defn.h */
+#define yylval yylvalR
 
 #define DEBUGVALS 0		/* 1 causes detailed internal state output to R console */	
 #define DEBUGMODE 0		/* 1 causes Bison output of parse state, to stdout or stderr */
@@ -736,15 +742,15 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   224,   224,   225,   226,   229,   232,   235,   236,   238,
-     239,   240,   241,   242,   243,   244,   245,   246,   247,   248,
-     249,   250,   251,   253,   254,   256,   257,   258,   259,   260,
-     261,   262,   263,   264,   266,   267,   268,   269,   270,   271,
-     272,   273,   274,   275,   276,   277,   278,   279,   280,   281,
-     282,   284,   285,   286,   287,   289,   291,   293,   295,   297,
-     300,   303,   308,   310,   311,   320,   322,   324,   328,   329,
-     331,   333,   337,   338,   340,   343,   345,   347,   349,   351,
-     353,   355,   357,   359,   361,   362,   363,   364,   365,   367
+       0,   230,   230,   231,   232,   235,   238,   241,   242,   244,
+     245,   246,   247,   248,   249,   250,   251,   252,   253,   254,
+     255,   256,   257,   259,   260,   262,   263,   264,   265,   266,
+     267,   268,   269,   270,   272,   273,   274,   275,   276,   277,
+     278,   279,   280,   281,   282,   283,   284,   285,   286,   287,
+     288,   290,   291,   292,   293,   295,   297,   299,   301,   303,
+     306,   309,   314,   316,   317,   326,   328,   330,   334,   335,
+     337,   339,   343,   344,   346,   349,   351,   353,   355,   357,
+     359,   361,   363,   365,   367,   368,   369,   370,   371,   373
 };
 #endif
 
@@ -3818,7 +3824,7 @@ static keywords[] = {
     { "\\preformatted", VERBMACRO },
     
     { "\\samp",    VERBMACRO },
-    { "\\special", VERBMACRO },
+    { "\\special", RCODEMACRO },
     { "\\url",     VERBMACRO },
     { "\\verb",    VERBMACRO },
     
@@ -4159,6 +4165,31 @@ static int mkComment(int c)
     return COMMENT;
 }
 
+#define EAT_DASHES(n_var) do {				\
+	for (c = xxgetc(); c == '-'; c = xxgetc()) {	\
+	    n_var++;					\
+	    TEXT_PUSH(c);				\
+	}						\
+    } while (0)
+
+#define EAT_CHARS_TO_DELIM_OR_EOF(delim) do {	\
+	while (c != delim && c != R_EOF) {	\
+	    TEXT_PUSH(c);			\
+	    c = xxgetc();			\
+	}					\
+    } while (0)
+
+static int closingRawStringDelim(int c)
+{
+    switch(c) {
+    case '(': return ')';
+    case '{': return '}';
+    case '[': return ']';
+    case '|': return '|';
+    default:  return 0;
+    }
+}
+
 static int mkCode(int c)
 {
     char st0[INITBUFSIZE];
@@ -4170,6 +4201,37 @@ static int mkCode(int c)
     if (c == RBRACE && !parseState.xxinRString) parseState.xxbraceDepth++; 
     
     while(1) {
+	/* handle a raw string */
+	if (parseState.xxinRString == 0 && (c == 'r' || c == 'R')) {
+    	    int lookahead = xxgetc();
+	    if (lookahead == '"' || lookahead == '\'') {
+		TEXT_PUSH(c);
+		int quote = lookahead;
+		parseState.xxinRString = quote;
+    	    	parseState.xxQuoteLine = parseState.xxlineno;
+    	    	parseState.xxQuoteCol  = parseState.xxcolno;
+		TEXT_PUSH(quote);
+		int ndash = 0;
+		EAT_DASHES(ndash);
+		int delim = closingRawStringDelim(c);
+		if (delim != 0) {
+		    int done = FALSE;
+		    do {
+			EAT_CHARS_TO_DELIM_OR_EOF(delim);
+			if (c == delim) {
+			    TEXT_PUSH(c);
+			    int nndash = 0;
+			    EAT_DASHES(nndash);
+			    if (nndash == ndash && c == quote)
+				done = TRUE; // close quote is handled below
+			}
+			else done = TRUE; // EOF; move on
+		    } while (! done);
+		}
+	    }
+	    else xxungetc(lookahead);
+	}
+
 	int escaped = 0;
     	if (c == '\\') {
     	    int lookahead = xxgetc();
@@ -4443,6 +4505,7 @@ static void UseState(ParseState *state) {
 static void PushState() {
     if (busy) {
     	ParseState *prev = malloc(sizeof(ParseState));
+	if (prev == NULL) error("unable to allocate in PushState");
     	PutState(prev);
     	parseState.prevState = prev;
     } else 

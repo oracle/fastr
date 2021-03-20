@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,6 @@ public class TestUpdateForm extends TestBase {
 
     @Test
     public void basicTests() {
-        assertEval(template("update.formula(%0, %1)", OLD_FORMULAE, NEW_FORMULAE));
+        assertEval(Ignored.NewRVersionMigration, template("update.formula(%0, %1)", OLD_FORMULAE, NEW_FORMULAE));
     }
 }

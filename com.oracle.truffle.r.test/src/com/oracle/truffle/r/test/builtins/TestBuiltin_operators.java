@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -2073,9 +2073,9 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testListWithNull() {
-        assertEval("{ list(NULL) < 1 }");
-        assertEval("{ list(1, NULL) < c(1, 1) }");
-        assertEval("{ c(1, 1) < list(1, NULL) }");
+        assertEval(Ignored.NewRVersionMigration, "{ list(NULL) < 1 }");
+        assertEval(Ignored.NewRVersionMigration, "{ list(1, NULL) < c(1, 1) }");
+        assertEval(Ignored.NewRVersionMigration, "{ c(1, 1) < list(1, NULL) }");
     }
 
     @Test

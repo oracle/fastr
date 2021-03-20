@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -178,7 +178,7 @@ public class TestBuiltin_classassign extends TestBase {
 
         assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)<-\"array\"; x; class(x)<-\"matrix\"; x;}");
 
-        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)}");
+        assertEval(Ignored.NewRVersionMigration, "{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)}");
 
         assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x);dim(x)<-c(2,2,1);class(x)}");
 

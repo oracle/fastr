@@ -1,7 +1,7 @@
 c-----------------------------------------------------------------------
 c
 c  R : A Computer Language for Statistical Data Analysis
-c  Copyright (C) 2003--2018  The R Foundation
+c  Copyright (C) 2003--2019  The R Foundation
 c  Copyright (C) 1996, 1997  Robert Gentleman and Ross Ihaka
 c
 c  This program is free software; you can redistribute it and/or modify
@@ -39,10 +39,7 @@ c               the number of columns in the matrix x.
 c
 c       q       integer
 c               the number of columns of the (multivariate) y[]
-c
-c       docoef  integer (logical) indicating if  coef(*,*) should be computed
-c               Computation of coef(.) is O(n^2 * k) which may be too much.
-c
+c      
 c       qraux   double precision(k)
 c               auxiliary information about the qr decomposition.
 c
@@ -53,11 +50,6 @@ c   on return
 c
 c       hat     double precision(n)
 c               the diagonal of the hat matrix.
-c
-c       coef    double precision(n, p, q)
-c               an 3d-array which has as i-th row/face the estimated
-c               regression coefficients when the i-th case is omitted
-c               from the regression.
 c
 c       sigma   double precision(n, q)
 c               the (i,j)-th element of sigma contains an estimate
@@ -70,16 +62,16 @@ c   'docoef' option added Feb 17, 2003;  Martin Maechler ETH Zurich.
 c   Handle hat == 1 case, Nov 2005.
 c   Argument 'tol' was real not double precision, Aug 2007
 c   'q' for multivariate (mlm) models added Sep, 2018;  Martin Maechler.
-
-      subroutine lminfl(x, ldx, n, k, q, docoef, qraux, resid,
-     +     hat, coef, sigma, tol)
-      integer ldx, n, k, q, docoef
+c    docoef replaced by R code and removed Nov 2019.
+      
+      subroutine lminfl(x, ldx, n, k, q, qraux, resid,
+     +     hat, sigma, tol)
+      integer ldx, n, k, q
       double precision x(ldx,k), qraux(k), resid(n,q),
-     +     hat(n), coef(n,k,q), sigma(n,q), tol
-c   coef(.,.) can be dummy(1) when docoef is 0(false)
+     +     hat(n), sigma(n,q), tol
 
-      integer c, i, j, info
-      double precision sum, denom, dummy
+      integer i, j, info
+      double precision sum, denom, dummy(1)
 c
 c     hat matrix diagonal h_ii = hat(i)    [sigma(i,1) as auxiliary] :
 c
@@ -101,29 +93,6 @@ c
       do i = 1, n
         if(hat(i) .ge. 1.0d0 - tol) hat(i) = 1.0d0
       end do
-c
-c     changes in the estimated coefficients  coef(i,j,c)  i=1..n, j=1..k, c=1..q
-c
-      if(docoef .ne. 0) then
-         ! use sigma(*,1) as auxiliary
-         do  i = 1,n
-            do c = 1,q
-               do j = 1,n
-                  sigma(j,1) = 0.0d0
-               end do
-c     if hat() is effectively 1, change is zero
-               if(hat(i) .lt. 1.0d0) then
-                  sigma(i,1) = resid(i,c)/(1.0d0 - hat(i))
-                  call dqrsl(x, ldx, n, k, qraux, sigma, dummy, sigma,
-     .                       dummy, dummy, dummy, 1000, info)
-                  call dtrsl(x, ldx, k, sigma, 1, info)
-               endif
-               do j = 1,k
-                  coef(i,j,c) = sigma(j,1)
-               end do
-            end do ! c = 1..q
-         end do ! i = 1,n
-      endif
 c
 c     estimated residual standard deviation  sigma(j,c)
 c

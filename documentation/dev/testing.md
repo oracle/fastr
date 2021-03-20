@@ -51,6 +51,10 @@ Test all gated packages:
 
     mx pkgtest --cache-pkgs dir=/path/to/cache --ignore-blacklist --pkg-filelist com.oracle.truffle.r.test.packages/gated
 
+Build package cache beforehand:
+
+    mx r-pkgcache --vm fastr --cache-dir /path/to/cache --pkg-pattern <pkg-pattern>
+
 Run `testthat` tests manually:
 
     library(testthat); library(mypackage); test_package('mypackage')

@@ -54,6 +54,12 @@ else
 endif
 endif # FASTR_RELEASE
 
+$(info ***** FastR Libraries configuration *****)
+$(info BLAS_SOURCE: $(BLAS_SOURCE))
+$(info LAPACK_SOURCE: $(LAPACK_SOURCE))
+$(info FASTR_CAPTURE_DEPENDENCIES: $(FASTR_CAPTURE_DEPENDENCIES))
+
+
 .PHONY: all
 
 all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) rcopylib.done
