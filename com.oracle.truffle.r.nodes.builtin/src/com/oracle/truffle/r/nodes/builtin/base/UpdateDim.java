@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,19 +32,19 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
-import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
 
 @RBuiltin(name = "dim<-", kind = PRIMITIVE, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateDim extends RBuiltinNode.Arg2 {
@@ -115,6 +115,6 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "!isRAbstractVector(obj)")
     protected RAbstractVector noVector(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") RIntVector dimensions) {
-        throw error(RError.Message.INVALID_FIRST_ARGUMENT);
+        throw error(RError.Message.INVALID_FIRST_ARGUMENT_MUST_BE_VEC);
     }
 }
