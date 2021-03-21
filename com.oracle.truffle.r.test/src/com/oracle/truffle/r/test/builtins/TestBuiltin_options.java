@@ -40,7 +40,9 @@ public class TestBuiltin_options extends TestBase {
 
     @Test
     public void testoptions3() {
-        assertEval(Ignored.NewRVersionMigration, "argv <- list('str'); .Internal(options(argv[[1]]))");
+        // options("str") returns, among other elements, 'formatNum', which is a function that has
+        // an environment, and GNU-R, obviously, outputs different environment than FastR
+        assertEval(Ignored.OutputFormatting, "argv <- list('str'); .Internal(options(argv[[1]]))");
     }
 
     @Test
@@ -95,7 +97,7 @@ public class TestBuiltin_options extends TestBase {
             if ("keep.source".equals(option) || "warn".equals(option)) {
                 assertEval(Ignored.Unknown, "{ options('" + option + "') }");
             } else {
-                assertEval(Ignored.NewRVersionMigration, "{ options('" + option + "') }");
+                assertEval("{ options('" + option + "') }");
             }
         }
     }
