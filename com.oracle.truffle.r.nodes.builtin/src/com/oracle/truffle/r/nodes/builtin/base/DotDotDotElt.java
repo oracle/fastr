@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -38,9 +43,6 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-
 @RBuiltin(name = "...elt", kind = PRIMITIVE, parameterNames = {"n"}, behavior = READS_FRAME)
 public abstract class DotDotDotElt extends RBuiltinNode.Arg1 {
 
@@ -50,7 +52,8 @@ public abstract class DotDotDotElt extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(DotDotDotElt.class);
-        casts.arg("n").asIntegerVector().findFirst();
+        // n parameter must be of size 1, and it must be numeric.
+        casts.arg("n").defaultError(Message.DOT_DOT_INVALID_INDEX).mustNotBeNull().mustBe(numericValue()).asIntegerVector().mustBe(singleElement()).findFirst();
     }
 
     @Specialization(guards = "n > 0")
