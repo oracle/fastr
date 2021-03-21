@@ -80,8 +80,8 @@ public class TestBuiltin_cummax extends TestBase {
         assertEval("{ cummax(c(1+1i,2-3i,4+5i)) }");
         assertEval("{ cummax(c(1+1i, NA, 2+3i)) }");
 
-        assertEval(Ignored.NewRVersionMigration, "values <- c(1,2,NaN,1, NA); cummax(values); cummax(as.integer(values))");
-        assertEval(Ignored.NewRVersionMigration, "values <- c(1,2,NA,1, NaN); cummax(values); cummax(as.integer(values))");
+        assertEval("values <- c(1,2,NaN,1, NA); cummax(values); cummax(as.integer(values))");
+        assertEval("values <- c(1,2,NA,1, NaN); cummax(values); cummax(as.integer(values))");
 
         assertEval("a <- structure(1:3, names=c('a1','a2','a3')); b<-cummax(a); names(b)[1]<-'x'; a; ");
     }

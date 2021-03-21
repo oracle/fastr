@@ -33,10 +33,7 @@ public class TestBuiltin_dotdotdotelt extends TestBase {
     @Test
     public void testdotdotdotelt1() {
         assertEval("tst <- function(n,...) ...elt(n); tst(1, 1, 2, 3)");
-        assertEval(Ignored.NewRVersionMigration, "tst <- function(n,...) ...elt(n); tst(c(3,2,1), 1, 2, 3)");
         assertEval("tst <- function(n,...) ...elt(n); tst(1.6, 1, 2, 3)");
-        // TODO: error with conversion of string to interger
-        assertEval(Ignored.ImplementationError, "tst <- function(n,...) ...elt(n); tst('1.6', 1, 2, 3)");
         assertEval("tst <- function(n,...) ...elt(n); a <- 1; tst(a, 1, 2, 3)");
         assertEval("tst <- function(n,...) ...elt(n); f <- function() {print('hello')}; tst(1, f(), f(), 3)");
         assertEval("tst <- function(n,...) ...elt(n); tst(c(1), c(1,2,3))");
@@ -47,14 +44,18 @@ public class TestBuiltin_dotdotdotelt extends TestBase {
 
     @Test
     public void testdotdotdoteltError() {
+        // Parameter n must be of length 1 and only integer or real type
+        assertEval("tst <- function(n,...) ...elt(n); tst(c(3,2,1), 1, 2, 3)");
         assertEval("tst <- function(n,...) ...elt(n); tst(-1, 1)");
         assertEval("tst <- function(n,...) ...elt(n); tst(1)");
         assertEval("tst <- function(n,...) ...elt(n); tst(0, 1)");
         assertEval("tst <- function(n,...) ...elt(n); tst(5, 1, 2, 3)");
+        assertEval("tst <- function(n,...) ...elt(n); tst('1', 1, 2, 3)");
+        assertEval("tst <- function(n,...) ...elt(n); tst(1+1i, 1, 2, 3)");
+        assertEval("tst <- function(n,...) ...elt(n); tst(list(1), 1, 2, 3)");
         // TODO: different error reporting for primitives
         assertEval(Output.IgnoreErrorMessage, "tst <- function(n,...) ...elt(); tst(c(1), c(1,2,3))");
-        // TODO: error with conversion of string to interger
-        assertEval(Ignored.ReferenceError, "tst <- function(n,...) ...elt(n); tst(' ', 1, 2)");
+        assertEval("tst <- function(n,...) ...elt(n); tst(' ', 1, 2)");
         assertEval("tst <- function(n,...) ...elt(n); tst(NA, 1, 2, 3)");
     }
 

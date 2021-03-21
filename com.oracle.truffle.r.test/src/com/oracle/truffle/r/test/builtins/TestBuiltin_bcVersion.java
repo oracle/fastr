@@ -29,6 +29,6 @@ public class TestBuiltin_bcVersion extends TestBase {
 
     @Test
     public void testbcVersion1() {
-        assertEval(Ignored.NewRVersionMigration, ".Internal(bcVersion())");
+        assertEval(".Internal(bcVersion())");
     }
 }

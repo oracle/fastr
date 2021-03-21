@@ -169,6 +169,16 @@ public class TestS3Dispatch extends TestRBase {
         assertEval("{ fun <- function(x) UseMethod('fun'); fun.NULL <- function(x) 'integer'; fun(); }");
     }
 
+    /**
+     * From GNU-R version 4.0.0, matrices also have array class. This means that S3 methods for
+     * class "array" are now dispatched for matrix objects.
+     */
+    @Test
+    public void testDispatchOnMatrix() {
+        assertEval("{ glob_flag <- FALSE; my_generic <- function(x) UseMethod('my_generic', x); my_generic.array <- function(x) glob_flag <<- TRUE; m <- matrix(1:9, ncol=3); my_generic(x); glob_flag }");
+        assertEval("{ glob_flag <- FALSE; my_generic <- function(x) UseMethod('my_generic', x); my_generic.array <- function(x) glob_flag <<- TRUE; m <- 1:9; dim(m) <- c(3,3); my_generic(x); glob_flag }");
+    }
+
     @Override
     public String getTestDir() {
         return "S3";

@@ -67,7 +67,7 @@ public class TestBuiltin_rowMeans extends TestBase {
         assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
 
         // Whichever value(NA or NaN) is first in the row will be returned for that row.
-        assertEval(Ignored.NewRVersionMigration, "{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
+        assertEval("{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
 
         assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
         assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");

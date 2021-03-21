@@ -112,8 +112,7 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval(Ignored.ImplementationError, "{ as.complex(\"+.1e+2-3i\") }");
 
         assertEval("{ as.complex(list(42)) }");
-        // TODO: Wrong IgnoreErrorContext
-        assertEval(Ignored.NewRVersionMigration, Output.IgnoreErrorContext, "{ as.complex(list(NULL)) }");
+        assertEval(Output.IgnoreErrorContext, "{ as.complex(list(NULL)) }");
         assertEval(Output.IgnoreWarningContext, "{ as.complex(list(\"foo\")) }");
         assertEval("{ as.complex.cls <- function(x) 42; as.complex(structure(c(1,2), class='cls')); }");
 
