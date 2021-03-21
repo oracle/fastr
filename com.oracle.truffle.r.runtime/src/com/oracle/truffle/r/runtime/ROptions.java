@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.AdditionalOptions;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +30,6 @@ import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.launcher.RStartParams;
-import static com.oracle.truffle.r.runtime.context.FastROptions.AdditionalOptions;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
@@ -37,9 +38,9 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -192,7 +193,7 @@ public class ROptions {
         putOption(map, "keep.parse.data", RDataFactory.createSharedLogicalVectorFromScalar(true));
         putOption(map, "keep.parse.data.pkgs", RDataFactory.createSharedLogicalVectorFromScalar(false));
         putOption(map, "matprod", RDataFactory.createSharedStringVectorFromScalar("default"));
-        putOption(map, "PCRE_study", RDataFactory.createSharedIntVectorFromScalar(10));
+        putOption(map, "PCRE_study", RDataFactory.createSharedLogicalVectorFromScalar(false));
         putOption(map, "PCRE_use_JIT", RDataFactory.createSharedLogicalVectorFromScalar(true));
         putOption(map, "PCRE_limit_recursion", RDataFactory.createSharedLogicalVectorFromScalar(RRuntime.LOGICAL_NA));
         putOption(map, "rl_word_breaks", RDataFactory.createSharedStringVectorFromScalar(" \t\n\"\\'`><=%;,|&{()}"));

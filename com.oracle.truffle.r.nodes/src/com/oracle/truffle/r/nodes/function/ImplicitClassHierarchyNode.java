@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
-import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -39,11 +36,14 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 
 public abstract class ImplicitClassHierarchyNode extends UnaryNode {
 
     private static final RStringVector implicitArrayClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector("array"));
-    private static final RStringVector implicitMatrixClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector("matrix"));
+    private static final RStringVector implicitMatrixClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector(new String[]{"matrix", "array"}, true));
     private static final RStringVector dispatchDoubleImplicitClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector(new String[]{"double", "numeric"}, RDataFactory.COMPLETE_VECTOR));
     private static final RStringVector dispatchIntegerImplicitClass = ShareObjectNode.sharePermanent(RDataFactory.createStringVector(new String[]{"integer", "numeric"}, RDataFactory.COMPLETE_VECTOR));
     @CompilationFinal(dimensions = 1) private static final RStringVector[] implicitClasses = new RStringVector[RType.values().length];
