@@ -1,12 +1,35 @@
 # 21.1.0
 
+* Upgraded FastR to R 4.0.3
+  * Made FastR runtime mostly compatible with R 4.0.3
+  * Migrated to new versions of the base and recommended packages
+  * Implemented some of the new features of R 4.0.3
+    * All matrices have implicitly also the `array` class
+    * Implemented `str2expression`, `str2lang` builtins
+    * Pairlists cannot be coerced to language and vice versa
+    * Deprecated `--slave` command line option, replaced by `--no-echo`
+    * Added `recycle0` parameter to `paste` and `paste0`
+    * Add expand parameter to `unlink`
+    * `...elt` does no longer accept character vector as parameter
+  * See [GNU-R 4.0.3 changelog](https://cran.r-project.org/doc/manuals/r-release/NEWS.pdf) for other changes in the base packages
+
+* Upgraded the CRAN snapshot, used by default by `install.packages`, to 2021-02-01
+  * Support of the new versions of most popular packages on FastR is work in progress
+  * Packages with known issues: dplyr 1.0.3, ggplot 3.3.3, knitr 1.31
+
 Bug fixes:
 
 * `switch` builtin handles arguments properly (#171)
+* `Rf_installTrChar` was giving wrong result
+* S3 dispatch in `cbind` and `rbind`
+* `.cache_class` with `NULL` parameter
+* copy on write of S4 objects when passed into `class<-` function
 
 Added missing R builtins and C APIs:
 
 * `Rf_allocSExp` supports `CLOSXP`
+* `R_Serialize` and `R_removeVarFromFrame`
+
 
 # 21.0.0
 
