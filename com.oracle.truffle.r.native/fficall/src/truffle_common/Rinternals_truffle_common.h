@@ -667,6 +667,14 @@ SEXP Rf_installChar(SEXP charsxp) {
     return result;
 }
 
+SEXP Rf_installTrChar(SEXP x) {
+    // For now we just call installChar
+    TRACE0();
+    SEXP result = ((call_Rf_installChar) callbacks[Rf_installChar_x])(x);
+    checkExitCall();
+    return result;
+}
+
 Rboolean Rf_isNull(SEXP s) {
     TRACE0();
     Rboolean result = (Rboolean) ((call_Rf_isNull) callbacks[Rf_isNull_x])(s);
