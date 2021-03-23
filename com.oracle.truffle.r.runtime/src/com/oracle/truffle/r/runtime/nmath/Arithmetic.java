@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,21 +31,26 @@ public final class Arithmetic {
         // private
     }
 
-    /* Keep these two in step */
-    /*
-     * GnuR fix me: consider using tmp = (LDOUBLE)x1 - floor(q) * (LDOUBLE)x2;
-     */
+    private static final double q_1_eps = 1 / RRuntime.EPSILON;
+
+    /* Keep myfmod() and myfloor() in step */
     public static double myfmod(double x1, double x2) {
         if (x2 == 0.0) {
             return Double.NaN;
         }
+        if (Math.abs(x2) > q_1_eps && Double.isFinite(x1) && Math.abs(x1) <= Math.abs(x2)) {
+            return (Math.abs(x1) == Math.abs(x2)) ? 0
+                            : ((x1 < 0 && x2 > 0) ||
+                                            (x2 < 0 && x1 > 0))
+                                                            ? x1 + x2  // differing signs
+                                                            : x1;      // "same" signs (incl. 0)
+        }
         double q = x1 / x2;
-        double tmp = x1 - Math.floor(q) * x2;
-        if (Double.isFinite(q) && (Math.abs(q) > 1 / RRuntime.EPSILON)) {
+        if (Double.isFinite(q) && (Math.abs(q) > q_1_eps)) {
             RError.warning(RError.SHOW_CALLER, Message.GENERIC, "probable complete loss of accuracy in modulus");
         }
-        q = Math.floor(tmp / x2);
-        return tmp - q * x2;
+        double tmp = x1 - Math.floor(q) * x2;
+        return (tmp - Math.floor(tmp / x2) * x2);
     }
 
     // R_pow

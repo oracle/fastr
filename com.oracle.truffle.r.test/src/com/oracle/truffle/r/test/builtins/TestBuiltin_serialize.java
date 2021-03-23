@@ -93,9 +93,8 @@ public class TestBuiltin_serialize extends TestBase {
         assertEval(template("options(keep.source=FALSE); serialize(quote(if (a * 2 < 199) b + foo(x,y,foo=z+1,bar=)), connection=NULL, version=%0)", VERSIONS));
         assertEval(template("options(keep.source=FALSE); serialize(quote(\"bar\"), connection=NULL, version=%0)", VERSIONS));
         assertEval(template("options(keep.source=FALSE); serialize(quote('baz'), connection=NULL, version=%0)", VERSIONS));
-        assertEval(Ignored.NewRVersionMigration,
-                        template("setClass('foo', slots = c(x='numeric', y='numeric')); t1 <- new('foo', x=4, y=c(77,88)); options(keep.source=FALSE); serialize(t1, connection=NULL, version=%0)",
-                                        VERSIONS));
+        assertEval(template("setClass('foo', slots = c(x='numeric', y='numeric')); t1 <- new('foo', x=4, y=c(77,88)); options(keep.source=FALSE); serialize(t1, connection=NULL, version=%0)",
+                        VERSIONS));
         assertEval(template("options(keep.source=FALSE); serialize(quote(a(b(c(d(function (e, ...) { f(g)$h.i}))))), connection=NULL, version=%0)", VERSIONS));
         assertEval(template("options(keep.source=FALSE); serialize(quote(f(g)$h.i), connection=NULL, version=%0)", VERSIONS));
         assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); serialize(val, connection=NULL, version=%0)", VERSIONS));
@@ -128,8 +127,7 @@ public class TestBuiltin_serialize extends TestBase {
                         "options(keep.source=FALSE); val <- new.env(hash=FALSE); makeActiveBinding('a', function(x) print('hello'), val); data <- serialize(val, connection=NULL, version=%0); newenv <- unserialize(rawConnection(data)); newenv$a",
                         VERSIONS));
 
-        assertEval(Ignored.NewRVersionMigration, template(
-                        "options(keep.source=FALSE); mc <- setClass('FooSerial0', representation(a = 'call')); obj <- new('FooSerial0'); serialize(obj, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); mc <- setClass('FooSerial0', representation(a = 'call')); obj <- new('FooSerial0'); serialize(obj, connection=NULL, version=%0)", VERSIONS));
         assertEval(Ignored.ImplementationError, template("options(keep.source=FALSE); fc <- setClass('FooSerial1', representation(a = 'call')); serialize(fc, connection=NULL, version=%0)", VERSIONS));
 
         assertEval(template(

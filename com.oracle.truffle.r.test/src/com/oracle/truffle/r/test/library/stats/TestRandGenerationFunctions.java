@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.test.library.stats;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -39,9 +43,21 @@ public class TestRandGenerationFunctions extends TestBase {
                     "24, c(0.0653, 0.000123, 32e-80, 8833, 79e70), c(0.0653, 0.000123, 32e-80, 8833, 79e70, 0, -1)"
     };
 
+    private static String[] filterOutFailingTests(String[] allTests, String[] failingTests) {
+        Set<String> allTestsSet = new HashSet<>(Arrays.asList(allTests));
+        Set<String> failingTestsSet = new HashSet<>(Arrays.asList(failingTests));
+        allTestsSet.removeAll(failingTestsSet);
+        return allTestsSet.toArray(new String[]{});
+    }
+
     @Test
     public void testFunctions2() {
-        assertEval(Ignored.NewRVersionMigration, Output.IgnoreWhitespace, template("set.seed(1); %0(%1)", FUNCTION2_NAMES, FUNCTION2_PARAMS));
+        // Failing test is "rnbinom(24, c(...), c(...))"
+        String[] failingTest = template("set.seed(1); %0(%1)", new String[]{FUNCTION2_NAMES[FUNCTION2_NAMES.length - 1]}, new String[]{FUNCTION2_PARAMS[FUNCTION2_PARAMS.length - 1]});
+        String[] allTests = template("set.seed(1); %0(%1)", FUNCTION2_NAMES, FUNCTION2_PARAMS);
+        String[] successfullTests = filterOutFailingTests(allTests, failingTest);
+        assertEval(Ignored.NewRVersionMigration, failingTest);
+        assertEval(Output.IgnoreWhitespace, successfullTests);
     }
 
     @Test
@@ -63,8 +79,11 @@ public class TestRandGenerationFunctions extends TestBase {
 
     @Test
     public void testFunctions1() {
-        assertEval(Ignored.NewRVersionMigration, Output.IgnoreWhitespace,
-                        template("set.seed(2); %0(13, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.5, 0.0653, 0.000123, 32e-80, 8833, 79e70))", FUNCTION1_NAMES));
+        String[] allTests = template("set.seed(2); %0(13, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.5, 0.0653, 0.000123, 32e-80, 8833, 79e70))", FUNCTION1_NAMES);
+        String[] failingTests = template("set.seed(2); %0(13, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.5, 0.0653, 0.000123, 32e-80, 8833, 79e70))", new String[]{"rgeom", "rpois"});
+        String[] successfullTests = filterOutFailingTests(allTests, failingTests);
+        assertEval(Ignored.NewRVersionMigration, failingTests);
+        assertEval(Output.IgnoreWhitespace, successfullTests);
         // Note: signrank has loop with 'n' iterations: we have to leave out the large numbers
         assertEval(Output.IgnoreWhitespace, "set.seed(10); rsignrank(12, c(NA, NaN, 1/0, -1/0, -1, 1, 0.3, -0.6, 0.0653, 0.000123, 32e-80, 10))");
     }

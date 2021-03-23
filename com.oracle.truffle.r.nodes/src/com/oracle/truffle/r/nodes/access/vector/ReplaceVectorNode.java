@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -175,14 +175,8 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         RType type;
         switch (mode) {
             case FIELD_SUBSCRIPT:
-                type = RType.List;
-                break;
             case SUBSCRIPT:
-                if (value instanceof RAbstractAtomicVector && ((RAbstractAtomicVector) value).getLength() == 1) {
-                    type = ((RAbstractAtomicVector) value).getRType();
-                } else {
-                    type = RType.List;
-                }
+                type = RType.List;
                 break;
             case SUBSET:
                 if (value instanceof RAbstractAtomicVector) {

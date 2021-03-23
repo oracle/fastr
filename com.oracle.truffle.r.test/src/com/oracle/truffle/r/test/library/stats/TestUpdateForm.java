@@ -38,6 +38,6 @@ public class TestUpdateForm extends TestBase {
 
     @Test
     public void basicTests() {
-        assertEval(Ignored.NewRVersionMigration, template("update.formula(%0, %1)", OLD_FORMULAE, NEW_FORMULAE));
+        assertEval(template("update.formula(%0, %1)", OLD_FORMULAE, NEW_FORMULAE));
     }
 }

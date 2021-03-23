@@ -178,7 +178,7 @@ public class TestBuiltin_classassign extends TestBase {
 
         assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)<-\"array\"; x; class(x)<-\"matrix\"; x;}");
 
-        assertEval(Ignored.NewRVersionMigration, "{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)}");
+        assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x)}");
 
         assertEval("{x<-c(1,2,3,4); dim(x)<-c(2,2); class(x);dim(x)<-c(2,2,1);class(x)}");
 

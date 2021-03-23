@@ -2073,9 +2073,9 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testListWithNull() {
-        assertEval(Ignored.NewRVersionMigration, "{ list(NULL) < 1 }");
-        assertEval(Ignored.NewRVersionMigration, "{ list(1, NULL) < c(1, 1) }");
-        assertEval(Ignored.NewRVersionMigration, "{ c(1, 1) < list(1, NULL) }");
+        assertEval("{ list(NULL) < 1 }");
+        assertEval("{ list(1, NULL) < c(1, 1) }");
+        assertEval("{ c(1, 1) < list(1, NULL) }");
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -184,7 +184,7 @@ final class ParseDataBuilder {
 
     void lookupCall(SourceSection source, String symbol) {
         if (symbol.equals("=")) {
-            expr(source, "equal_assign");
+            expr(source, "expr_or_assign_or_help");
         } else {
             expr(source);
         }
