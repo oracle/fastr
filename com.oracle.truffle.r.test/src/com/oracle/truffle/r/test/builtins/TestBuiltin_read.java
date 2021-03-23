@@ -33,9 +33,28 @@ import com.oracle.truffle.r.test.TestBase;
  */
 public class TestBuiltin_read extends TestBase {
 
+    private static final String DCF_CONTENT =
+            "Authors@R: c(\n" +
+            "  person('John', 'Doe'))\n" +
+            "Collate: 'assertions.R' 'built.R'\n" +
+            // Whitespaces are at the beginning of the line and at the end of the line on purpose
+            "    'collate.R' 'constants.R  '\n";
+
+    private static final String[] KEEP_WHITE = new String[]{"'Authors@R'", "'Collate'", "NULL", "c('Authors@R', 'Collate')"};
+
     @Test
     public void testReadDCF() {
         assertEval("{ f <- tempfile(); write('hi', file=f); read.dcf(f); unlink(f); }");
+    }
+
+    /**
+     * We have to keep white spaces correctly in .Internal(readDCF) because desc package expects that.
+     */
+    @Test
+    public void testReadDCFKeepWhiteSpaces() {
+        assertEval(template("{ f <- tempfile(); write(\"%0\", file=f); print(read.dcf(f)); unlink(f); }", new String[]{DCF_CONTENT}));
+        assertEval(template("{ f <- tempfile(); write(\"%0\", file=f); print(read.dcf(f, keep.white=%1, all=FALSE)); unlink(f); }", new String[]{DCF_CONTENT}, KEEP_WHITE));
+        assertEval(template("{ f <- tempfile(); write(\"%0\", file=f); print(read.dcf(f, keep.white=%1, all=TRUE)); unlink(f); }", new String[]{DCF_CONTENT}, KEEP_WHITE));
     }
 
 }
