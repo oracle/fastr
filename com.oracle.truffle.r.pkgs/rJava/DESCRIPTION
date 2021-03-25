@@ -1,5 +1,5 @@
 Package: rJava
-Version: 1.0
+Version: 1.0.1
 Title: FastR rJava compatibility layer
 Author: Tomas Stupka, Simon Urbanek <simon.urbanek@r-project.org>
 Maintainer: Tomas Stupka <tomas.stupka@oracle.com>
