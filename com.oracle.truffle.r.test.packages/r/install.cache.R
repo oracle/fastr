@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -739,6 +739,11 @@ pkg.cache.full.install <- function(install.candidate.names, contriburl, lib.inst
     }
 }
 
+# We explicitly forbid some packages to be cached
+should.cache.package <- function(pkgname) {
+    pkgname != "rJava"
+}
+
 # Fetches the package from the cache or installs it. This is also done for all transitive dependencies.
 pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.install) {
     tryCatch({
@@ -753,7 +758,7 @@ pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.i
         transitive.pkg.list <- rbind(transitive.dependencies(pkg.cache.env, pkgname, lib=lib.install, pl=pkg.list), pkg)
         log.message("transitive deps: ", as.character(transitive.pkg.list$Package), level=1)
 
-        if (pkg.cache.is.enabled(pkg.cache.env)) {
+        if (pkg.cache.is.enabled(pkg.cache.env) && should.cache.package(pkgname)) {
             # apply pkg cache to fetch cached packages first
             cached.pkgs <- apply(transitive.pkg.list, 1, function(pkg) pkg.cache.get(pkg.cache.env, pkg, lib.install))
             log.message("Number of uncached packages:", nrow(transitive.pkg.list[!cached.pkgs, ]), level=1)
