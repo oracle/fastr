@@ -70,7 +70,7 @@ CXX17STD = -std=gnu++17
 CXX_VISIBILITY = 
 DYLIB_EXT = .dylib
 DYLIB_LD = $(CC)
-DYLIB_LDFLAGS = "-Wl,-headerpad_max_install_names,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
+DYLIB_LDFLAGS = "-Wl,-headerpad_max_install_names,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
 DYLIB_LINK = $(DYLIB_LD) $(DYLIB_LDFLAGS) $(LDFLAGS)
 ECHO = echo
 ECHO_C = \c
@@ -110,7 +110,7 @@ JAR = $(JAVA_HOME)/bin/jar
 ## JAVA_HOME might be used in the next three.
 ## They are for packages 'JavaGD' and 'rJava'
 LAPACK_LIBS = -L"$(R_HOME)/lib$(R_ARCH)" -lRlapack
-LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c $(PKG_LDFLAGS_OVERRIDE)
+LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -lf2c $(PKG_LDFLAGS_OVERRIDE)
 ## we only need this is if it is external, as otherwise link to R
 LIBM = -lm
 LIBR0 = -lR 
@@ -122,7 +122,7 @@ LIBTOOL = $(SHELL) "$(R_HOME)/bin/libtool"
 LTO = 
 ## needed to build applications linking to static libR
 MAIN_LD = $(CC)
-MAIN_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c
+MAIN_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -lf2c
 MAIN_LINK = $(MAIN_LD) $(MAIN_LDFLAGS) $(LDFLAGS)
 MKINSTALLDIRS = $(R_HOME)/bin/mkinstalldirs
 OBJC = $(CC)
@@ -137,19 +137,19 @@ SHELL = /bin/sh
 SHLIB_CFLAGS = 
 SHLIB_CXXFLAGS = 
 SHLIB_CXXLD = $(CXX)
-SHLIB_CXXLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXXLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_CXX98LD = $(CXX98) $(CXX98STD)
-SHLIB_CXX98LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX98LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_CXX11LD = $(CXX11) $(CXX11STD)
-SHLIB_CXX11LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX11LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_CXX14LD = $(CXX14) $(CXX14STD)
-SHLIB_CXX14LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX14LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_CXX17LD = $(CXX17) $(CXX17STD)
-SHLIB_CXX17LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX17LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_EXT = .so
 SHLIB_FFLAGS = 
 SHLIB_LD = $(CC)
-SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
+SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
 SHLIB_LIBADD = 
 ## We want to ensure libR is picked up from $(R_HOME)/lib
 ## before e.g. /usr/local/lib if a version is already installed.
@@ -170,7 +170,7 @@ F77 = $(FC)
 FCPICFLAGS = -fPIC
 F77_VISIBILITY = 
 SHLIB_FCLD = $(FC)
-SHLIB_FCLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_FCLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_OPENMP_FCFLAGS = 
 
 
