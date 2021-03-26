@@ -126,6 +126,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(testMissingArgWithATTRIB, 0),
         CALLDEF(testPRIMFUN, 2),
         CALLDEF(serialize, 1),
+        CALLDEF(testInstallTrChar, 2),
         #include "init_api.h"
         {NULL, NULL, 0}
 };

@@ -156,7 +156,7 @@ public class TestBuiltin_unserialize extends TestBase {
         assertEval(template("options(keep.source=FALSE); unserialize(serialize(quote(if (a * 2 < 199) b + foo(x,y,foo=z+1,bar=)), connection=NULL, version=%0))", VERSIONS));
         assertEval(template("options(keep.source=FALSE); unserialize(serialize(quote(\"bar\"), connection=NULL, version=%0))", VERSIONS));
         assertEval(template("options(keep.source=FALSE); unserialize(serialize(quote('baz'), connection=NULL, version=%0))", VERSIONS));
-        assertEval(Ignored.NewRVersionMigration, template(
+        assertEval(template(
                         "setClass('foo', slots = c(x='numeric', y='numeric')); t1 <- new('foo', x=4, y=c(77,88)); options(keep.source=FALSE); unserialize(serialize(t1, connection=NULL, version=%0))",
                         VERSIONS));
         assertEval(Output.IgnoreWhitespace, template("options(keep.source=FALSE); unserialize(serialize(quote(a(b(c(d(function (e, ...) { f(g)$h.i}))))), connection=NULL, version=%0))", VERSIONS));

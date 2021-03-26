@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -37,12 +36,13 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ImportStatic(DSLConfig.class)
@@ -137,6 +137,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
     }
 
     private int doIntegerSlowPath(PositionProfile profile, int dimSize, int value) {
+        assert value <= 0;
         positionNACheck.enable(value);
         if (positionNACheck.check(value)) {
             handleNA(dimSize);
@@ -151,20 +152,10 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
                 }
             }
             error.enter();
-            int selected = 0;
-            if (value > 0) {
-                selected = 1;
-            } else if (value < 0) {
-                if (-value <= dimSize) {
-                    selected = dimSize - 1;
-                } else {
-                    selected = dimSize;
-                }
-            }
-            if (selected <= 1) {
-                throw error(RError.Message.SELECT_LESS_1);
+            if (value == 0) {
+                throw error(Message.SELECT_LESS_1);
             } else {
-                throw error(RError.Message.SELECT_MORE_1);
+                throw error(Message.INVALID_NEGATIVE_SUBSCRIPT);
             }
         }
     }

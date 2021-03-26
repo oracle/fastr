@@ -179,7 +179,12 @@ public class TestConnections extends TestRBase {
     public void testFileOpenRaw() {
         Assert.assertTrue("Could not create required temp file for test.", Files.exists(tempFileGzip));
         assertEval("{ zz <- file(\"" + tempFileGzip + "\", \"r\", raw=T); res <- readBin(zz, raw(), 4); close(zz); res }");
-        assertEval(Ignored.NewRVersionMigration, "{ zz <- rawConnection(as.raw(c(65, 66, 67, 0, 97, 98, 99))); readChar(zz, 6) }");
+        assertEval("{ zz <- rawConnection(as.raw(c(65, 0))); readChar(zz, 1) }");
+        // FIXME: We should produce warning messages in the following tests (GR-30275)
+        assertEval(Output.IgnoreWarningMessage, "{ zz <- rawConnection(as.raw(c(65, 0, 65))); readChar(zz, 3) }");
+        assertEval(Output.IgnoreWarningMessage, "{ zz <- rawConnection(as.raw(c(65, 0))); readChar(zz, 2) }");
+        assertEval(Output.IgnoreWarningMessage, "{ zz <- rawConnection(as.raw(c(65, 0))); readChar(zz, 3) }");
+        assertEval(Output.IgnoreWarningMessage, "{ zz <- rawConnection(as.raw(c(65, 66, 67, 0, 97, 98, 99))); readChar(zz, 6) }");
     }
 
     @Test

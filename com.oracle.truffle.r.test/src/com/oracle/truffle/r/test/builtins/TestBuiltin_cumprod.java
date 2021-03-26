@@ -79,7 +79,7 @@ public class TestBuiltin_cumprod extends TestBase {
 
     @Test
     public void testCumProd() {
-        assertEval(Ignored.NewRVersionMigration, "values <- c(1,2,NaN,1, NA); cumprod(values); cumprod(as.integer(values))");
+        assertEval("values <- c(1,2,NaN,1, NA); cumprod(values); cumprod(as.integer(values))");
         assertEval("values <- c(1,2,NA,1, NaN); cumprod(values); cumprod(as.integer(values))");
 
         assertEval("a <- structure(c(1,2,3), names=c('a1','a2','a3')); b<-cumprod(a); names(b)[1]<-'x'; a; ");

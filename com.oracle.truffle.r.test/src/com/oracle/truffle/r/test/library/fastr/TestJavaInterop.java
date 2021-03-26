@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
+import static com.oracle.truffle.r.test.library.fastr.Utils.errorIn;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -35,8 +36,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyArray;
+import org.graalvm.polyglot.proxy.ProxyObject;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
@@ -45,11 +50,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import static com.oracle.truffle.r.test.library.fastr.Utils.errorIn;
-import org.graalvm.polyglot.Value;
-import org.graalvm.polyglot.proxy.ProxyArray;
-import org.graalvm.polyglot.proxy.ProxyObject;
-import org.junit.Ignore;
 
 public class TestJavaInterop extends TestBase {
 
@@ -994,7 +994,7 @@ public class TestJavaInterop extends TestBase {
         String expected = "matrix(" + resultVector + ", nrow=2, ncol=3, byrow=T)";
 
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", expected);
-        expected = "'matrix'";
+        expected = "c('matrix', 'array')";
         assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", expected);
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)", "c(" + result[0] + ", " + result[1] + ")");
     }
