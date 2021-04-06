@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.remote.RemoteDevice;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -48,21 +46,16 @@ public final class WindowDevice {
     }
 
     public static GridDevice createWindowDevice(RContext ctx, boolean byGridServer, int width, int height) {
-        if (FastRConfig.UseRemoteGridAwtDevice) {
-            noSchedulingSupportWarning();
-            return RemoteDevice.createWindowDevice(ctx, width, height);
+        JFrameDevice frameDevice = new JFrameDevice(width, height);
+        if (!byGridServer && ctx != null && ctx.hasExecutor()) {
+            frameDevice.setResizeListener(() -> redrawAll(ctx));
+            frameDevice.setCloseListener(() -> devOff(ctx));
         } else {
-            JFrameDevice frameDevice = new JFrameDevice(width, height);
-            if (!byGridServer && ctx != null && ctx.hasExecutor() && !FastRConfig.UseRemoteGridAwtDevice) {
-                frameDevice.setResizeListener(() -> redrawAll(ctx));
-                frameDevice.setCloseListener(() -> devOff(ctx));
-            } else {
-                if (!byGridServer) {
-                    noSchedulingSupportWarning();
-                }
+            if (!byGridServer) {
+                noSchedulingSupportWarning();
             }
-            return frameDevice;
         }
+        return frameDevice;
     }
 
     public static RError awtNotSupported() {

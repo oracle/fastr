@@ -324,20 +324,6 @@ suite = {
       "spotbugsIgnoresGenerated" : True,
     },
 
-    "com.oracle.truffle.r.library.fastrGrid.server" : {
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "com.oracle.truffle.r.library",
-      ],
-      "annotationProcessors" : [
-      ],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
-      "workingSets" : "FastR",
-      "jacoco" : "include",
-
-    },
-
     "org.rosuda.javaGD" : {
       "sourceDirs" : ["src"],
       "dependencies" : [],
@@ -424,27 +410,6 @@ suite = {
       ],
       # TODO: is this intentional that we embed things from LAUNCHER_COMMON?
       "overlaps": ["sdk:LAUNCHER_COMMON"],
-    },
-
-    "GRID_DEVICE_REMOTE_SERVER" : {
-      "description" : "remote server for grid device",
-      "dependencies" : [
-        "com.oracle.truffle.r.library.fastrGrid.server",
-      ],
-      "mainClass" : "com.oracle.truffle.r.library.fastrGrid.server.RemoteDeviceServer",
-      "exclude" : [
-        "sdk:JLINE3",
-        "truffle:ANTLR4",
-        "GNUR",
-        "XZ-1.8",
-      ],
-      "distDependencies" : [
-        "truffle:TRUFFLE_API",
-        "truffle:TRUFFLE_NFI",
-        "truffle:TRUFFLE_NFI_NATIVE",
-        "sulong:SULONG_API",
-        "fastr:FASTR",
-      ],
     },
 
     "FASTR_UNIT_TESTS" : {

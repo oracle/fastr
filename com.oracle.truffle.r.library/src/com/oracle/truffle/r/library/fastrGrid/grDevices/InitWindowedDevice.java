@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.WindowDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
+import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.Graphics2DDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.FastRConfig;
@@ -75,9 +76,6 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         // check if we got custom Graphics2D object as 3rd parameter
         boolean isFastRDevice = args.getArgument(0).equals(".FASTR.AWT");
         if (isFastRDevice && args.getLength() > 3) {
-            if (FastRConfig.UseRemoteGridAwtDevice) {
-                throw error(Message.GENERIC, "Using custom Graphics2D object is not supported on the remote grid device.");
-            }
             Object arg3 = args.getArgument(3);
             boolean isForeignTruffleObj = RRuntime.isForeignObject(arg3);
             TruffleLanguage.Env env = RContext.getInstance().getEnv();
@@ -107,7 +105,7 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         String formatName = name.substring(0, name.indexOf("::"));
         String filename = name.substring(name.lastIndexOf(':') + 1);
         try {
-            GridDevice device = GridContext.openLocalOrRemoteDevice(RContext.getInstance(), FileDevUtils.formatInitialFilename(filename), formatName, width, height);
+            BufferedImageDevice device = BufferedImageDevice.open(FileDevUtils.formatInitialFilename(filename), formatName, width, height);
             GridContext.getContext().setCurrentDevice(formatName.toUpperCase(), device, filename);
         } catch (NotSupportedImageFormatException e) {
             throw error(Message.GENERIC, String.format("Format '%s' is not supported.", formatName));
