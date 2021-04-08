@@ -110,7 +110,7 @@ JAR = $(JAVA_HOME)/bin/jar
 ## JAVA_HOME might be used in the next three.
 ## They are for packages 'JavaGD' and 'rJava'
 LAPACK_LIBS = -L"$(R_HOME)/lib$(R_ARCH)" -lRlapack
-LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c $(PKG_LDFLAGS_OVERRIDE)
+LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -dynamiclib -lf2c $(PKG_LDFLAGS_OVERRIDE)
 ## we only need this is if it is external, as otherwise link to R
 LIBM = -lm
 LIBR0 = -lR 
