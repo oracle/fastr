@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,6 @@ public final class FastRConfig {
      * Whether the internal grid emulation should use AWT backed graphical devices.
      */
     public static final boolean AwtSupport;
-
-    public static final boolean UseRemoteGridAwtDevice;
 
     /**
      * Umbrella option, which changes default values of other options in a way that FastR will not
@@ -65,17 +63,11 @@ public final class FastRConfig {
             UseNativeEventLoop = getBooleanOrTrue("fastr.internal.usenativeeventloop");
         }
         AwtSupport = getBooleanOrTrue("fastr.awt.support");
-        UseRemoteGridAwtDevice = getBooleanOrFalse("fastr.use.remote.grid.awt.device");
         DefaultDownloadMethod = System.getProperty("fastr.internal.defaultdownloadmethod");
     }
 
     private FastRConfig() {
         // only static fields
-    }
-
-    private static boolean getBooleanOrFalse(String propName) {
-        String val = System.getProperty(propName);
-        return val != null && val.equals("true");
     }
 
     private static boolean getBooleanOrTrue(String propName) {
