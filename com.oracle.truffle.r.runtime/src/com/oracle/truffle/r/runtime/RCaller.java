@@ -94,6 +94,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * will be additional frame when iterating frames with Truffle, but that frame will hold the
  * 'internal frame' inside its arguments array.
  *
+ * For debugging purposes, there is {@code com.oracle.truffle.r.nodes.builtin.fastr.FastRRCallerTrace}
+ * builtin that prints RCaller hierarchy from the current Truffle execution frame.
+ *
  * See {@code FrameFunctions}.
  *
  * @see RArguments
