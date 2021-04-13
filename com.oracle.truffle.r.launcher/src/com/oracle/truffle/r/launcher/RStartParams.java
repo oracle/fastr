@@ -48,7 +48,7 @@ import java.util.List;
 public class RStartParams {
 
     private boolean quiet;
-    private boolean slave;
+    private boolean noEcho;
 
     /**
      * The setting of this value in GNU R is unusual and not simply based on the value of the
@@ -86,7 +86,7 @@ public class RStartParams {
         this.noRenviron = embedded || options.getBoolean(NO_ENVIRON) || options.getBoolean(VANILLA);
         this.restoreAction = options.getBoolean(RESTORE) && !(options.getBoolean(NO_RESTORE) || options.getBoolean(NO_RESTORE_DATA) || options.getBoolean(VANILLA));
         this.noReadline = options.getBoolean(NO_READLINE);
-        this.slave = options.getBoolean(NO_ECHO);
+        this.noEcho = options.getBoolean(NO_ECHO);
 
         /*
          * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
@@ -114,7 +114,7 @@ public class RStartParams {
             this.save = false;
         } else {
             this.interactive = options.getBoolean(INTERACTIVE);
-            if (slave || options.getBoolean(NO_SAVE) || options.getBoolean(VANILLA)) {
+            if (noEcho || options.getBoolean(NO_SAVE) || options.getBoolean(VANILLA)) {
                 this.askForSave = false;
                 this.save = false;
             } else if (options.getBoolean(SAVE)) {
@@ -132,10 +132,10 @@ public class RStartParams {
     /**
      * Used for R embedding, allows to alter some of the values.
      */
-    public void setParams(boolean quietA, boolean slaveA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
+    public void setParams(boolean quietA, boolean noEchoA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
                     boolean loadInitFileA, boolean debugInitFileA, @SuppressWarnings("unused") int restoreActionA, @SuppressWarnings("unused") int saveActionA, boolean noRenvironA) {
         quiet = quietA;
-        slave = slaveA;
+        noEcho = noEchoA;
         interactive = interactiveA;
         verbose = verboseA;
         loadSiteFile = loadSiteFileA;
@@ -149,8 +149,8 @@ public class RStartParams {
         return this.quiet;
     }
 
-    public boolean isSlave() {
-        return slave;
+    public boolean noEcho() {
+        return noEcho;
     }
 
     public boolean isInteractive() {

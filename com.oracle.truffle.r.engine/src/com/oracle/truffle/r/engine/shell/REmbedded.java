@@ -103,11 +103,11 @@ public class REmbedded {
      * has been fully initialized yet.
      */
     @SuppressWarnings("unused")
-    private static void setParams(boolean quietA, boolean slaveA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
+    private static void setParams(boolean quietA, boolean noEchoA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
                     boolean loadInitFileA, boolean debugInitFileA, int restoreActionA, int saveActionA, boolean noRenvironA) {
         context.enter();
         RStartParams params = RContext.getInstance().getStartParams();
-        params.setParams(quietA, slaveA, interactiveA, verboseA, loadSiteFileA, loadInitFileA, debugInitFileA, restoreActionA, saveActionA, noRenvironA);
+        params.setParams(quietA, noEchoA, interactiveA, verboseA, loadSiteFileA, loadInitFileA, debugInitFileA, restoreActionA, saveActionA, noRenvironA);
         context.leave();
     }
 

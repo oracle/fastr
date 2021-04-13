@@ -184,7 +184,7 @@ public class ROptions {
         putOption(map, "continue", RDataFactory.createSharedStringVectorFromScalar("+ "));
         putOption(map, "deparse.cutoff", RDataFactory.createSharedIntVectorFromScalar(60));
         putOption(map, "digits", RDataFactory.createSharedIntVectorFromScalar(7));
-        putOption(map, "echo", RDataFactory.createSharedLogicalVectorFromScalar(!startParams.isSlave()));
+        putOption(map, "echo", RDataFactory.createSharedLogicalVectorFromScalar(!startParams.noEcho()));
         putOption(map, "encoding", RDataFactory.createSharedStringVectorFromScalar("native.enc"));
         putOption(map, "expressions", RDataFactory.createSharedIntVectorFromScalar(5000));
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);
