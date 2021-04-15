@@ -121,7 +121,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /**
  * Represents and executes the syntax node for a function call.
  *
- * See {@code documentation/dev/arcane.md} for the documentation of the {@link RCallNode} AST.
+ * See {@code documentation/dev/functions.md} for the documentation of the {@link RCallNode} AST.
  */
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = RNode.class)

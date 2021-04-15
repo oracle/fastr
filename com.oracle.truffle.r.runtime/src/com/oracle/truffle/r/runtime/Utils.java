@@ -40,6 +40,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import org.graalvm.collections.EconomicMap;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -78,8 +80,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-
-import org.graalvm.collections.EconomicMap;
 
 public final class Utils {
 
@@ -485,7 +485,7 @@ public final class Utils {
      *
      * @param fa kind of access required to the frame
      * @param target identifies which frame is required
-     * @return {@link Frame} instance or {@code null} if {@code depth} is out of range
+     * @return {@link Frame} instance or {@code null} if {@code target} is not found
      */
     @TruffleBoundary
     public static Frame getStackFrame(FrameAccess fa, RCaller target) {

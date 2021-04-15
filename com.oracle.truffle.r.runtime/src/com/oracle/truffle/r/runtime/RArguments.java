@@ -85,7 +85,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  * The INDEX_CALLER_FRAME slot is used for either a {@link CallerFrameClosure} or the materialized
  * caller frame itself. Passing the materialized caller frame via arguments allows us to walk
  * the call stack without calling {@link com.oracle.truffle.api.TruffleRuntime#iterateFrames( FrameInstanceVisitor)},
- * which would case deopts.
+ * which would cause deopts.
  *
  * The INDEX_CALL slot contains the {@link RCaller caller} of the current frame. It corresponds to the caller frame
  * stored in INDEX_CALLER_FRAME.
