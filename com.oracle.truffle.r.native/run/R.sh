@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -46,4 +46,4 @@ else
     mx=`which mx`
 fi
 
-exec $mx --no-warning --primary-suite-path $PRIMARY_PATH $MX_R_GLOBAL_ARGS R $FASTR_INTERNAL_ARGS $MX_R_CMD_ARGS "$@"
+exec $mx -J-Dpolyglot.engine.WarnInterpreterOnly=false --no-warning --primary-suite-path $PRIMARY_PATH $MX_R_GLOBAL_ARGS R $FASTR_INTERNAL_ARGS $MX_R_CMD_ARGS "$@"
