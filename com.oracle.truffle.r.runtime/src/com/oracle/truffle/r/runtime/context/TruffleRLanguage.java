@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.runtime.context;
 
 import java.util.HashMap;
+
+import org.graalvm.options.OptionDescriptors;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -56,9 +58,8 @@ import com.oracle.truffle.r.runtime.instrument.RSyntaxTags;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import org.graalvm.options.OptionDescriptors;
 
-@TruffleLanguage.Registration(name = "R", id = "R", version = "3.6.1", mimeType = {RRuntime.R_APP_MIME,
+@TruffleLanguage.Registration(name = "R", id = "R", version = "4.0.3", mimeType = {RRuntime.R_APP_MIME,
                 RRuntime.R_TEXT_MIME}, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootBodyTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
