@@ -30,12 +30,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 /**
@@ -49,6 +51,8 @@ public abstract class FastRRCallerTrace extends RBuiltinNode.Arg0 {
         return FastRRCallerTraceNodeGen.create();
     }
 
+    @Child InteropLibrary interopLibrary = InteropLibrary.getUncached();
+
     @Specialization
     protected RNull printRCallerTrace(VirtualFrame frame) {
         assert RArguments.isRFrame(frame);
@@ -59,7 +63,7 @@ public abstract class FastRRCallerTrace extends RBuiltinNode.Arg0 {
     }
 
     @TruffleBoundary
-    private static String rcallerToNestedString(RCaller caller, int indentDepth) {
+    private String rcallerToNestedString(RCaller caller, int indentDepth) {
         StringBuilder sb = new StringBuilder();
         sb.append(createIndentString(indentDepth));
         sb.append(String.format("RCaller (@%s):\n", Integer.toHexString(caller.hashCode())));
@@ -71,6 +75,18 @@ public abstract class FastRRCallerTrace extends RBuiltinNode.Arg0 {
         sb.append("isPromise = ").append(caller.isPromise()).append("\n");
         sb.append(createIndentString(indentDepth));
         sb.append("isValidCaller = ").append(caller.isValidCaller()).append("\n");
+
+        sb.append(createIndentString(indentDepth));
+        sb.append("promise = ");
+        RPromise promise = caller.getPromise();
+        if (promise == null) {
+            sb.append("null");
+        } else {
+            Object displayStringObject = interopLibrary.toDisplayString(promise, false);
+            assert displayStringObject instanceof String;
+            sb.append((String) displayStringObject);
+        }
+        sb.append("\n");
 
         sb.append(createIndentString(indentDepth));
         sb.append("payload = ");
