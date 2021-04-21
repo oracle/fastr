@@ -109,9 +109,9 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         RCaller currentCaller = RArguments.getCall(frame);
         if (env == REnvironment.globalEnv(rCtx)) {
             globalEnvProfile.enter();
-            return RCaller.createForPromise(originalCaller, currentCaller);
+            return RCaller.createForPromise(originalCaller, currentCaller, null);
         }
-        return RCaller.createForPromise(originalCaller, env, currentCaller);
+        return RCaller.createForPromise(originalCaller, env, currentCaller, null);
     }
 
     @Specialization

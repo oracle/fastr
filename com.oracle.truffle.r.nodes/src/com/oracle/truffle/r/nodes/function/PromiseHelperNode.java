@@ -226,7 +226,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
             // TODO: no wrapping of arguments here?, why we do not have to set visibility here?
             promise.setUnderEvaluation();
             boolean inOrigin = inOriginProfile.profile(isInOriginFrame(frame, promise));
-            Frame execFrame = inOrigin ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()), getCallerFrameObject(frame));
+            Frame execFrame = inOrigin ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()), promise, getCallerFrameObject(frame));
             Object value = promiseClosureCache.execute(execFrame, promise.getClosure());
             if (visibleExec && !inOrigin && frame != null) {
                 if (setVisibility == null) {
@@ -357,7 +357,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                 evalFrame = frame.materialize();
                 res = promise.getClosure().eval(evalFrame);
             } else {
-                evalFrame = wrapPromiseFrame(frame, promise.getFrame(), frame != null ? frame.materialize() : null);
+                evalFrame = wrapPromiseFrame(frame, promise.getFrame(), promise, frame != null ? frame.materialize() : null);
                 res = promise.getClosure().eval(evalFrame);
             }
 
@@ -376,9 +376,10 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         }
     }
 
-    private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, MaterializedFrame promiseFrame, Object callerFrameObject) {
+    private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, MaterializedFrame promiseFrame, RPromise promise, Object callerFrameObject) {
+        assert promise != null;
         assert promiseFrame != null;
-        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), callerFrameObject, RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame)));
+        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), callerFrameObject, RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame), promise));
     }
 
     private static Object generateValueFromEagerPromiseSlowPath(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec) {

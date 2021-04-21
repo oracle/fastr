@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
@@ -156,20 +157,31 @@ public final class RCaller {
     private final Object payload;
 
     /**
+     * When constructing an RCaller for a promise, we may add a reference to the promise itself.
+     * This helps with the performance of {@code sys.frame} and {@code parent.frame} - if this
+     * field is not null, we get the materialized frame straight from the {@link RPromise} rather
+     * than iterating all the truffle frames.
+     *
+     * Note that this field may be null even if {@link #isPromise()} returns true.
+     */
+    private final RPromise promise;
+
+    /**
      * This flag instructs {@code PromiseHelperNode} to evaluate eager promises only. Otherwise, it
      * throws {@code CannotOptimizePromise}. Also see {@code OptForcedEagerPromiseNode}.
      */
     private boolean evaluateOnlyEagerPromises;
 
     private RCaller(Frame callingFrame, Object payload) {
-        this(depthFromFrame(callingFrame), parentFromFrame(callingFrame), payload);
+        this(depthFromFrame(callingFrame), parentFromFrame(callingFrame), payload, null);
     }
 
-    private RCaller(int depth, RCaller previous, Object payload) {
+    private RCaller(int depth, RCaller previous, Object payload, RPromise promise) {
         assert payload == null || payload instanceof Supplier<?> || payload instanceof RCaller || payload instanceof LogicalParent || payload instanceof RSyntaxNode : payload;
         this.depth = depth;
         this.previous = previous;
         this.payload = payload;
+        this.promise = promise;
         this.evaluateOnlyEagerPromises = previous != null ? previous.evaluateOnlyEagerPromises : false;
     }
 
@@ -187,6 +199,10 @@ public final class RCaller {
 
     public RCaller getPrevious() {
         return previous;
+    }
+
+    public RPromise getPromise() {
+        return promise;
     }
 
     public RCaller getLogicalParent() {
@@ -398,7 +414,7 @@ public final class RCaller {
     }
 
     public static RCaller createInvalid(Frame callingFrame, RCaller previous) {
-        return new RCaller(depthFromFrame(callingFrame), previous, null);
+        return new RCaller(depthFromFrame(callingFrame), previous, null, null);
     }
 
     public static RCaller create(Frame callingFrame, RSyntaxElement node) {
@@ -408,7 +424,7 @@ public final class RCaller {
 
     public static RCaller create(Frame callingFrame, RCaller previous, RSyntaxElement node) {
         assert node != null;
-        return new RCaller(depthFromFrame(callingFrame), previous, node);
+        return new RCaller(depthFromFrame(callingFrame), previous, node, null);
     }
 
     public static RCaller create(Frame callingFrame, Supplier<RSyntaxElement> supplier) {
@@ -418,12 +434,12 @@ public final class RCaller {
 
     public static RCaller create(int depth, RCaller previous, Object payload) {
         assert payload != null;
-        return new RCaller(depth, previous, payload);
+        return new RCaller(depth, previous, payload, null);
     }
 
     public static RCaller create(Frame callingFrame, RCaller previous, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
-        return new RCaller(depthFromFrame(callingFrame), previous, supplier);
+        return new RCaller(depthFromFrame(callingFrame), previous, supplier, null);
     }
 
     /**
@@ -436,9 +452,9 @@ public final class RCaller {
      * @param currentCaller the current {@link RCaller} instance where the promise is actually being
      *            evaluated, will be used as the pointer to the previous {@link RCaller}.
      */
-    public static RCaller createForPromise(RCaller originalCaller, RCaller currentCaller) {
+    public static RCaller createForPromise(RCaller originalCaller, RCaller currentCaller, RPromise promise) {
         int newDepth = currentCaller == null ? 0 : currentCaller.getDepth();
-        return new RCaller(newDepth, currentCaller, originalCaller);
+        return new RCaller(newDepth, currentCaller, originalCaller, promise);
     }
 
     /**
@@ -455,9 +471,9 @@ public final class RCaller {
      * @param currentCaller the current {@link RCaller} instance where the promise is actually being
      *            evaluated, will be used as the pointer to the previous {@link RCaller}.
      */
-    public static RCaller createForPromise(RCaller originalCaller, REnvironment sysParent, RCaller currentCaller) {
+    public static RCaller createForPromise(RCaller originalCaller, REnvironment sysParent, RCaller currentCaller, RPromise promise) {
         int newDepth = currentCaller == null ? 0 : currentCaller.getDepth();
-        return new RCaller(newDepth, currentCaller, new PromiseLogicalParent(sysParent, originalCaller));
+        return new RCaller(newDepth, currentCaller, new PromiseLogicalParent(sysParent, originalCaller), promise);
     }
 
     /**
@@ -470,7 +486,7 @@ public final class RCaller {
      * @param currentCaller The current {@link RCaller}.
      */
     public static RCaller createForGenericFunctionCall(RCaller dispatchingCaller, Object call, RCaller currentCaller) {
-        return new RCaller(currentCaller.getDepth() + 1, currentCaller, new NonPromiseLogicalParent(dispatchingCaller, call));
+        return new RCaller(currentCaller.getDepth() + 1, currentCaller, new NonPromiseLogicalParent(dispatchingCaller, call), null);
     }
 
     public boolean getVisibility() {
@@ -483,7 +499,7 @@ public final class RCaller {
 
     public RCaller withLogicalParent(RCaller logicalParent) {
         assert !isPromise();
-        return new RCaller(this.depth, this.previous, new NonPromiseLogicalParent(logicalParent, this.payload));
+        return new RCaller(this.depth, this.previous, new NonPromiseLogicalParent(logicalParent, this.payload), null);
     }
 
     public boolean evaluateOnlyEagerPromises() {

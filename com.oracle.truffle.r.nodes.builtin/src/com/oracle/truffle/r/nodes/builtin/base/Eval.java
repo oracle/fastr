@@ -428,10 +428,10 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         private static RCaller createCaller(CallInfo callInfo, RCaller evalCaller, MaterializedFrame evalFrame, RPairList expr) {
             RCaller promiseCaller;
-            if (callInfo.env == REnvironment.globalEnv(RContext.getInstance())) {
-                promiseCaller = RCaller.createForPromise(evalCaller, evalCaller);
+            if (callInfo.env == REnvironment.globalEnv()) {
+                promiseCaller = RCaller.createForPromise(evalCaller, evalCaller, null);
             } else {
-                promiseCaller = RCaller.createForPromise(evalCaller, callInfo.env, evalCaller);
+                promiseCaller = RCaller.createForPromise(evalCaller, callInfo.env, evalCaller, null);
             }
 
             return RCallerHelper.getExplicitCaller(evalFrame, expr, promiseCaller);

@@ -203,9 +203,9 @@ public final class RCallerHelper {
         // see InlineCacheNode.
         RCaller promiseCaller;
         if (env == REnvironment.globalEnv(ctx)) {
-            promiseCaller = RCaller.createForPromise(originalPromiseCaller, currentCall);
+            promiseCaller = RCaller.createForPromise(originalPromiseCaller, currentCall, null);
         } else {
-            promiseCaller = RCaller.createForPromise(originalPromiseCaller, env, currentCall);
+            promiseCaller = RCaller.createForPromise(originalPromiseCaller, env, currentCall, null);
         }
         return promiseCaller;
     }
