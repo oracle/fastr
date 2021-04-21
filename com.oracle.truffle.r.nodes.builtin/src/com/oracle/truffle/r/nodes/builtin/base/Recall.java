@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,7 +105,7 @@ public abstract class Recall extends RBuiltinNode.Arg1 {
         }
 
         private VirtualEvalFrame createVirtualEvalFrame(VirtualFrame frame, RFunction function, Object orginalFrame) {
-            RCaller clonedCaller = RCaller.createForPromise(RArguments.getCall((Frame) orginalFrame), RArguments.getCall(frame));
+            RCaller clonedCaller = RCaller.createForPromise(RArguments.getCall((Frame) orginalFrame), RArguments.getCall(frame), null);
             return VirtualEvalFrame.create((MaterializedFrame) orginalFrame, function, getCallerFrameObject(frame), clonedCaller);
         }
     }

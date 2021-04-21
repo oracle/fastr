@@ -76,10 +76,10 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -1002,13 +1002,42 @@ public class FrameFunctions {
             if (sysParent != null) {
                 return sysParent;
             }
-            call = RCaller.unwrapPromiseCaller(call, unwrapResultCallerProfile);
-            if (useGetCallerFrameNode.profile(iterState.originalDepth == call.getDepth() + 1)) {
+            RCaller parentCall = RCaller.unwrapPromiseCaller(call, unwrapResultCallerProfile);
+            if (useGetCallerFrameNode.profile(iterState.originalDepth == parentCall.getDepth() + 1)) {
                 // If the parent frame is the caller frame, we can use more efficient code:
                 return REnvironment.frameToEnvironment(getCallerFrameNode().execute(frame));
             }
-            return REnvironment.frameToEnvironment((MaterializedFrame) getFrameHelper().getNumberedFrame(frame, call.getDepth(), true));
+            MaterializedFrame parentFrame;
+            if (call.isPromise() && call.getPromise() != null) {
+                RCaller lastPromiseCaller = getLastPromiseCaller(call);
+                parentFrame = lastPromiseCaller.getPromise().getFrame();
+            } else {
+                parentFrame = (MaterializedFrame) getFrameHelper().getNumberedFrame(frame, parentCall.getDepth(), true);
+            }
+            // This may happen if the parentCall is not in any materialized truffle frame.
+            if (parentFrame == null) {
+                String errorMessage = "Trying to fetch a frame via parent.frame that is not on the stack.\n" +
+                                "Note that this is discouraged. See 'Note' section in ?parent.frame";
+                throw RError.error(RError.NO_CALLER, Message.GENERIC, errorMessage);
+            }
+            return REnvironment.frameToEnvironment(parentFrame);
+        }
 
+        /**
+         * Traverses over payload of promises until it reaches the last promise caller and returns
+         * it.
+         */
+        private static RCaller getLastPromiseCaller(RCaller currentPromiseCaller) {
+            assert currentPromiseCaller.isPromise();
+            RCaller caller = currentPromiseCaller;
+            RCaller previousCaller = caller;
+            while (caller.isValidCaller() && caller.isPromise()) {
+                previousCaller = caller;
+                caller = caller.getLogicalParent();
+            }
+            assert previousCaller.isPromise();
+            assert previousCaller.isValidCaller();
+            return previousCaller;
         }
 
         @SuppressWarnings("static-method")

@@ -369,18 +369,11 @@ foo <- function() do.call(nargs, list(), envir = parent.frame(1))
 bar <- function(barvar, x, y, z) foo()
 assert(bar(1, 2), 2L)
 
-# -----------------
-# how are default args evaluated in the case of do.call:
-
-foo <- function() do.call(nargs, list(), envir = parent.frame(1))
-bar <- function(barvar, x, y, z) foo()
-assert(bar(1, 2), 2L)
-
 # ===============================================
 # promises
 
 # -----------------
-# sys.frame and promise: as if the promise was evaluated in "bar"
+# sys.frame and promise: as if the promise was evaluated in "boo"
 
 foo <- function(foovar) foovar
 bar <- function(barvar) foo(barvar)
@@ -413,7 +406,7 @@ x <- fst(42)
 assertFrames(x, "fst", "boo")
 
 # -----------------
-# parent.frame and promise: as if the promise was evaluated in "bar"
+# parent.frame and promise: as if the promise was evaluated in "boo"
 
 foo <- function(foovar) foovar
 bar <- function(barvar) foo(barvar)

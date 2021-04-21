@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
@@ -39,10 +40,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * Represents the caller of a function and other information related an R stack frame evaluation
  * context. It is created by the caller of the function and passed in the arguments array.
  * {@link RCaller} instances for all R stack frames form a linked list.
- *
+ * <p>
  * A value of this type never appears in a Truffle execution. The closest concept in GNU-R is
  * RCNTXT, see {@code main/context.c}.
- *
+ * <p>
  * On the high level {@link RCaller} instance holds:
  * <ul>
  * <li>link to the {@link RCaller} associated with the previous R stack frame.</li>
@@ -77,6 +78,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *   global          (depth = 0, parent = null, payload = null)
  * </pre>
  *
+ * For convenience, there is a diagram representing the aforementioned stack frames here:
+ * <p>
+ * <img src="doc_files/promise_fun_rcaller_hierarchy.svg">
+ * <p>
  * Where the 'internal frame' wraps the frame of bar so that the promise code can access all the
  * local variables of bar, but the {@link RCaller} can be different: the depth that would normally
  * be 1 is 2, and parent and payload are different (see docs of {@link #isPromise()}). The purpose
@@ -84,7 +89,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * promise is logically evaluated, should the promise call some stack introspection built-in, e.g.
  * {@code parent.frame()}. The reason why depths is 2 is that any consecutive function call uses
  * current depth + 1 as the new depth and we need the new depth to be 3.
- *
+ * <p>
  * Note that the 'internal frame' may not be on the real execution stack (i.e. not iterable by
  * Truffle). The {@code InlineCacheNode} directly injects the AST of the promise into the calling
  * function AST (foo in this case), but passes the 'internal frame' to the execute method instead of
@@ -93,6 +98,21 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * {@link com.oracle.truffle.api.CallTarget} and calls it with 'internal frame', in which case there
  * will be additional frame when iterating frames with Truffle, but that frame will hold the
  * 'internal frame' inside its arguments array.
+ * <p>
+ * For debugging purposes, there is
+ * {@code com.oracle.truffle.r.nodes.builtin.fastr.FastRRCallerTrace} builtin that prints RCaller
+ * hierarchy from the current Truffle execution frame.
+ * <p>
+ * To fully understand {@code RCaller}, we provide the following diagrams drawn according to the
+ * output of {@code .fastr.rcallertrace()}:
+ * <p>
+ * <img src="doc_files/nested_promises_rcaller_hierarchy.svg">
+ * <p>
+ * Depicting a stack frame with nested promises. Source code taken from {@code stack-intro-tests.R}.
+ * <p>
+ * <img src="doc_files/parent_frame_not_on_stack_rcaller_hierarchy.svg">
+ * <p>
+ * Depicting a parent.frame that is not on the stack frame any more.
  *
  * See {@code FrameFunctions}.
  *
@@ -153,20 +173,31 @@ public final class RCaller {
     private final Object payload;
 
     /**
+     * When constructing an RCaller for a promise, we may add a reference to the promise itself.
+     * This helps with the performance of {@code sys.frame} and {@code parent.frame} - if this field
+     * is not null, we get the materialized frame straight from the {@link RPromise} rather than
+     * iterating all the truffle frames.
+     *
+     * Note that this field may be null even if {@link #isPromise()} returns true.
+     */
+    private final RPromise promise;
+
+    /**
      * This flag instructs {@code PromiseHelperNode} to evaluate eager promises only. Otherwise, it
      * throws {@code CannotOptimizePromise}. Also see {@code OptForcedEagerPromiseNode}.
      */
     private boolean evaluateOnlyEagerPromises;
 
     private RCaller(Frame callingFrame, Object payload) {
-        this(depthFromFrame(callingFrame), parentFromFrame(callingFrame), payload);
+        this(depthFromFrame(callingFrame), parentFromFrame(callingFrame), payload, null);
     }
 
-    private RCaller(int depth, RCaller previous, Object payload) {
+    private RCaller(int depth, RCaller previous, Object payload, RPromise promise) {
         assert payload == null || payload instanceof Supplier<?> || payload instanceof RCaller || payload instanceof LogicalParent || payload instanceof RSyntaxNode : payload;
         this.depth = depth;
         this.previous = previous;
         this.payload = payload;
+        this.promise = promise;
         this.evaluateOnlyEagerPromises = previous != null ? previous.evaluateOnlyEagerPromises : false;
     }
 
@@ -184,6 +215,10 @@ public final class RCaller {
 
     public RCaller getPrevious() {
         return previous;
+    }
+
+    public RPromise getPromise() {
+        return promise;
     }
 
     public RCaller getLogicalParent() {
@@ -395,7 +430,7 @@ public final class RCaller {
     }
 
     public static RCaller createInvalid(Frame callingFrame, RCaller previous) {
-        return new RCaller(depthFromFrame(callingFrame), previous, null);
+        return new RCaller(depthFromFrame(callingFrame), previous, null, null);
     }
 
     public static RCaller create(Frame callingFrame, RSyntaxElement node) {
@@ -405,7 +440,7 @@ public final class RCaller {
 
     public static RCaller create(Frame callingFrame, RCaller previous, RSyntaxElement node) {
         assert node != null;
-        return new RCaller(depthFromFrame(callingFrame), previous, node);
+        return new RCaller(depthFromFrame(callingFrame), previous, node, null);
     }
 
     public static RCaller create(Frame callingFrame, Supplier<RSyntaxElement> supplier) {
@@ -415,12 +450,12 @@ public final class RCaller {
 
     public static RCaller create(int depth, RCaller previous, Object payload) {
         assert payload != null;
-        return new RCaller(depth, previous, payload);
+        return new RCaller(depth, previous, payload, null);
     }
 
     public static RCaller create(Frame callingFrame, RCaller previous, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
-        return new RCaller(depthFromFrame(callingFrame), previous, supplier);
+        return new RCaller(depthFromFrame(callingFrame), previous, supplier, null);
     }
 
     /**
@@ -433,9 +468,9 @@ public final class RCaller {
      * @param currentCaller the current {@link RCaller} instance where the promise is actually being
      *            evaluated, will be used as the pointer to the previous {@link RCaller}.
      */
-    public static RCaller createForPromise(RCaller originalCaller, RCaller currentCaller) {
+    public static RCaller createForPromise(RCaller originalCaller, RCaller currentCaller, RPromise promise) {
         int newDepth = currentCaller == null ? 0 : currentCaller.getDepth();
-        return new RCaller(newDepth, currentCaller, originalCaller);
+        return new RCaller(newDepth, currentCaller, originalCaller, promise);
     }
 
     /**
@@ -452,9 +487,9 @@ public final class RCaller {
      * @param currentCaller the current {@link RCaller} instance where the promise is actually being
      *            evaluated, will be used as the pointer to the previous {@link RCaller}.
      */
-    public static RCaller createForPromise(RCaller originalCaller, REnvironment sysParent, RCaller currentCaller) {
+    public static RCaller createForPromise(RCaller originalCaller, REnvironment sysParent, RCaller currentCaller, RPromise promise) {
         int newDepth = currentCaller == null ? 0 : currentCaller.getDepth();
-        return new RCaller(newDepth, currentCaller, new PromiseLogicalParent(sysParent, originalCaller));
+        return new RCaller(newDepth, currentCaller, new PromiseLogicalParent(sysParent, originalCaller), promise);
     }
 
     /**
@@ -467,7 +502,7 @@ public final class RCaller {
      * @param currentCaller The current {@link RCaller}.
      */
     public static RCaller createForGenericFunctionCall(RCaller dispatchingCaller, Object call, RCaller currentCaller) {
-        return new RCaller(currentCaller.getDepth() + 1, currentCaller, new NonPromiseLogicalParent(dispatchingCaller, call));
+        return new RCaller(currentCaller.getDepth() + 1, currentCaller, new NonPromiseLogicalParent(dispatchingCaller, call), null);
     }
 
     public boolean getVisibility() {
@@ -480,7 +515,7 @@ public final class RCaller {
 
     public RCaller withLogicalParent(RCaller logicalParent) {
         assert !isPromise();
-        return new RCaller(this.depth, this.previous, new NonPromiseLogicalParent(logicalParent, this.payload));
+        return new RCaller(this.depth, this.previous, new NonPromiseLogicalParent(logicalParent, this.payload), null);
     }
 
     public boolean evaluateOnlyEagerPromises() {
