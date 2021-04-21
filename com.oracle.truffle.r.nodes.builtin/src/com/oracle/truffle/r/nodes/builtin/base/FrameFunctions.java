@@ -1015,10 +1015,9 @@ public class FrameFunctions {
                 parentFrame = (MaterializedFrame) getFrameHelper().getNumberedFrame(frame, parentCall.getDepth(), true);
             }
             // This may happen if the parentCall is not in any materialized truffle frame.
-            if (parentFrame == null || RArguments.getCall(parentFrame) != parentCall) {
-                String errorMessage =
-                        "Trying to fetch a frame via parent.frame that is not on the stack.\n" +
-                        "Note that this is discouraged. See 'Note' section in ?parent.frame";
+            if (parentFrame == null) {
+                String errorMessage = "Trying to fetch a frame via parent.frame that is not on the stack.\n" +
+                                "Note that this is discouraged. See 'Note' section in ?parent.frame";
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, errorMessage);
             }
             return REnvironment.frameToEnvironment(parentFrame);
