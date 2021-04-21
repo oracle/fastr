@@ -379,7 +379,8 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, MaterializedFrame promiseFrame, RPromise promise, Object callerFrameObject) {
         assert promise != null;
         assert promiseFrame != null;
-        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), callerFrameObject, RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame), promise));
+        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), callerFrameObject,
+                        RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame), promise));
     }
 
     private static Object generateValueFromEagerPromiseSlowPath(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec) {

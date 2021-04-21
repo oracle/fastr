@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,10 +40,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * Represents the caller of a function and other information related an R stack frame evaluation
  * context. It is created by the caller of the function and passed in the arguments array.
  * {@link RCaller} instances for all R stack frames form a linked list.
- *
+ * <p>
  * A value of this type never appears in a Truffle execution. The closest concept in GNU-R is
  * RCNTXT, see {@code main/context.c}.
- *
+ * <p>
  * On the high level {@link RCaller} instance holds:
  * <ul>
  * <li>link to the {@link RCaller} associated with the previous R stack frame.</li>
@@ -78,6 +78,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *   global          (depth = 0, parent = null, payload = null)
  * </pre>
  *
+ * For convenience, there is a diagram representing the aforementioned stack frames here:
+ * <p>
+ * <img src="doc_files/promise_fun_rcaller_hierarchy.svg">
+ * <p>
  * Where the 'internal frame' wraps the frame of bar so that the promise code can access all the
  * local variables of bar, but the {@link RCaller} can be different: the depth that would normally
  * be 1 is 2, and parent and payload are different (see docs of {@link #isPromise()}). The purpose
@@ -85,7 +89,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * promise is logically evaluated, should the promise call some stack introspection built-in, e.g.
  * {@code parent.frame()}. The reason why depths is 2 is that any consecutive function call uses
  * current depth + 1 as the new depth and we need the new depth to be 3.
- *
+ * <p>
  * Note that the 'internal frame' may not be on the real execution stack (i.e. not iterable by
  * Truffle). The {@code InlineCacheNode} directly injects the AST of the promise into the calling
  * function AST (foo in this case), but passes the 'internal frame' to the execute method instead of
@@ -94,9 +98,21 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * {@link com.oracle.truffle.api.CallTarget} and calls it with 'internal frame', in which case there
  * will be additional frame when iterating frames with Truffle, but that frame will hold the
  * 'internal frame' inside its arguments array.
- *
- * For debugging purposes, there is {@code com.oracle.truffle.r.nodes.builtin.fastr.FastRRCallerTrace}
- * builtin that prints RCaller hierarchy from the current Truffle execution frame.
+ * <p>
+ * For debugging purposes, there is
+ * {@code com.oracle.truffle.r.nodes.builtin.fastr.FastRRCallerTrace} builtin that prints RCaller
+ * hierarchy from the current Truffle execution frame.
+ * <p>
+ * To fully understand {@code RCaller}, we provide the following diagrams drawn according to the
+ * output of {@code .fastr.rcallertrace()}:
+ * <p>
+ * <img src="doc_files/nested_promises_rcaller_hierarchy.svg">
+ * <p>
+ * Depicting a stack frame with nested promises. Source code taken from {@code stack-intro-tests.R}.
+ * <p>
+ * <img src="doc_files/parent_frame_not_on_stack_rcaller_hierarchy.svg">
+ * <p>
+ * Depicting a parent.frame that is not on the stack frame any more.
  *
  * See {@code FrameFunctions}.
  *
@@ -158,9 +174,9 @@ public final class RCaller {
 
     /**
      * When constructing an RCaller for a promise, we may add a reference to the promise itself.
-     * This helps with the performance of {@code sys.frame} and {@code parent.frame} - if this
-     * field is not null, we get the materialized frame straight from the {@link RPromise} rather
-     * than iterating all the truffle frames.
+     * This helps with the performance of {@code sys.frame} and {@code parent.frame} - if this field
+     * is not null, we get the materialized frame straight from the {@link RPromise} rather than
+     * iterating all the truffle frames.
      *
      * Note that this field may be null even if {@link #isPromise()} returns true.
      */

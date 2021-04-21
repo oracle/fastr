@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -207,8 +207,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         /**
          * The contract is that the function call will be evaluated in the given environment, but at
          * the same time some primitives expect to see {@code do.call(foo, ...)} as the caller, so
-         * we create a frame that fakes the caller, but otherwise delegates to the frame backing
-         * the explicitly given environment.
+         * we create a frame that fakes the caller, but otherwise delegates to the frame backing the
+         * explicitly given environment.
          *
          * @param currentFrame the current materialized frame, which is set as the caller frame
          * @param envFrame the frame from which the clone is made
