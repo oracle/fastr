@@ -567,6 +567,9 @@ public final class RCaller {
      * This class is used for non-promise callers only. The field {@link #callNodeOrSupplier} holds
      * the syntax of the call or its supplier {@code Supplier} (like {@link RCaller#payload} for
      * non-promise {@link RCaller}s).
+     * <p>
+     * Used for, e.g., {@code UseMethod} or {@code NextMethod} that should not be called from
+     * promises.
      */
     private static final class NonPromiseLogicalParent extends LogicalParent {
         /**

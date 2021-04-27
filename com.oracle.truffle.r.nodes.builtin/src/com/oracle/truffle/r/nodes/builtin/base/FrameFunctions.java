@@ -85,6 +85,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -111,6 +112,7 @@ public class FrameFunctions {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile globalFrameProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile nullResultProfile = ConditionProfile.createBinaryProfile();
         private final BranchProfile iterateProfile = BranchProfile.create();
         private final BranchProfile slowPathProfile = BranchProfile.create();
         private final UnwrapPromiseCallerProfile unwrapCallerProfile = new UnwrapPromiseCallerProfile();
@@ -182,18 +184,27 @@ public class FrameFunctions {
         private static final int ITERATE_LEVELS = 3;
         private static final boolean NOTIFY_CALLERS = true;
 
+        /**
+         * Looks for a frame with depth {@code frameDepth}. There are some special functions that do
+         * not have corresponding frame on Truffle stack, e.g., {@code NextMethod}. For these
+         * functions, we create an artificial frame.
+         * 
+         * @param frameDepth Depth of the frame to look for.
+         * @param materialize Whether to materialize the result.
+         * @return Non-null frame.
+         */
         @ExplodeLoop
-        protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame, boolean materialize) {
-            if (currentFrameProfile.profile(RArguments.isRFrame(frame) && RArguments.getDepth(frame) == actualFrame)) {
+        protected Frame getNumberedFrame(VirtualFrame frame, int frameDepth, boolean materialize) {
+            if (currentFrameProfile.profile(RArguments.isRFrame(frame) && RArguments.getDepth(frame) == frameDepth)) {
                 return materialize ? frame.materialize() : frame;
-            } else if (globalFrameProfile.profile(actualFrame == 0)) {
+            } else if (globalFrameProfile.profile(frameDepth == 0)) {
                 // Note: this is optimization and necessity, because in the case of invocation of R
                 // function from another "master" language, there will be no actual Truffle frame
                 // for global environment
                 return REnvironment.globalEnv().getFrame();
             } else {
                 MaterializedFrame current = null;
-                if (RArguments.getDepth(frame) - actualFrame <= ITERATE_LEVELS) {
+                if (RArguments.getDepth(frame) - frameDepth <= ITERATE_LEVELS) {
                     iterateProfile.enter();
                     current = getCallerFrame(frame);
                     // An optimization attempt: a small number of "exploded" iterations should be
@@ -202,7 +213,7 @@ public class FrameFunctions {
                         if (current == null) {
                             break;
                         }
-                        MaterializedFrame result = RArguments.getActualMaterializedFrame(current, actualFrame, false);
+                        MaterializedFrame result = RArguments.getActualMaterializedFrame(current, frameDepth, false);
                         if (result != null) {
                             return result;
                         }
@@ -210,12 +221,20 @@ public class FrameFunctions {
                     }
                 }
                 slowPathProfile.enter();
-                return getNumberedFrameSlowPath(current == null ? frame.materialize() : current.materialize(), actualFrame, materialize);
+                return getNumberedFrameSlowPath(frame, current == null ? frame.materialize() : current.materialize(), frameDepth, materialize);
             }
         }
 
-        private Frame getNumberedFrameSlowPath(MaterializedFrame frame, int actualFrame, boolean materialize) {
-            Frame resultViaCaller = getNumberedCallerFrameSlowPath(frame, actualFrame);
+        /**
+         * @param originalFrame A frame from which {@code sys.frame} or {@code sys.frames} was
+         *            called.
+         * @param frame This frame may have different depth as opposed to {@code originalFrame}.
+         * @param frameDepth Depth of a frame that we are looking for.
+         * @param materialize Whether to materialize the result.
+         * @return Non-null frame.
+         */
+        private Frame getNumberedFrameSlowPath(VirtualFrame originalFrame, MaterializedFrame frame, int frameDepth, boolean materialize) {
+            Frame resultViaCaller = getNumberedCallerFrameSlowPath(frame, frameDepth);
             /*
              * The materialize flag and the seemingly unnecessary cast to MateralizedFrame is here
              * to prevent Graal from merging two control paths that would lead to an unjustified
@@ -224,7 +243,11 @@ public class FrameFunctions {
             if (resultViaCaller != null) {
                 return materialize ? (MaterializedFrame) resultViaCaller : resultViaCaller;
             }
-            Frame result = Utils.getStackFrame(access, actualFrame, NOTIFY_CALLERS);
+            Frame result = Utils.getStackFrame(access, frameDepth, NOTIFY_CALLERS);
+            if (nullResultProfile.profile(result == null)) {
+                result = createArtificialFrame(originalFrame.materialize(), frameDepth);
+            }
+            RInternalError.guaranteeNonNull(result);
             return materialize ? (MaterializedFrame) result : result;
         }
 
@@ -258,6 +281,86 @@ public class FrameFunctions {
             }
             assert callerFrame == null || callerFrame instanceof Frame;
             return (MaterializedFrame) callerFrame;
+        }
+
+        /**
+         * Some function calls, e.g., {@code NextMethod} does not have materialized stack frame on
+         * truffle stack. We have to create an artificial frame for such function calls.
+         * 
+         * @param frameDepth Depth of the frame that is not on the Truffle stack.
+         */
+        @TruffleBoundary
+        private static MaterializedFrame createArtificialFrame(MaterializedFrame originalFrame, int frameDepth) {
+            RCaller originalCaller = RArguments.getCall(originalFrame);
+            RCaller callerWithDepth = findCallerWithDepth(originalCaller, frameDepth);
+            if (isRCallerForNextMethod(callerWithDepth)) {
+                REnvironment artificialEnv = createEnvForNextMethodCaller(callerWithDepth);
+                return artificialEnv.getFrame();
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+
+        /**
+         * Returns true if {@code caller} corresponds to {@code NextMethod} builtin function call.
+         */
+        private static boolean isRCallerForNextMethod(RCaller caller) {
+            if (!caller.isValidCaller() || caller.isPromise()) {
+                return false;
+            }
+            RSyntaxElement syntaxElement = caller.getSyntaxNode();
+            if (!(syntaxElement instanceof RCallNode)) {
+                return false;
+            }
+            RCallNode callNode = (RCallNode) syntaxElement;
+            RSyntaxElement lhsSyntaxElement = callNode.getSyntaxLHS();
+            if (!(lhsSyntaxElement instanceof RSyntaxLookup)) {
+                return false;
+            }
+            RSyntaxLookup lhsSyntaxLookup = (RSyntaxLookup) lhsSyntaxElement;
+            if (!lhsSyntaxLookup.isFunctionLookup()) {
+                return false;
+            }
+            return lhsSyntaxLookup.getIdentifier().equals("NextMethod");
+        }
+
+        /**
+         * Find an RCaller with given {@code depth}. Note that we iterate only non-promise RCallers,
+         * so there is just one RCaller with given {@code depth}.
+         * 
+         * @return Not-null RCaller.
+         */
+        private static RCaller findCallerWithDepth(RCaller actualCaller, int depth) {
+            RCaller[] callerWithDepth = {null};
+            RCaller.iterateCallers(actualCaller, (RCaller caller) -> {
+                if (caller.getDepth() == depth) {
+                    callerWithDepth[0] = caller;
+                }
+            });
+            assert callerWithDepth[0] != null : "There should be an RCaller with depth " + depth + " in the hierarchy.";
+            return callerWithDepth[0];
+        }
+
+        /**
+         * {@code NextMethod} has a materialized stack frame in GNU-R. In FastR, we do not create
+         * frames for {@code NextMethod}, as it is {@code RBuiltin.Kind == SUBSTITUTE}, rather than
+         * {@code INTERNAL}, therefore, we have to create an artifical environment for it.
+         * 
+         * @param nextMethodCaller Caller corresponding to NextMethod function call.
+         * @return An artifical environment for NextMethod function call. Such an environment
+         *         contains symbols "generic", "object", and "...".
+         */
+        private static REnvironment createEnvForNextMethodCaller(RCaller nextMethodCaller) {
+            assert isRCallerForNextMethod(nextMethodCaller);
+            REnvironment env = RDataFactory.createInternalEnv("NextMethod_artificial_frame");
+            try {
+                env.put("generic", new RInternalError("'generic' should not be accessed from NextMethod artificial environment"));
+                env.put("object", new RInternalError("'object' should not be accessed from NextMethod artificial environment"));
+                env.put("...", new RInternalError("'...' should not be accessed from NextMethod artificial environment"));
+            } catch (REnvironment.PutException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            return env;
         }
     }
 
