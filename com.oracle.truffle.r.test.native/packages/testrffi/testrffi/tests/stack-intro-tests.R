@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -65,6 +65,7 @@ check <- function(env, name) {
         eval = checkvars("expr", "envir", "enclos"),
         Rf_eval = envMustBeEmpty(),
         Recall = assert(length(ls(env)), 0L),
+        NextMethod = checkvars("generic", "object"),
         checkvars(paste0(name, "var")))
     invisible(res)
 }
@@ -616,7 +617,7 @@ assert(x[[2]], quote(foo(structure(barvar, class = class))))
 assert(x[[3]], quote(foo.c1(structure(barvar, class = class))))
 assert(x[[4]], quote(baz(foo.c1var)))
 
-# the same with sys.frames()
+# the same with sys.frames() - there is no frame for UseMethod
 baz <- function(bazvar) sys.frames()
 
 x <- bar(1, 'c1');
@@ -655,6 +656,28 @@ assert(x[[3]], quote(foo.c1(structure(barvar, class = class))))
 assert(x[[4]], quote(NextMethod()))
 assert(x[[5]], quote(foo.c2(structure(barvar, class = class))))
 assert(x[[6]], quote(baz(foo.c2var)))
+
+# -----------------
+# UseMethod & NextMethod & sys.frame
+# NextMethod has its stack frame, whereas UseMethod does not have any.
+baz <- function(bazvar) sys.frame(bazvar)
+foo.c2 <- function(foo.c2var) baz(foo.c2var)
+foo.c1 <- function(foo.c1var) NextMethod()
+foo <- function(foovar) UseMethod("foo")
+bar <- function(barvar, class) foo(structure(barvar, class=class))
+
+x <- bar(1, c('c1', 'c2')); check(x, 'bar')
+x <- bar(2, c('c1', 'c2')); check(x, 'foo')
+x <- bar(3, c('c1', 'c2')); check(x, 'foo.c1')
+x <- bar(4, c('c1', 'c2')); check(x, 'NextMethod')
+x <- bar(5, c('c1', 'c2')); check(x, 'foo.c2')
+x <- bar(6, c('c1', 'c2')); check(x, 'baz')
+
+# Same situation with sys.frames
+baz <- function(bazvar) sys.frames()
+
+x <- bar(1, c('c1', 'c2'))
+assertFrames(x, 'bar', 'foo', 'foo.c1', 'NextMethod', 'foo.c2', 'baz')
 
 # ===============================================
 # eval
