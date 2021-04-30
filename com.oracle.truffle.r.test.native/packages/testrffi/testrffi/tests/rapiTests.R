@@ -253,3 +253,11 @@ for (handle in list(testrffi:::C_rapi_dotExternal2$address, testrffi:::C_rapi_do
     assertEquals('pairlist', typeof(args))
     assertEquals(list(handle, 'bar', arg1 = 'foo', arg2 = 42L), as.list(args))
 }
+
+# ----------------------------------------------------------------------------------------
+# Rf_match
+assertEquals(rffi.test_RfMatch(c("x", "y"), "x"), 1L)
+assertEquals(rffi.test_RfMatch(c("x", "y"), "y"), 2L)
+assertEquals(rffi.test_RfMatch(c("x", "y"), "foo"), NA_integer_)
+assertEquals(rffi.test_RfMatch(c(), "foo"), NA_integer_)
+assertEquals(rffi.test_RfMatch(c(), c("foo", "bar")), c(NA_integer_, NA_integer_))

@@ -367,3 +367,7 @@ rffi.serialize <- function(object) {
 rffi.testInstallTrChar <- function(strvec, envir) {
 	.Call("testInstallTrChar", strvec, envir, PACKAGE = "testrffi")
 }
+
+rffi.test_RfMatch <- function(x, y) {
+	.Call("test_RfMatch", x, y)
+}

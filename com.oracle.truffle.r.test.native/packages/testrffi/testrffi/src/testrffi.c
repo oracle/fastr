@@ -1180,3 +1180,7 @@ SEXP testInstallTrChar(SEXP strvec, SEXP env) {
     defineVar(symbol, ScalarInteger(length(strvec)), env);
     return symbol;
 }
+
+SEXP test_RfMatch(SEXP x, SEXP y) {
+    return Rf_match(x, y, NA_INTEGER);
+}
