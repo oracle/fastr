@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,15 +32,15 @@ import com.oracle.truffle.r.nodes.builtin.Match5Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypes;
 
 public final class MatchNodes {
 
     @TypeSystemReference(RTypes.class)
     public abstract static class Match5UpCallNode extends FFIUpCallNode.Arg5 {
         @Specialization
-        Object match(Object x, Object table, int noMatch, Object incomparables, @SuppressWarnings("unused") Object env,
+        Object match(Object table, Object x, int noMatch, Object incomparables, @SuppressWarnings("unused") Object env,
                         @Cached Match5Node match5Node) {
             return match5Node.execute(x, table, noMatch, incomparables);
         }
