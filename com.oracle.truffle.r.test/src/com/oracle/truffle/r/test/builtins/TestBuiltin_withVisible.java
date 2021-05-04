@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,5 +37,13 @@ public class TestBuiltin_withVisible extends TestBase {
         assertEval("withVisible({ 1; x <- 1 })");
         assertEval("f <- function(x) { foo <- 1 + x }; withVisible(f(1))");
         assertEval("f <- function(x) { 1 + x }; withVisible(f(1))");
+    }
+
+    @Test
+    public void testInvisibleValueForWithVisible() {
+        // FIXME: FastR fails on this test probably because of eager promise optimization, or because of
+        // wrong visibility propagation. A similar test is present in testthat 3.0.1 package
+        // test-expect-comparison.
+        assertEval(Ignored.ImplementationError, "{ id <- function(x) x; f <- function(x) { res <- withVisible(x); res$visible }; f(id(invisible(1))) }");
     }
 }
