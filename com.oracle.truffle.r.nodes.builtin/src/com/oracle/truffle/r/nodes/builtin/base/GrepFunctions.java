@@ -255,7 +255,7 @@ public class GrepFunctions {
                 if (!perl) {
                     // TODO case
                     if (!fixed) {
-                        pattern = RegExp.checkPreDefinedClasses(pattern);
+                        pattern = RegExp.transformPatternToGnurCompatible(pattern);
                     }
                     findAllMatches(matches, pattern, vector, fixed, ignoreCase);
                 } else {
@@ -488,7 +488,7 @@ public class GrepFunctions {
                 } else if (perl) {
                     pcre = compilePerlPattern(pattern, ignoreCase);
                 } else {
-                    pattern = RegExp.checkPreDefinedClasses(pattern);
+                    pattern = RegExp.transformPatternToGnurCompatible(pattern);
                 }
                 String preparedReplacement = null;
                 String[] result = new String[len];
@@ -874,7 +874,7 @@ public class GrepFunctions {
                 }
                 String pattern = patternArg.getDataAt(0);
                 if (!perl && !fixed) {
-                    pattern = RegExp.checkPreDefinedClasses(pattern);
+                    pattern = RegExp.transformPatternToGnurCompatible(pattern);
                 }
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
@@ -1115,7 +1115,7 @@ public class GrepFunctions {
                 }
                 RList ret = RDataFactory.createList(vector.getLength());
                 String pattern = patternArg.getDataAt(0);
-                pattern = RegExp.checkPreDefinedClasses(pattern);
+                pattern = RegExp.transformPatternToGnurCompatible(pattern);
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
                 boolean useBytes = true;
@@ -1262,7 +1262,7 @@ public class GrepFunctions {
                 }
                 String pattern = patternArg.getDataAt(0);
                 if (!perl && !fixed) {
-                    pattern = RegExp.checkPreDefinedClasses(pattern);
+                    pattern = RegExp.transformPatternToGnurCompatible(pattern);
                 }
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
@@ -1552,7 +1552,7 @@ public class GrepFunctions {
             na.enable(x);
             for (int i = 0; i < splits.length; i++) {
                 String currentSplit = split.getDataAt(i);
-                splits[i] = fixed || perl ? split.getDataAt(i) : RegExp.checkPreDefinedClasses(split.getDataAt(i));
+                splits[i] = fixed || perl ? split.getDataAt(i) : RegExp.transformPatternToGnurCompatible(split.getDataAt(i));
                 if (perl) {
                     if (!currentSplit.isEmpty()) {
                         pcreSplits[i] = common.compileNode.execute(currentSplit, 0, pcreTables);

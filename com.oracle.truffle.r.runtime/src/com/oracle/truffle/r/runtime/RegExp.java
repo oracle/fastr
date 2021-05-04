@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,13 +55,25 @@ public class RegExp {
     }
 
     /**
+     * Transforms given pattern into a pattern that can be used by the Java regexp library.
+     * @param pattern Pattern that can be used directly by GNU-R engine.
+     * @return Pattern that can be used directly by Java regexp library.
+     */
+    public static String transformPatternToGnurCompatible(String pattern) {
+        String transformedPattern = pattern;
+        transformedPattern = checkPreDefinedClasses(transformedPattern);
+        transformedPattern = checkSpacesInQuantifiers(transformedPattern);
+        return transformedPattern;
+    }
+
+    /**
      * R defines some short forms of character classes. E.g. {@code [[:alnum:]]} means
      * {@code [0-9A-Za-z]} but independent of locale and character encoding. So we have to translate
      * these for use with Java regexp. TODO handle the complete set and do locale and character
      * encoding
      */
     @TruffleBoundary
-    public static String checkPreDefinedClasses(String pattern) {
+    private static String checkPreDefinedClasses(String pattern) {
         String result = pattern;
         /*
          * this loop replaces "[[]" (illegal in Java regex) with "[\[]", "[\]" with "[\\]" and
@@ -138,5 +150,101 @@ public class RegExp {
             i++;
         }
         return result;
+    }
+
+    /**
+     * GNU-R ignores some spaces in quantifiers, e.g., in "{3, }", the space in front of the last
+     * bracket is ignored. In PCRE, this is a valid expression that is, however, not interpreted
+     * as a quantifier. In Java regexp library, this is not a valid expression.
+     * @param pattern Pattern, potentially with spaces in quantifiers.
+     * @return Pattern without spaces in quantifiers.
+     */
+    @TruffleBoundary
+    private static String checkSpacesInQuantifiers(String pattern) {
+        boolean escapedOpeningBracket = false;
+        int i = 0;
+        StringBuilder sb = new StringBuilder();
+        while (i < pattern.length()) {
+            char currentChar = pattern.charAt(i);
+            switch (currentChar) {
+                case '{':
+                    if (!escapedOpeningBracket) {
+                        int idxOfClosingBracket = pattern.indexOf("}", i);
+                        if (idxOfClosingBracket == -1) {
+                            // This is a pattern syntax error, just forward the pattern as is.
+                            return pattern;
+                        }
+                        // quantifierContent is without the opening bracket.
+                        String quantifierContent = pattern.substring(i + 1, idxOfClosingBracket);
+                        int idxOfComma = quantifierContent.indexOf(",");
+                        if (idxOfComma == -1) {
+                            return pattern;
+                        }
+                        String quantifierContentBeforeComma = quantifierContent.substring(0, idxOfComma);
+                        String quantifierContentAfterComma = quantifierContent.substring(idxOfComma + 1);
+                        sb.append("{");
+                        sb.append(quantifierContentBeforeComma);
+                        sb.append(",");
+                        if (!quantifierContentAfterComma.isEmpty() && containsOnlyWhiteSpaces(quantifierContentAfterComma)) {
+                            sb.append(removeWhiteSpaces(quantifierContentAfterComma));
+                        } else {
+                            sb.append(quantifierContentAfterComma);
+                        }
+                        sb.append("}");
+                        i += 3 + quantifierContentBeforeComma.length() + quantifierContentAfterComma.length();
+                    } else {
+                        escapedOpeningBracket = false;
+                        sb.append(currentChar);
+                        i++;
+                    }
+                    break;
+                case '\\':
+                    if (i < pattern.length() - 1 && pattern.charAt(i + 1) == '{') {
+                        escapedOpeningBracket = true;
+                    }
+                    sb.append(currentChar);
+                    i++;
+                    break;
+                default:
+                    sb.append(currentChar);
+                    i++;
+                    break;
+            }
+        }
+        return sb.toString();
+    }
+
+    private static boolean containsOnlyWhiteSpaces(String string) {
+        for (int i = 0; i < string.length(); i++) {
+            if (!isWhiteSpace(string.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int indexOfWhiteSpace(String string) {
+        for (int i = 0; i < string.length(); i++) {
+            if (isWhiteSpace(string.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isWhiteSpace(char c) {
+        return c == ' ';
+    }
+
+    private static String removeWhiteSpaces(String string) {
+        int idxOfWhiteSpace = indexOfWhiteSpace(string);
+        assert idxOfWhiteSpace != -1;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < string.length(); i++) {
+            if (!isWhiteSpace(string.charAt(i))) {
+                sb.append(string.charAt(i));
+            }
+        }
+        return sb.toString();
     }
 }
