@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -140,19 +140,21 @@ public enum RLocale {
             return null;
         }
 
-        public void setLocale(RLocale locale, String value) {
-            setLocale(locale, value, false);
+        public boolean setLocale(RLocale locale, String value) {
+            return setLocale(locale, value, false);
         }
 
-        public void setLocale(RLocale locale, String value, boolean startup) {
+        public boolean setLocale(RLocale locale, String value, boolean startup) {
             Charset c = null;
             Locale l = null;
+            boolean localeSet = true;
             if ("C".equals(value) || "POSIX".equals(value)) {
                 c = StandardCharsets.US_ASCII;
             } else if (value != null) {
                 c = getCharset(value);
                 l = getLocale(value);
-                if ((c == null && l == null) || (l == null && locale.needsLocale)) {
+                if (c == null || l == null) {
+                    localeSet = false;
                     if (startup) {
                         RContext.getInstance().getConsole().printErrorln("Setting " + locale.name + " failed, using default");
                     } else {
@@ -162,6 +164,7 @@ public enum RLocale {
             }
             charsets.put(locale, c == null ? StandardCharsets.UTF_8 : c);
             locales.put(locale, l == null ? Locale.ROOT : l);
+            return localeSet;
         }
 
         public Charset getCharset(RLocale locale) {

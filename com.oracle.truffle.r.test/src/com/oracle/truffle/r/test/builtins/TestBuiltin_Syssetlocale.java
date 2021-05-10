@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -51,4 +51,11 @@ public class TestBuiltin_Syssetlocale extends TestBase {
         assertEval("names(Sys.localeconv())");
     }
 
+    @Test
+    public void testSyslocaleNonExistingLocales() {
+        // Non-existing locale, should produce warning. It prints 4 warnings on fastr, but just one
+        // warning on gnur, this is the reason for Output.MayIgnoreWarningMessage.
+        assertEval(Output.MayIgnoreWarningMessage, "Sys.setlocale('LC_ALL', 'foo_BAR')");
+        assertEval(Output.MayIgnoreWarningMessage, "Sys.setlocale('LC_ALL', 'xx_ZZ')");
+    }
 }

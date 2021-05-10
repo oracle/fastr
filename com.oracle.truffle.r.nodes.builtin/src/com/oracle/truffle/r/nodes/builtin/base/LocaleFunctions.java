@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,14 +113,21 @@ public class LocaleFunctions {
         @TruffleBoundary
         protected Object setLocale(int category, String value) {
             RContext context = RContext.getInstance();
+            boolean localeSet = true;
             if (category == LC_ALL) {
                 for (RLocale locale : SET_ALL) {
-                    context.stateRLocale.setLocale(locale, value);
+                    if (!context.stateRLocale.setLocale(locale, value)) {
+                        localeSet = false;
+                    }
                 }
             } else {
-                context.stateRLocale.setLocale(MAPPING[category - MAPPING_START], value);
+                localeSet = context.stateRLocale.setLocale(MAPPING[category - MAPPING_START], value);
             }
-            return GetLocale.getLocale(category);
+            if (localeSet) {
+                return GetLocale.getLocale(category);
+            } else {
+                return RDataFactory.createStringVector("");
+            }
         }
     }
 
