@@ -1,3 +1,12 @@
+---
+layout: docs-experimental
+toc_group: fastr
+title: GraalVM R Engine Performance
+link_title: GraalVM R Engine Performance
+permalink: /reference-manual/r/Performance/
+redirect_from: /docs/reference-manual/r/Performance/
+previous: /en/graalvm/enterprise/21/docs/reference-manual/r/ParallelExecution/
+---
 # Runtime Performance
 
 GraalVM optimizes R code that runs for extended periods of time.

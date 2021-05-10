@@ -1,3 +1,13 @@
+---
+layout: docs-experimental
+toc_group: fastr
+title: R Extensions Support
+link_title: R Extensions Support
+permalink: /reference-manual/r/ExtensionsSupport/
+redirect_from: /docs/reference-manual/r/ExtensionsSupport/
+next: /en/graalvm/enterprise/21/docs/reference-manual/r/Interoperability/
+previous: /en/graalvm/enterprise/21/docs/reference-manual/r/Compatibility/
+---
 # R Extensions Support
 
 The GraalVM R runtime can run [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) in two modes:

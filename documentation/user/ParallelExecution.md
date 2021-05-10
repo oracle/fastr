@@ -1,3 +1,13 @@
+---
+layout: docs-experimental
+toc_group: fastr
+title: Parallel Execution
+link_title: Parallel Execution
+permalink: /reference-manual/r/ParallelExecution/
+redirect_from: /docs/reference-manual/r/ParallelExecution/
+next: /en/graalvm/enterprise/21/docs/reference-manual/r/Performance/
+previous: /en/graalvm/enterprise/21/docs/reference-manual/r/JavaInteroperability/
+---
 # Parallel Execution
 
 The `FORK` cluster and functions depending solely on forking (e.g., `mcparallel`) are not supported by the GraalVM R runtime at the moment.
