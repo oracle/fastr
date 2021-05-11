@@ -35,6 +35,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
@@ -713,7 +714,7 @@ public class FileFunctions {
                         }
                         file = root.relativize(file);
                         String p = file.getPath();
-                        if (p.startsWith(vecPathString)) {
+                        if (isPathPrefixOf(p, vecPathString)) {
                             p = p.substring(vecPathString.length());
                             if (p.startsWith("/")) {
                                 p = p.substring(1);
@@ -760,6 +761,13 @@ public class FileFunctions {
                 });
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             }
+        }
+
+        private static boolean isPathPrefixOf(String filePath, String dirPath) {
+            if (!filePath.startsWith(dirPath)) {
+                return false;
+            }
+            return dirPath.contains(File.separator) && filePath.contains(File.separator);
         }
 
         private static String skipLeadingDotInFilename(String filePath, String fileSeparator) {
