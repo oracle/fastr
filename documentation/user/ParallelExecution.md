@@ -5,8 +5,8 @@ title: Parallel Execution
 link_title: Parallel Execution
 permalink: /reference-manual/r/ParallelExecution/
 redirect_from: /docs/reference-manual/r/ParallelExecution/
-next: /en/graalvm/enterprise/21/docs/reference-manual/r/Performance/
-previous: /en/graalvm/enterprise/21/docs/reference-manual/r/JavaInteroperability/
+next: /en/graalvm/enterprise/{{ site.version }}/docs/reference-manual/r/Performance/
+previous: /en/graalvm/enterprise/{{ site.version }}/docs/reference-manual/r/JavaInteroperability/
 ---
 # Parallel Execution
 

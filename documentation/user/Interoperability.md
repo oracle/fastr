@@ -5,8 +5,8 @@ title: Interoperability
 link_title: Interoperability
 permalink: /reference-manual/r/Interoperability/
 redirect_from: /docs/reference-manual/r/Interoperability/
-next: /en/graalvm/enterprise/21/docs/reference-manual/r/JavaInteroperability/
-previous: /en/graalvm/enterprise/21/docs/reference-manual/r/ExtensionsSupport/
+next: /en/graalvm/enterprise/{{ site.version }}/docs/reference-manual/r/JavaInteroperability/
+previous: /en/graalvm/enterprise/{{ site.version }}/docs/reference-manual/r/ExtensionsSupport/
 ---
 # Interoperability
 
