@@ -56,6 +56,7 @@ public class RegExp {
 
     /**
      * Transforms given pattern into a pattern that can be used by the Java regexp library.
+     * 
      * @param pattern Pattern that can be used directly by GNU-R engine.
      * @return Pattern that can be used directly by Java regexp library.
      */
@@ -154,8 +155,9 @@ public class RegExp {
 
     /**
      * GNU-R ignores some spaces in quantifiers, e.g., in "{3, }", the space in front of the last
-     * bracket is ignored. In PCRE, this is a valid expression that is, however, not interpreted
-     * as a quantifier. In Java regexp library, this is not a valid expression.
+     * bracket is ignored. In PCRE, this is a valid expression that is, however, not interpreted as
+     * a quantifier. In Java regexp library, this is not a valid expression.
+     * 
      * @param pattern Pattern, potentially with spaces in quantifiers.
      * @return Pattern without spaces in quantifiers.
      */

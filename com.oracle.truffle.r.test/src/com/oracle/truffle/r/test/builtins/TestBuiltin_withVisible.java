@@ -41,7 +41,8 @@ public class TestBuiltin_withVisible extends TestBase {
 
     @Test
     public void testInvisibleValueForWithVisible() {
-        // FIXME: FastR fails on this test probably because of eager promise optimization, or because of
+        // FIXME: FastR fails on this test probably because of eager promise optimization, or
+        // because of
         // wrong visibility propagation. A similar test is present in testthat 3.0.1 package
         // test-expect-comparison.
         assertEval(Ignored.ImplementationError, "{ id <- function(x) x; f <- function(x) { res <- withVisible(x); res$visible }; f(id(invisible(1))) }");

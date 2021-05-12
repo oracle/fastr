@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,12 +33,12 @@ import com.oracle.truffle.r.test.TestBase;
  */
 public class TestBuiltin_read extends TestBase {
 
-    private static final String DCF_CONTENT =
-            "Authors@R: c(\n" +
-            "  person('John', 'Doe'))\n" +
-            "Collate: 'assertions.R' 'built.R'\n" +
-            // Whitespaces are at the beginning of the line and at the end of the line on purpose
-            "    'collate.R' 'constants.R  '\n";
+    private static final String DCF_CONTENT = "Authors@R: c(\n" +
+                    "  person('John', 'Doe'))\n" +
+                    "Collate: 'assertions.R' 'built.R'\n" +
+                    // Whitespaces are at the beginning of the line and at the end of the line on
+                    // purpose
+                    "    'collate.R' 'constants.R  '\n";
 
     private static final String[] KEEP_WHITE = new String[]{"'Authors@R'", "'Collate'", "NULL", "c('Authors@R', 'Collate')"};
 
@@ -48,7 +48,8 @@ public class TestBuiltin_read extends TestBase {
     }
 
     /**
-     * We have to keep white spaces correctly in .Internal(readDCF) because desc package expects that.
+     * We have to keep white spaces correctly in .Internal(readDCF) because desc package expects
+     * that.
      */
     @Test
     public void testReadDCFKeepWhiteSpaces() {

@@ -37,22 +37,20 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
 public enum RLocale {
-    COLLATE(true, true, true),
-    CTYPE(false, true, true),
-    MONETARY(true, true, true),
-    NUMERIC(true, false, true),
-    TIME(true, true, true),
-    MESSAGES(true, true, true),
-    PAPER(false, false, false),
-    MEASUREMENT(false, false, false);
+    COLLATE(true, true),
+    CTYPE(true, true),
+    MONETARY(true, true),
+    NUMERIC(false, true),
+    TIME(true, true),
+    MESSAGES(true, true),
+    PAPER(false, false),
+    MEASUREMENT(false, false);
 
     private final String name;
-    private final boolean needsLocale;
     private final boolean initializedAtStartup;
     private final boolean listed;
 
-    RLocale(boolean needsLocale, boolean initializedAtStartup, boolean listed) {
-        this.needsLocale = needsLocale;
+    RLocale(boolean initializedAtStartup, boolean listed) {
         this.initializedAtStartup = initializedAtStartup;
         this.listed = listed;
         this.name = "LC_" + name();
