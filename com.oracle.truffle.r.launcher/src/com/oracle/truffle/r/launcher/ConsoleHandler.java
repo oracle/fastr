@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,13 +86,13 @@ public abstract class ConsoleHandler {
                  * should be lazy, as these may not be necessary and can cause hangs if stdin has
                  * been redirected.
                  */
-                Supplier<ConsoleHandler> delegateFactory = useReadLine ? () -> createJLineConsoleHandler(inStream, outStream, rsp.isSlave())
+                Supplier<ConsoleHandler> delegateFactory = useReadLine ? () -> createJLineConsoleHandler(inStream, outStream, rsp.isNoEcho())
                                 : () -> new DefaultConsoleHandler(inStream, outStream, isInteractive);
                 useDelegatingWrapper.setDelegate(delegateFactory);
                 return useDelegatingWrapper;
             } else {
                 if (useReadLine) {
-                    return createJLineConsoleHandler(inStream, outStream, rsp.isSlave());
+                    return createJLineConsoleHandler(inStream, outStream, rsp.isNoEcho());
                 } else {
                     return new DefaultConsoleHandler(inStream, outStream, isInteractive);
                 }
