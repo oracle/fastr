@@ -3,7 +3,6 @@ layout: docs-experimental
 toc_group: fastr
 link_title: R Reference
 permalink: /reference-manual/r/
-redirect_from: /docs/reference-manual/languages/r/
 ---
 # GraalVM R Runtime
 

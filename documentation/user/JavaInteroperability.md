@@ -3,7 +3,6 @@ layout: docs-experimental
 toc_group: fastr
 link_title: Interoperability with Java
 permalink: /reference-manual/r/JavaInteroperability/
-redirect_from: /docs/reference-manual/r/JavaInteroperability/
 ---
 # Interoperability with Java
 

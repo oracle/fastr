@@ -3,7 +3,6 @@ layout: docs-experimental
 toc_group: fastr
 link_title: GraalVM R Engine Performance
 permalink: /reference-manual/r/Performance/
-redirect_from: /docs/reference-manual/r/Performance/
 ---
 # Runtime Performance
 

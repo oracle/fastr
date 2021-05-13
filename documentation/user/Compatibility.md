@@ -3,7 +3,6 @@ layout: docs-experimental
 toc_group: fastr
 link_title: GraalVM R Engine Compatibility
 permalink: /reference-manual/r/Compatibility/
-redirect_from: /docs/reference-manual/r/Compatibility/
 ---
 # GraalVM R Runtime Compatibility
 

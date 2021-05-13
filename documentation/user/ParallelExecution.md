@@ -3,7 +3,6 @@ layout: docs-experimental
 toc_group: fastr
 link_title: Parallel Execution
 permalink: /reference-manual/r/ParallelExecution/
-redirect_from: /docs/reference-manual/r/ParallelExecution/
 ---
 # Parallel Execution
 

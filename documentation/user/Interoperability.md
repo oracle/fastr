@@ -3,7 +3,6 @@ layout: docs-experimental
 toc_group: fastr
 link_title: Interoperability
 permalink: /reference-manual/r/Interoperability/
-redirect_from: /docs/reference-manual/r/Interoperability/
 ---
 # Interoperability
 
