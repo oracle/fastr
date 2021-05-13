@@ -36,7 +36,7 @@ VERBOSE=--verbose
 endif
 
 FASTR_R_HOME = $(abspath $(TOPDIR)/..)
-R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
+R_VERSION = 4.0.3
 # The package tar balls are copied from $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended
 export GNUR_HOME_BINARY_UNPACKED = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
 
