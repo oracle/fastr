@@ -154,7 +154,7 @@ public enum RLocale {
                 if (c == null || l == null) {
                     localeSet = false;
                     if (startup) {
-                        RContext.getInstance().getConsole().printErrorln("Setting " + locale.name + " failed, using default");
+                        RContext.getInstance().getConsole().printErrorln("Setting " + locale.name + " to " + value + " failed, using default");
                     } else {
                         RError.warning(RError.SHOW_CALLER, Message.OS_REQUEST_LOCALE, value);
                     }
