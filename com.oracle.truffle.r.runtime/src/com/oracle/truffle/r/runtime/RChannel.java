@@ -80,8 +80,8 @@ public class RChannel {
      */
     private static final Semaphore create = new Semaphore(1, true);
 
-    private final ArrayBlockingQueue<Object> masterToClient = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-    private final ArrayBlockingQueue<Object> clientToMaster = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
+    private final ArrayBlockingQueue<Object> primaryToWorker = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
+    private final ArrayBlockingQueue<Object> workerToPrimary = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
 
     public static int createChannel(int key) {
         if (key <= 0) {
@@ -216,7 +216,7 @@ public class RChannel {
         Object msg = out.processOutgoingMessage(data);
         RChannel channel = getChannelFromId(id);
         try {
-            (id > 0 ? channel.masterToClient : channel.clientToMaster).put(msg);
+            (id > 0 ? channel.primaryToWorker : channel.workerToPrimary).put(msg);
         } catch (InterruptedException x) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error sending through the channel");
         }
@@ -225,7 +225,7 @@ public class RChannel {
     public static Object receive(int id) {
         RChannel channel = getChannelFromId(id);
         try {
-            ArrayBlockingQueue<Object> queue = id < 0 ? channel.masterToClient : channel.clientToMaster;
+            ArrayBlockingQueue<Object> queue = id < 0 ? channel.primaryToWorker : channel.workerToPrimary;
             int timeout = RContext.getInstance().getNonNegativeIntOption(ChannelReceiveTimeout);
             Object msg;
             if (timeout > 0) {
@@ -247,7 +247,7 @@ public class RChannel {
 
     public static Object poll(int id) {
         RChannel channel = getChannelFromId(id);
-        Object msg = (id < 0 ? channel.masterToClient : channel.clientToMaster).poll();
+        Object msg = (id < 0 ? channel.primaryToWorker : channel.workerToPrimary).poll();
         if (msg != null) {
             Input in = new Input();
             return in.processedReceivedMessage(msg);

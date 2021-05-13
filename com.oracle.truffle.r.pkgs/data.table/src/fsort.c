@@ -93,7 +93,7 @@ R_xlen_t *qsort_data;
 // would have liked to define cmp inside fsort where qsort is called but wasn't sure that's portable
 int qsort_cmp(const void *a, const void *b) {
   // return >0 if the element a goes after the element b
-  // doesn't master if stable or not
+  // doesn't matter if stable or not
   R_xlen_t x = qsort_data[*(int *)a];
   R_xlen_t y = qsort_data[*(int *)b];
   // return x-y;  would like this, but this is long and the cast to int return may not preserve sign
