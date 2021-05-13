@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,13 +44,14 @@ import java.util.TreeMap;
 
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.test.IgnoreOS;
+import com.oracle.truffle.r.test.IncludeList;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.TestBase.Context;
 import com.oracle.truffle.r.test.TestBase.Ignored;
 import com.oracle.truffle.r.test.TestBase.IgnoredJdk;
 import com.oracle.truffle.r.test.TestBase.Output;
 import com.oracle.truffle.r.test.TestTrait;
-import com.oracle.truffle.r.test.WhiteList;
+
 import static com.oracle.truffle.r.test.generate.RSession.USE_DEFAULT_TIMEOUT;
 
 /**
@@ -271,8 +272,8 @@ public class TestOutputManager {
                             case "Context":
                                 trait = Context.valueOf(traitParts[1]);
                                 break;
-                            case "WhiteList":
-                                trait = WhiteList.create(traitParts[1]);
+                            case "IncludeList":
+                                trait = IncludeList.create(traitParts[1]);
                                 break;
                             case "IgnoreOS":
                                 trait = IgnoreOS.valueOf(traitParts[1]);

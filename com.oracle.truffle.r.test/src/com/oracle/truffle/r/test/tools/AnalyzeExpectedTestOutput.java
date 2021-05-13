@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.SortedMap;
 
+import com.oracle.truffle.r.test.IncludeList;
 import com.oracle.truffle.r.test.TestBase.Output;
 import com.oracle.truffle.r.test.TestTrait;
-import com.oracle.truffle.r.test.WhiteList;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
 import com.oracle.truffle.r.test.generate.TestOutputManager.TestInfo;
 import com.oracle.truffle.r.test.library.base.TestSimpleValues;
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.test.library.base.TestSimpleValues;
  * Compares several "expected" test output files and reports differences. Typically used to
  * determine differences between operating system environments or R versions.
  *
- * When {@code --arith-whitelist} is set, the first file is taken as providing the definitive test
+ * When {@code --arith-includelist} is set, the first file is taken as providing the definitive test
  * output that will be used in unit tests, and the second file is assumed to be the FastR output.
  * This is intended to handle differences in binary arithmetic operations and generates a list of
  * entries of the form: "test, file 0 output, file 1 output" that can be plugged into
@@ -51,14 +51,14 @@ public class AnalyzeExpectedTestOutput {
             usage();
         }
         ArrayList<String> fileList = new ArrayList<>();
-        boolean arithWhiteList = false;
+        boolean arithIncludeList = false;
         int i = 0;
         while (i < args.length) {
             String arg = args[i];
             if (arg.startsWith("--")) {
                 // options maybe
-                if (arg.equals("--arith-whitelist")) {
-                    arithWhiteList = true;
+                if (arg.equals("--arith-includelist")) {
+                    arithIncludeList = true;
                 }
             } else {
                 fileList.add(arg);
@@ -74,19 +74,19 @@ public class AnalyzeExpectedTestOutput {
                 toms[i].readTestOutputFile();
             }
             // compare and report differences
-            ArrayList<WhiteListInfo> whiteListInfo = compare(toms, files);
+            ArrayList<IncludeListInfo> includeListInfo = compare(toms, files);
 
-            if (arithWhiteList) {
+            if (arithIncludeList) {
                 TestOutputManager fastrTOM = toms[1];
                 Map<String, String> fastrMap = fastrTOM.getRuntimeMap();
-                for (WhiteListInfo info : whiteListInfo) {
+                for (IncludeListInfo info : includeListInfo) {
                     String expected = info.expected.replace("\n", "\\n");
                     String fastr = fastrMap.get(info.test);
                     if (fastr != null && info.name.equals("arithmetic") && !expected.contains("Error")) {
                         fastr = fastr.replace("\n", "\\n");
                         if (!fastr.equals(expected)) {
                             String fastrExpected = fastrMap.get(info.test).replace("\n", "\\n");
-                            System.out.printf("WHITELIST.add(\"%s\", \"%s\", \"%s\");%n", info.test, fastrExpected, expected);
+                            System.out.printf("INCLUDE_LIST.add(\"%s\", \"%s\", \"%s\");%n", info.test, fastrExpected, expected);
                         }
                     }
                 }
@@ -96,12 +96,12 @@ public class AnalyzeExpectedTestOutput {
         }
     }
 
-    private static class WhiteListInfo {
+    private static class IncludeListInfo {
         private final String name;
         private final String test;
         private final String expected;
 
-        WhiteListInfo(String name, String test, String expected) {
+        IncludeListInfo(String name, String test, String expected) {
             this.name = name;
             this.test = test;
             this.expected = expected;
@@ -109,12 +109,12 @@ public class AnalyzeExpectedTestOutput {
     }
 
     private static void usage() {
-        System.out.println("usage: [-arith-whitelist] file1 file2");
+        System.out.println("usage: [--arith-includelist] file1 file2");
         System.exit(1);
     }
 
-    private static ArrayList<WhiteListInfo> compare(TestOutputManager[] toms, String[] files) {
-        ArrayList<WhiteListInfo> misMatchedTests = new ArrayList<>();
+    private static ArrayList<IncludeListInfo> compare(TestOutputManager[] toms, String[] files) {
+        ArrayList<IncludeListInfo> misMatchedTests = new ArrayList<>();
         // assume the maps ran on the same set of inputs and use toms[0] as iterator
         SortedMap<String, SortedMap<String, TestInfo>> m0 = toms[0].getTestMaps();
         ArrayList<SortedMap<String, SortedMap<String, TestInfo>>> subMaps = new ArrayList<>();
@@ -133,7 +133,7 @@ public class AnalyzeExpectedTestOutput {
                 String test = entrySet.getKey();
                 TestInfo testInfo = entrySet.getValue();
                 boolean misMatch = false;
-                WhiteList[] whiteLists = TestTrait.collect(testInfo.testTraits(), WhiteList.class);
+                IncludeList[] includeLists = TestTrait.collect(testInfo.testTraits(), IncludeList.class);
                 for (int i = 0; i < subMaps.size(); i++) {
                     Map<String, TestInfo> subMap = subMaps.get(i).get(m0EntryKey);
                     if (subMap == null) {
@@ -158,8 +158,8 @@ public class AnalyzeExpectedTestOutput {
                             System.out.println("file 0:");
                             System.out.println(testInfo.output);
                             // record the difference
-                            if (whiteLists.length != 0 && whiteLists[0].getName().equals("arithmetic")) {
-                                misMatchedTests.add(new WhiteListInfo("arithmetic", test, testInfo.output));
+                            if (includeLists.length != 0 && includeLists[0].getName().equals("arithmetic")) {
+                                misMatchedTests.add(new IncludeListInfo("arithmetic", test, testInfo.output));
                             }
                             misMatch = true;
                         }

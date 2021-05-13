@@ -22,7 +22,7 @@ package com.oracle.truffle.r.test.library.base;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.ArithmeticWhiteList;
+import com.oracle.truffle.r.test.ArithmeticIncludeList;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestSimpleArithmetic extends TestBase {
@@ -119,8 +119,8 @@ public class TestSimpleArithmetic extends TestBase {
     @Test
     public void testScalarsComplexIgnore() {
         assertEval("{ (1+2i)^(-2) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ ((1+0i)/(0+0i)) ^ (-3) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ ((1+1i)/(0+0i)) ^ (-3) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ ((1+0i)/(0+0i)) ^ (-3) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ ((1+1i)/(0+0i)) ^ (-3) }");
     }
 
     @Test
@@ -134,7 +134,7 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ x <- c(-1-2i,3+10i) ; y <- c(3+1i, -4+5i) ; y-x }");
         assertEval("{ (1+2i)^2 }");
         assertEval("{ (1+2i)^0 }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ 1/((1+0i)/(0+0i)) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ 1/((1+0i)/(0+0i)) }");
         assertEval("{ f <- function(a, b) { a + b } ; f(1+2i, 3+4i) ; f(1, 2) }");
         assertEval("{ f <- function(a, b) { a + b } ; f(2, 3+4i) ; f(1, 2) }");
         assertEval("{ f <- function(a, b) { a + b } ; f(1+2i, 3) ; f(1, 2) }");
@@ -148,7 +148,7 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ f <- function(b) { b / 2 } ; f(1+1i) ; f(1L)  }");
         assertEval("{ f <- function(a, b) { a / b } ; f(1,1) ; f(1,1L) ; f(2+1i,(1:2)[3]) }");
         assertEval("{ (0+2i)^0 }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ (1+2i) / ((0-1i)/(0+0i)) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ (1+2i) / ((0-1i)/(0+0i)) }");
         assertEval("{ (3+2i)^2 }");
         assertEval("{ x <- 1+2i; y <- 3+4i; round(x*x*y/(x+y), digits=5) }");
         assertEval("{ round( (1+2i)^(3+4i), digits=5 ) }");
@@ -169,17 +169,17 @@ public class TestSimpleArithmetic extends TestBase {
     public void testComplexNaNInfinity() {
         assertEval("{ 0^(-1+1i) }");
         assertEval("{ (0+0i)/(0+0i) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ (1+0i)/(0+0i) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ (0+1i)/(0+0i) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ (1+1i)/(0+0i) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ (-1+0i)/(0+0i) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ (-1-1i)/(0+0i) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ (1+0i)/(0+0i) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ (0+1i)/(0+0i) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ (1+1i)/(0+0i) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ (-1+0i)/(0+0i) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ (-1-1i)/(0+0i) }");
         assertEval("{ (1+2i) / ((0-0i)/(0+0i)) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ ((0+1i)/0) * ((0+1i)/0) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ ((0-1i)/0) * ((0+1i)/0) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ ((0-1i)/0) * ((0-1i)/0) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ ((0-1i)/0) * ((1-1i)/0) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ ((0-1i)/0) * ((-1-1i)/0) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ ((0+1i)/0) * ((0+1i)/0) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ ((0-1i)/0) * ((0+1i)/0) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ ((0-1i)/0) * ((0-1i)/0) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ ((0-1i)/0) * ((1-1i)/0) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ ((0-1i)/0) * ((-1-1i)/0) }");
         assertEval("{ 0/0 - 4i }");
         assertEval("{ 4i + 0/0  }");
         assertEval("{ a <- 1 + 2i; b <- 0/0 - 4i; a + b }");
@@ -413,9 +413,9 @@ public class TestSimpleArithmetic extends TestBase {
     @Test
     public void testUnaryMinusComplex() {
         assertEval("{ -(2+1i)  }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ -((0+1i)/0)  }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ -((1+0i)/0)  }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ -c((1+0i)/0,2) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ -((0+1i)/0)  }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ -((1+0i)/0)  }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ -c((1+0i)/0,2) }");
     }
 
     @Test
@@ -635,8 +635,8 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ as.raw(10) && \"hi\" }");
         assertEval("{ c(TRUE,FALSE) | logical() }");
         assertEval("{ logical() | c(TRUE,FALSE) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ as.raw(c(1,4)) | raw() }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ raw() | as.raw(c(1,4))}");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ as.raw(c(1,4)) | raw() }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ raw() | as.raw(c(1,4))}");
         assertEval("{ logical(0) || logical(0) }");
         assertEval("{ logical(0) || TRUE }");
         assertEval("{ logical(0) || FALSE }");
