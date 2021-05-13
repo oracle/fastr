@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,7 @@
 # questions.
 #
 
-# A script to install and optionally test packages (typically from CRAN), with a blacklist mechanism starting
-# from a known set of packages that we cannot handle, e.g. Rcpp (due to C++)
+# A script to install and optionally test packages (typically from CRAN)
 # By default all packages are candidates for installation, but this
 # can be limited in the following ways:
 #
@@ -48,16 +47,6 @@
 # The default value for --repos is "CRAN=http://cloud.r-project.org/"
 
 # Packages are installed into the directory specified by the --lib arg (or R_LIBS_USER env var)
-
-# By default, blacklisted packages nor their dependents will not be installed. The list of blacklisted
-# packages will be read from the file in the --blacklist-file arg (defaults to "package.blacklist"),
-# and will be created if necessary. The initial set of blacklisted packages are read from the file specified by
-# --initial-blacklist-file (defaults to "com.oracle.truffle.r.test.packages/initial.package.blacklist").
-# This is a DCF file with entries of the form:
-# Package: name
-# Reason: reason
-
-# The --ignore-blacklist option can be used to suppress the use of the blacklist.
 
 # The env var R_LIBS_USER or the option --lib must be set to the directory where the install should take place.
 # N.B. --lib works for installation. However, when running tests ( --run-tests), it does not and
@@ -115,8 +104,6 @@ usage <- function() {
 					  "[--cache-pkgs name=value,...]",
                       "[--verbose | -v] [-V] [--dryrun]",
                       "[--no-install | -n] ",
-				      "[--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
-					  "[--initial-blacklist-file file]",
 					  "[--random count]",
 					  "[--install-dependents-first]",
 					  "[--run-mode mode]",
@@ -249,53 +236,6 @@ install.order <- function(pkgs, pkg, choice, depth=0L) {
 	unname(result)
 }
 
-# blacklist is a vector of package (names) that are known to be uninstallable.
-# the result is a vector of new packages that depend/import/linkto any package on blacklist
-create.blacklist.with <- function(blacklist, iter) {
-	this.blacklist <- vector()
-
-	log.message("Iteration: ", iter, "\n\n", level = 2)
-	for (i in (1:length(avail.pkgs.rownames))) {
-		pkg <- avail.pkgs[i, ]
-		pkgName <- pkg["Package"]
-		if (!(pkgName %in% blacklist)) {
-			log.message("Processing: ", pkgName, "\n", level = 2)
-			all.deps = direct.depends(pkg)
-			log.message("all.deps for: ", pkgName," ", all.deps, "\n", level = 2)
-
-			match.result <- match(blacklist, all.deps, nomatch=0)
-			in.result <- match.result > 0
-			if (any(in.result)) {
-				log.output(function() {
-					names(all.deps) <- NULL
-					cat("adding: ", pkg["Package"], "to blacklist (", all.deps[match.result], ")\n")
-				}, level=1)
-				this.blacklist <- append(this.blacklist, pkg["Package"])
-			}
-		}
-	}
-
-	names(this.blacklist) <- NULL
-	this.blacklist
-}
-
-# iteratively adds to blacklist until no new blacklisted packages are found
-create.blacklist.iter <- function(blacklist) {
-	v <- if(is.null(blacklist)) character(0) else blacklist
-	result <-v
-	iter <- 1
-	while (length(v) > 0) {
-		v <- create.blacklist.with(result, iter)
-		result <- append(result, v)
-		iter <- iter + 1
-	}
-	result
-}
-
-create.blacklist <- function() {
-	create.blacklist.iter(rownames(initial.blacklist))
-}
-
 get.default.cran.mirror <- function() {
     default.cran.mirror.path <- file.path(R.home(), "etc", "DEFAULT_CRAN_MIRROR")
     tryCatch({
@@ -365,27 +305,6 @@ set.repos <- function() {
 		print(repos); cat('----\n')
 	}, level = 1)
 	options(repos = repos)
-}
-
-set.package.blacklist <- function() {
-	if (is.na(blacklist.file)) {
-	    # not set on command line
-		blacklist.file <<- "package.blacklist"
-	}
-	if (!create.blacklist.file && !ignore.blacklist) {
-		if (!file.exists(blacklist.file)) {
-			log.message.always("blacklist file", blacklist.file, "does not exist, creating\n")
-			create.blacklist.file <<- T
-		}
-	}
-}
-
-set.initial.package.blacklist <- function() {
-	if (is.na(initial.blacklist.file)) {
-		# not set on command line
-		initial.blacklist.file <<- file.path(this.package, "initial.package.blacklist")
-	}
-
 }
 
 # Scans the package installation directory for packages that installed
@@ -513,15 +432,11 @@ get.pkgs <- function() {
 	}
 
 	avail.pkgs.rownames <<- rownames(avail.pkgs)
-	# get/create the blacklist
-	blacklist <- get.blacklist()
 	if (use.installed.pkgs) {
 		installed.pkgs <- check.installed.pkgs()
 	} else {
 		installed.pkgs <- character()
 	}
-
-	in.blacklist <- function(x) x["Package"] %in% blacklist
 
 	in.filelist <- function(x)  x["Package"] %in% pkg.filelist
 
@@ -532,12 +447,12 @@ get.pkgs <- function() {
 	in.overrides <- function(x) FALSE
 
 	basic.exclude <- function(x, exclude.installed = T) {
-		in.blacklist(x) || ifelse(exclude.installed, in.installed(x), F)
+		ifelse(exclude.installed, in.installed(x), F)
 	}
 
 	set.match.fun <- function(exclude.installed = T) {
 		# either pkg.pattern is set or pkg.filelist but not both (checked earlier)
-		# if inverting, alter sense of the basic match but still exclude blacklist/installed
+		# if inverting, alter sense of the basic match
 		if (!is.na(pkg.filelistfile)) {
 			if (invert.pkgset) {
 				match.fun <- function(x) !in.filelist(x) && (in.overrides(x) || !basic.exclude(x, exclude.installed))
@@ -557,7 +472,6 @@ get.pkgs <- function() {
 	log.output(function() {
 		cat("Filtering the packages to install: invert.pkgset=", invert.pkgset, ", pkg.pattern=", pkg.pattern, ".\n")
 		cat("pkg.filelist:\n"); print(pkg.filelist)
-		cat("blacklist:\n"); print(blacklist)
 	}, level = 1)
 
 	matched.avail.pkgs <- apply(avail.pkgs, 1, match.fun)
@@ -714,15 +628,6 @@ install.suggests <- function(pkgnames) {
 			log.message("NOTE: ignoring suggested: ", paste(ignore, collapse=','))
 		}
 		if (length(suggests) > 0) {
-			if (is.fastr() && !ignore.blacklist) {
-				# no point in trying to install blacklisted packages (which are likely)
-				blacklist <- get.blacklist()
-				nsuggests <- suggests[!suggests %in% blacklist]
-				if (length(nsuggests) != length(suggests)) {
-					log.message("not installing Suggests of: ", pkgname, ", one or more is blacklisted: ", paste0(suggests[suggests %in% blacklist], collapse=","))
-					return()
-				}
-			}
 			dep.status <- install.status[suggests]
 			# three cases:
 			# 1. all TRUE: nothing to do all already installed ok
@@ -742,21 +647,6 @@ install.suggests <- function(pkgnames) {
 			}
 		}
 	}
-}
-
-get.blacklist <- function() {
-	if (create.blacklist.file) {
-		get.initial.package.blacklist()
-		blacklist <- create.blacklist()
-		writeLines(sort(blacklist), blacklist.file)
-	} else {
-		if (ignore.blacklist) {
-			blacklist <- character()
-		} else {
-			blacklist <- readLines(blacklist.file)
-		}
-	}
-	blacklist
 }
 
 is.important.package <- function(pkg.name, pkg.version) {
@@ -848,13 +738,6 @@ do.it <- function() {
 		}
 		log.message.always("END package tests\n")
 	}
-}
-
-# Should package "x" be included in the install?
-# No, if it is in the blacklist set (what about --ignore-blacklist?)
-# Nor if it is in ok.pkg.filelist (what does this achieve)
-include.package <- function(x, blacklist) {
-	return (!(x["Package"] %in% blacklist || x["Package"] %in% ok.pkg.filelist))
 }
 
 # Returns a vector (with names) containing the sizes of all 'fastr_errors*.log' files
@@ -997,14 +880,8 @@ parse.args <- function() {
 			install <<- F
 		} else if (a == "--dryrun" || a == "--dry-run") {
 			dry.run <<- T
-		} else if (a == "--create-blacklist") {
-			create.blacklist.file <<- T
 		} else if (a == "--ignore-blacklist") {
-			ignore.blacklist <<- T
-		} else if (a == "--blacklist-file") {
-			blacklist.file <<- get.argvalue()
-		} else if (a == "--initial-blacklist-file") {
-			initial.blacklist.file <<- get.argvalue()
+			# Silently ignore for backwards compatibility
 		} else if (a == "--repos") {
 			repo.list <<- strsplit(get.argvalue(), ",")[[1]]
 		} else if (a == "--cache-pkgs") {
@@ -1119,14 +996,10 @@ cat.args <- function() {
 	log.output(function() {
 		cat("tempdir:", tempdir(), "\n")
 		cat("cran.mirror:", cran.mirror, "\n")
-		cat("initial.blacklist.file:", initial.blacklist.file, "\n")
-		cat("blacklist.file:", blacklist.file, "\n")
 		cat("lib.install:", lib.install, "\n")
 		cat("install:", install, "\n")
 		cat("install.dependents.first:", install.dependents.first, "\n")
 		cat("dry.run:", dry.run, "\n")
-		cat("create.blacklist.file:", create.blacklist.file, "\n")
-		cat("ignore.blacklist:", ignore.blacklist, "\n")
 		cat("pkg.pattern:", pkg.pattern, "\n")
 		cat("random.count:", random.count, "\n")
 		cat("count.daily:", count.daily, "\n")
@@ -1214,15 +1087,6 @@ check.pkgfilelist <- function() {
 	}
 }
 
-get.initial.package.blacklist <- function() {
-	if (file.exists(initial.blacklist.file)) {
-		initial.blacklist <<- read.dcf(initial.blacklist.file)
-		rownames(initial.blacklist) <- initial.blacklist[, "Package"]
-	} else {
-		log.and.abort(initial.blacklist.file, "not found", status = 104)
-	}
-}
-
 do.find.top.pkgs <- function(n) {
     names <- if (n <= 100L) {
         do.find.top.cranlogs(n)
@@ -1304,8 +1168,6 @@ run.setup <- function() {
 	check.libs()
 	check.pkgfilelist()
 	set.repos()
-	set.initial.package.blacklist()
-	set.package.blacklist()
 	lib.install <<- normalizePath(lib.install)
 	.libPaths(c(.libPaths(), lib.install))
 	cat.args()
@@ -1373,8 +1235,6 @@ this.package <- dirname(curScriptDir)
 repo.list <- c("CRAN")
 pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L, sync=FALSE, mode="local", ignore="default"))
 cran.mirror <- NA
-blacklist.file <- NA
-initial.blacklist.file <- NA
 lib.install <- NA
 testdir <- "test"
 
@@ -1390,8 +1250,6 @@ dry.run <- F
 avail.pkgs <- NULL
 avail.pkgs.rownames <- NULL
 toinstall.pkgs <- NULL
-create.blacklist.file <- F
-ignore.blacklist <- F
 random.count <- NA
 count.daily <- NA
 install.mode <- "internal"
