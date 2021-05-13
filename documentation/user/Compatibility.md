@@ -1,12 +1,9 @@
 ---
 layout: docs-experimental
 toc_group: fastr
-title: GraalVM R Engine Compatibility
 link_title: GraalVM R Engine Compatibility
 permalink: /reference-manual/r/Compatibility/
 redirect_from: /docs/reference-manual/r/Compatibility/
-next: /en/graalvm/enterprise/{{ site.version }}/docs/reference-manual/r/ExtensionsSupport/
-previous: /en/graalvm/enterprise/{{ site.version }}/docs/reference-manual/r/
 ---
 # GraalVM R Runtime Compatibility
 

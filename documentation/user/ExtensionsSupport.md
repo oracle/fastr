@@ -1,12 +1,9 @@
 ---
 layout: docs-experimental
 toc_group: fastr
-title: R Extensions Support
 link_title: R Extensions Support
 permalink: /reference-manual/r/ExtensionsSupport/
 redirect_from: /docs/reference-manual/r/ExtensionsSupport/
-next: /en/graalvm/enterprise/{{ site.version }}/docs/reference-manual/r/Interoperability/
-previous: /en/graalvm/enterprise/{{ site.version }}/docs/reference-manual/r/Compatibility/
 ---
 # R Extensions Support
 
