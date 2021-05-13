@@ -54,7 +54,8 @@ public class TestBuiltin_read extends TestBase {
     @Test
     public void testReadDCFKeepWhiteSpaces() {
         assertEval(Output.IgnoreWarningMessage, template("{ f <- tempfile(); write(\"%0\", file=f); print(read.dcf(f)); unlink(f); }", new String[]{DCF_CONTENT}));
-        assertEval(Output.IgnoreWarningMessage, template("{ f <- tempfile(); write(\"%0\", file=f); print(read.dcf(f, keep.white=%1, all=FALSE)); unlink(f); }", new String[]{DCF_CONTENT}, KEEP_WHITE));
+        assertEval(Output.IgnoreWarningMessage,
+                        template("{ f <- tempfile(); write(\"%0\", file=f); print(read.dcf(f, keep.white=%1, all=FALSE)); unlink(f); }", new String[]{DCF_CONTENT}, KEEP_WHITE));
         assertEval(Output.IgnoreWarningMessage, template("{ f <- tempfile(); write(\"%0\", file=f); print(read.dcf(f, keep.white=%1, all=TRUE)); unlink(f); }", new String[]{DCF_CONTENT}, KEEP_WHITE));
     }
 

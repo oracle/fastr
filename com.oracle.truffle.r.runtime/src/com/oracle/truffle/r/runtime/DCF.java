@@ -32,10 +32,10 @@ import java.util.Set;
  * Control File</a>.
  *
  * Note that for the
- * <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file">
- * R DESCRIPTION file </a> it is not specified whether or not the whitespaces in fields values
- * (for multiline and continuation fields) should be retained. GNU-R 4.0.3 does retain the
- * whitespaces in the fields by default, therefore we also retain them.
+ * <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file"> R
+ * DESCRIPTION file </a> it is not specified whether or not the whitespaces in fields values (for
+ * multiline and continuation fields) should be retained. GNU-R 4.0.3 does retain the whitespaces in
+ * the fields by default, therefore we also retain them.
  *
  */
 public class DCF {
