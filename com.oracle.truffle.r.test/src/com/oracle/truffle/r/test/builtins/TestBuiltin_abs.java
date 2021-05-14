@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -22,7 +22,7 @@ package com.oracle.truffle.r.test.builtins;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.ArithmeticWhiteList;
+import com.oracle.truffle.r.test.ArithmeticIncludeList;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -151,8 +151,8 @@ public class TestBuiltin_abs extends TestBase {
         assertEval("{ abs(c(1, -2, 3)) }");
         assertEval("{ abs(c(1L, -2L, 3L)) }");
         assertEval("{ abs(c(1L, -2L, NA)) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ abs((-1-0i)/(0+0i)) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ abs((-0-1i)/(0+0i)) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ abs((-1-0i)/(0+0i)) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ abs((-0-1i)/(0+0i)) }");
         assertEval("{ abs(NA+0.1) }");
         assertEval("{ abs((0+0i)/0) }");
         assertEval("{ abs(c(1, -2, NA)) }");

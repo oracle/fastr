@@ -248,15 +248,15 @@ SEXP subsetDT(SEXP x, SEXP rows, SEXP cols) {
     {
       #pragma omp master
       // this thread and this thread only handles all the STRSXP and VECSXP columns, one by one
-      // it doesn't have to be master; the directive is just convenient.
+      // it doesn't have to be the main thread (omp master); the directive is just convenient.
       for (int i=0; i<LENGTH(cols); i++) {
         SEXP target = VECTOR_ELT(ans, i);
         if (isString(target) || isNewList(target))
           subsetVectorRaw(target, VECTOR_ELT(x, INTEGER(cols)[i]-1), rows, any0orNA);
       }
       #pragma omp for schedule(dynamic)
-      // slaves get on with the other non-STRSXP non-VECSXP columns at the same time.
-      // master may join in when it's finished, straight away if there are no STRSXP or VECSXP columns
+      // workers get on with the other non-STRSXP non-VECSXP columns at the same time.
+      // main thread may join in when it's finished, straight away if there are no STRSXP or VECSXP columns
       for (int i=0; i<LENGTH(cols); i++) {
         SEXP target = VECTOR_ELT(ans, i);
         if (!isString(target) && !isNewList(target))

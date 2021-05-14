@@ -64,12 +64,12 @@ newSHAREDnodes <- function(nnodes, debug, options = defaultClusterOptions) {
             channel <- .fastr.channel.createForkChannel(snow:::getClusterOption("port", options))
 
             startup <- substitute(local({
-                makeSHAREDmaster <- function(key) {
+                makeSHAREDprimary <- function(key) {
                     channel <- .fastr.channel.get(as.integer(key))
                     structure(list(channel=channel), class = "SHAREDnode")
                 }
                 snow:::sinkWorkerOutput(OUTFILE)
-                snow:::slaveLoop(makeSHAREDmaster(PORT))
+                snow:::slaveLoop(makeSHAREDprimary(PORT))
             }), list(OUTFILE=outfile, PORT=channel$port))
 		
             context_code[[i]] <- paste0(deparse(startup), collapse="\n")

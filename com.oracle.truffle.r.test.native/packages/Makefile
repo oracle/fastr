@@ -49,7 +49,7 @@ repo:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir || exit 1; \
 	done
-	(cd $(REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --slave -e "tools::write_PACKAGES('.', type='source')")
+	(cd $(REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --no-echo -e "tools::write_PACKAGES('.', type='source')")
 	ls -R $(REPO_DIR) || true
 	cat $(REPO_DIR)/PACKAGES || true
 

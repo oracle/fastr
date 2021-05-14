@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,11 +81,11 @@ import static com.oracle.truffle.r.test.generate.RSession.USE_DEFAULT_TIMEOUT;
  */
 class ChimneySweeping extends SingleBuiltinDiagnostics {
 
-    private final Set<String> blacklistedBuiltins = new HashSet<>();
+    private final Set<String> excludedBuiltins = new HashSet<>();
     {
-        blacklistedBuiltins.add(".dfltWarn");
-        blacklistedBuiltins.add("browser");
-        blacklistedBuiltins.add(".fastr.context.r");
+        excludedBuiltins.add(".dfltWarn");
+        excludedBuiltins.add("browser");
+        excludedBuiltins.add(".fastr.context.r");
     }
 
     private static final String TEST_PREFIX = "com.oracle.truffle.r.test.builtins.TestBuiltin_";
@@ -244,8 +244,8 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     public boolean diagnoseBuiltin() throws Exception {
         // super.diagnoseBuiltin();
 
-        if (blacklistedBuiltins.contains(builtinName)) {
-            print(1, "Builtin '" + builtinName + "' blacklisted for chimney-sweeping");
+        if (excludedBuiltins.contains(builtinName)) {
+            print(1, "Builtin '" + builtinName + "' excluded from chimney-sweeping");
         } else {
             sweepChimney();
         }

@@ -199,7 +199,7 @@ public class FrameFunctions {
                 return materialize ? frame.materialize() : frame;
             } else if (globalFrameProfile.profile(frameDepth == 0)) {
                 // Note: this is optimization and necessity, because in the case of invocation of R
-                // function from another "master" language, there will be no actual Truffle frame
+                // function from another "main" language, there will be no actual Truffle frame
                 // for global environment
                 return REnvironment.globalEnv().getFrame();
             } else {
