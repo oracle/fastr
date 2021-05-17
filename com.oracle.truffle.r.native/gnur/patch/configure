@@ -22468,7 +22468,7 @@ $as_echo "${BUILD_CC}" >&6; }
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for build R" >&5
 $as_echo_n "checking for build R... " >&6; }
   : ${BUILD_R=R}
-  if echo 'cat(R.home())'|"${BUILD_R}" --vanilla --slave >/dev/null 2>&1; then
+  if echo 'cat(R.home())'|"${BUILD_R}" --vanilla --no-echo>/dev/null 2>&1; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${BUILD_R}" >&5
 $as_echo "${BUILD_R}" >&6; }
   else

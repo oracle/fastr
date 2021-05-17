@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -22,7 +22,7 @@ package com.oracle.truffle.r.test.library.base;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.ArithmeticWhiteList;
+import com.oracle.truffle.r.test.ArithmeticIncludeList;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestSimpleComparison extends TestBase {
@@ -263,8 +263,8 @@ public class TestSimpleComparison extends TestBase {
         assertEval("{ NA > 1:3 }");
         assertEval("{ 2L > c(1L,NA,2L) }");
         assertEval("{ c(1L,NA,2L) < 2L }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ c(0/0+1i,2+1i) == c(1+1i,2+1i) }");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{ c(1+1i,2+1i) == c(0/0+1i,2+1i) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ c(0/0+1i,2+1i) == c(1+1i,2+1i) }");
+        assertEval(ArithmeticIncludeList.INCLUDE_LIST, "{ c(1+1i,2+1i) == c(0/0+1i,2+1i) }");
 
         assertEval(Output.IgnoreErrorContext, "{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
 

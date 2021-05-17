@@ -893,7 +893,7 @@ SEXP writefile(SEXP DFin,               // any list of same length vectors; e.g.
             // Although this ordered section is one-at-a-time it seems that calling Rprintf() here, even with a
             // R_FlushConsole() too, causes corruptions on Windows but not on Linux. At least, as observed so
             // far using capture.output(). Perhaps Rprintf() updates some state or allocation that cannot be done
-            // by slave threads, even when one-at-a-time. Anyway, made this single-threaded when output to console
+            // by worker threads, even when one-at-a-time. Anyway, made this single-threaded when output to console
             // to be safe (setDTthreads(1) in fwrite.R) since output to console doesn't need to be fast.
           } else {
             if (WRITE(f, buffer, (int)(ch-buffer)) == -1) {
@@ -906,7 +906,7 @@ SEXP writefile(SEXP DFin,               // any list of same length vectors; e.g.
             if (me==0 && showProgress && (now=time(NULL))>=next_time && !failed) {
               // See comments above inside the f==-1 clause.
               // Not only is this ordered section one-at-a-time but we'll also Rprintf() here only from the
-              // master thread (me==0) and hopefully this will work on Windows. If not, user should set
+              // main thread (me==0) and hopefully this will work on Windows. If not, user should set
               // showProgress=FALSE until this can be fixed or removed.
               int ETA = (int)((nrow-end)*(((double)(now-start_time))/end));
               if (hasPrinted || ETA >= 2) {
@@ -920,15 +920,15 @@ SEXP writefile(SEXP DFin,               // any list of same length vectors; e.g.
                 hasPrinted = TRUE;
               }
             }
-            // May be possible for master thread (me==0) to call R_CheckUserInterrupt() here.
+            // May be possible for main thread (me==0) to call R_CheckUserInterrupt() here.
             // Something like:
             // if (me==0) {
-            //   failed = TRUE;  // inside ordered here; the slaves are before ordered and not looking at 'failed'
+            //   failed = TRUE;  // inside ordered here; the workers are before ordered and not looking at 'failed'
             //   R_CheckUserInterrupt();
             //   failed = FALSE; // no user interrupt so return state
             // }
-            // But I fear the slaves will hang waiting for the master (me==0) to complete the ordered
-            // section which may not happen if the master thread has been interrupted. Rather than
+            // But I fear the workers will hang waiting for the main (me==0) to complete the ordered
+            // section which may not happen if the main thread has been interrupted. Rather than
             // seeing failed=TRUE and falling through to free() and close() as intended.
             // Could register a finalizer to free() and close() perhaps :
             // http://r.789695.n4.nabble.com/checking-user-interrupts-in-C-code-tp2717528p2717722.html

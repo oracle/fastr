@@ -75,7 +75,7 @@ public final class GridContext {
      * the {@link GridContext}. If the {@link RContext} is a child of existing context, the parent
      * {@link GridContext} is used to initialize this {@link GridContext}, which is problematic if
      * the parent did not load grid package, so this scenario is not supported yet. The grid package
-     * must be either loaded by the master context or not used.
+     * must be either loaded by the primary context or not used.
      */
     public static GridContext getContext(RContext rCtx) {
         return getContext(rCtx, true);

@@ -66,12 +66,12 @@ newSHAREDnodes <- function(nnodes, debug, options = defaultClusterOptions) {
             channel <- .fastr.channel.createForkChannel(parallel:::getClusterOption("port", options))
 
             startup <- substitute(local({
-                makeSHAREDmaster <- function(key) {
+                makeSHAREDprimary <- function(key) {
                     channel <- .fastr.channel.get(as.integer(key))
                     structure(list(channel=channel), class = "SHAREDnode")
                 }
                 parallel:::sinkWorkerOutput(OUTFILE)
-                parallel:::slaveLoop(makeSHAREDmaster(PORT))
+                parallel:::slaveLoop(makeSHAREDprimary(PORT))
             }), list(OUTFILE=outfile, PORT=channel$port))
 		
             context_code[[i]] <- paste0(deparse(startup), collapse="\n")

@@ -149,7 +149,7 @@ public class RStartParams {
         return this.quiet;
     }
 
-    public boolean noEcho() {
+    public boolean isNoEcho() {
         return noEcho;
     }
 

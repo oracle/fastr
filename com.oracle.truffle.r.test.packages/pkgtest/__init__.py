@@ -568,7 +568,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     N.B. That means that regardless of how the packages were specified to pkgtest
     we always use a --pkg-filelist' arg to GNU R
     '''
-    if (len(pkgs) == 0):
+    if len(pkgs) == 0:
         logging.info('No packages to install/test on GNU-R (install/test failed for all packages on FastR?)')
         return
 
@@ -588,7 +588,6 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
     args += ['--test-executable', get_gnur_rscript()]
-    args += ['--ignore-blacklist']
     args += ['--testdir', get_opts().gnur_testdir]
     log_step('BEGIN', 'install/test', 'GnuR')
 

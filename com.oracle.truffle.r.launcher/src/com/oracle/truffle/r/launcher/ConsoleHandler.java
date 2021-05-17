@@ -86,13 +86,13 @@ public abstract class ConsoleHandler {
                  * should be lazy, as these may not be necessary and can cause hangs if stdin has
                  * been redirected.
                  */
-                Supplier<ConsoleHandler> delegateFactory = useReadLine ? () -> createJLineConsoleHandler(inStream, outStream, rsp.noEcho())
+                Supplier<ConsoleHandler> delegateFactory = useReadLine ? () -> createJLineConsoleHandler(inStream, outStream, rsp.isNoEcho())
                                 : () -> new DefaultConsoleHandler(inStream, outStream, isInteractive);
                 useDelegatingWrapper.setDelegate(delegateFactory);
                 return useDelegatingWrapper;
             } else {
                 if (useReadLine) {
-                    return createJLineConsoleHandler(inStream, outStream, rsp.noEcho());
+                    return createJLineConsoleHandler(inStream, outStream, rsp.isNoEcho());
                 } else {
                     return new DefaultConsoleHandler(inStream, outStream, isInteractive);
                 }

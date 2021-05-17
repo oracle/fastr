@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -751,7 +751,7 @@ public class TestBase {
         if (!hasGeneratedOutput && generatingExpected()) {
             return true;
         }
-        WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
+        IncludeList[] includeLists = TestTrait.collect(traitsList, IncludeList.class);
         TestTraitsSet traits = new TestTraitsSet(traitsList);
         ContextKind contextKind = traits.context.contains(Context.NonShared) ? ContextKind.SHARE_NOTHING : ContextKind.SHARE_PARENT_RW;
         int index = 1;
@@ -763,7 +763,7 @@ public class TestBase {
                 ignoredInputCount++;
             } else {
                 String result = fastREval(input, contextKind, timeout, !traits.context.contains(Context.NoJavaInterop), useREPL);
-                CheckResult checkResult = checkResult(whiteLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
+                CheckResult checkResult = checkResult(includeLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
 
                 result = checkResult.result;
                 expected = checkResult.expected;
@@ -911,11 +911,11 @@ public class TestBase {
         }
     }
 
-    private CheckResult checkResult(WhiteList[] whiteLists, String input, String originalExpected, String originalResult, TestTraitsSet traits) {
+    private CheckResult checkResult(IncludeList[] includeLists, String input, String originalExpected, String originalResult, TestTraitsSet traits) {
         boolean ok;
         String result = originalResult;
         String expected = originalExpected;
-        if (expected.equals(result) || searchWhiteLists(whiteLists, input, expected, result, traits)) {
+        if (expected.equals(result) || searchIncludeLists(includeLists, input, expected, result, traits)) {
             ok = true;
             if (traits.containsError && !traits.output.contains(Output.IgnoreErrorMessage)) {
                 System.out.println("unexpected correct error message: " + getTestContext());
@@ -1017,14 +1017,14 @@ public class TestBase {
         return sb.toString();
     }
 
-    private boolean searchWhiteLists(WhiteList[] whiteLists, String input, String expected, String result, TestTraitsSet testTraits) {
-        if (whiteLists == null) {
+    private boolean searchIncludeLists(IncludeList[] includeLists, String input, String expected, String result, TestTraitsSet testTraits) {
+        if (includeLists == null) {
             return false;
         }
-        for (WhiteList list : whiteLists) {
-            WhiteList.Results wlr = list.get(input);
+        for (IncludeList list : includeLists) {
+            IncludeList.Results wlr = list.get(input);
             if (wlr != null) {
-                // Sanity check that "expected" matches the entry in the WhiteList
+                // Sanity check that "expected" matches the entry in the IncludeList
                 CheckResult checkedResult = checkResult(null, input, wlr.expected, expected, testTraits);
                 if (!checkedResult.ok) {
                     System.out.println("expected output does not match: " + wlr.expected + " vs. " + expected);
@@ -1298,7 +1298,7 @@ public class TestBase {
             @Override
             public void run() {
                 if (!generatingExpected()) {
-                    WhiteList.report();
+                    IncludeList.report();
                 }
                 if (!unexpectedSuccessfulMicroTests.isEmpty()) {
                     System.out.println("Unexpectedly successful tests:");

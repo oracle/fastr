@@ -671,7 +671,7 @@ public class TestSimpleVectors extends TestBase {
          * These tests, which should generate errors, appear to be non-deterministic in GnuR in the
          * error message produced. It is either "more elements supplied than there are to replace"
          * or some type-error, e.g. "incompatible types (from NULL to double) in [[ assignment". We
-         * could address this with a whitelist.
+         * could address this with an include-list.
          */
         assertEval(Output.IgnoreErrorMessage, "{ x<-c(1,2,3,4); dim(x)<-c(2,2); x[[1,1]]<-NULL; x }");
         assertEval(Output.IgnoreErrorMessage, "{ b<-as.list(3:5); dim(b) <- c(1,3) ; b[[c(1,2)]] <- NULL ; b }");

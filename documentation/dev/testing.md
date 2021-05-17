@@ -40,7 +40,7 @@ After adding, removing or altering units tests (including the `TestTrait` argume
 
 Test single package and visually compare the outputs using `meld` (look only at `*.preprocessed` files):
 
-    mx pkgtest --verbose --dump-preprocessed --cache-pkgs dir=/path/to/cache --ignore-blacklist --pkg-pattern ^MatrixModels$
+    mx pkgtest --verbose --dump-preprocessed --cache-pkgs dir=/path/to/cache --pkg-pattern ^MatrixModels$
     meld test.fastr test.gnur
 
 Run RFFI tests:
@@ -49,7 +49,7 @@ Run RFFI tests:
 
 Test all gated packages:
 
-    mx pkgtest --cache-pkgs dir=/path/to/cache --ignore-blacklist --pkg-filelist com.oracle.truffle.r.test.packages/gated
+    mx pkgtest --cache-pkgs dir=/path/to/cache --pkg-filelist com.oracle.truffle.r.test.packages/gated
 
 Build package cache beforehand:
 
@@ -115,10 +115,6 @@ The command has a rather daunting set of options but, for normal use, most of th
                    [--verbose | -v] [-V]
                    [--dryrun]
                    [--no-install | -n]
-                   [--create-blacklist]
-                   [--blacklist-file file]
-                   [--ignore-blacklist]
-                   [--initial-blacklist-file file]
                    [--install-dependents-first]
                    [--run-mode mode]
                    [--pkg-filelist file]
@@ -138,14 +134,6 @@ The command has a rather daunting set of options but, for normal use, most of th
 A single unkeyworded argument, i.e. `pattern` is interpreted as if it were `-pkg-pattern pattern`.
 
 Key concepts are discussed below.
-
-##### Package Blacklist
-
-There are many packages that cannot be installed due to either missing functionality or fundamental limitations in FastR and this set is seeded from a a DCF file, `initial.package.blacklist`, in the `com.oracle.truffle.r.test.packages` project. `install.packages` operates in two modes, either creating a complete blacklist from an initial blacklist or reading a previously created blacklist file. In the latter case, if the blacklist file does not exist, it will be created. The complete blacklist file can be specified in three ways:
-
-1. using the command line argument `--blacklist-file`; if omitted defaults to the file `package.blacklist`
-2. TODO
-3. TODO
 
 ##### CRAN Mirror
 Packages are downloaded and installed from the repos given by the `repos` argument, a comma-separated list of `name[=value]` pairs, 
@@ -172,7 +160,7 @@ Two options are designed to be used for a daily package testing run. These are b
 
 Finally, the `--invert-pkgset` option starts with the set from `available.packages()` and then subtracts the candidate set computed as described above and sets the candidate set to the result.
 
-N.B. By default the candidate set is always reduced by omitting any package in the package blacklist set, but this can be turned off by setting `--ignore-blacklist`. N.B. also that `--pkg-filelist` and `--pkg-pattern` are mutually exclusive.
+N.B.: `--pkg-filelist` and `--pkg-pattern` are mutually exclusive.
 
 ##### Installing Dependent Packages:
 `install.packages` installs the list of requested packages one by one. By default `utils::install.packages` always installs dependent packages, even if the dependent package has already been installed. This can be particularly wasteful if the package fails to install. Setting `--install-dependents-first` causes `install.packages` to analyse the dependents and install them one by one first, aborting the installation of the depending package if any fail.
@@ -198,7 +186,7 @@ Testing packages requires that they are first installed, so all of the above is 
     --verbose | -v: output tracing on basic steps
     -V: more verbose tracing
     --dry-run: output what would be installed but don't actually install
-    --no-install | -n: suppress installation phase (useful for --create blacklist and --run-tests)
+    --no-install | -n: suppress installation phase (useful for --run-tests)
     --random count: install count packages randomly chosen from the candidate set
     --testdir dir: store test output in dir (defaults to "test").
     --print-ok-installs: print the successfully installed packages
@@ -212,7 +200,7 @@ Testing packages requires that they are first installed, so all of the above is 
 
     $ mx installpkgs --pkg-pattern '^A3$'
 
-Install the `A3` package (and its dependents) in `$R_LIBS_USER`, creating the `package.blacklist` file first if it does not exist. The dependents (`xtable`, `pbapply`) will be installed implicitly by the  underlying R install.packages function
+Install the `A3` package (and its dependents) in `$R_LIBS_USER`. The dependents (`xtable`, `pbapply`) will be installed implicitly by the  underlying R install.packages function
 
     $ mx installpkgs --repos CRAN=file://path-to-local-cran-mirror --pkg-pattern '^A3$'
 
@@ -222,10 +210,6 @@ Similar to above but uses a local CRAN mirror stored in `path-to-local-cran-mirr
 
 Similar to the above but the dependents of A3 are explicitly installed first. This is equivalent to using `--pkg-filelist` file, where file would contain xtable, pbapply and A3 in that order.
 
-    $ mx installpkgs --create-blacklist --no-install
-
-Just (re)create the package blacklist file.
-
     $ mx installpkgs --pkg-filelist specific
 
 Install exactly those packages (and their dependents) specified, one per line, in the file `specific`.
@@ -234,9 +218,9 @@ Install exactly those packages (and their dependents) specified, one per line, i
 
 Install 100 randomly chosen packages that are not in the file `com.oracle.truffle.r.test.packages/ok.packages`.
 
-    $ mx installpkgs --ignore-blacklist '^Rcpp$'
+    $ mx installpkgs '^Rcpp$'
 
-Override the blacklist and attempt to install the `Rcpp` package. N.B. The regular expression prevents the installation of other packages beginning with `Rcpp`.
+Attempt to install the `Rcpp` package. N.B. The regular expression prevents the installation of other packages beginning with `Rcpp`.
 
 #### The mx pkgtest command
 
@@ -278,7 +262,7 @@ The API checksum must be provided because we do not want to rely on some R packa
 
 Run `mx pkgtest --cache-pkgs dir=<pkg-cache-dir>,size=<cache-size>`, e.g.
 ```
-mx pkgtest --cache-pkgs dir=/tmp/cache_dir --ignore-blacklist --pkg-pattern ^MatrixModels$
+mx pkgtest --cache-pkgs dir=/tmp/cache_dir --pkg-pattern ^MatrixModels$
 ```
 
 The `pkg-cache-dir` key specifies the directory of the cache (mandatory, no default).
