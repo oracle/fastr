@@ -241,7 +241,7 @@ public class RegExp {
     private static String removeWhiteSpaces(String string) {
         int idxOfWhiteSpace = indexOfWhiteSpace(string);
         assert idxOfWhiteSpace != -1;
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(string.length());
         for (int i = 0; i < string.length(); i++) {
             if (!isWhiteSpace(string.charAt(i))) {
                 sb.append(string.charAt(i));
