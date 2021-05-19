@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,12 @@ import java.util.Set;
  * Read/write a <a href="http://www.debian.org/doc/debian-policy/ch-controlfields.html">Debian
  * Control File</a>.
  *
+ * Note that for the
+ * <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file"> R
+ * DESCRIPTION file </a> it is not specified whether or not the whitespaces in fields values (for
+ * multiline and continuation fields) should be retained. GNU-R 4.0.3 does retain the whitespaces in
+ * the fields by default, therefore we also retain them.
+ *
  */
 public class DCF {
 
@@ -42,6 +48,9 @@ public class DCF {
             fieldMap.put(name, content);
         }
 
+        /**
+         * Note that values of fields may contain white spaces at the beginning or at the end.
+         */
         public LinkedHashMap<String, String> getFields() {
             return fieldMap;
         }
@@ -61,9 +70,13 @@ public class DCF {
             if (line.startsWith("#")) {
                 continue;
             }
-            final int wsLen = getWhiteSpaceHeadLength(line);
-            if (wsLen > 0) {
-                fieldContent.append('\n').append(line.substring(wsLen));
+            if (isContinuationLine(line)) {
+                assert fieldName != null;
+                if (shouldStripWhiteSpaceOfField(fieldName, keepWhiteSet)) {
+                    fieldContent.append('\n').append(line.trim());
+                } else {
+                    fieldContent.append('\n').append(line);
+                }
             } else {
                 // should start a field, finish off any current one
                 if (fieldName != null) {
@@ -92,14 +105,9 @@ public class DCF {
                 }
             }
         }
-        // end of the field for sure
         if (fieldName != null) {
-            boolean stripWhite = keepWhiteSet == null || !keepWhiteSet.contains(fieldName);
-            String fieldAsString = fieldContent.toString();
-            if (stripWhite) {
-                fieldAsString = fieldAsString.trim();
-            }
-            fields.add(fieldName, fieldAsString);
+            // Finish the last field
+            fields.add(fieldName, fieldContent.toString());
             result.paragraphs.add(fields);
         }
         return result;
@@ -107,6 +115,16 @@ public class DCF {
 
     public List<Fields> getRecords() {
         return paragraphs;
+    }
+
+    private static boolean isContinuationLine(String line) {
+        int wsLen = getWhiteSpaceHeadLength(line);
+        return wsLen > 0;
+    }
+
+    private static boolean shouldStripWhiteSpaceOfField(String fieldName, Set<String> keepWhiteSet) {
+        assert fieldName != null;
+        return keepWhiteSet == null || !keepWhiteSet.contains(fieldName);
     }
 
     private static int getWhiteSpaceHeadLength(String line) {

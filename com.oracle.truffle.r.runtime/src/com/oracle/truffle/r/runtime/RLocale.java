@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,7 +154,7 @@ public enum RLocale {
                 l = getLocale(value);
                 if ((c == null && l == null) || (l == null && locale.needsLocale)) {
                     if (startup) {
-                        RContext.getInstance().getConsole().printErrorln("Setting " + locale.name + " failed, using default");
+                        RContext.getInstance().getConsole().printErrorln("Setting " + locale.name + " to " + value + " failed, using default");
                     } else {
                         RError.warning(RError.SHOW_CALLER, Message.OS_REQUEST_LOCALE, value);
                     }

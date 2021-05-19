@@ -14,17 +14,17 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.builtins;
 
+import java.io.File;
+
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
-
-import java.io.File;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_listfiles extends TestBase {
@@ -62,6 +62,8 @@ public class TestBuiltin_listfiles extends TestBase {
 
         // TODO Why does GnuR not require the leading "." when Java does?
         assertEval("{ list.files(\"" + dirPath + "\", pattern=\".*.tx\") }");
+
+        assertEval("{ oldwd <- getwd(); setwd('" + dirPath + "'); print(list.files('subdir')); setwd(oldwd) } ");
     }
 
     @Test

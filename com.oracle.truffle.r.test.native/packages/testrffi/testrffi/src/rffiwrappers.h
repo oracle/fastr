@@ -292,6 +292,8 @@ SEXP api_exp_rand();
 
 SEXP api_Rf_classgets(SEXP x, SEXP y);
 
+SEXP api_EXTPTR_PTR(SEXP x);
+
 SEXP api_R_ExternalPtrAddr(SEXP x);
 
 SEXP api_R_ExternalPtrTag(SEXP x);
@@ -579,4 +581,6 @@ SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName
 SEXP api_Rf_isObject(SEXP x);
 
 SEXP api_R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env);
+
+SEXP api_R_removeVarFromFrame(SEXP sym, SEXP env);
 

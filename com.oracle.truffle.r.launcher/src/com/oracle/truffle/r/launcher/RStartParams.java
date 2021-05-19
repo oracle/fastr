@@ -132,10 +132,10 @@ public class RStartParams {
     /**
      * Used for R embedding, allows to alter some of the values.
      */
-    public void setParams(boolean quietA, boolean noEcho, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
+    public void setParams(boolean quietA, boolean noEchoA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
                     boolean loadInitFileA, boolean debugInitFileA, @SuppressWarnings("unused") int restoreActionA, @SuppressWarnings("unused") int saveActionA, boolean noRenvironA) {
         quiet = quietA;
-        this.noEcho = noEcho;
+        noEcho = noEchoA;
         interactive = interactiveA;
         verbose = verboseA;
         loadSiteFile = loadSiteFileA;

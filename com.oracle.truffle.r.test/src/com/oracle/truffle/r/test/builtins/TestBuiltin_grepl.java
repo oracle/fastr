@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -93,5 +93,23 @@ public class TestBuiltin_grepl extends TestBase {
         assertEval("{ .Internal(grepl('.+X', 'a\nXb', F, F, F, F, F, F)) }");
         // the dot matches the new line in a Perl regexp
         assertEval("{ .Internal(grepl('.+X', 'a\nXb', F, F, T, F, F, F)) }");
+    }
+
+    /**
+     * The following test tests an expected bug in GNU-R implementation: spaces after comma in
+     * quantifiers are ignored.
+     */
+    @Test
+    public void testSpacesInQuantifiers() {
+        assertEval("{ grepl('x{2,}', 'xxx', perl=FALSE) }");
+        assertEval("{ grepl('x{2,}', 'xxx', perl=TRUE) }");
+        assertEval("{ grepl('x{2, }', 'xxx', perl=FALSE) }");
+        assertEval("{ grepl('x{2, }', 'xxx', perl=TRUE) }");
+        // There may be arbitrarily many spaces in front of the closing bracket.
+        assertEval("{ grepl('x{2,    }', 'xxx', perl=FALSE) }");
+        assertEval("{ grepl('x{2,    }', 'xxx', perl=TRUE) }");
+        // This fails even on GNU-R.
+        assertEval(Output.IgnoreErrorMessage, "{ grepl('x{2,  3}', 'xxx', perl=FALSE) }");
+        assertEval("{ grepl('x{2,  3}', 'xxx', perl=TRUE) }");
     }
 }

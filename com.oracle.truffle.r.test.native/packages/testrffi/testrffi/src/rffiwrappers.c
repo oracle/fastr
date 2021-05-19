@@ -594,6 +594,10 @@ SEXP api_Rf_classgets(SEXP x, SEXP y) {
     return Rf_classgets(x, y);
 }
 
+SEXP api_EXTPTR_PTR(SEXP x) {
+    return ScalarInteger(EXTPTR_PTR(x));
+}
+
 SEXP api_R_ExternalPtrAddr(SEXP x) {
     return ScalarInteger(R_ExternalPtrAddr(x));
 }
@@ -1172,6 +1176,11 @@ SEXP api_Rf_isObject(SEXP x) {
 
 SEXP api_R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
     R_MakeActiveBinding(sym, fun, env);
+    return R_NilValue;
+}
+
+SEXP api_R_removeVarFromFrame(SEXP sym, SEXP env) {
+    R_removeVarFromFrame(sym, env);
     return R_NilValue;
 }
 
