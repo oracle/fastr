@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,20 +37,22 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
 public enum RLocale {
-    COLLATE(true, true),
-    CTYPE(true, true),
-    MONETARY(true, true),
-    NUMERIC(false, true),
-    TIME(true, true),
-    MESSAGES(true, true),
-    PAPER(false, false),
-    MEASUREMENT(false, false);
+    COLLATE(true, true, true),
+    CTYPE(false, true, true),
+    MONETARY(true, true, true),
+    NUMERIC(true, false, true),
+    TIME(true, true, true),
+    MESSAGES(true, true, true),
+    PAPER(false, false, false),
+    MEASUREMENT(false, false, false);
 
     private final String name;
+    private final boolean needsLocale;
     private final boolean initializedAtStartup;
     private final boolean listed;
 
-    RLocale(boolean initializedAtStartup, boolean listed) {
+    RLocale(boolean needsLocale, boolean initializedAtStartup, boolean listed) {
+        this.needsLocale = needsLocale;
         this.initializedAtStartup = initializedAtStartup;
         this.listed = listed;
         this.name = "LC_" + name();
@@ -138,21 +140,19 @@ public enum RLocale {
             return null;
         }
 
-        public boolean setLocale(RLocale locale, String value) {
-            return setLocale(locale, value, false);
+        public void setLocale(RLocale locale, String value) {
+            setLocale(locale, value, false);
         }
 
-        public boolean setLocale(RLocale locale, String value, boolean startup) {
+        public void setLocale(RLocale locale, String value, boolean startup) {
             Charset c = null;
             Locale l = null;
-            boolean localeSet = true;
             if ("C".equals(value) || "POSIX".equals(value)) {
                 c = StandardCharsets.US_ASCII;
             } else if (value != null) {
                 c = getCharset(value);
                 l = getLocale(value);
-                if (c == null || l == null) {
-                    localeSet = false;
+                if ((c == null && l == null) || (l == null && locale.needsLocale)) {
                     if (startup) {
                         RContext.getInstance().getConsole().printErrorln("Setting " + locale.name + " to " + value + " failed, using default");
                     } else {
@@ -162,7 +162,6 @@ public enum RLocale {
             }
             charsets.put(locale, c == null ? StandardCharsets.UTF_8 : c);
             locales.put(locale, l == null ? Locale.ROOT : l);
-            return localeSet;
         }
 
         public Charset getCharset(RLocale locale) {
