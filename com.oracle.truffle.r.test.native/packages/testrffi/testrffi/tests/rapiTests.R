@@ -261,3 +261,9 @@ assertEquals(rffi.test_RfMatch(c("x", "y"), "y"), 2L)
 assertEquals(rffi.test_RfMatch(c("x", "y"), "foo"), NA_integer_)
 assertEquals(rffi.test_RfMatch(c(), "foo"), NA_integer_)
 assertEquals(rffi.test_RfMatch(c(), c("foo", "bar")), c(NA_integer_, NA_integer_))
+
+# ----------------------------------------------------------------------------------------
+# Rf_mkChar should not be garbage collected
+gctorture(on = TRUE)
+assertEquals(rffi.test_mkCharDoesNotCollect(), "Hello-World")
+gctorture(on = FALSE)

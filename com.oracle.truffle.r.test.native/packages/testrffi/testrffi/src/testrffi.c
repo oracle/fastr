@@ -1184,3 +1184,20 @@ SEXP testInstallTrChar(SEXP strvec, SEXP env) {
 SEXP test_RfMatch(SEXP x, SEXP y) {
     return Rf_match(x, y, NA_INTEGER);
 }
+
+/**
+* Values returned by Rf_mkChar should not be garbage-collected even if they are not
+* protected. This behavior is assumed in, e.g., vctrs package version 0.3.6.
+* Make sure this test runs with `gctorture()`.
+*/
+SEXP test_mkCharDoesNotCollect() {
+    // Not protected on purpose
+    SEXP char_sxp = mkChar("Hello-World");
+    // Allocate some other object. With gctorture, char_sxp can be collected.
+    SEXP string = PROTECT(allocVector(STRSXP, 1));
+    // If char_sxp is collected, the following statement should throw an error.
+    SET_STRING_ELT(string, 0, char_sxp);
+
+    UNPROTECT(1);
+    return string;
+}
