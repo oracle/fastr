@@ -69,7 +69,7 @@ public abstract class RfAllocVectorNode extends FFIUpCallNode.Arg2 {
         }
     }
 
-    private static Object allocate(@Cached(value = "getType(mode)", allowUncached = true) SEXPTYPE type, int ni) {
+    private static Object allocate(SEXPTYPE type, int ni) {
         switch (type) {
             case INTSXP:
                 return RDataFactory.createIntVector(new int[ni], RDataFactory.COMPLETE_VECTOR);
