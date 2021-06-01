@@ -22,10 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
-
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
@@ -34,7 +30,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 @GenerateUncached
@@ -70,32 +65,6 @@ public abstract class RfAllocVectorNode extends FFIUpCallNode.Arg2 {
     }
 
     private static Object allocate(SEXPTYPE type, int ni) {
-        switch (type) {
-            case INTSXP:
-                return RDataFactory.createIntVector(new int[ni], RDataFactory.COMPLETE_VECTOR);
-            case REALSXP:
-                return RDataFactory.createDoubleVector(new double[ni], RDataFactory.COMPLETE_VECTOR);
-            case LGLSXP:
-                return RDataFactory.createLogicalVector(new byte[ni], RDataFactory.COMPLETE_VECTOR);
-            case STRSXP:
-                // fill list with empty strings
-                String[] data = new String[ni];
-                Arrays.fill(data, "");
-                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-            case CPLXSXP:
-                return RDataFactory.createComplexVector(new double[2 * ni], RDataFactory.COMPLETE_VECTOR);
-            case RAWSXP:
-                return RDataFactory.createRawVector(new byte[ni]);
-            case VECSXP:
-                return RDataFactory.createList(ni);
-            case LISTSXP:
-            case LANGSXP:
-                return RDataFactory.createPairList(ni, type);
-            case NILSXP:
-                return RNull.instance;
-            default:
-                CompilerDirectives.transferToInterpreter();
-                throw unimplemented("unexpected SEXPTYPE " + type);
-        }
+        return RDataFactory.createEmptyVectorFromSEXPType(type, ni);
     }
 }

@@ -267,3 +267,9 @@ assertEquals(rffi.test_RfMatch(c(), c("foo", "bar")), c(NA_integer_, NA_integer_
 gctorture(on = TRUE)
 assertEquals(rffi.test_mkCharDoesNotCollect(), "Hello-World")
 gctorture(on = FALSE)
+
+# ----------------------------------------------------------------------------------------
+# Rf_allocArray
+arr <- api.Rf_allocArray(13L, c(2L, 2L)) # INTSXP
+assertEquals(4, length(arr))
+assertEquals(c(2L, 2L), dim(arr))

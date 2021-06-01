@@ -88,4 +88,6 @@ public final class RFFIUpCallTargets {
     public volatile RootCallTarget AsS4;
 
     public volatile RootCallTarget Match5UpCallNode;
+
+    public volatile RootCallTarget RfAllocArrayNode;
 }
