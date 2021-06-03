@@ -23,8 +23,9 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import java.util.HashMap;
+import java.lang.ref.WeakReference;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -51,7 +52,7 @@ import java.nio.charset.StandardCharsets;
  */
 @ExportLibrary(InteropLibrary.class)
 public final class CharSXPWrapper extends RBaseObject {
-    private static final Map<String, CharSXPWrapper> instances = new HashMap<>(2048);
+    private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
     private String contents;
     private byte[] bytes;
@@ -169,16 +170,20 @@ public final class CharSXPWrapper extends RBaseObject {
     @TruffleBoundary
     private static CharSXPWrapper createNonNA(String contents, boolean intern) {
         assert !RRuntime.isNA(contents);
+        CharSXPWrapper cachedWrapper;
         CharSXPWrapper newWrapper = new CharSXPWrapper(contents);
         synchronized (instances) {
-            CharSXPWrapper cachedWrapper = instances.get(contents);
-            if (cachedWrapper != null) {
-                if (intern) {
-                    cachedWrapper.contents = contents;
+            WeakReference<CharSXPWrapper> wr = instances.get(newWrapper);
+            if (wr != null) {
+                cachedWrapper = wr.get();
+                if (cachedWrapper != null) {
+                    if (intern) {
+                        cachedWrapper.contents = contents;
+                    }
+                    return cachedWrapper;
                 }
-                return cachedWrapper;
             }
-            instances.put(contents, newWrapper);
+            instances.put(newWrapper, new WeakReference<>(newWrapper));
         }
         return newWrapper;
     }
