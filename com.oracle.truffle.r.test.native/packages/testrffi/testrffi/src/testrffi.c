@@ -1191,13 +1191,17 @@ SEXP test_RfMatch(SEXP x, SEXP y) {
 * Make sure this test runs with `gctorture()`.
 */
 SEXP test_mkCharDoesNotCollect() {
-    // Not protected on purpose
-    SEXP char_sxp = mkChar("Hello-World");
-    // Allocate some other object. With gctorture, char_sxp can be collected.
-    SEXP string = PROTECT(allocVector(STRSXP, 1));
-    // If char_sxp is collected, the following statement should throw an error.
-    SET_STRING_ELT(string, 0, char_sxp);
+    SEXP string_one = PROTECT(allocVector(STRSXP, 1));
+    SEXP char_sxp = mkChar("XX_YY");
+    // Should be OK, char_sxp cannot be collected yet
+    SET_STRING_ELT(string_one, 0, char_sxp);
+    // char_sxp should be transitivelly referenced from GC root
 
-    UNPROTECT(1);
-    return string;
+    // char_sxp can be potentially collected here.
+    SEXP string_two = PROTECT(allocVector(STRSXP, 1));
+    // If char_sxp is collected, the following statement throws an error.
+    SET_STRING_ELT(string_two, 0, char_sxp);
+
+    UNPROTECT(2);
+    return list2(string_one, string_two);
 }
