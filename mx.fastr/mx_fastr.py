@@ -767,7 +767,6 @@ def nativebuild(args):
 
 
 def mx_post_parse_cmd_line(opts):
-    mx_fastr_dists.mx_post_parse_cmd_line(opts)
     mx_subst.results_substitutions.register_no_arg('graalvm_version', mx.suite('sdk').release_version())
     if mx.suite("sulong", fatalIfMissing=False) and not _fastr_suite.isBinarySuite():
         # native.recommended runs FastR, it already has a build dependency to the FASTR distribution

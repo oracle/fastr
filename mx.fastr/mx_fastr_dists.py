@@ -144,37 +144,6 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         rscript_launcher = join(self.subject.dir, 'src', 'Rscript_launcher')
         self._template(rscript_launcher, join(bin_dir, 'Rscript'), template_dict)
 
-
-class FastRArchiveParticipant:
-    def __init__(self, dist):
-        self.dist = dist
-
-    def __opened__(self, arc, srcArc, services):
-        pass
-
-    def __add__(self, arcname, contents):  # pylint: disable=unexpected-special-method-signature
-        return False
-
-    def __addsrc__(self, arcname, contents):
-        return False
-
-    def __closing__(self):
-        if "FASTR_RELEASE" in self.dist.name:
-            assert isinstance(self.dist.deps[0], FastRReleaseProject)
-            release_project = self.dist.deps[0]
-            # the files copied in can be confused as source files by
-            # e.g., mx copyright, so delete them, specifically the
-            # include dir
-            include_dir = join(release_project.dir, 'include')
-            shutil.rmtree(include_dir)
-
-
-def mx_post_parse_cmd_line(opts):
-    for dist in _fastr_suite.dists:
-        if isinstance(dist, mx.JARDistribution):
-            dist.set_archiveparticipant(FastRArchiveParticipant(dist))
-
-
 def mx_register_dynamic_suite_constituents(register_project, register_distribution):
     fastr_release_distribution = mx.JARDistribution(
         suite=_fastr_suite,
