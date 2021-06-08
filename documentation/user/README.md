@@ -1,3 +1,9 @@
+---
+layout: docs-experimental
+toc_group: fastr
+link_title: R Reference
+permalink: /reference-manual/r/
+---
 # GraalVM R Runtime
 
 GraalVM provides a GNU-compatible R runtime to run R programs directly or in the REPL mode.

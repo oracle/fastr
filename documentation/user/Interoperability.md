@@ -1,3 +1,9 @@
+---
+layout: docs-experimental
+toc_group: fastr
+link_title: Interoperability
+permalink: /reference-manual/r/Interoperability/
+---
 # Interoperability
 
 GraalVM supports several other programming languages including JavaScript, Ruby, Python, and those that compile to LLVM bitcode.

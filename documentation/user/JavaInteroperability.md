@@ -1,3 +1,9 @@
+---
+layout: docs-experimental
+toc_group: fastr
+link_title: Interoperability with Java
+permalink: /reference-manual/r/JavaInteroperability/
+---
 # Interoperability with Java
 
 The GraalVM R runtime provides the built-in interoperability with Java.
