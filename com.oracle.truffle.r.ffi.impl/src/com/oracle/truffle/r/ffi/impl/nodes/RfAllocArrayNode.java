@@ -42,9 +42,9 @@ public abstract class RfAllocArrayNode extends FFIUpCallNode.Arg2 {
 
     @Specialization(guards = "mode == type.code", limit = "getGenericDataLibraryCacheSize()")
     protected static Object allocArrayCached(@SuppressWarnings("unused") int mode, RIntVector dims,
-                         @Cached(value = "getType(mode)", allowUncached = true) SEXPTYPE type,
-                         @CachedLibrary("dims.getData()") VectorDataLibrary dimsDataLib,
-                         @Cached SetDimAttributeNode setDimNode) {
+                    @Cached(value = "getType(mode)", allowUncached = true) SEXPTYPE type,
+                    @CachedLibrary("dims.getData()") VectorDataLibrary dimsDataLib,
+                    @Cached SetDimAttributeNode setDimNode) {
         CompilerAsserts.compilationConstant(type);
         return allocArray(dims, dimsDataLib, type, setDimNode);
     }
