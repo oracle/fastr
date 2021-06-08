@@ -26,17 +26,18 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RLogger;
-import com.oracle.truffle.r.runtime.context.RContext;
-
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
-import java.util.List;
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import org.graalvm.collections.EconomicMap;
 import org.graalvm.collections.MapCursor;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 
 /**
  * Support for logging R FFI.
@@ -80,6 +81,7 @@ public class RFFILog {
         log(message + " " + rObjectToDebugString(obj));
     }
 
+    @TruffleBoundary
     private static String rObjectToDebugString(Object obj) {
         Object mirror = obj instanceof RBaseObject ? ((RBaseObject) obj).getNativeMirror() : null;
         return String.format("[%s, native mirror: %s]", Utils.getDebugInfo(obj), mirror);
