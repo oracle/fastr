@@ -352,6 +352,43 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         return dataLib.getString(data, it, index);
     }
 
+    // CharSXP
+
+    @ExportMessage
+    public CharSXPWrapper[] getCharSXPDataCopy(@CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        assert getTargetType() == RType.Char || getTargetType() == RType.Character;
+        CharSXPWrapper[] result = new CharSXPWrapper[getLength(dataLib)];
+        SeqIterator it = dataLib.iterator(data);
+        while (dataLib.next(data, it)) {
+            result[it.getIndex()] = dataLib.getNextCharSXP(data, it);
+        }
+        return result;
+    }
+
+    @ExportMessage
+    public RStringCharSXPData materializeCharSXPStorage(@CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        assert getTargetType() == RType.Char || getTargetType() == RType.Character;
+        return new RStringCharSXPData(getCharSXPDataCopy(dataLib));
+    }
+
+    @ExportMessage
+    public CharSXPWrapper getCharSXPAt(int index,
+                        @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        return dataLib.getCharSXPAt(data, index);
+    }
+
+    @ExportMessage
+    public CharSXPWrapper getNextCharSXP(SeqIterator it,
+                        @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        return dataLib.getNextCharSXP(data, it);
+    }
+
+    @ExportMessage
+    public CharSXPWrapper getCharSXP(RandomAccessIterator it, int index,
+                        @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        return dataLib.getCharSXP(data, it, index);
+    }
+
     // List
 
     @ExportMessage
