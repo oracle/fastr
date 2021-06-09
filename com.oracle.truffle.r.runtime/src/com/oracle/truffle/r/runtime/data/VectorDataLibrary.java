@@ -150,6 +150,9 @@ public abstract class VectorDataLibrary extends Library {
      * Similarly to {@link #materialize(Object)}, returns an instance of object that implements
      * {@link VectorDataLibrary}. Moreover, the receiver should transform into an object containing
      * {@link CharSXPWrapper} data, if possible.
+     *
+     * If the result is the same as the {@code data}, it means that the receiver already has
+     * materialized CharSXP storage.
      * 
      * @see #materialize(Object)
      */

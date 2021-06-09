@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -52,6 +50,8 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
@@ -122,8 +122,7 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
         altStringVector.setAltRep();
         altStringVector.data = altStringVecData;
         // This is a workaround, because we already have to invoke some altrep methods in
-        // getLengthMethodUncached
-        // and for that we need non-null owner.
+        // getLengthMethodUncached and for that we need non-null owner.
         altStringVecData.setOwner(altStringVector);
         int length = AltrepUtilities.getLengthUncached(altStringVector);
         altStringVector.setData(altStringVecData, length);
@@ -390,7 +389,7 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
     public void setElement(int i, Object value) {
         assert value instanceof CharSXPWrapper;
         wrapStrings();
-        setWrappedDataAt(i, (CharSXPWrapper) value);
+        VectorDataLibrary.getFactory().getUncached().setCharSXPAt(data, i, (CharSXPWrapper) value);
     }
 
     /**
@@ -424,37 +423,17 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
      * wrapped.
      */
     @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
-    public void wrapStrings(ConditionProfile isNativized, ConditionProfile needsWrapping) {
+    public void wrapStrings(ConditionProfile isNativized, ConditionProfile isWrapped) {
         if (isNativized.profile(!isNativized())) {
-            Object oldData = data;
-            if (needsWrapping.profile(oldData instanceof RStringCharSXPData)) {
+            VectorDataLibrary dataLib = getUncachedDataLib();
+            Object newCharSXPData = dataLib.materializeCharSXPStorage(data);
+            if (isWrapped.profile(newCharSXPData == data)) {
                 return;
             }
-            oldData = getUncachedDataLib().materialize(oldData);
-            Object newData = ((RStringArrayVectorData) oldData).wrapStrings();
             fence = 42; // make sure the array is really initialized before we set it to this.data
-            setData(newData, getUncachedDataLib().getLength(newData));
+            setData(newCharSXPData, dataLib.getLength(newCharSXPData));
         }
         verifyData();
-    }
-
-    public CharSXPWrapper getWrappedDataAt(int index) {
-        if (!isNativized()) {
-            assert data instanceof RStringCharSXPData : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
-            return ((RStringCharSXPData) data).getWrappedAt(index);
-        } else {
-            return NativeDataAccess.getStringNativeMirrorData(getNativeMirror(), index);
-        }
-    }
-
-    public void setWrappedDataAt(int index, CharSXPWrapper elem) {
-        if (!isNativized()) {
-            wrapStrings();
-            assert data instanceof RStringCharSXPData : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
-            ((RStringCharSXPData) data).setWrappedAt(index, elem);
-        } else {
-            ((RStringVecNativeData) data).setWrappedStringAt(index, elem);
-        }
     }
 
     protected static RStringVector createStringVector(Object[] vecData, boolean isComplete, int[] dims) {

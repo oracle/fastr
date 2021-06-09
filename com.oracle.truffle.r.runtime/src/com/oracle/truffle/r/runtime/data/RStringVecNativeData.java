@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,11 @@ public class RStringVecNativeData implements TruffleObject {
     }
 
     @ExportMessage
+    public RStringVecNativeData materializeCharSXPStorage() {
+        return this;
+    }
+
+    @ExportMessage
     public boolean isWriteable() {
         return true;
     }
@@ -148,6 +153,21 @@ public class RStringVecNativeData implements TruffleObject {
         return NativeDataAccess.getData(vec, null, index);
     }
 
+    @ExportMessage
+    public CharSXPWrapper getCharSXPAt(int index) {
+        return data[index];
+    }
+
+    @ExportMessage
+    public CharSXPWrapper getNextCharSXP(SeqIterator it) {
+        return data[it.getIndex()];
+    }
+
+    @ExportMessage
+    public CharSXPWrapper getCharSXP(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
+        return data[index];
+    }
+
     // Write access to the elements:
 
     @ExportMessage
@@ -173,5 +193,20 @@ public class RStringVecNativeData implements TruffleObject {
     @ExportMessage
     public void setString(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, String value) {
         NativeDataAccess.setData(vec, data, index, CharSXPWrapper.create(value));
+    }
+
+    @ExportMessage
+    public void setCharSXPAt(int index, CharSXPWrapper value) {
+        data[index] = value;
+    }
+
+    @ExportMessage
+    public void setNextCharSXP(SeqWriteIterator it, CharSXPWrapper value) {
+        data[it.getIndex()] = value;
+    }
+
+    @ExportMessage
+    public void setCharSXP(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, CharSXPWrapper value) {
+        data[index] = value;
     }
 }

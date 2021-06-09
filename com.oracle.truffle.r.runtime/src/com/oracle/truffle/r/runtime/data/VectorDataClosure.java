@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -373,19 +373,19 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
 
     @ExportMessage
     public CharSXPWrapper getCharSXPAt(int index,
-                        @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+                    @CachedLibrary("this.data") VectorDataLibrary dataLib) {
         return dataLib.getCharSXPAt(data, index);
     }
 
     @ExportMessage
     public CharSXPWrapper getNextCharSXP(SeqIterator it,
-                        @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+                    @CachedLibrary("this.data") VectorDataLibrary dataLib) {
         return dataLib.getNextCharSXP(data, it);
     }
 
     @ExportMessage
     public CharSXPWrapper getCharSXP(RandomAccessIterator it, int index,
-                        @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+                    @CachedLibrary("this.data") VectorDataLibrary dataLib) {
         return dataLib.getCharSXP(data, it, index);
     }
 
