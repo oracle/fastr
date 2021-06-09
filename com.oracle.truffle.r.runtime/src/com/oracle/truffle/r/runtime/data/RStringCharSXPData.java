@@ -49,14 +49,6 @@ public class RStringCharSXPData implements ShareableVectorData {
         return data;
     }
 
-    public CharSXPWrapper getWrappedAt(int index) {
-        return data[index];
-    }
-
-    public void setWrappedAt(int index, CharSXPWrapper value) {
-        data[index] = value;
-    }
-
     @ExportMessage
     public NACheck getNACheck() {
         return NACheck.getEnabled();
