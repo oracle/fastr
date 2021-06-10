@@ -35,7 +35,7 @@ public abstract class SetStringEltNode extends FFIUpCallNode.Arg3 {
         return SetStringEltNodeGen.create();
     }
 
-    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    @Specialization
     Object doIt(RStringVector vector, long index, CharSXPWrapper element,
                     @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary dataLibrary) {
         Object newCharSXPData = dataLibrary.materializeCharSXPStorage(vector.getData());
