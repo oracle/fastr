@@ -51,7 +51,7 @@ class FastRProjectAdapter(mx.ArchivableProject):
 class FastRReleaseProject(FastRProjectAdapter):  # pylint: disable=too-many-ancestors
     '''
     Custom class for creating the FastR release project, which supports the
-    FASTR_RELEASE distribution.
+    FASTR_GRAALVM_RELEASE distribution.
     '''
     def __init__(self, suite, name, deps, workingSets, theLicense, **args):
         FastRProjectAdapter.__init__(self, suite, name, deps, workingSets, theLicense)
@@ -145,22 +145,6 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         self._template(rscript_launcher, join(bin_dir, 'Rscript'), template_dict)
 
 def mx_register_dynamic_suite_constituents(register_project, register_distribution):
-    fastr_release_distribution = mx.JARDistribution(
-        suite=_fastr_suite,
-        name="FASTR_RELEASE",
-        subDir=None,
-        path="mxbuild/dists/<os>/<arch>/fastr-release.jar",
-        sourcesPath=None,
-        deps=["com.oracle.truffle.r.release"],
-        mainClass=None,
-        excludedLibs=[],
-        distDependencies=[],
-        javaCompliance=None,
-        platformDependent=True,
-        theLicense=None
-    )
-    fastr_release_distribution.description = "a binary release of FastR"
-
     fastr_graalvm_release = mx.NativeTARDistribution(
         suite=_fastr_suite,
         name="FASTR_GRAALVM_RELEASE",
@@ -170,11 +154,8 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
         platformDependent=True,
         theLicense=None,
         relpath=True,
-        output=None,
-        overlaps=["FASTR_RELEASE"]
+        output=None
     )
-
-    register_distribution(fastr_release_distribution)
     register_distribution(fastr_graalvm_release)
 
 
