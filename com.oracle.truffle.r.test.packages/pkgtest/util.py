@@ -21,15 +21,15 @@
 # questions.
 #
 
-import logging
 import argparse
 import hashlib
+import logging
+import os
 import subprocess
 import sys
-import os
 import tempfile
-from os.path import join
 from datetime import datetime
+from os.path import join
 
 fastr_default_testdir = 'test.fastr'
 gnur_default_testdir = 'test.gnur'
@@ -249,7 +249,9 @@ def computeApiChecksum(includeDir):
     for fileName in fileList:
         try:
             with open(fileName) as f:
-                m.update(f.read().encode())
+                fileContent = f.read().encode()
+                m.update(fileContent)
+                logging.log(VERY_VERBOSE, f"{m.hexdigest()} is checksum after updating with {fileName}")
         except IOError as e:
             # Ignore errors on broken symlinks
             if not os.path.islink(fileName) or os.path.exists(fileName):
