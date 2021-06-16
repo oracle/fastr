@@ -251,7 +251,7 @@ def computeApiChecksum(includeDir):
             with open(fileName) as f:
                 fileContent = f.read().encode()
                 m.update(fileContent)
-                logging.log(VERY_VERBOSE, f"{m.hexdigest()} is checksum after updating with {fileName}")
+                logging.log(VERY_VERBOSE, "{0} is checksum after updating with {1}".format(m.hexdigest(), fileName))
         except IOError as e:
             # Ignore errors on broken symlinks
             if not os.path.islink(fileName) or os.path.exists(fileName):

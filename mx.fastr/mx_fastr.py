@@ -899,7 +899,7 @@ def build_binary_pkgs(args_in, **kwargs):
     finally:
         sys.stdout = sys.__stdout__
     checksum_lines = string_io.getvalue().splitlines(keepends=False)
-    mx.log(f"===== Output of 'mx r-pkgcache --print-api-checksum --vm fastr': =====")
+    mx.log("===== Output of 'mx r-pkgcache --print-api-checksum --vm fastr': =====")
     mx.log(string_io.getvalue())
     mx.log("===== End of output of 'mx r-pkgcache --print-api-checksum --vm fastr' =====")
     with open(os.path.join(pkgs_path, 'api-checksum.txt'), 'w') as f:
