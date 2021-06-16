@@ -900,7 +900,7 @@ def build_binary_pkgs(args_in, **kwargs):
         sys.stdout = sys.__stdout__
     with open(os.path.join(pkgs_path, 'api-checksum.txt'), 'w') as f:
         checksum = string_io.getvalue().splitlines(keepends=False)[-1]
-        print(checksum, f)
+        f.write(checksum)
     # creates the tarball
     result_tarball = os.path.join(dest_dir, pkgs_name + '.tar.gz')
     with tarfile.open(result_tarball, "w:gz") as tar:
