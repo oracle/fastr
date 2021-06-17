@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
-public class RIntArrayVectorData implements TruffleObject {
+public class RIntArrayVectorData implements TruffleObject, ShareableVectorData {
     private final int[] data;
     private boolean complete;
 

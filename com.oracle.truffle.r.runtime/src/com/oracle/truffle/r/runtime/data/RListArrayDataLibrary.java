@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(value = VectorDataLibrary.class, receiverType = Object[].class)
-public class RListArrayDataLibrary {
+public class RListArrayDataLibrary implements ShareableVectorData {
     @ExportMessage
     public static NACheck getNACheck(@SuppressWarnings("unused") Object[] receiver) {
         return NACheck.getEnabled();

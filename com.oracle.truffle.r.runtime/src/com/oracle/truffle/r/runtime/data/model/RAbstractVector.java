@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.ShareableVectorData;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataWithOwner;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
@@ -93,8 +94,14 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
             // "setOwner" may be a message in the VectorDataLibrary to make this fast
             ((VectorDataWithOwner) data).setOwner(this);
         }
-        // temporary solution to keep isShareable() fast
-        shareable = VectorDataLibrary.getFactory().getUncached().isWriteable(data);
+        // TODO: This is a temporary hack, we should implement this with appropriate messages in
+        // VectorDataLibrary. See GR-28570.
+        if (data instanceof ShareableVectorData || (this instanceof RList && data instanceof Object[])) {
+            shareable = true;
+        } else {
+            shareable = false;
+        }
+        assert shareable == VectorDataLibrary.getFactory().getUncached().isWriteable(data);
         verifyData();
     }
 

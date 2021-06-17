@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
-public class RRawNativeVectorData implements TruffleObject {
+public class RRawNativeVectorData implements TruffleObject, ShareableVectorData {
     // We need the vector, so that we can easily use the existing NativeDataAccess methods
     // TODO: this field should be replaced with address/length fields and
     // the address/length fields and logic should be removed from NativeMirror

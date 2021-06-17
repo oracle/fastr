@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
-class RRawArrayVectorData implements TruffleObject {
+class RRawArrayVectorData implements TruffleObject, ShareableVectorData {
     private final byte[] data;
 
     RRawArrayVectorData(byte[] data) {
