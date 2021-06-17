@@ -898,9 +898,13 @@ def build_binary_pkgs(args_in, **kwargs):
         pkgcache(['--print-api-checksum', '--vm', 'fastr'])
     finally:
         sys.stdout = sys.__stdout__
+    checksum_lines = string_io.getvalue().splitlines(keepends=False)
+    mx.log("===== Output of 'mx r-pkgcache --print-api-checksum --vm fastr': =====")
+    mx.log(string_io.getvalue())
+    mx.log("===== End of output of 'mx r-pkgcache --print-api-checksum --vm fastr' =====")
     with open(os.path.join(pkgs_path, 'api-checksum.txt'), 'w') as f:
-        checksum = string_io.getvalue().splitlines(keepends=False)[-1]
-        print(checksum, f)
+        checksum = checksum_lines[-1]
+        f.write(checksum + "\n")
     # creates the tarball
     result_tarball = os.path.join(dest_dir, pkgs_name + '.tar.gz')
     with tarfile.open(result_tarball, "w:gz") as tar:
