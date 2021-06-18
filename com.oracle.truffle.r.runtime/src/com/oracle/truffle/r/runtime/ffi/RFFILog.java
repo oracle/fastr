@@ -124,6 +124,7 @@ public class RFFILog {
         }
     }
 
+    @TruffleBoundary
     private static void logNativeObjects() {
         logPreserveList();
         logProtectStack();
