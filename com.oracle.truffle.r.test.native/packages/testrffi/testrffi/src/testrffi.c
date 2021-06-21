@@ -1186,10 +1186,11 @@ SEXP test_RfMatch(SEXP x, SEXP y) {
 }
 
 /**
-* Values returned by Rf_mkChar should not be garbage-collected even if they are not
-* protected. This behavior is assumed in, e.g., vctrs package version 0.3.6.
-* Make sure this test runs with `gctorture()`.
-*/
+ * Values returned by Rf_mkChar must not be garbage-collected when they are referenced
+ * from some STRSXP vector.
+ * This behavior is assumed in, e.g., vctrs package version 0.3.6.
+ * Make sure this test runs with `gctorture()`.
+ */
 SEXP test_mkCharDoesNotCollect() {
     SEXP string_one = PROTECT(allocVector(STRSXP, 1));
     SEXP char_sxp = mkChar("XX_YY");
@@ -1197,7 +1198,7 @@ SEXP test_mkCharDoesNotCollect() {
     SET_STRING_ELT(string_one, 0, char_sxp);
     // char_sxp should be transitivelly referenced from GC root
 
-    // char_sxp can be potentially collected here.
+    // char_sxp must not be collected here.
     SEXP string_two = PROTECT(allocVector(STRSXP, 1));
     // If char_sxp is collected, the following statement throws an error.
     SET_STRING_ELT(string_two, 0, char_sxp);

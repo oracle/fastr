@@ -27,24 +27,34 @@ replace_nth_str <- function(str, i, replacement) {
     stopifnot(is.character(str) && length(str) > 0)
     stopifnot(is.integer(i) && length(i) == 1)
     stopifnot(is.character(replacement) && length(replacement) == 1)
-    .Call("replace_nth_str", str, i, replacement)
+    .Call("charsxp_replace_nth_str", str, i, replacement)
 }
 
 # Returns n-th element from `str`.
 nth_str <- function(str, i) {
     stopifnot(is.character(str) && length(str) > 0)
     stopifnot(is.integer(i) && length(i) == 1)
-    .Call("nth_str", str, i)
+    .Call("charsxp_nth_str", str, i)
 }
 
 create_empty_str <- function(i) {
     stopifnot(is.integer(i) && length(i) == 1)
-    .Call("create_empty_str", i)
+    .Call("charsxp_create_empty_str", i)
+}
+
+revert_via_elt <- function(str) {
+    stopifnot(is.character(str))
+    .Call("charsxp_revert_via_elt", str)
+}
+
+revert_via_dataptr <- function(str) {
+    stopifnot(is.character(str))
+    .Call("charsxp_revert_via_dataptr", str)
 }
 
 # Rest of the native tests
 run_all_native_tests <- function() {
-    .Call("str_tests")
+    .Call("charsxp_tests")
 }
 
 s <- c("a", "b", "c")
@@ -70,6 +80,25 @@ replace_nth_str(s, 1L, "Y")
 stopifnot(s == c("X", "Y", ""))
 s[3] <- "Z"
 stopifnot(s == c("X", "Y", "Z"))
+
+# Create a vector in R and revert it in native.
+s <- c("a", "b", "c", "d")
+revert_via_elt(s)
+stopifnot(s == c("d", "c", "b", "a"))
+revert_via_dataptr(s)
+stopifnot(s == c("a", "b", "c", "d"))
+
+# Create a vector in native, modify it in R, and revert it in native.
+s <- create_empty_str(3L)
+s[1] <- "X"
+s[2] <- "Y"
+s[3] <- "Z"
+stopifnot(s == c("X", "Y", "Z"))
+revert_via_dataptr(s)
+stopifnot(s == c("Z", "Y", "X"))
+revert_via_elt(s)
+stopifnot(s == c("X", "Y", "Z"))
+
 
 # Run rest of the native tests
 run_all_native_tests()
