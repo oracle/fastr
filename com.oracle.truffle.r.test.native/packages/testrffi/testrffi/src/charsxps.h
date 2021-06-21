@@ -22,7 +22,9 @@
  */
 #include <Rinternals.h>
 
-SEXP replace_nth_str(SEXP str, SEXP n, SEXP replacement);
-SEXP nth_str(SEXP str, SEXP n);
-SEXP create_empty_str(SEXP n);
-SEXP str_tests();
+SEXP charsxp_replace_nth_str(SEXP str, SEXP n, SEXP replacement);
+SEXP charsxp_nth_str(SEXP str, SEXP n);
+SEXP charsxp_create_empty_str(SEXP n);
+SEXP charsxp_revert_via_elt(SEXP str);
+SEXP charsxp_revert_via_dataptr(SEXP str);
+SEXP charsxp_tests();
