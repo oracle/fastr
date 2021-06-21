@@ -151,13 +151,15 @@ public abstract class VectorDataLibrary extends Library {
      * {@link VectorDataLibrary}. Moreover, the receiver should transform into an object containing
      * {@link CharSXPWrapper} data, if possible.
      *
+     * Must be implemented when {@code getType() == Character}.
+     *
      * If the result is the same as the {@code data}, it means that the receiver already has
      * materialized CharSXP storage.
      * 
      * @see #materialize(Object)
      */
-    public Object materializeCharSXPStorage(Object data) {
-        return null;
+    public Object materializeCharSXPStorage(Object data) throws UnsupportedMessageException {
+        throw UnsupportedMessageException.create();
     }
 
     /**
@@ -1058,15 +1060,15 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     public void setCharSXPAt(Object receiver, int index, CharSXPWrapper value) {
-        throw notWriteableError(receiver, "setStringAt");
+        throw notWriteableError(receiver, "setCharSXPAt");
     }
 
     public void setNextCharSXP(Object receiver, SeqWriteIterator it, CharSXPWrapper value) {
-        throw notWriteableError(receiver, "setNextString");
+        throw notWriteableError(receiver, "setNextCharSXP");
     }
 
     public void setCharSXP(Object receiver, RandomAccessWriteIterator it, int index, CharSXPWrapper value) {
-        throw notWriteableError(receiver, "setString");
+        throw notWriteableError(receiver, "setCharSXP");
     }
 
     private final ConditionProfile emptyStringProfile = ConditionProfile.createBinaryProfile();
@@ -1699,9 +1701,11 @@ public abstract class VectorDataLibrary extends Library {
         @Override
         public Object materializeCharSXPStorage(Object data) {
             verifyIfSlowAssertsEnabled(data);
-            Object result = delegate.materializeCharSXPStorage(data);
-            if (result == null) {
-                throw RInternalError.shouldNotReachHere("materializeCharSXPStorage message not implemented for " + delegate.toString());
+            Object result = null;
+            try {
+                result = delegate.materializeCharSXPStorage(data);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
             }
             assert result != null;
             return result;
