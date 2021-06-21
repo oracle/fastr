@@ -1121,34 +1121,8 @@ public final class NativeDataAccess {
         }
     }
 
-    static String getData(RStringVector vector, Object data, int index) {
-        if (noStringNative.isValid() || data != null) {
-            Object localData = data;
-            if (localData instanceof String[]) {
-                return ((String[]) localData)[index];
-            }
-            assert data instanceof CharSXPWrapper[] : localData;
-            assert ((CharSXPWrapper[]) localData)[index] != null;
-            return ((CharSXPWrapper[]) localData)[index].getContents();
-        } else {
-            return getStringNativeMirrorData(vector.getNativeMirror(), index).getContents();
-        }
-    }
-
-    static void setData(RStringVector vector, Object data, int index, String value) {
-        assert data != null;
-        if (data instanceof String[]) {
-            assert !vector.isNativized();
-            ((String[]) data)[index] = value;
-        } else {
-            assert data instanceof CharSXPWrapper[] : data;
-            CharSXPWrapper elem = CharSXPWrapper.create(value);
-            ((CharSXPWrapper[]) data)[index] = elem;
-
-            if (!noStringNative.isValid() && vector.isNativized()) {
-                NativeDataAccess.setNativeMirrorStringData(vector.getNativeMirror(), index, elem);
-            }
-        }
+    static CharSXPWrapper getData(RStringVector vector, int index) {
+        return getStringNativeMirrorData(vector.getNativeMirror(), index);
     }
 
     static void setData(RStringVector vector, CharSXPWrapper[] data, int index, CharSXPWrapper value) {
