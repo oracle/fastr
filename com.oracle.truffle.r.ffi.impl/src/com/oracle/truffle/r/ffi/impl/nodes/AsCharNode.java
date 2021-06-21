@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
@@ -60,7 +61,12 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
         if (zeroLengthProfile.profile(obj.getLength() == 0)) {
             return CharSXPWrapper_NA;
         } else {
-            Object newCharSXPData = dataLib.materializeCharSXPStorage(obj.getData());
+            Object newCharSXPData = null;
+            try {
+                newCharSXPData = dataLib.materializeCharSXPStorage(obj.getData());
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
             obj.setData(newCharSXPData);
             CharSXPWrapper result = dataLib.getCharSXPAt(obj.getData(), 0);
             return naProfile.profile(RRuntime.isNA(result.getContents())) ? CharSXPWrapper_NA : result;

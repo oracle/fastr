@@ -426,7 +426,12 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
     public void wrapStrings(ConditionProfile isNativized, ConditionProfile isWrapped) {
         if (isNativized.profile(!isNativized())) {
             VectorDataLibrary dataLib = getUncachedDataLib();
-            Object newCharSXPData = dataLib.materializeCharSXPStorage(data);
+            Object newCharSXPData = null;
+            try {
+                newCharSXPData = dataLib.materializeCharSXPStorage(data);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
             if (isWrapped.profile(newCharSXPData == data)) {
                 return;
             }

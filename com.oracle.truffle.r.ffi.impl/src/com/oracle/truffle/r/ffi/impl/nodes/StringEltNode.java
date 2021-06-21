@@ -25,8 +25,10 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
@@ -40,7 +42,12 @@ public abstract class StringEltNode extends FFIUpCallNode.Arg2 {
     Object doStringVector(RStringVector stringVector, long index,
                     @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary genericDataLib,
                     @CachedLibrary("stringVector.getData()") VectorDataLibrary stringVecDataLib) {
-        Object newCharSXPData = stringVecDataLib.materializeCharSXPStorage(stringVector.getData());
+        Object newCharSXPData = null;
+        try {
+            newCharSXPData = stringVecDataLib.materializeCharSXPStorage(stringVector.getData());
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
         stringVector.setData(newCharSXPData);
         if (index > Integer.MAX_VALUE) {
             CompilerDirectives.transferToInterpreter();
