@@ -356,13 +356,30 @@ public final class FastRSession implements RSession {
         return getField(value, "receiver");
     }
 
-    // Copied from ReflectionUtils.
-    // TODO we need better support to access the TruffleObject in Value
+    /**
+     * Finds given field from the class of {@code value} or from its super classes and return its
+     * value. Throws {@link AssertionError} if not found.
+     * 
+     * @return Value of the field. TODO we need better support to access the TruffleObject in Value
+     */
     private static Object getField(Object value, String name) {
         try {
-            Field f = value.getClass().getDeclaredField(name);
-            setAccessible(f, true);
-            return f.get(value);
+            Field field = null;
+            Class<?> klazz = value.getClass();
+            while (klazz != null) {
+                try {
+                    field = klazz.getDeclaredField(name);
+                } catch (NoSuchFieldException e) {
+                    // noop
+                }
+                if (field != null) {
+                    break;
+                }
+                klazz = klazz.getSuperclass();
+            }
+            assert field != null;
+            setAccessible(field, true);
+            return field.get(value);
         } catch (Exception e) {
             throw new AssertionError(e);
         }
