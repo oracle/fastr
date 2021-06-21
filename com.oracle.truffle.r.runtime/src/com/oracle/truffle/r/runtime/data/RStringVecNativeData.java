@@ -46,7 +46,10 @@ public class RStringVecNativeData implements TruffleObject, ShareableVectorData 
 
     /**
      * After nativized, the data array degenerates to a reference holder, which prevents the objects
-     * from being GC'ed. If the native code copies data of one string vector to another without
+     * from being GC'ed. This means that if someone changes the order of the CHARSXP elements on the native
+     * side, this modification is not reflected in this reference holder array.
+     *
+     * If the native code copies data of one string vector to another without
      * using the proper API, we are doomed.
      */
     private final CharSXPWrapper[] data;
@@ -140,32 +143,32 @@ public class RStringVecNativeData implements TruffleObject, ShareableVectorData 
 
     @ExportMessage
     public String getStringAt(int index) {
-        return NativeDataAccess.getData(vec, null, index);
+        return NativeDataAccess.getData(vec, index).getContents();
     }
 
     @ExportMessage
     public String getNextString(SeqIterator it) {
-        return NativeDataAccess.getData(vec, null, it.getIndex());
+        return NativeDataAccess.getData(vec, it.getIndex()).getContents();
     }
 
     @ExportMessage
     public String getString(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return NativeDataAccess.getData(vec, null, index);
+        return NativeDataAccess.getData(vec, index).getContents();
     }
 
     @ExportMessage
     public CharSXPWrapper getCharSXPAt(int index) {
-        return data[index];
+        return NativeDataAccess.getData(vec, index);
     }
 
     @ExportMessage
     public CharSXPWrapper getNextCharSXP(SeqIterator it) {
-        return data[it.getIndex()];
+        return NativeDataAccess.getData(vec, it.getIndex());
     }
 
     @ExportMessage
     public CharSXPWrapper getCharSXP(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return data[index];
+        return NativeDataAccess.getData(vec, index);
     }
 
     // Write access to the elements:
@@ -197,16 +200,16 @@ public class RStringVecNativeData implements TruffleObject, ShareableVectorData 
 
     @ExportMessage
     public void setCharSXPAt(int index, CharSXPWrapper value) {
-        data[index] = value;
+        NativeDataAccess.setData(vec, data, index, value);
     }
 
     @ExportMessage
     public void setNextCharSXP(SeqWriteIterator it, CharSXPWrapper value) {
-        data[it.getIndex()] = value;
+        NativeDataAccess.setData(vec, data, it.getIndex(), value);
     }
 
     @ExportMessage
     public void setCharSXP(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, CharSXPWrapper value) {
-        data[index] = value;
+        NativeDataAccess.setData(vec, data, index, value);
     }
 }
