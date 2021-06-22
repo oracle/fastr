@@ -45,6 +45,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCADDDRNodeG
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCADDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCADRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -146,8 +148,8 @@ public final class ListAccessNodes {
 
         @Fallback
         @TruffleBoundary
-        protected Object cdr(Object obj) {
-            throw RInternalError.unimplemented("CDR only works on pair lists, language objects, and argument lists, type given: " + Utils.getTypeName(obj));
+        protected Object cdr(@SuppressWarnings("unused") Object obj) {
+            return RNull.instance;
         }
 
         public static CDRNode create() {
