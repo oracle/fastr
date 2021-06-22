@@ -154,7 +154,7 @@ SEXP invoke_TYPEOF(SEXP x) {
 }
 
 SEXP invoke_error(SEXP msg) {
-	error(R_CHAR(STRING_ELT(msg, 0)));
+	error(CHAR(STRING_ELT(msg, 0)));
 }
 
 // returns a
@@ -291,7 +291,7 @@ SEXP r_home(void) {
 }
 
 SEXP char_length(SEXP x) {
-	const char *cx = R_CHAR(STRING_ELT(x, 0));
+	const char *cx = CHAR(STRING_ELT(x, 0));
 	int count  = 0;
 	while (*cx++ != 0) {
 		count++;
@@ -398,7 +398,7 @@ SEXP release_object(SEXP x) {
 SEXP findvar(SEXP x, SEXP env) {
 	SEXP v = Rf_findVar(x, env);
 	if (v == R_UnboundValue) {
-		Rf_error("'%s' not found", R_CHAR(PRINTNAME(x)));
+		Rf_error("'%s' not found", CHAR(PRINTNAME(x)));
 	} else {
 		return v;
 	}
@@ -469,7 +469,7 @@ SEXP test_isNAString(SEXP vec) {
 }
 
 SEXP test_getBytes(SEXP vec) {
-    const char* bytes = R_CHAR(STRING_ELT(vec, 0));
+    const char* bytes = CHAR(STRING_ELT(vec, 0));
     SEXP result;
     PROTECT(result = allocVector(RAWSXP, Rf_length(STRING_ELT(vec, 0))));
     unsigned char* resData = RAW(result);
@@ -636,17 +636,6 @@ static size_t testrfficonn_write(const void * message, size_t size, size_t nitem
         fflush(stdout);
         return size * nitems;
     }
-}
-
-static size_t testrfficonn_read(void *buffer, size_t size, size_t niterms, Rconnection conn) {
-    if (conn != customConn) {
-        printNow("ERROR: read function did not receive expected argument\n");
-        return 0;
-    } else if (size * niterms > 0) {
-        ((char *)buffer)[0] = 'Q';
-        return 1;
-    }
-    return 0;
 }
 
 SEXP test_createNativeConnection() {
@@ -1098,7 +1087,7 @@ SEXP get_dataptr(SEXP vec) {
 
 void benchRf_isNull(int* n) {
 	for (int i = 0; i < *n; i++) {
-		Rf_isNull(R_NilValue);
+		(void) isNull(R_NilValue);
 	}
 }
 
@@ -1164,6 +1153,7 @@ void testTrace2() {
 
 SEXP testTrace() {
   testTrace2();
+  return R_NilValue;
 }
 
 SEXP testdiv(SEXP n) {
