@@ -26,6 +26,7 @@
 #include <R_ext/Rdynload.h>
 #include "testrffi.h"
 #include "serialization.h"
+#include "promises.h"
 #include "rapi_helpers.h"
 #include "rffiwrappers.h"
 
@@ -127,6 +128,8 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(testPRIMFUN, 2),
         CALLDEF(serialize, 1),
         CALLDEF(testInstallTrChar, 2),
+        CALLDEF(promises_create_promise, 2),
+        CALLDEF(promises_tests, 0),
         #include "init_api.h"
         {NULL, NULL, 0}
 };
