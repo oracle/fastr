@@ -607,6 +607,12 @@ public interface StdUpCallsRFFI {
 
     Object R_NewHashedEnv(Object parent, Object initialSize);
 
+    void SET_PRCODE(Object promise, Object code);
+
+    void SET_PRENV(Object promise, Object env);
+
+    void SET_PRVALUE(Object promise, Object value);
+
     int PRSEEN(Object x);
 
     Object PRENV(@RFFIResultOwner Object x);

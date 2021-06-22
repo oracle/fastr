@@ -43,10 +43,6 @@
 
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 
-SEXP api_OBJECT(SEXP x) {
-    return ScalarInteger(OBJECT(x));
-}
-
 SEXP api_Rf_ScalarInteger(SEXP value) {
     return Rf_ScalarInteger(INTEGER_VALUE(value));
 }
@@ -620,6 +616,21 @@ SEXP api_R_SetExternalPtrProtected(SEXP x, SEXP prot) {
     return R_NilValue;
 }
 
+SEXP api_SET_PRCODE(SEXP promise, SEXP code) {
+    SET_PRCODE(promise, code);
+    return R_NilValue;
+}
+
+SEXP api_SET_PRENV(SEXP promise, SEXP env) {
+    SET_PRENV(promise, env);
+    return R_NilValue;
+}
+
+SEXP api_SET_PRVALUE(SEXP promise, SEXP value) {
+    SET_PRVALUE(promise, value);
+    return R_NilValue;
+}
+
 SEXP api_PRSEEN(SEXP x) {
     return ScalarInteger(PRSEEN(x));
 }
@@ -1182,6 +1193,10 @@ SEXP api_R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
 SEXP api_R_removeVarFromFrame(SEXP sym, SEXP env) {
     R_removeVarFromFrame(sym, env);
     return R_NilValue;
+}
+
+SEXP api_OBJECT(SEXP x) {
+    return ScalarInteger(OBJECT(x));
 }
 
 #pragma GCC diagnostic pop

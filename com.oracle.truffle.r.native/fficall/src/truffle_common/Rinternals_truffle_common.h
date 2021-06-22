@@ -1149,19 +1149,22 @@ void SET_PRSEEN(SEXP x, int v) {
     unimplemented("SET_PRSEEN");
 }
 
-void SET_PRENV(SEXP x, SEXP v) {
+void SET_PRENV(SEXP prom, SEXP env) {
     TRACE0();
-    unimplemented("SET_PRENV");
+    ((call_SET_PRENV) callbacks[SET_PRENV_x])(prom, env);
+    checkExitCall();
 }
 
-void SET_PRVALUE(SEXP x, SEXP v) {
+void SET_PRVALUE(SEXP prom, SEXP value) {
     TRACE0();
-    unimplemented("SET_PRVALUE");
+    ((call_SET_PRVALUE) callbacks[SET_PRVALUE_x])(prom, value);
+    checkExitCall();
 }
 
-void SET_PRCODE(SEXP x, SEXP v) {
+void SET_PRCODE(SEXP prom, SEXP code) {
     TRACE0();
-    unimplemented("SET_PRCODE");
+    ((call_SET_PRCODE) callbacks[SET_PRCODE_x])(prom, code);
+    checkExitCall();
 }
 
 R_xlen_t TRUELENGTH(SEXP x) {

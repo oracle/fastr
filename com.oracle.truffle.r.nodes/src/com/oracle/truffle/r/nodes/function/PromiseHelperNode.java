@@ -166,7 +166,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
      *
      * @param frame The current {@link VirtualFrame}
      * @param promise The {@link RPromise} to evaluate
-     * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
+     * @return Evaluates the given {@link RPromise} in the given frame using the inline cache
      */
     public Object evaluate(VirtualFrame frame, RPromise promise) {
         return evaluateImpl(frame, promise, false);
@@ -178,7 +178,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
      *
      * @param frame The current {@link VirtualFrame}
      * @param promise The {@link RPromise} to evaluate
-     * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
+     * @return Evaluates the given {@link RPromise} in the given frame using the inline cache
      */
     public Object visibleEvaluate(VirtualFrame frame, RPromise promise) {
         return evaluateImpl(frame, promise, true);
