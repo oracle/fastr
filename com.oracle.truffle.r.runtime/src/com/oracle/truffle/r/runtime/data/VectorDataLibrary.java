@@ -158,7 +158,7 @@ public abstract class VectorDataLibrary extends Library {
      * 
      * @see #materialize(Object)
      */
-    public Object materializeCharSXPStorage(Object data) throws UnsupportedMessageException {
+    public Object materializeCharSXPStorage(@SuppressWarnings("unused") Object data) throws UnsupportedMessageException {
         throw UnsupportedMessageException.create();
     }
 
@@ -1059,14 +1059,17 @@ public abstract class VectorDataLibrary extends Library {
         throw notWriteableError(receiver, "setString");
     }
 
+    @SuppressWarnings("unused")
     public void setCharSXPAt(Object receiver, int index, CharSXPWrapper value) {
         throw notWriteableError(receiver, "setCharSXPAt");
     }
 
+    @SuppressWarnings("unused")
     public void setNextCharSXP(Object receiver, SeqWriteIterator it, CharSXPWrapper value) {
         throw notWriteableError(receiver, "setNextCharSXP");
     }
 
+    @SuppressWarnings("unused")
     public void setCharSXP(Object receiver, RandomAccessWriteIterator it, int index, CharSXPWrapper value) {
         throw notWriteableError(receiver, "setCharSXP");
     }
