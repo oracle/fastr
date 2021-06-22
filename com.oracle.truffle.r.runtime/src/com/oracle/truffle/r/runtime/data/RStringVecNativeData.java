@@ -46,11 +46,11 @@ public class RStringVecNativeData implements TruffleObject, ShareableVectorData 
 
     /**
      * After nativized, the data array degenerates to a reference holder, which prevents the objects
-     * from being GC'ed. This means that if someone changes the order of the CHARSXP elements on the native
-     * side, this modification is not reflected in this reference holder array.
+     * from being GC'ed. This means that if someone changes the order of the CHARSXP elements on the
+     * native side, this modification is not reflected in this reference holder array.
      *
-     * If the native code copies data of one string vector to another without
-     * using the proper API, we are doomed.
+     * If the native code copies data of one string vector to another without using the proper API,
+     * we are doomed.
      */
     private final CharSXPWrapper[] data;
 
