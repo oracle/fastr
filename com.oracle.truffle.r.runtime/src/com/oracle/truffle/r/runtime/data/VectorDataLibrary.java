@@ -147,12 +147,17 @@ public abstract class VectorDataLibrary extends Library {
     public abstract Object materialize(Object data);
 
     /**
-     * Similarly to {@link #materialize(Object)}, returns an instance of object that implements
-     * {@link VectorDataLibrary}. Moreover, the receiver should transform into an object containing
-     * {@link CharSXPWrapper} data, if possible.
-     *
+     * Returns vector data (an object implementing {@link VectorDataLibrary}) that implements
+     * CHARSXP-specific messages, like {@link #getCharSXPAt(Object, int)} or
+     * {@link #setCharSXPAt(Object, int, CharSXPWrapper)}. More specifically, the returned vector
+     * data must not throw an exception when a CHARSXP element is set on it via, e.g.,
+     * {@link #setCharSXPAt(Object, int, CharSXPWrapper)}.
+     * <p>
      * Must be implemented when {@code getType() == Character}.
-     *
+     * <p>
+     * This method is necessary when the character vector data is passed to the native side. There,
+     * all the elements of a character vector are treated as CHARSXP elements.
+     * <p>
      * If the result is the same as the {@code data}, it means that the receiver already has
      * materialized CharSXP storage.
      * 
