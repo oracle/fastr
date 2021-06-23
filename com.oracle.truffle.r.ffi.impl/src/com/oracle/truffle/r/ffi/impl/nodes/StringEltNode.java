@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
@@ -36,17 +38,21 @@ public abstract class StringEltNode extends FFIUpCallNode.Arg2 {
         return StringEltNodeGen.create();
     }
 
-    // TODO: Make just one specialization that handles both altrep and non-altrep via
-    // VectorDataLibrary
     @Specialization(limit = "1")
     Object doStringVector(RStringVector stringVector, long index,
-                    @CachedLibrary("stringVector.getData()") VectorDataLibrary dataLibrary,
-                    @Cached("createBinaryProfile()") ConditionProfile isAltrepProfile) {
-        if (isAltrepProfile.profile(stringVector.isAltRep())) {
-            return dataLibrary.getStringAt(stringVector, (int) index);
-        } else {
-            stringVector.wrapStrings();
-            return stringVector.getWrappedDataAt((int) index);
+                    @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary genericDataLib,
+                    @CachedLibrary("stringVector.getData()") VectorDataLibrary stringVecDataLib) {
+        Object newCharSXPData = null;
+        try {
+            newCharSXPData = stringVecDataLib.materializeCharSXPStorage(stringVector.getData());
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
         }
+        stringVector.setData(newCharSXPData);
+        if (index > Integer.MAX_VALUE) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.NO_CALLER, RError.Message.LONG_VECTORS_NOT_SUPPORTED);
+        }
+        return genericDataLib.getCharSXPAt(stringVector.getData(), (int) index);
     }
 }

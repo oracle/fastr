@@ -118,6 +118,11 @@ public class RStringSeqVectorData implements RSeq {
     }
 
     @ExportMessage
+    public RStringCharSXPData materializeCharSXPStorage() {
+        return new RStringCharSXPData(getCharSXPDataCopy());
+    }
+
+    @ExportMessage
     public RStringSeqVectorData copy(@SuppressWarnings("unused") boolean deep) {
         return new RStringSeqVectorData(prefix, suffix, start, stride, length);
     }
@@ -132,6 +137,15 @@ public class RStringSeqVectorData implements RSeq {
         String[] result = new String[length];
         for (int i = 0; i < result.length; i++) {
             result[i] = getStringImpl(i);
+        }
+        return result;
+    }
+
+    @ExportMessage
+    public CharSXPWrapper[] getCharSXPDataCopy() {
+        CharSXPWrapper[] result = new CharSXPWrapper[length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = getCharSXPImpl(i);
         }
         return result;
     }
@@ -179,11 +193,30 @@ public class RStringSeqVectorData implements RSeq {
         return getStringImpl(index);
     }
 
+    @ExportMessage
+    public CharSXPWrapper getCharSXPAt(int index) {
+        return getCharSXPImpl(index);
+    }
+
+    @ExportMessage
+    public CharSXPWrapper getNextCharSXP(SeqIterator it) {
+        return getCharSXPImpl(it.getIndex());
+    }
+
+    @ExportMessage
+    public CharSXPWrapper getCharSXP(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
+        return getCharSXPImpl(index);
+    }
+
     // Utility methods:
 
     @TruffleBoundary
     private String getStringImpl(int index) {
         assert index >= 0 && index < getLength();
         return prefix + (start + stride * index) + suffix;
+    }
+
+    private CharSXPWrapper getCharSXPImpl(int index) {
+        return CharSXPWrapper.create(getStringImpl(index));
     }
 }

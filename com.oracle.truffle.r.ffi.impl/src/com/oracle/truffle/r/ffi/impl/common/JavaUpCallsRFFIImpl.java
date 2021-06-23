@@ -437,19 +437,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_allocArray(int mode, Object dimsObj) {
-        RIntVector dims = (RIntVector) dimsObj;
-        int n = 1;
-        int[] newDims = new int[dims.getLength()];
-        // TODO check long vector
-        for (int i = 0; i < newDims.length; i++) {
-            newDims[i] = dims.getDataAt(i);
-            n *= newDims[i];
-        }
-        RAbstractVector result = (RAbstractVector) Rf_allocVector(mode, n);
-        setDims(newDims, result);
-        return result;
+        throw implementedAsNode();
     }
 
     @Override

@@ -180,3 +180,5 @@ extern SEXP testdiv(SEXP n);
 extern SEXP testInstallTrChar(SEXP strvec, SEXP env);
 
 extern SEXP test_RfMatch(SEXP x, SEXP y);
+
+extern SEXP test_mkCharDoesNotCollect();

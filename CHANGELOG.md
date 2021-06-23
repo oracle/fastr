@@ -1,3 +1,20 @@
+# 21.2.0
+* Support for packages in 2021-02-01 CRAN snapshot:
+  * testthat 3.0.1 is partially supported.
+    * FastR does not support parallel tests run, i.e. run testthat only with `Sys.setenv(TESTTHAT_PARALLEL="false")`.
+  * tibble 3.0.6 , vctrs 0.3.6, and data.table 1.13.6 are mostly supported.
+  * Support for dplyr 1.0.3, ggplot 3.3.3, and knitr 1.31 is a work in progress.
+  
+Bug fixes:
+
+* `read.dcf` does not ignore whitespaces in fields any more.
+* `list.files` gives correct result in a subdirectory with the same prefix as its parent directory.
+* Whitespaces in quantifiers in regular expressions are ignored.
+  * GNU-R does not comply with PCRE with this behavior.
+* `sys.frame` displays frames for `NextMethod` correctly.
+* `parent.frame` is able to get the frame that is no longer on the stack.
+  * Which is not recommended due to the documentation of `parent.frame`, but some packages do that nonetheless.
+
 # 21.1.0
 
 * Upgraded FastR to R 4.0.3

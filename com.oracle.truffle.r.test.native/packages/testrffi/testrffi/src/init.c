@@ -26,6 +26,7 @@
 #include <R_ext/Rdynload.h>
 #include "testrffi.h"
 #include "serialization.h"
+#include "charsxps.h"
 #include "rapi_helpers.h"
 #include "rffiwrappers.h"
 
@@ -127,6 +128,12 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(testPRIMFUN, 2),
         CALLDEF(serialize, 1),
         CALLDEF(testInstallTrChar, 2),
+        CALLDEF(charsxp_replace_nth_str, 3),
+        CALLDEF(charsxp_nth_str, 2),
+        CALLDEF(charsxp_create_empty_str, 1),
+        CALLDEF(charsxp_revert_via_elt, 1),
+        CALLDEF(charsxp_revert_via_dataptr, 1),
+        CALLDEF(charsxp_tests, 0),
         #include "init_api.h"
         {NULL, NULL, 0}
 };
