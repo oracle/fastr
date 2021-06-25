@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,17 +26,20 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @TypeSystemReference(RTypes.class)
 public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
@@ -51,14 +54,21 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    protected CharSXPWrapper asChar(RStringVector obj, @Cached("createBinaryProfile()") ConditionProfile profile, @Cached("createBinaryProfile()") ConditionProfile naProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile isNativized,
-                    @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
-        if (profile.profile(obj.getLength() == 0)) {
+    protected CharSXPWrapper asChar(RStringVector obj,
+                    @Cached("createBinaryProfile()") ConditionProfile zeroLengthProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile naProfile,
+                    @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary dataLib) {
+        if (zeroLengthProfile.profile(obj.getLength() == 0)) {
             return CharSXPWrapper_NA;
         } else {
-            obj.wrapStrings(isNativized, wrapProfile);
-            CharSXPWrapper result = obj.getWrappedDataAt(0);
+            Object newCharSXPData = null;
+            try {
+                newCharSXPData = dataLib.materializeCharSXPStorage(obj.getData());
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            obj.setData(newCharSXPData);
+            CharSXPWrapper result = dataLib.getCharSXPAt(obj.getData(), 0);
             return naProfile.profile(RRuntime.isNA(result.getContents())) ? CharSXPWrapper_NA : result;
         }
     }

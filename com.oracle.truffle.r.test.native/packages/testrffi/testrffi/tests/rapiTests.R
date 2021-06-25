@@ -261,3 +261,15 @@ assertEquals(rffi.test_RfMatch(c("x", "y"), "y"), 2L)
 assertEquals(rffi.test_RfMatch(c("x", "y"), "foo"), NA_integer_)
 assertEquals(rffi.test_RfMatch(c(), "foo"), NA_integer_)
 assertEquals(rffi.test_RfMatch(c(), c("foo", "bar")), c(NA_integer_, NA_integer_))
+
+# ----------------------------------------------------------------------------------------
+# Rf_mkChar should not be garbage collected
+gctorture(on = TRUE)
+assertEquals(rffi.test_mkCharDoesNotCollect(), list("XX_YY", "XX_YY"))
+gctorture(on = FALSE)
+
+# ----------------------------------------------------------------------------------------
+# Rf_allocArray
+arr <- api.Rf_allocArray(13L, c(2L, 2L)) # INTSXP
+assertEquals(4, length(arr))
+assertEquals(c(2L, 2L), dim(arr))

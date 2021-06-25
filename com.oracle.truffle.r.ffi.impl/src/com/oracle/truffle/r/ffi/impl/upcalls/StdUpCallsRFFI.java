@@ -94,6 +94,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.R_CHARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RawGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RealGetRegionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RfAllocArrayNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfAllocVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfFindFun;
@@ -283,6 +284,7 @@ public interface StdUpCallsRFFI {
     Object Rf_allocVector(int mode, long n);
 
     @RFFIRunGC
+    @RFFIUpCallNode(value = RfAllocArrayNode.class, needsCallTarget = true)
     Object Rf_allocArray(int mode, Object dimsObj);
 
     @RFFIRunGC

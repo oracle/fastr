@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -759,6 +760,36 @@ public final class RDataFactory {
 
     public static final boolean INCOMPLETE_VECTOR = false;
     public static final boolean COMPLETE_VECTOR = true;
+
+    public static Object createEmptyVectorFromSEXPType(SEXPTYPE type, int length) {
+        switch (type) {
+            case INTSXP:
+                return RDataFactory.createIntVector(new int[length], RDataFactory.COMPLETE_VECTOR);
+            case REALSXP:
+                return RDataFactory.createDoubleVector(new double[length], RDataFactory.COMPLETE_VECTOR);
+            case LGLSXP:
+                return RDataFactory.createLogicalVector(new byte[length], RDataFactory.COMPLETE_VECTOR);
+            case STRSXP:
+                // fill list with empty strings
+                String[] data = new String[length];
+                Arrays.fill(data, "");
+                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            case CPLXSXP:
+                return RDataFactory.createComplexVector(new double[2 * length], RDataFactory.COMPLETE_VECTOR);
+            case RAWSXP:
+                return RDataFactory.createRawVector(new byte[length]);
+            case VECSXP:
+                return RDataFactory.createList(length);
+            case LISTSXP:
+            case LANGSXP:
+                return RDataFactory.createPairList(length, type);
+            case NILSXP:
+                return RNull.instance;
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.unimplemented("unexpected SEXPTYPE " + type);
+        }
+    }
 
     public static RIntVector createIntVectorFromNative(long address, int length) {
         return traceDataCreated(RIntVector.fromNative(address, length));

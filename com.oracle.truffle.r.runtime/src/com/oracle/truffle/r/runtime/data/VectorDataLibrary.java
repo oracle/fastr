@@ -140,11 +140,32 @@ public abstract class VectorDataLibrary extends Library {
     public abstract RType getType(Object data);
 
     /**
-     * Returns an instance of object that implements {@link VectorDataLibrary} and it guaranteed to
+     * Returns an instance of object that implements {@link VectorDataLibrary} and is guaranteed to
      * return {@code true} from {@link #isWriteable(Object)}. The result may be the same as
      * {@code receiver} or a new fresh instance.
      */
     public abstract Object materialize(Object data);
+
+    /**
+     * Returns vector data (an object implementing {@link VectorDataLibrary}) that implements
+     * CHARSXP-specific messages, like {@link #getCharSXPAt(Object, int)} or
+     * {@link #setCharSXPAt(Object, int, CharSXPWrapper)}. More specifically, the returned vector
+     * data must not throw an exception when a CHARSXP element is set on it via, e.g.,
+     * {@link #setCharSXPAt(Object, int, CharSXPWrapper)}.
+     * <p>
+     * Must be implemented when {@code getType() == Character}.
+     * <p>
+     * This method is necessary when the character vector data is passed to the native side. There,
+     * all the elements of a character vector are treated as CHARSXP elements.
+     * <p>
+     * If the result is the same as the {@code data}, it means that the receiver already has
+     * materialized CharSXP storage.
+     * 
+     * @see #materialize(Object)
+     */
+    public Object materializeCharSXPStorage(@SuppressWarnings("unused") Object data) throws UnsupportedMessageException {
+        throw UnsupportedMessageException.create();
+    }
 
     /**
      * Transforms the data to representation that is backed by native memory.
@@ -872,7 +893,6 @@ public abstract class VectorDataLibrary extends Library {
 
     // ---------------------------------------------------------------------
     // Methods specific to String data
-    // TODO: support for CharSXP
 
     public String[] getReadonlyStringData(Object receiver) {
         return getStringDataCopy(receiver);
@@ -882,7 +902,7 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
-    public String getStringAt(Object receiver, @SuppressWarnings("unused") int index) {
+    public String getStringAt(Object receiver, int index) {
         RType type = getType(receiver);
         switch (type) {
             case Integer:
@@ -904,7 +924,7 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
-    public String getNextString(Object receiver, @SuppressWarnings("unused") SeqIterator it) {
+    public String getNextString(Object receiver, SeqIterator it) {
         RType type = getType(receiver);
         switch (type) {
             case Integer:
@@ -926,7 +946,7 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
-    public String getString(Object receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
+    public String getString(Object receiver, RandomAccessIterator it, int index) {
         RType type = getType(receiver);
         return getStringImpl(receiver, type, it, index);
     }
@@ -952,6 +972,83 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
+    // ---------------------------------------------------------------------
+    // Methods specific to CharSXP data
+
+    public CharSXPWrapper[] getReadonlyCharSXPData(Object receiver) {
+        return getCharSXPDataCopy(receiver);
+    }
+
+    public CharSXPWrapper[] getCharSXPDataCopy(Object receiver) {
+        throw notImplemented(receiver);
+    }
+
+    public CharSXPWrapper getCharSXPAt(Object receiver, int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2charSXP(getNACheck(receiver), getIntAt(receiver, index));
+            case Double:
+                return double2charSXP(getNACheck(receiver), getDoubleAt(receiver, index));
+            case Logical:
+                return logical2charSXP(getNACheck(receiver), getLogicalAt(receiver, index));
+            case Raw:
+                return raw2charSXP(getRawAt(receiver, index));
+            case Complex:
+                return complex2charSXP(getNACheck(receiver), getComplexAt(receiver, index));
+            case Character:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
+    }
+
+    public CharSXPWrapper getNextCharSXP(Object receiver, SeqIterator it) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2charSXP(getNACheck(receiver), getNextInt(receiver, it));
+            case Double:
+                return double2charSXP(getNACheck(receiver), getNextDouble(receiver, it));
+            case Logical:
+                return logical2charSXP(getNACheck(receiver), getNextLogical(receiver, it));
+            case Raw:
+                return raw2charSXP(getNextRaw(receiver, it));
+            case Complex:
+                return complex2charSXP(getNACheck(receiver), getNextComplex(receiver, it));
+            case Character:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
+    }
+
+    public CharSXPWrapper getCharSXP(Object receiver, RandomAccessIterator it, int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2charSXP(getNACheck(receiver), getInt(receiver, it, index));
+            case Double:
+                return double2charSXP(getNACheck(receiver), getDouble(receiver, it, index));
+            case Logical:
+                return logical2charSXP(getNACheck(receiver), getLogical(receiver, it, index));
+            case Raw:
+                return raw2charSXP(getRaw(receiver, it, index));
+            case Complex:
+                return complex2charSXP(getNACheck(receiver), getComplex(receiver, it, index));
+            case Character:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
+    }
+
     @SuppressWarnings("unused")
     public void setStringAt(Object receiver, int index, String value) {
         throw notWriteableError(receiver, "setStringAt");
@@ -965,6 +1062,21 @@ public abstract class VectorDataLibrary extends Library {
     @SuppressWarnings("unused")
     public void setString(Object receiver, RandomAccessWriteIterator it, int index, String value) {
         throw notWriteableError(receiver, "setString");
+    }
+
+    @SuppressWarnings("unused")
+    public void setCharSXPAt(Object receiver, int index, CharSXPWrapper value) {
+        throw notWriteableError(receiver, "setCharSXPAt");
+    }
+
+    @SuppressWarnings("unused")
+    public void setNextCharSXP(Object receiver, SeqWriteIterator it, CharSXPWrapper value) {
+        throw notWriteableError(receiver, "setNextCharSXP");
+    }
+
+    @SuppressWarnings("unused")
+    public void setCharSXP(Object receiver, RandomAccessWriteIterator it, int index, CharSXPWrapper value) {
+        throw notWriteableError(receiver, "setCharSXP");
     }
 
     private final ConditionProfile emptyStringProfile = ConditionProfile.createBinaryProfile();
@@ -1595,6 +1707,19 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
+        public Object materializeCharSXPStorage(Object data) {
+            verifyIfSlowAssertsEnabled(data);
+            Object result = null;
+            try {
+                result = delegate.materializeCharSXPStorage(data);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            assert result != null;
+            return result;
+        }
+
+        @Override
         public Object copy(Object data, boolean deep) {
             verifyIfSlowAssertsEnabled(data);
             return delegate.copy(data, deep);
@@ -2035,6 +2160,33 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
+        public CharSXPWrapper[] getReadonlyCharSXPData(Object receiver) {
+            verifyIfSlowAssertsEnabled(receiver);
+            return delegate.getReadonlyCharSXPData(receiver);
+        }
+
+        @Override
+        public CharSXPWrapper[] getCharSXPDataCopy(Object receiver) {
+            verifyIfSlowAssertsEnabled(receiver);
+            return delegate.getCharSXPDataCopy(receiver);
+        }
+
+        @Override
+        public CharSXPWrapper getCharSXPAt(Object receiver, int index) {
+            return delegate.getCharSXPAt(receiver, index);
+        }
+
+        @Override
+        public CharSXPWrapper getNextCharSXP(Object receiver, SeqIterator it) {
+            return delegate.getNextCharSXP(receiver, it);
+        }
+
+        @Override
+        public CharSXPWrapper getCharSXP(Object receiver, RandomAccessIterator it, int index) {
+            return delegate.getCharSXP(receiver, it, index);
+        }
+
+        @Override
         public void setStringAt(Object receiver, int index, String value) {
             delegate.setStringAt(receiver, index, value);
         }
@@ -2047,6 +2199,21 @@ public abstract class VectorDataLibrary extends Library {
         @Override
         public void setString(Object receiver, RandomAccessWriteIterator it, int index, String value) {
             delegate.setString(receiver, it, index, value);
+        }
+
+        @Override
+        public void setCharSXPAt(Object receiver, int index, CharSXPWrapper value) {
+            delegate.setCharSXPAt(receiver, index, value);
+        }
+
+        @Override
+        public void setNextCharSXP(Object receiver, SeqWriteIterator it, CharSXPWrapper value) {
+            delegate.setNextCharSXP(receiver, it, value);
+        }
+
+        @Override
+        public void setCharSXP(Object receiver, RandomAccessWriteIterator it, int index, CharSXPWrapper value) {
+            delegate.setCharSXP(receiver, it, index, value);
         }
 
         @Override
@@ -2148,6 +2315,10 @@ public abstract class VectorDataLibrary extends Library {
         return naCheck.check(value) ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeComplex(value);
     }
 
+    private static CharSXPWrapper complex2charSXP(NACheck naCheck, RComplex value) {
+        return CharSXPWrapper.create(complex2string(naCheck, value));
+    }
+
     private static byte complex2raw(NACheck naCheck, RComplex value) {
         naCheck.check(value);
         double realPart = value.getRealPart();
@@ -2219,6 +2390,10 @@ public abstract class VectorDataLibrary extends Library {
         return naCheck.check(value) ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeDouble(value);
     }
 
+    private static CharSXPWrapper double2charSXP(NACheck naCheck, double value) {
+        return CharSXPWrapper.create(double2string(naCheck, value));
+    }
+
     private static RComplex double2complex(NACheck naCheck, double value) {
         return naCheck.check(value) ? RRuntime.COMPLEX_NA : RRuntime.double2complexNoCheck(value);
     }
@@ -2257,6 +2432,10 @@ public abstract class VectorDataLibrary extends Library {
         return naCheck.check(value) ? RRuntime.STRING_NA : RRuntime.intToStringNoCheck(value);
     }
 
+    private static CharSXPWrapper int2charSXP(NACheck naCheck, int value) {
+        return CharSXPWrapper.create(int2string(naCheck, value));
+    }
+
     private static RComplex int2complex(NACheck naCheck, int value) {
         return naCheck.check(value) ? RRuntime.COMPLEX_NA : RRuntime.int2complexNoCheck(value);
     }
@@ -2283,6 +2462,10 @@ public abstract class VectorDataLibrary extends Library {
         return naCheck.check(value) ? RRuntime.STRING_NA : RRuntime.logicalToStringNoCheck(value);
     }
 
+    private static CharSXPWrapper logical2charSXP(NACheck naCheck, byte value) {
+        return CharSXPWrapper.create(logical2string(naCheck, value));
+    }
+
     private static RComplex logical2complex(NACheck naCheck, byte value) {
         return naCheck.check(value) ? RRuntime.COMPLEX_NA : RRuntime.logical2complexNoCheck(value);
     }
@@ -2301,6 +2484,10 @@ public abstract class VectorDataLibrary extends Library {
 
     private static String raw2string(byte value) {
         return RRuntime.rawToHexString(value);
+    }
+
+    private static CharSXPWrapper raw2charSXP(byte value) {
+        return CharSXPWrapper.create(raw2string(value));
     }
 
     private static RComplex raw2complex(byte value) {
