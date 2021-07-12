@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -625,6 +625,9 @@ public class DatePOSIXFunctions {
                             i++;
                             if (i + 1 < fLen && format.charAt(i + 1) == '3') {
                                 builder.appendLiteral('.').appendValue(ChronoField.MILLI_OF_SECOND, 3);
+                                i++;
+                            } else if (i + 1 < fLen && format.charAt(i + 1) == '6') {
+                                builder.appendLiteral('.').appendValue(ChronoField.MICRO_OF_SECOND, 6);
                                 i++;
                             }
                         } else {
