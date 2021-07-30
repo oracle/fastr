@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ C_VISIBILITY =
 CC = "$(LABS_TOOLCHAIN_CC)"
 CFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CPICFLAGS = -fPIC
-CPPFLAGS = -O2 -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CPPFLAGS =
 CXX = "$(LABS_TOOLCHAIN_CXX)"
 CXXCPP = $(CXX) -E
 CXXFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
@@ -149,7 +149,7 @@ SHLIB_CXX17LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(
 SHLIB_EXT = .so
 SHLIB_FFLAGS = 
 SHLIB_LD = $(CC)
-SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
+SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib" -undefined dynamic_lookup -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_LIBADD = 
 ## We want to ensure libR is picked up from $(R_HOME)/lib
 ## before e.g. /usr/local/lib if a version is already installed.

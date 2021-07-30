@@ -46,7 +46,7 @@ C_VISIBILITY = -fvisibility=hidden
 CC = "$(LABS_TOOLCHAIN_CC)"
 CFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CPICFLAGS = -fpic
-CPPFLAGS = -O2 -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CPPFLAGS =
 CXX = "$(LABS_TOOLCHAIN_CXX)"
 CXXCPP = $(CXX) -E
 CXXFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
@@ -153,7 +153,7 @@ SHLIB_CXX17LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared
 SHLIB_EXT = .so
 SHLIB_FFLAGS = 
 SHLIB_LD = $(CC)
-SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared# $(CFLAGS) $(CPICFLAGS)
+SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared
 SHLIB_LIBADD = 
 ## We want to ensure libR is picked up from $(R_HOME)/lib
 ## before e.g. /usr/local/lib if a version is already installed.
