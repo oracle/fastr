@@ -70,7 +70,7 @@ CXX17STD = -std=gnu++17
 CXX_VISIBILITY = -fvisibility=hidden
 DYLIB_EXT = .so
 DYLIB_LD = $(CC)
-DYLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -shared -fopenmp
+DYLIB_LDFLAGS = -shared "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -shared -fopenmp
 DYLIB_LINK = $(DYLIB_LD) $(DYLIB_LDFLAGS) $(LDFLAGS)
 ECHO = echo
 ECHO_C = 
