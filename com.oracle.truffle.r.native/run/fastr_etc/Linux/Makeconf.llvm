@@ -157,7 +157,7 @@ SHLIB_LD = $(CC)
 SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared
 # From GNU-R docs: used for standard packages
 SHLIB_LDFLAGS_R = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared
-SHLIB_LIBADD =
+SHLIB_LIBADD = 
 ## We want to ensure libR is picked up from $(R_HOME)/lib
 ## before e.g. /usr/local/lib if a version is already installed.
 SHLIB_LINK = $(SHLIB_LD) $(SHLIB_LDFLAGS) $(LIBR0) $(LDFLAGS)
