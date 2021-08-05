@@ -60,12 +60,6 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
         return RType.Double;
     }
 
-    public abstract Object executeDouble(int o);
-
-    public abstract Object executeDouble(double o);
-
-    public abstract Object executeDouble(byte o);
-
     public abstract Object executeDouble(Object o);
 
     @Specialization
