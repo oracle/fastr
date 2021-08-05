@@ -54,12 +54,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class CastComplexNode extends CastBaseNode {
 
-    public abstract Object executeComplex(int o);
-
-    public abstract Object executeComplex(double o);
-
-    public abstract Object executeComplex(byte o);
-
     public abstract Object executeComplex(Object o);
 
     protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
