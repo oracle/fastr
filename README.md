@@ -80,4 +80,3 @@ It contains contributions by researchers at Purdue University ([purdue-fastr](ht
 
 FastR is available under a GPLv3 license.
 
-
