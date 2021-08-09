@@ -23,6 +23,7 @@ These possibilities apply both for GNU-R and FastR, if not noted otherwise.
 Normally, the installation process of a package invokes child R processes multiple times.
 Therefore, attaching java debugger to the first process starting the installation is not very practical.
 Instead, set the `MX_R_GLOBAL_ARGS` environment variable to `MX_R_GLOBAL_ARGS=-d` so that each spawned FastR process will start with `-d` option.
+Note that `MX_R_GLOBAL_ARGS` environment variable works only when FastR is invoked via `mx`.
 
 Another option is to directly hack `$GNUR_HOME_BINARY/src/library/tools/R/install.R` sources and add, e.g., logging outputs.
 Note that for this to work, you have to rebuild FastR.
