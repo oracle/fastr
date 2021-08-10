@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,7 +89,7 @@ public class FastROptions {
     @Option(category = OptionCategory.EXPERT, help = "Disable reference count decrements") //
     public static final OptionKey<Boolean> RefCountIncrementOnly = new OptionKey<>(false);
     @Option(category = OptionCategory.EXPERT, help = "Whether the internal (Java) grid graphics implementation should be used") //
-    public static final OptionKey<Boolean> UseInternalGridGraphics = new OptionKey<>(true);
+    public static final OptionKey<Boolean> UseInternalGridGraphics = new OptionKey<>(false);
     @Option(category = OptionCategory.INTERNAL, help = "Whether the fast-path special call nodes should be created for simple enough arguments.") //
     public static final OptionKey<Boolean> UseSpecials = new OptionKey<>(true);
     @Option(category = OptionCategory.EXPERT, help = "Generate source sections for unserialized code") //
