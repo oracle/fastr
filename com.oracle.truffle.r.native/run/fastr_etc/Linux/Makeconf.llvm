@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ C_VISIBILITY = -fvisibility=hidden
 CC = "$(LABS_TOOLCHAIN_CC)"
 CFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CPICFLAGS = -fpic
-CPPFLAGS = -O2 -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CPPFLAGS =
 CXX = "$(LABS_TOOLCHAIN_CXX)"
 CXXCPP = $(CXX) -E
 CXXFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
@@ -74,7 +74,7 @@ CXX20STD = -std=gnu++20
 CXX_VISIBILITY = -fvisibility=hidden
 DYLIB_EXT = .so
 DYLIB_LD = $(CC)
-DYLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c # $(CFLAGS) $(CPICFLAGS)
+DYLIB_LDFLAGS = -shared "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c # $(CFLAGS) $(CPICFLAGS)
 DYLIB_LINK = $(DYLIB_LD) $(DYLIB_LDFLAGS) $(LDFLAGS)
 ECHO = echo
 ECHO_C = 
@@ -114,7 +114,7 @@ JAR = "$(JAVA_HOME)/bin/jar"
 ## JAVA_HOME might be used in the next three.
 ## They are for packages 'JavaGD' and 'rJava'
 LAPACK_LIBS = -L"$(R_HOME)/lib$(R_ARCH)" -lRlapack
-LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared $(PKG_LDFLAGS_OVERRIDE)
+LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c $(PKG_LDFLAGS_OVERRIDE)
 ## we only need this is if it is external, as otherwise link to R
 LIBM = -lm
 LIBR0 = -lR 
@@ -153,7 +153,10 @@ SHLIB_CXX17LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared
 SHLIB_EXT = .so
 SHLIB_FFLAGS = 
 SHLIB_LD = $(CC)
-SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared# $(CFLAGS) $(CPICFLAGS)
+# From GNU-R docs: used for add-on packages linked by C
+SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared
+# From GNU-R docs: used for standard packages
+SHLIB_LDFLAGS_R = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lf2c -shared
 SHLIB_LIBADD = 
 ## We want to ensure libR is picked up from $(R_HOME)/lib
 ## before e.g. /usr/local/lib if a version is already installed.
