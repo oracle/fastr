@@ -24,6 +24,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -36,7 +37,10 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public abstract class Approx extends RExternalBuiltinNode.Arg7 {
+/**
+ * Transcribed from {@code src/library/stats/src/approx.c:R_approxfun}.
+ */
+public abstract class Approx extends RExternalBuiltinNode.Arg8 {
     private static final NACheck naCheck = NACheck.create();
 
     public static Approx create() {
@@ -52,10 +56,11 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
         casts.arg(4).asDoubleVector().findFirst();
         casts.arg(5).asDoubleVector().findFirst();
         casts.arg(6).asDoubleVector().findFirst();
+        casts.arg(7).asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization(limit = "getVectorAccessCacheSize()")
-    protected RDoubleVector approx(RDoubleVector x, RDoubleVector y, RDoubleVector v, int method, double yl, double yr, double f,
+    protected RDoubleVector approx(RDoubleVector x, RDoubleVector y, RDoubleVector v, int method, double yl, double yr, double f, boolean naRm,
                     @CachedLibrary("x.getData()") VectorDataLibrary xLib,
                     @CachedLibrary("y.getData()") VectorDataLibrary yLib,
                     @CachedLibrary("v.getData()") VectorDataLibrary vLib) {
@@ -69,6 +74,7 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
         apprMeth.kind = method;
         apprMeth.ylow = yl;
         apprMeth.yhigh = yr;
+        apprMeth.naRm = naRm;
         naCheck.enable(true);
 
         Object xData = x.getData();
@@ -94,6 +100,8 @@ public abstract class Approx extends RExternalBuiltinNode.Arg7 {
         double f1;
         double f2;
         int kind;
+        // In GNU-R, naRm field is unused.
+        boolean naRm;
     }
 
     private static double approx1(double v, VectorDataLibrary xLib, Object xData, RandomAccessIterator xIter,
