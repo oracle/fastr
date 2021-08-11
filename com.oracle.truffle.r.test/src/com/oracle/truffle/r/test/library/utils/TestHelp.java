@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.library.utils;
 
 import static org.junit.Assert.assertThat;
 
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
@@ -42,8 +43,11 @@ public class TestHelp extends TestBase {
 
     @Test
     public void testGrDevicesHelp() {
-        assertHelpResult(fastREval("?svg.off", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
-        assertHelpResult(fastREval("help(svg.off)", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
+        // Test only if we use internal grid graphics
+        if (FastROptions.UseInternalGridGraphics.getDefaultValue()) {
+            assertHelpResult(fastREval("?svg.off", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
+            assertHelpResult(fastREval("help(svg.off)", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
+        }
     }
 
     private static void assertHelpResult(String result, String startsWith, String... contains) {

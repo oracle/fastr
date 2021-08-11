@@ -30,7 +30,8 @@ public class TestBuiltin_exists extends TestBase {
 
     @Test
     public void testexists1() {
-        assertEval("argv <- structure(list(x = '.Device'), .Names = 'x');do.call('exists', argv)");
+        // With native grid graphics, this causes an error when run with other unit tests.
+        assertEval(Ignored.NativeGridGraphics, "argv <- structure(list(x = '.Device'), .Names = 'x');do.call('exists', argv)");
         assertEval("exists('somethingthatdoesnotexist123456789')");
         assertEval("exists('.Device', inherit=FALSE)");
         assertEval("x <- 42; exists('x', mode='numeric')");
