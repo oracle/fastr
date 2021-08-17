@@ -84,7 +84,6 @@ def create_cmdline(args, command, extraVmArgs=None, jdk=None):
     '''
     if not jdk:
         jdk = get_default_jdk()
-
     dists = ['FASTR']
     if mx.suite("sulong", fatalIfMissing=False):
         dists.append('SULONG_NATIVE')
@@ -122,6 +121,8 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
     The assumption is that the VM is already built and available.
     '''
+    if not jdk:
+        jdk = get_default_jdk()
     env = kwargs['env'] if 'env' in kwargs else os.environ
     setREnvironment(env)
     all_args = create_cmdline(args, command, extraVmArgs, jdk)
