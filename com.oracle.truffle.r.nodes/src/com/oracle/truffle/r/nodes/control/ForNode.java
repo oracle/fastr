@@ -207,7 +207,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     private abstract static class AbstractIndexRepeatingNode extends AbstractRepeatingNode {
 
-        private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile breakBlock = BranchProfile.create();
         private final BranchProfile nextBlock = BranchProfile.create();
 
@@ -227,8 +226,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
             this.readIndexNode = LocalReadVariableNode.create(indexName, true);
             this.readLengthNode = LocalReadVariableNode.create(lengthName, true);
             this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, Mode.REGULAR, null);
-            // pre-initialize the profile so that loop exits to not deoptimize
-            conditionProfile.profile(false);
         }
 
         private static RNode createPositionLoad(String positionName, String rangeName) {
@@ -252,7 +249,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                 throw RInternalError.shouldNotReachHere("For index must be Integer.");
             }
             try {
-                if (conditionProfile.profile(index <= length)) {
+                if (index <= length) {
                     if (writePosition(frame, index)) {
                         writeElementNode.voidExecute(frame);
                         body.voidExecute(frame);

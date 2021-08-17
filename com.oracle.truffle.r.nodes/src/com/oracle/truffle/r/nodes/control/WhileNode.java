@@ -60,7 +60,6 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
 
         @Child private ConvertBooleanNode condition;
 
-        private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile normalBlock = BranchProfile.create();
         private final BranchProfile breakBlock = BranchProfile.create();
         private final BranchProfile nextBlock = BranchProfile.create();
@@ -72,14 +71,12 @@ public final class WhileNode extends AbstractLoopNode implements RSyntaxNode, RS
             super(body);
             this.whileNode = whileNode;
             this.condition = condition;
-            // pre-initialize the profile so that loop exits to not deoptimize
-            conditionProfile.profile(false);
         }
 
         @Override
         public boolean executeRepeating(VirtualFrame frame) {
             try {
-                if (conditionProfile.profile(condition.executeByte(frame) == RRuntime.LOGICAL_TRUE)) {
+                if (condition.executeByte(frame) == RRuntime.LOGICAL_TRUE) {
                     body.voidExecute(frame);
                     normalBlock.enter();
                     return true;
