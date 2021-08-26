@@ -47,7 +47,7 @@ public class BufferedImageContainer extends AbstractImageContainer {
     private final String fileType;
     private final float quality;
 
-    BufferedImageContainer(int width, int height, String fileType, String fileNameTemplate, float quality) {
+    public BufferedImageContainer(int width, int height, String fileType, String fileNameTemplate, float quality) {
         super(width, height, fileNameTemplate);
 
         if (!isSupportedFormat(fileType)) {

@@ -29,6 +29,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -59,6 +60,11 @@ public abstract class AbstractImageContainer extends FileOutputContainer {
         objects.add(o);
     }
 
+    @Override
+    public Collection<GDObject> getGDObjects() {
+        return objects;
+    }
+
     protected abstract void resetGraphics();
 
     @Override
@@ -87,7 +93,7 @@ public abstract class AbstractImageContainer extends FileOutputContainer {
     }
 
     @Override
-    protected final void saveImage(TruffleFile file) throws IOException {
+    public final void saveImage(TruffleFile file) throws IOException {
         repaint();
         dumpImage(file);
     }

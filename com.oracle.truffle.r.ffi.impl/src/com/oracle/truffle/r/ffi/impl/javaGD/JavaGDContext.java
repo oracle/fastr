@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.javaGD;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,6 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.profiles.BranchProfile;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 import org.rosuda.javaGD.GDInterface;
@@ -44,13 +47,12 @@ import com.oracle.truffle.r.runtime.context.RContext;
 public final class JavaGDContext {
 
     private final Collections.ArrayListObj<GDInterface> devices;
+    private final Collections.ArrayListObj<Integer> deviceIndexes;
 
     private JavaGDContext(JavaGDContext parentGDCtx) {
-        this.devices = parentGDCtx.devices;
-    }
-
-    private JavaGDContext() {
-        this.devices = new Collections.ArrayListObj<>();
+        this.devices = parentGDCtx != null ? parentGDCtx.devices : new Collections.ArrayListObj<>();
+        this.deviceIndexes = new Collections.ArrayListObj<>();
+        this.deviceIndexes.push(-1, BranchProfile.getUncached());
     }
 
     public static RError awtNotSupported() {
@@ -64,6 +66,7 @@ public final class JavaGDContext {
         }
 
         assert gdId == devices.size();
+        deviceIndexes.push(gdId, BranchProfile.getUncached());
         GDInterface gd = newGD(gdId, deviceName, LoggingGD.Mode.getMode());
         devices.add(gd);
         return gd;
@@ -130,21 +133,34 @@ public final class JavaGDContext {
         return params == null ? fileType + "::/dev/null" : fileType + "::" + params + ":/dev/null";
     }
 
-    public GDInterface getGD(int devId) {
-        if (!FastRConfig.AwtSupport) {
-            throw awtNotSupported();
-        }
-        return this.devices.get(devId);
+    /**
+     * Returns the current device ID, as tracked by javagd package.
+     * Note that this should be mapped to value in {@code jGDtalk.c:javaGDDeviceController}.
+     * Also note that this is a different value than `dev.cur()` returns.
+     * `dev.cur()` is mapped to {@code devices.c:R_CurrentDevice} and is tracked by grDevices.
+     * @return Current ID of a JavaGD device. -1 if there is no active JavaGD device.
+     */
+    public int getCurrentGdId() {
+        return (int) deviceIndexes.peek();
     }
 
-    public GDInterface removeGD(int devId) {
+    public GDInterface getGD(int gdId) {
         if (!FastRConfig.AwtSupport) {
             throw awtNotSupported();
         }
-        assert devId < devices.size();
-        GDInterface gd = devices.get(devId);
+        return this.devices.get(gdId);
+    }
+
+    public GDInterface removeGD(int gdId) {
+        if (!FastRConfig.AwtSupport) {
+            throw awtNotSupported();
+        }
+        assert gdId < devices.size();
+        int lastDevIdx = (int) deviceIndexes.pop();
+        assert lastDevIdx == gdId;
+        GDInterface gd = devices.get(gdId);
         assert gd != null;
-        devices.set(devId, null);
+        devices.set(gdId, null);
         return gd;
     }
 
@@ -171,7 +187,7 @@ public final class JavaGDContext {
                 }
             }
             if (doInitialize) {
-                rCtx.gridContext = new JavaGDContext();
+                rCtx.gridContext = new JavaGDContext(null);
             }
         }
         return (JavaGDContext) rCtx.gridContext;

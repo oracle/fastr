@@ -107,7 +107,7 @@ if (.fastr.option("UseInternalGridGraphics")) {
 	
 	# add help files for the new public functions
 	.fastr.addHelpPath('/com/oracle/truffle/r/library/fastrGrid/grDevices/Rd')
-} else {
+} else { # 'UseInternalGridGraphics' is false
 	eval(expression({
 
 		svg <- function (filename = if (onefile) "Rplots.svg" else "Rplot%03d.svg", width = 7, height = 7, pointsize = 12, onefile = FALSE, family = "sans", bg = "white", antialias = c("default", "none", "gray", "subpixel")) {
@@ -302,6 +302,10 @@ if (.fastr.option("UseInternalGridGraphics")) {
 				setwd(outputDir) 
 				tryCatch(replayLog(), finally = setwd(curWD)) 
 			}
+		}
+
+		savePlot <- function (filename = paste("Rplot", type, sep = "."), type = c("png", "jpeg", "bmp"), device = dev.cur()) {
+			.Internal(.fastr.savePlot(filename, type, device))
 		}
 
 		exports <- asNamespace("grDevices")[[".__NAMESPACE__."]][['exports']]

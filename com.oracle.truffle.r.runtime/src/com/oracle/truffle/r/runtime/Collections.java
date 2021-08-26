@@ -558,9 +558,6 @@ public final class Collections {
             return result;
         }
 
-        /**
-         * Removes the last element.
-         */
         @ExportMessage
         public Object pop() {
             if (size <= 0) {
@@ -571,6 +568,15 @@ public final class Collections {
             Object removed = data[size];
             data[size] = null;
             return removed;
+        }
+
+        @ExportMessage
+        public Object peek() {
+            if (size <= 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw new ArrayIndexOutOfBoundsException("cannot peek from empty list");
+            }
+            return data[size - 1];
         }
 
         public int size() {
@@ -618,7 +624,15 @@ public final class Collections {
 
         public abstract void push(Object stack, Object value);
 
+        /**
+         * Removes the last element.
+         */
         public abstract Object pop(Object stack);
+
+        /**
+         * Shows the last element without removing it.
+         */
+        public abstract Object peek(Object stack);
     }
 
 }
