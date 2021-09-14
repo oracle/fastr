@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,9 @@
 #include <glob.h>
 #include <sys/utsname.h>
 #include <errno.h>
+
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 int call_base_initEventLoop(char *fifoInPath, char *fifoOutPath) {
     return initEventLoop(fifoInPath, fifoOutPath);
@@ -105,15 +108,28 @@ void call_base_strtol(void (*call_setresult)(long result, int cerrno), char *s, 
 	call_setresult(rc, errno);
 }
 
-extern const char * pcre_version();
 extern const char * zlibVersion();
 
-void call_base_eSoftVersion(void (*call_eSoftVersion_setfields)(char *zlibVersion, char *pcreVersion)) {
+static void pcre2_version(char *buffer, int buff_len)
+{
+    int min_buff_len = pcre2_config(PCRE2_CONFIG_VERSION, NULL);
+    if (buff_len < min_buff_len) {
+        printf("Fatal error: pcre_version: buff_len < min_buff_len\n");
+        exit(1);
+    }
+    int ret = pcre2_config(PCRE2_CONFIG_VERSION, buffer);
+    if (ret < 0) {
+        printf("Fatal error: returned %d from pcre2_config\n", ret);
+        exit(1);
+    }
+}
 
-    char sZlibVersion[256], sPcreVersion[256];
+void call_base_eSoftVersion(void (*call_eSoftVersion_setfields)(char *zlibVersion, char *pcre2Version)) {
+    char sZlibVersion[256];
+    char sPcre2Version[256];
     snprintf(sZlibVersion, 256, "%s", zlibVersion());
-    snprintf(sPcreVersion, 256, "%s", pcre_version());
-    call_eSoftVersion_setfields(sZlibVersion, sPcreVersion);
+    pcre2_version(sPcre2Version, 256);
+    call_eSoftVersion_setfields(sZlibVersion, sPcre2Version);
 }
 
 int call_base_umask(int mode) {

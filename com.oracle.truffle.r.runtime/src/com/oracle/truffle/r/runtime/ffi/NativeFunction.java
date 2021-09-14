@@ -46,13 +46,14 @@ public enum NativeFunction {
     eSoftVersion("((string, string): void): void", "call_base_"),
     umask("(sint32): sint32", "call_base_"),
     cpolyroot("([double], [double], sint32, [double], [double]): sint32", "call_base_", baseLibrary(), true),
-    // PCRE
-    maketables("(): sint64", "call_pcre_"),
-    compile("((uint64, string, sint32): void, string, sint32, uint64): void", "call_pcre_"),
-    getcapturecount("(uint64, uint64): sint32", "call_pcre_"),
-    getcapturenames("((sint32, string): void, uint64, uint64): sint32", "call_pcre_"),
-    study("(uint64, sint32): void", "call_pcre_"),
-    exec("(uint64, uint64, [uint8], sint32, sint32, sint32, [sint32], sint32): sint32", "call_pcre_"),
+    // PCRE2 (in pcre2_rffi.c)
+    compile("(string, uint32, [sint32], [sint32]): pointer", "call_pcre2_"),
+    match("((uint32, uint32): void, (uint32, uint32, uint32): void, pointer, [uint8], uint32, sint32): sint32", "call_pcre2_"),
+    capture_count("(pointer): uint32", "call_pcre2_"),
+    names_count("(point): uint32", "call_pcre2_"),
+    get_capture_names("((string, sint32): void, pointer): sint32", "call_pcre2_"),
+    match_count("(pointer, string, sint32, sint32, uint32): sint32", "call_pcre2_"),
+    pattern_free("(pointer): void", "call_pcre2_"),
     // zip
     compress("([uint8], uint64, [uint8], uint64): sint32", "call_zip_"),
     uncompress("([uint8], uint64, [uint8], uint64): sint32", "call_zip_"),

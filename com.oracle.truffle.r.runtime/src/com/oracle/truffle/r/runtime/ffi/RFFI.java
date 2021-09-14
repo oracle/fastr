@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  * <li>{@link CRFFI}: {@code .C} and {@code .Fortran} call interface.</li>
  * <li>{@link CallRFFI}: {@code .Call} and {@code .External} call interface.</li>
  * <li>{@link UserRngRFFI}: specific interface to user-supplied random number generator.</li>
- * <li>{@link PCRERFFI}: interface to PCRE library (Perl regexp).</li>
+ * <li>{@link PCRE2RFFI}: interface to PCRE2 library (Perl regexp).</li>
  * <li>{@link ZipRFFI}: interface to zip compression</li>
  * <li>{@link DLLRFFI}: interface to dll functions, e.g., {@code dlopen}</li>
  * <li>{@link REmbedRFFI}: interface to embedded support</li>
@@ -56,14 +56,14 @@ public abstract class RFFI implements ContextState {
     public final DLLRFFI dllRFFI;
     public final UserRngRFFI userRngRFFI;
     public final ZipRFFI zipRFFI;
-    public final PCRERFFI pcreRFFI;
+    public final PCRE2RFFI pcre2RFFI;
     public final LapackRFFI lapackRFFI;
     public final StatsRFFI statsRFFI;
     public final ToolsRFFI toolsRFFI;
     public final REmbedRFFI embedRFFI;
     public final MiscRFFI miscRFFI;
 
-    protected RFFI(CRFFI cRFFI, BaseRFFI baseRFFI, AltrepRFFI altrepRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRERFFI pcreRFFI, LapackRFFI lapackRFFI,
+    protected RFFI(CRFFI cRFFI, BaseRFFI baseRFFI, AltrepRFFI altrepRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRE2RFFI pcre2RFFI, LapackRFFI lapackRFFI,
                     StatsRFFI statsRFFI,
                     ToolsRFFI toolsRFFI, REmbedRFFI embedRFFI, MiscRFFI miscRFFI) {
         this.cRFFI = cRFFI;
@@ -73,7 +73,7 @@ public abstract class RFFI implements ContextState {
         this.dllRFFI = dllRFFI;
         this.userRngRFFI = userRngRFFI;
         this.zipRFFI = zipRFFI;
-        this.pcreRFFI = pcreRFFI;
+        this.pcre2RFFI = pcre2RFFI;
         this.lapackRFFI = lapackRFFI;
         this.statsRFFI = statsRFFI;
         this.toolsRFFI = toolsRFFI;

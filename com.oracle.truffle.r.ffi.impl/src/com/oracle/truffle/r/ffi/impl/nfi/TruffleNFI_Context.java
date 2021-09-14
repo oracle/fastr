@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
-import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -87,9 +87,10 @@ public class TruffleNFI_Context extends RFFIContext {
                         new TruffleNFI_Call(),
                         new TruffleNFI_DLL(),
                         new TruffleNFI_UserRng(),
-                        new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
-                        new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
-                        new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
+                        new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
+                        new PCRE2RFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
+                        new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(),
+                        new REmbedRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
         // forward constructor
     }
 
