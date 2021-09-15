@@ -1,3 +1,13 @@
+# 21.3.0
+* Upgrade of PCRE to PCRE2 version 10.37.
+  * Some Unicode patterns and texts are still not supported.
+
+Bug fixes:
+
+* Fixed implicit make rule parameters.
+  * Which fixes, e.g., installation of maps package version 3.3.0.
+* Fixed issue with unexpected garbage collection of CHARSXP elements.
+
 # 21.2.0
 * Support for packages in 2021-02-01 CRAN snapshot:
   * testthat 3.0.1 is partially supported.
