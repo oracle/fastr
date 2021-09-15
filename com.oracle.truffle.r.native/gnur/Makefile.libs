@@ -46,9 +46,9 @@ LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 # they were found in the standard system locations
 ifdef FASTR_RELEASE
 ifeq ($(OSNAME), Linux)
-  FASTR_CAPTURE_DEPENDENCIES ?= pcre z gfortran quadmath gcc_s
+  FASTR_CAPTURE_DEPENDENCIES ?= pcre2-8 z gfortran quadmath gcc_s
 else ifeq ($(OSNAME), Darwin)
-  FASTR_CAPTURE_DEPENDENCIES ?= pcre gfortran quadmath gcc_s
+  FASTR_CAPTURE_DEPENDENCIES ?= pcre2-8 gfortran quadmath gcc_s
 else
   $(error OS $(OSNAME) is not supported)
 endif
