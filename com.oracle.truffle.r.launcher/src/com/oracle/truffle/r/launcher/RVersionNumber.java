@@ -50,11 +50,9 @@ public class RVersionNumber {
 
     public static final String VERSION_STRING = "FastR version " + FULL + RELEASE_DATE;
 
-    public static final String COPYRIGHT = "Copyright (c) 2013-19, Oracle and/or its affiliates\n" +
-                    "Copyright (c) 1995-2018, The R Core Team\n" +
-                    "Copyright (c) 2018 The R Foundation for Statistical Computing\n" +
+    public static final String COPYRIGHT = "Copyright (c) 2013-21, Oracle and/or its affiliates\n" +
+                    "Copyright (C) 2020 The R Foundation for Statistical Computing\n" +
                     "Copyright (c) 2012-4 Purdue University\n" +
-                    "Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura\n" +
                     "All rights reserved.\n";
 
     /**
