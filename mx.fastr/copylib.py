@@ -104,7 +104,7 @@ def _copylib(lib, libpath, plain_libpath_base, target):
 def copylib(args):
     '''
     This supports a configuration where no explicit setting (e.g. LD_LIBRARY_PATH) is
-    required at runtime for the libraries that are required by FastR, e.g. pcre.
+    required at runtime for the libraries that are required by FastR, e.g. pcre2.
     The easy case is when the libraries are already installed with the correct versions
     in one of the directories, e.g./usr/lib, that is searched by default by the system linker -
     in which case no configuration is required.

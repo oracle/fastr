@@ -112,7 +112,7 @@ ifeq ($(OS_NAME),Darwin)
 	# given that we use -Wl,-undefined,dynamic_lookup when building libRllvm
 	install_name_tool -change bin/libpolyglot-mock.dylib $(LLVM_LIBS_DIR)/libpolyglot-mock.dylib $(LLVM_LIB)
 
-    	# check if we captured libpcre/libz, rpath those in libR
+    	# check if we captured libpcre2-8/libz, rpath those in libR
 	python $(FASTR_R_HOME)/mx.fastr/copylib.py updatelib $(FASTR_LIB_DIR) $(FASTR_R_HOME)
 else
 	# not Darwin:

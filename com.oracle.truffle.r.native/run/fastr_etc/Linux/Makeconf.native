@@ -101,7 +101,7 @@ LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" $(PKG_LDFLAGS_OVERRIDE)
 LIBM = -lm
 LIBR0 = -lR 
 LIBR1 = 
-LIBS =  -lpcre -llzma -lbz2 -lz -lrt -ldl -lm
+LIBS =  -lpcre2-8 -llzma -lbz2 -lz -lrt -ldl -lm
 ## needed by R CMD config
 LIBnn = lib64
 LIBTOOL = $(SHELL) "$(R_HOME)/bin/libtool"

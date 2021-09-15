@@ -101,7 +101,7 @@ LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-undefined,dynamic_lookup" -L"$(R_HOME)/lib
 LIBM = 
 LIBR0 = 
 LIBR1 = 
-LIBS =  -lpcre -llzma -lbz2 -lz -licucore -ldl -lm -liconv
+LIBS =  -lpcre2-8 -llzma -lbz2 -lz -licucore -ldl -lm -liconv
 ## needed by R CMD config
 LIBnn = lib
 LIBTOOL = $(SHELL) "$(R_HOME)/bin/libtool"

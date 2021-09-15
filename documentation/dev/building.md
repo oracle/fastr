@@ -25,7 +25,7 @@ This can be controlled by the following environment variables:
 and must be used when you are building a GraalVM distribution (from the `graal/vm` mx suite),
 but it can be further configured by using the following environment variables:
 * `FASTR_NO_RECOMMENDED` set to any value turns off the recommended packages build and bundling with FastR. Only applicable if `FASTR_RELEASE` is set.
-* `FASTR_CAPTURE_DEPENDENCIES` if exported overrides the set of 3rd party libraries that are bundled with FastR, the value is space separated list of "base" names of the libraries, for example, use `gfortran`, for `libgfortran.so.5`. Libraries that can be bundled are: `libz`, `libpcre`, `libgfortran`, `libquadmath`, and `libgcc_s`. Only applicable if `FASTR_RELEASE` is set.
+* `FASTR_CAPTURE_DEPENDENCIES` if exported overrides the set of 3rd party libraries that are bundled with FastR, the value is space separated list of "base" names of the libraries, for example, use `gfortran`, for `libgfortran.so.5`. Libraries that can be bundled are: `libz`, `libpcre2-8`, `libgfortran`, `libquadmath`, and `libgcc_s`. Only applicable if `FASTR_RELEASE` is set.
 
 Note for maintainers of packages for package managers like apt or yum: it is recommended to **not bundle** any 3rd party libraries with FastR, but instead use the dependency management mechanisms of your package manager. To achieve this, export `FASTR_BUNDLE_DEPENDENCIES` set to an empty value (and build FastR with `FASTR_RELEASE`).
 
@@ -80,7 +80,7 @@ These variables must point to dynamic libraries that implement the Blas/Lapack i
 Requirements shared between FastR and GNU-R are:
 
     A Fortran compiler and libraries. Typically gfortran 4.8 or later
-    The pcre package, version 8.38 or later
+    The pcre2 package, version 10.37 or later
     The zlib package, version 1.2.8 or later
     The ed, sed, and make utilities (usually but not always available on modern *nix systems)
 
