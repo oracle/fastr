@@ -59,7 +59,7 @@ import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
-@TruffleLanguage.Registration(name = "R", id = "R", version = "4.0.3", characterMimeTypes = {RRuntime.R_APP_MIME,
+@TruffleLanguage.Registration(name = "R", id = "R", version = "4.0.3", implementationName = "FastR", characterMimeTypes = {RRuntime.R_APP_MIME,
                 RRuntime.R_TEXT_MIME}, defaultMimeType = RRuntime.R_APP_MIME, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootBodyTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
