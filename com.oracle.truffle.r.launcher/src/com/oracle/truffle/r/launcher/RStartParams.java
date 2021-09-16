@@ -82,7 +82,7 @@ public class RStartParams {
         this.verbose = options.getBoolean(VERBOSE);
         this.quiet = options.getBoolean(QUIET) || options.getBoolean(SILENT) || options.getBoolean(NO_ECHO);
         this.loadSiteFile = options.getBoolean(NO_SITE_FILE);
-        this.loadInitFile = !embedded && options.getBoolean(NO_INIT_FILE) && !options.getBoolean(VANILLA);
+        this.loadInitFile = !embedded && !options.getBoolean(NO_INIT_FILE) && !options.getBoolean(VANILLA);
         this.noRenviron = embedded || options.getBoolean(NO_ENVIRON) || options.getBoolean(VANILLA);
         this.restoreAction = options.getBoolean(RESTORE) && !(options.getBoolean(NO_RESTORE) || options.getBoolean(NO_RESTORE_DATA) || options.getBoolean(VANILLA));
         this.noReadline = options.getBoolean(NO_READLINE);
