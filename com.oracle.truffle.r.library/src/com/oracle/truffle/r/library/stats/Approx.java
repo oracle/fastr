@@ -101,7 +101,7 @@ public abstract class Approx extends RExternalBuiltinNode.Arg8 {
         double f2;
         int kind;
         // In GNU-R, naRm field is unused.
-        boolean naRm;
+        @SuppressWarnings("unused") boolean naRm;
     }
 
     private static double approx1(double v, VectorDataLibrary xLib, Object xData, RandomAccessIterator xIter,
