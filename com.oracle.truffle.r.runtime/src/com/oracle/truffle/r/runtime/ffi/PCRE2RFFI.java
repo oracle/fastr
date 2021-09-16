@@ -49,7 +49,7 @@ import java.util.logging.Level;
  * for Perl regular expressions.
  */
 public final class PCRE2RFFI {
-    private static final TruffleLogger logger = RLogger.getLogger("com.oracle.truffle.r.pcre");
+    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_PCRE);
 
     /**
      * Transcribed from pcre2.h. The enumeration is not complete.
@@ -92,8 +92,8 @@ public final class PCRE2RFFI {
 
     /**
      * PCRE uses call by reference for error-related information, which we encapsulate and sanitize
-     * in this class. The {@code result} value (which is typically an opaque pointer to an internal
-     * C struct), is the actual result of the function as per the PCRE spec.
+     * in this class. The {@code compiledPattern} value (which is typically an opaque pointer to an
+     * internal C struct), is the actual result of the function as per the PCRE2 spec.
      */
     public static final class CompileResult {
         // Pointer to the pcre2_code data, NULL if a pattern-compile error occured.
@@ -267,26 +267,6 @@ public final class PCRE2RFFI {
         }
     }
 
-    public static final class Capture {
-        public final IndexRange range;
-
-        private Capture(IndexRange range) {
-            assert range != null;
-            this.range = range;
-        }
-
-        public Capture(int startIdx, int endIdx) {
-            this(new IndexRange(startIdx, endIdx));
-        }
-
-        @Override
-        public String toString() {
-            return "Capture{" +
-                            "range=" + range +
-                            '}';
-        }
-    }
-
     /**
      * This is called from the native when a match occurs.
      */
@@ -313,9 +293,8 @@ public final class PCRE2RFFI {
             assert args.length == 2;
             assert args[0] instanceof Long;
             assert args[1] instanceof Long;
-            // TODO: Check if the Long values fit in Integer.
-            int startIdx = ((Long) args[0]).intValue();
-            int endIdx = ((Long) args[1]).intValue();
+            int startIdx = Math.toIntExact((Long) args[0]);
+            int endIdx = Math.toIntExact((Long) args[1]);
             logger.fine(() -> String.format("MatchCallback: (%d, %d)", startIdx, endIdx));
             matchData.addMatch(startIdx, endIdx);
             return 0;
@@ -348,11 +327,9 @@ public final class PCRE2RFFI {
             assert args[0] instanceof Long;
             assert args[1] instanceof Long;
             assert args[2] instanceof Long;
-            // CaptureCallback is always called in order of the capture indexes. That is why we can
-            // ignore the acutal index of the capture.
-            int captureIdx = ((Long) args[0]).intValue();
-            int startIdx = ((Long) args[1]).intValue();
-            int endIdx = ((Long) args[2]).intValue();
+            int captureIdx = Math.toIntExact((Long) args[0]);
+            int startIdx = Math.toIntExact((Long) args[1]);
+            int endIdx = Math.toIntExact((Long) args[2]);
             logger.fine(() -> String.format("Capture: capture_idx=%d, range=(%d, %d)", captureIdx, startIdx, endIdx));
             matchData.addCapture(captureIdx, startIdx, endIdx);
             return 0;
@@ -504,6 +481,8 @@ public final class PCRE2RFFI {
          * When a match or capture callback is made from PCRE2, the indexes in these callbacks are
          * indexes into the byte array, not indexes into Java string. We have to convert these
          * indexes to indexes into Java string.
+         *
+         * @return A copy of match data with converted indexes.
          */
         private static MatchData convertIndexes(MatchData matchData, String subject, byte[] subjectBytes, int captureCount) {
             if (subject.length() == subjectBytes.length) {
@@ -511,7 +490,7 @@ public final class PCRE2RFFI {
             }
             MatchData newMatchData = new MatchData(captureCount);
             assert subjectBytes.length > subject.length();
-            int[] bytesToStrIndexes = bytesToStrMapping(subject, subjectBytes);
+            int[] bytesToStrIndexes = bytesToStrIndexMapping(subject, subjectBytes);
             assert bytesToStrIndexes.length == subjectBytes.length;
             // Convert indexes in all the matches.
             List<IndexRange> convertedMatches = convertListOfIndexes(matchData.matches, bytesToStrIndexes, subject, subjectBytes);
@@ -552,7 +531,12 @@ public final class PCRE2RFFI {
             return convertedRanges;
         }
 
-        private static int[] bytesToStrMapping(String str, byte[] strBytes) {
+        /**
+         * Returns an array of indexes with the same length as given {@code strBytes}, where
+         * in {@code array[i]}, there is an index into {@code str}. In other words, returns
+         * an array of indexes that maps indexes of bytes into the String.
+         */
+        private static int[] bytesToStrIndexMapping(String str, byte[] strBytes) {
             assert str.length() < strBytes.length;
             int indexMappingIdx = 0;
             int[] indexMapping = new int[strBytes.length];

@@ -108,6 +108,11 @@ public class RLogger {
      */
     public static final String LOGGER_FILE_ACCEESS = "com.oracle.truffle.r.fileAccess";
 
+    /**
+     * Log some return values and information from functions wrapping around PCRE2.
+     */
+    public static final String LOGGER_PCRE = "com.oracle.truffle.r.pcre";
+
     public static TruffleLogger getLogger(String name) {
         return TruffleLogger.getLogger(R_LANGUAGE_ID, name);
     }

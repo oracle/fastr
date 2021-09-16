@@ -242,7 +242,7 @@ public class GrepFunctions {
     }
 
     protected static final class GrepCommonCodeNode extends CommonCodeNode {
-        @Child private InteropLibrary interop = InteropLibrary.getFactory().createDispatched(3);
+        @Child private InteropLibrary interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
 
         protected Object doGrep(String patternArg, RStringVector vector, boolean ignoreCase, boolean value, boolean perlPar, boolean fixed,
                         @SuppressWarnings("unused") boolean useBytes, boolean invert, boolean grepl) {
@@ -268,6 +268,7 @@ public class GrepFunctions {
                     if (interop.isNull(compileResult.compiledPattern)) {
                         // Error occured during pattern compilation.
                         // TODO: Inspect the error - call a PCRE specific pcre2_get_err_msg(...)
+                        throw RInternalError.unimplemented("PCRE2 error handling not yet implemented");
                     }
                     int captureCount = pcre2CaptureCountNode.execute(compileResult.compiledPattern);
                     assert !interop.isNull(compileResult.compiledPattern);
@@ -448,8 +449,6 @@ public class GrepFunctions {
     }
 
     protected static final class SubCommonCodeNode extends CommonCodeNode {
-        @Child private PCRE2RFFI.GetCaptureCountNode captureCountNode = RFFIFactory.getPCRE2RFFI().createGetCaptureCountNode();
-
         private static final String APPEND_MISSING_NL_PATTERN = "([^\n])$";
         private static final String APPEND_MISSING_NL_REPLACEMENT = "\\1\n";
 
@@ -524,6 +523,7 @@ public class GrepFunctions {
                             value = ix < 0 ? input : input.substring(0, ix) + preparedReplacement + input.substring(ix + pattern.length());
                         }
                     } else if (perl) {
+                        assert pcre != null;
                         boolean stopAfterFirstMatch = !gsub;
                         PCRE2RFFI.MatchData matchData = pcre2MatchNode.execute(pcre.compiledPattern, input, 0, stopAfterFirstMatch, captureCount);
                         boolean replacementContainsBackReferences = containsBackReferences(replacement);
@@ -571,6 +571,10 @@ public class GrepFunctions {
                         }
                     }
                     result[i] = value;
+                }
+                if (perl) {
+                    assert pcre != null;
+                    pcre2MemoryReleaseNode.execute(pcre.compiledPattern);
                 }
                 boolean isVectorComplete = vectorDataLib.isComplete(vector.getData());
                 RStringVector ret = RDataFactory.createStringVector(result, isVectorComplete);
@@ -1719,7 +1723,7 @@ public class GrepFunctions {
             return RDataFactory.createStringVector(result, true);
         }
 
-        private RStringVector splitPerl(String data, PCRE2RFFI.CompileResult pcre, CommonCodeNode common) {
+        private static RStringVector splitPerl(String data, PCRE2RFFI.CompileResult pcre, CommonCodeNode common) {
             int captureCount = common.pcre2CaptureCountNode.execute(pcre.compiledPattern);
             PCRE2RFFI.MatchData matchData = common.pcre2MatchNode.execute(pcre.compiledPattern, data, 0, false, captureCount);
             List<IndexRange> matches = matchData.getMatches();
@@ -2157,56 +2161,5 @@ public class GrepFunctions {
                         @SuppressWarnings("unused") boolean invert) {
             throw RInternalError.unimplemented("grepRaw with fixed = FALSE");
         }
-    }
-
-    private static int getByteLength(String data) {
-        int byteLength = 0;
-        int pos = 0;
-        while (pos < data.length()) {
-            char c = data.charAt(pos);
-            if (c < 128) {
-                byteLength++;
-            } else if (c < 2048) {
-                byteLength += 2;
-            } else {
-                if (Character.isHighSurrogate(c)) {
-                    byteLength += 4;
-                    pos++;
-                } else {
-                    byteLength += 3;
-                }
-            }
-            pos++;
-        }
-        return byteLength;
-    }
-
-    private static int[] getFromByteMapping(String data) {
-        int byteLength = getByteLength(data);
-        if (byteLength == data.length()) {
-            return null;
-        }
-        int[] result = new int[byteLength + 1];
-        byteLength = 0;
-        int pos = 0;
-        while (pos < data.length()) {
-            result[byteLength] = pos;
-            char c = data.charAt(pos);
-            if (c < 128) {
-                byteLength++;
-            } else if (c < 2048) {
-                byteLength += 2;
-            } else {
-                if (Character.isHighSurrogate(c)) {
-                    byteLength += 4;
-                    pos++;
-                } else {
-                    byteLength += 3;
-                }
-            }
-            pos++;
-        }
-        result[byteLength] = pos;
-        return result;
     }
 }
