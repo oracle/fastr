@@ -25,9 +25,11 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -271,6 +273,7 @@ public final class PCRE2RFFI {
      * This is called from the native when a match occurs.
      */
     @ExportLibrary(InteropLibrary.class)
+    @ImportStatic(DSLConfig.class)
     public static class MatchCallback implements TruffleObject {
         private final MatchData matchData;
 
@@ -288,13 +291,19 @@ public final class PCRE2RFFI {
          * {@code void match_callback(size_t start_idx, size_t end_idx)}
          */
         @ExportMessage
-        Object execute(Object[] args) {
+        Object execute(Object[] args, @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
             // Arguments are `size_t start_idx` and `end_idx`.
             assert args.length == 2;
-            assert args[0] instanceof Long;
-            assert args[1] instanceof Long;
-            int startIdx = Math.toIntExact((Long) args[0]);
-            int endIdx = Math.toIntExact((Long) args[1]);
+            assert interop.fitsInLong(args[0]);
+            assert interop.fitsInLong(args[1]);
+            int startIdx;
+            int endIdx;
+            try {
+                startIdx = interop.asInt(args[0]);
+                endIdx = interop.asInt(args[1]);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
             logger.fine(() -> String.format("MatchCallback: (%d, %d)", startIdx, endIdx));
             matchData.addMatch(startIdx, endIdx);
             return 0;
@@ -305,6 +314,7 @@ public final class PCRE2RFFI {
      * This is called from native when a match of a capture occurs.
      */
     @ExportLibrary(InteropLibrary.class)
+    @ImportStatic(DSLConfig.class)
     public static class CaptureCallback implements TruffleObject {
         private final MatchData matchData;
 
@@ -322,14 +332,21 @@ public final class PCRE2RFFI {
          * {@code void capture_callback(size_t capture_idx, size_t start_idx, size_t end_idx)}
          */
         @ExportMessage
-        Object execute(Object[] args) {
+        Object execute(Object[] args, @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
             assert args.length == 3;
-            assert args[0] instanceof Long;
-            assert args[1] instanceof Long;
-            assert args[2] instanceof Long;
-            int captureIdx = Math.toIntExact((Long) args[0]);
-            int startIdx = Math.toIntExact((Long) args[1]);
-            int endIdx = Math.toIntExact((Long) args[2]);
+            assert interop.fitsInLong(args[0]);
+            assert interop.fitsInLong(args[1]);
+            assert interop.fitsInLong(args[2]);
+            int captureIdx;
+            int startIdx;
+            int endIdx;
+            try {
+                captureIdx = interop.asInt(args[0]);
+                startIdx = interop.asInt(args[1]);
+                endIdx = interop.asInt(args[2]);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
             logger.fine(() -> String.format("Capture: capture_idx=%d, range=(%d, %d)", captureIdx, startIdx, endIdx));
             matchData.addCapture(captureIdx, startIdx, endIdx);
             return 0;
@@ -337,6 +354,7 @@ public final class PCRE2RFFI {
     }
 
     @ExportLibrary(InteropLibrary.class)
+    @ImportStatic(DSLConfig.class)
     public static class SetCaptureNameCallback implements TruffleObject {
         private final String[] captureNames;
 
@@ -354,12 +372,18 @@ public final class PCRE2RFFI {
         }
 
         @ExportMessage
-        Object execute(Object[] args) {
+        Object execute(Object[] args, @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop){
             assert args.length == 2;
-            assert args[0] instanceof String;
-            assert args[1] instanceof Integer;
-            String name = (String) args[0];
-            int captureIdx = (int) args[1];
+            assert interop.isString(args[0]);
+            assert interop.fitsInInt(args[1]);
+            String name;
+            int captureIdx;
+            try {
+                name = interop.asString(args[0]);
+                captureIdx = interop.asInt(args[1]);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
             logger.fine(() -> String.format("SetCaptureNameCallback: capture_idx=%d, name=%s", captureIdx, name));
             set(captureIdx, name);
             return 0;
