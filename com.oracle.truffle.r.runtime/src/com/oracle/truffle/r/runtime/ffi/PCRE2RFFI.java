@@ -255,10 +255,12 @@ public final class PCRE2RFFI {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o)
+            if (this == o) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
+            }
             IndexRange that = (IndexRange) o;
             return startIdx == that.startIdx && endIdx == that.endIdx;
         }
@@ -274,7 +276,7 @@ public final class PCRE2RFFI {
      */
     @ExportLibrary(InteropLibrary.class)
     @ImportStatic(DSLConfig.class)
-    public static class MatchCallback implements TruffleObject {
+    public static final class MatchCallback implements TruffleObject {
         private final MatchData matchData;
 
         private MatchCallback(MatchData matchData) {
@@ -288,7 +290,7 @@ public final class PCRE2RFFI {
 
         /**
          * Signature of the corresponding native callback:
-         * {@code void match_callback(size_t start_idx, size_t end_idx)}
+         * {@code void match_callback(size_t start_idx, size_t end_idx)}.
          */
         @ExportMessage
         Object execute(Object[] args, @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
@@ -329,7 +331,7 @@ public final class PCRE2RFFI {
 
         /**
          * Signature of the corresponding native callback:
-         * {@code void capture_callback(size_t capture_idx, size_t start_idx, size_t end_idx)}
+         * {@code void capture_callback(size_t capture_idx, size_t start_idx, size_t end_idx)}.
          */
         @ExportMessage
         Object execute(Object[] args, @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {

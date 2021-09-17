@@ -23,11 +23,14 @@
 
 package com.oracle.truffle.r.nodes.test;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI;
-import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI.IndexRange;
-import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI.MatchData;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import static org.junit.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,13 +39,11 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI;
+import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI.IndexRange;
+import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI.MatchData;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 @RunWith(Theories.class)
 public class PCRE2Tests extends TestBase {
@@ -146,85 +147,80 @@ public class PCRE2Tests extends TestBase {
     // @formatter:off
     @DataPoints
     public static TestData[] testData = {
-            TestData.builder().pattern("X").subject("aaa")
-                    .expectedMatchIndexes(new int[]{})
-                    .build(),
-            TestData.builder().pattern("X").subject("aXa")
-                    .expectedMatchIndexes(new int[]{1, 2})
-                    .build(),
-            TestData.builder().pattern("[a-z]+").subject("abc123")
-                    .expectedMatchIndexes(new int[]{0, 3})
-                    .build(),
-            TestData.builder().pattern("([a-z]+)").subject("abc123")
-                    .expectedMatchIndexes(new int[]{0, 3})
-                    .expectedCaptureIndexes(0, new int[]{0, 3})
-                    .expectedCaptureNames(new String[]{null})
-                    .build(),
-            TestData.builder().pattern("(?P<word>[a-z]+)").subject("abc123")
-                    .expectedMatchIndexes(new int[]{0, 3})
-                    .expectedCaptureIndexes(0, new int[]{0, 3})
-                    .expectedCaptureNames(new String[]{"word"})
-                    .build(),
-            TestData.builder().pattern("(?P<word>[a-z]+)(?P<num>[0-9]+)").subject("abc123")
-                    .expectedMatchIndexes(new int[]{0, 6})
-                    .expectedCaptureIndexes(0, new int[]{0, 3})
-                    .expectedCaptureIndexes(1, new int[]{3, 6})
-                    .expectedCaptureNames(new String[]{"word", "num"})
-                    .build(),
-            TestData.builder().pattern("(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)").subject("  Ben Franklin and Jefferson Davis")
-                    .expectedMatchIndexes(new int[]{2, 14, 19, 34})
-                    .expectedCaptureIndexes(0, new int[]{
+            TestData.builder().pattern("X").subject("aaa").expectedMatchIndexes(new int[]{}).build(),
+            TestData.builder().pattern("X").subject("aXa").expectedMatchIndexes(new int[]{1, 2}).build(),
+            TestData.builder().pattern("[a-z]+").subject("abc123").expectedMatchIndexes(new int[]{0, 3}).build(),
+            TestData.builder().pattern("([a-z]+)").subject("abc123").
+                    expectedMatchIndexes(new int[]{0, 3}).
+                    expectedCaptureIndexes(0, new int[]{0, 3}).
+                    expectedCaptureNames(new String[]{null}).
+                    build(),
+            TestData.builder().pattern("(?P<word>[a-z]+)").subject("abc123").
+                    expectedMatchIndexes(new int[]{0, 3}).
+                    expectedCaptureIndexes(0, new int[]{0, 3}).
+                    expectedCaptureNames(new String[]{"word"}).
+                    build(),
+            TestData.builder().pattern("(?P<word>[a-z]+)(?P<num>[0-9]+)").subject("abc123").
+                    expectedMatchIndexes(new int[]{0, 6}).
+                    expectedCaptureIndexes(0, new int[]{0, 3}).
+                    expectedCaptureIndexes(1, new int[]{3, 6}).
+                    expectedCaptureNames(new String[]{"word", "num"}).
+                    build(),
+            TestData.builder().pattern("(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)").
+                    subject("  Ben Franklin and Jefferson Davis").
+                    expectedMatchIndexes(new int[]{2, 14, 19, 34}).
+                    expectedCaptureIndexes(0, new int[]{
                             2, 5, // "Ben"
                             19, 28  // "Jefferson"
-                    })
-                    .expectedCaptureIndexes(1, new int[]{
+                    }).
+                    expectedCaptureIndexes(1, new int[]{
                             6, 14, // "Franklin"
                             29, 34 // "Davis"
-                    })
-                    .expectedCaptureNames(new String[]{"first", "last"})
-                    .build(),
-            TestData.builder().pattern("^((.*))$").subject("A1")
-                    .expectedMatchIndexes(new int[]{0, 2})
-                    // Two captures at the same indexes.
-                    .expectedCaptureIndexes(0, new int[]{0, 2})
-                    .expectedCaptureIndexes(1, new int[]{0, 2})
-                    .expectedCaptureNames(new String[]{null, null})
-                    .build(),
-            TestData.builder().pattern("((?P<word>[a-z]+))").subject("abc")
-                    .expectedMatchIndexes(new int[]{0, 3})
-                    .expectedCaptureIndexes(0, new int[]{0, 3})
-                    .expectedCaptureIndexes(1, new int[]{0, 3})
-                    .expectedCaptureNames(new String[]{null, "word"})
-                    .build(),
-            TestData.builder().pattern("(a)(?P<capt1>b)").subject("ab")
-                    .expectedMatchIndexes(new int[]{0, 2})
-                    .expectedCaptureIndexes(0, new int[]{0, 1})
-                    .expectedCaptureIndexes(1, new int[]{1, 2})
-                    .expectedCaptureNames(new String[]{null, "capt1"})
-                    .build(),
-            TestData.builder().pattern("([a-z])").subject("ab")
-                    .expectedMatchIndexes(new int[]{0, 1, 1, 2})
-                    .expectedCaptureIndexes(0, new int[]{0, 1, 1, 2})
-                    .expectedCaptureNames(new String[]{null})
-                    .build(),
+                    }).
+                    expectedCaptureNames(new String[]{"first", "last"}).
+                    build(),
+            TestData.builder().pattern("^((.*))$").subject("A1").
+                    expectedMatchIndexes(new int[]{0, 2}).
+                                    // Two captures at the same indexes.
+                    expectedCaptureIndexes(0, new int[]{0, 2}).
+                    expectedCaptureIndexes(1, new int[]{0, 2}).
+                    expectedCaptureNames(new String[]{null, null}).
+                    build(),
+            TestData.builder().pattern("((?P<word>[a-z]+))").subject("abc").
+                    expectedMatchIndexes(new int[]{0, 3}).
+                    expectedCaptureIndexes(0, new int[]{0, 3}).
+                    expectedCaptureIndexes(1, new int[]{0, 3}).
+                    expectedCaptureNames(new String[]{null, "word"}).
+                    build(),
+            TestData.builder().pattern("(a)(?P<capt1>b)").subject("ab").
+                    expectedMatchIndexes(new int[]{0, 2}).
+                    expectedCaptureIndexes(0, new int[]{0, 1}).
+                    expectedCaptureIndexes(1, new int[]{1, 2}).
+                    expectedCaptureNames(new String[]{null, "capt1"}).
+                    build(),
+            TestData.builder().pattern("([a-z])").subject("ab").
+                    expectedMatchIndexes(new int[]{0, 1, 1, 2}).
+                    expectedCaptureIndexes(0, new int[]{0, 1, 1, 2}).
+                    expectedCaptureNames(new String[]{null}).
+                    build(),
             // UTF-8 tests
-            TestData.builder().pattern(".*").subject("á")
-                    .expectedMatchIndexes(new int[]{0, 1, 1, 1})
-                    .build(),
-            TestData.builder().pattern("(a)|(b)").subject("b")
-                    .expectedMatchIndexes(new int[]{0, 1})
+            TestData.builder().pattern(".*").subject("á").
+                    expectedMatchIndexes(new int[]{0, 1, 1, 1}).
+                    build(),
+            TestData.builder().pattern("(a)|(b)").subject("b").
+                    expectedMatchIndexes(new int[]{0, 1}).
                     // PCRE2 does not report the first capture at all, so we have to replace it with (0,0).
                     // i.e. the capture with index 0 does not have any matches.
-                    .expectedCaptureIndexes(0, new int[]{0, 0})
-                    .expectedCaptureIndexes(1, new int[]{0, 1})
-                    .expectedCaptureNames(new String[]{null, null})
-                    .build(),
-            TestData.builder().pattern("(a)|(b)").subject("a")
-                    .expectedMatchIndexes(new int[]{0, 1})
-                    .expectedCaptureIndexes(0, new int[]{0, 1})
-                    .expectedCaptureIndexes(1, new int[]{0, 0})
-                    .expectedCaptureNames(new String[]{null, null})
-                    .build(),
+                    expectedCaptureIndexes(0, new int[]{0, 0}).
+                    expectedCaptureIndexes(1, new int[]{0, 1}).
+                    expectedCaptureNames(new String[]{null, null}).
+                    build(),
+            TestData.builder().pattern("(a)|(b)").subject("a").
+                    expectedMatchIndexes(new int[]{0, 1}).
+                    expectedCaptureIndexes(0, new int[]{0, 1}).
+                    expectedCaptureIndexes(1, new int[]{0, 0}).
+                    expectedCaptureNames(new String[]{null, null}).
+                    build(),
     };
     // @formatter:on
 
