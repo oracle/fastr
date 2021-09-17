@@ -113,7 +113,7 @@ $(GNUR_HOME_BINARY_UNPACKED)/gnur.done:
 	(cd $(GNUR_HOME_BINARY_UNPACKED_PARENT); tar xf R-$(R_VERSION).tar.gz)
 	(\
 		cd $(GNUR_HOME_BINARY_UNPACKED);\
-		./configure --with-x=no --with-aqua=no --with-pcre2 $(RECPKGS) $(OS_EXTRA_CONFIGURE_FLAGS) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > $(GNUR_CONFIG_LOG) 2>&1;\
+		./configure --with-x=no --with-aqua=no --disable-openmp --with-pcre2 $(RECPKGS) $(OS_EXTRA_CONFIGURE_FLAGS) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > $(GNUR_CONFIG_LOG) 2>&1;\
 		$(MAKE) -j > $(GNUR_MAKE_LOG) 2>&1\
 	) || (\
 	  	# Print tails of both logs if configure or make fails\
