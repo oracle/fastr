@@ -372,7 +372,7 @@ public final class PCRE2RFFI {
         }
 
         @ExportMessage
-        Object execute(Object[] args, @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop){
+        Object execute(Object[] args, @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
             assert args.length == 2;
             assert interop.isString(args[0]);
             assert interop.fitsInInt(args[1]);
@@ -471,7 +471,7 @@ public final class PCRE2RFFI {
 
         /**
          * Performs a match in the text with the given compiled pattern.
-         * 
+         *
          * @param pcreCompiledPattern A PCRE-specific pattern obtained with {@link CompileNode}.
          * @param subject Text to be searched.
          * @param options See {@link Option}.
@@ -556,9 +556,9 @@ public final class PCRE2RFFI {
         }
 
         /**
-         * Returns an array of indexes with the same length as given {@code strBytes}, where
-         * in {@code array[i]}, there is an index into {@code str}. In other words, returns
-         * an array of indexes that maps indexes of bytes into the String.
+         * Returns an array of indexes with the same length as given {@code strBytes}, where in
+         * {@code array[i]}, there is an index into {@code str}. In other words, returns an array of
+         * indexes that maps indexes of bytes into the String.
          */
         private static int[] bytesToStrIndexMapping(String str, byte[] strBytes) {
             assert str.length() < strBytes.length;

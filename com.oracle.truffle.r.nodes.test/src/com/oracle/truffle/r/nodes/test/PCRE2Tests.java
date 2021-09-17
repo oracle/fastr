@@ -230,7 +230,8 @@ public class PCRE2Tests extends TestBase {
 
     // Declare dummy test so that `mx unittest` can discover this class.
     @Test
-    public void dummy() {}
+    public void dummy() {
+    }
 
     @Before
     public void init() {
@@ -246,18 +247,18 @@ public class PCRE2Tests extends TestBase {
     }
 
     @Theory
-    public void test(TestData testData) {
+    public void test(TestData testingData) {
         execInContext(() -> {
-            Object compiledPattern = compilePattern(testData.pattern);
+            Object compiledPattern = compilePattern(testingData.pattern);
             int captureCount = captureCountNode.execute(compiledPattern);
             String[] captureNames = captureNamesNode.execute(compiledPattern, captureCount);
             assertEquals(captureCount, captureNames.length);
-            MatchData matchData = matchNode.execute(compiledPattern, testData.subject, 0, false, captureCount);
-            assertMatchIndexesEqual(testData.expectedMatchIndexes, matchData);
-            if (testData.hasCaptures()) {
-                assert testData.expectedCaptureNames != null;
-                assertCapturesEqual(testData.expectedCaptureMatches, matchData);
-                assertCaptureNamesEqual(testData.expectedCaptureNames, captureNames);
+            MatchData matchData = matchNode.execute(compiledPattern, testingData.subject, 0, false, captureCount);
+            assertMatchIndexesEqual(testingData.expectedMatchIndexes, matchData);
+            if (testingData.hasCaptures()) {
+                assert testingData.expectedCaptureNames != null;
+                assertCapturesEqual(testingData.expectedCaptureMatches, matchData);
+                assertCaptureNamesEqual(testingData.expectedCaptureNames, captureNames);
             }
             freePattern(compiledPattern);
             return null;
@@ -268,7 +269,7 @@ public class PCRE2Tests extends TestBase {
      * @param expected Start indexes and end indexes are intertwined ([start_idx1, end_idx1,
      *            start_idx2, end_idx2,...])
      */
-    private void assertMatchIndexesEqual(int[] expected, MatchData matchData) {
+    private static void assertMatchIndexesEqual(int[] expected, MatchData matchData) {
         assert expected.length % 2 == 0;
         List<IndexRange> matches = matchData.getMatches();
         assertEquals(matches.size(), matchData.getMatchCount());
@@ -281,7 +282,7 @@ public class PCRE2Tests extends TestBase {
         }
     }
 
-    private void assertCapturesEqual(Map<Integer, List<IndexRange>> expectedCaptures, MatchData matchData) {
+    private static void assertCapturesEqual(Map<Integer, List<IndexRange>> expectedCaptures, MatchData matchData) {
         Map<Integer, List<IndexRange>> captures = matchData.getCaptures();
         assertEquals(expectedCaptures.size(), captures.size());
         for (Map.Entry<Integer, List<IndexRange>> entry : expectedCaptures.entrySet()) {
@@ -292,7 +293,7 @@ public class PCRE2Tests extends TestBase {
         }
     }
 
-    private void assertCaptureNamesEqual(String[] expectedNames, String[] actualNames) {
+    private static void assertCaptureNamesEqual(String[] expectedNames, String[] actualNames) {
         Assert.assertArrayEquals(expectedNames, actualNames);
     }
 
