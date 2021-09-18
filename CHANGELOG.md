@@ -4,9 +4,12 @@
 
 Bug fixes:
 
-* Fixed implicit make rule parameters.
-  * Which fixes, e.g., installation of maps package version 3.3.0.
-* Fixed issue with unexpected garbage collection of CHARSXP elements.
+* Fixed implicit make rule parameters used when building R extensions
+  * Fixes, e.g., installation of maps package version 3.3.0.
+* Fixed unexpected garbage collection of CHARSXP objects in R extensions
+* Option --no-init-file is not ignored anymore (do not read the user's profile at startup)
+* Fixed functions `approx` and `approxfun` from the `stats` package
+  * Previously they were always failing with error message "Incorrect number of arguments"
 
 # 21.2.0
 * Support for packages in 2021-02-01 CRAN snapshot:
