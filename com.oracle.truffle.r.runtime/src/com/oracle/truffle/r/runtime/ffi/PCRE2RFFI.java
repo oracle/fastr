@@ -24,6 +24,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -152,6 +153,7 @@ public final class PCRE2RFFI {
             addCapture(captureIdx, new IndexRange(startIdx, endIdx));
         }
 
+        @TruffleBoundary
         public void addCapture(int captureIdx, IndexRange captureRange) {
             assert 0 <= captureIdx && captureIdx < captureCount;
             if (!captures.containsKey(captureIdx)) {
