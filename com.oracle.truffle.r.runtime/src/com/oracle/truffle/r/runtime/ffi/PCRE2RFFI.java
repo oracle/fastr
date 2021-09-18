@@ -286,6 +286,7 @@ public final class PCRE2RFFI {
         }
 
         @ExportMessage
+        @SuppressWarnings("static-method")
         boolean isExecutable() {
             return true;
         }
@@ -327,6 +328,7 @@ public final class PCRE2RFFI {
         }
 
         @ExportMessage
+        @SuppressWarnings("static-method")
         boolean isExecutable() {
             return true;
         }
@@ -371,6 +373,7 @@ public final class PCRE2RFFI {
         }
 
         @ExportMessage
+        @SuppressWarnings("static-method")
         boolean isExecutable() {
             return true;
         }
