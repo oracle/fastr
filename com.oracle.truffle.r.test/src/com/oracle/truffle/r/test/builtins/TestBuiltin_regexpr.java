@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -123,11 +123,6 @@ public class TestBuiltin_regexpr extends TestBase {
         assertEval("{ .Internal(regexpr(character(), \"42\", F, F, F, F)) }");
         assertEval("{ .Internal(regexpr(\"7\", 42, F, F, F, F)) }");
 
-        assertEval("{ argv <- structure(list(pattern = '', text = c('abc', 'defg'), perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('regexpr', argv) }");
-        assertEval("{ x<-c(\"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
-        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
-        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
-
         assertEval("regexpr(')', 'abc()', fixed = TRUE)");
         assertEval("regexpr('(', 'abc()', fixed = TRUE)");
         assertEval("regexpr(')', 'abc()', fixed = FALSE)");
@@ -135,8 +130,28 @@ public class TestBuiltin_regexpr extends TestBase {
         assertEval(Output.IgnoreErrorMessage, "regexpr('(', 'abc()', fixed = FALSE)");
         assertEval("regexpr('\\\\(', 'abc()', fixed = FALSE)");
 
+    }
+
+    @Test
+    public void testRegExprPCRE() {
+        assertEval("{ regexpr('(a)|(b)', 'a', perl=TRUE) }");
+        assertEval("{ regexpr('(a)|(b)', 'b', perl=TRUE) }");
+        assertEval("{ regexpr('(a)(b)', 'ab', perl=TRUE) }");
+        assertEval("{ regexpr('(?P<word>[a-z]+)(1)', 'abc1', perl=TRUE) }");
+        assertEval("{ regexpr('(?P<word>[a-z]+)|(1)', '1', perl=TRUE) }");
+
+        assertEval("{ argv <- structure(list(pattern = '', text = c('abc', 'defg'), perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('regexpr', argv) }");
+        assertEval("{ x<-c(\"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+
         // pattern has capture groups, but data are empty:
         assertEval("regexpr(structure('.*: (?<message>X*)', class = 'regex'), list(), perl=T)");
         assertEval("regexpr(structure('^(?:ABC(?!_DEF))', class = 'regex'), list(), perl=T)");
+
+        // Unicode patterns - here, the pattern and the text have the same first byte (they are both
+        // encoded by 3 bytes), so the pattern has to be aware of unicode encoding.
+        // FIXME: Enable once Unicode support is implemented in PCRE2.
+        assertEval(Ignored.ImplementationError, "{ regexpr('[⚽]', '─', perl=TRUE) }");
     }
 }

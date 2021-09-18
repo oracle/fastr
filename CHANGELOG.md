@@ -8,6 +8,20 @@ Bug fixes:
   * Fixes, e.g., installation of maps package version 3.3.0.
 * Fixed unexpected garbage collection of CHARSXP objects in R extensions
 * Option --no-init-file is not ignored anymore
+* Upgrade of [PCRE](https://www.pcre.org/) to PCRE2 version 10.37.
+  * Some Unicode patterns and texts are still not supported.
+  * See [GNU-R changelog](https://cran.r-project.org/doc/manuals/r-devel/NEWS.html) (section MIGRATION TO PCRE2) for more details
+     on potentially user visible differences between PCRE and PCRE2
+
+Bug fixes:
+
+* Fixed implicit make rule parameters used when building [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html)
+  * Fixes, e.g., installation of [maps](https://cran.r-project.org/web/packages/maps/index.html) package version 3.3.0.
+  * Removed `-shared` flag from `LDFLAGS`, added `-shared` to `DYLIB_LDFLAGS`, added `SHLIB_LDGLAGS_R`
+* Fixed unexpected garbage collection of `CHARSXP` objects in [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html)
+  * FastR did not materialize its internal representation of character vectors to GNU-R compatible CHARSXP objects,
+      which caused unexpected collection of CHARSXP objects returned by STRING_ELT
+* Option --no-init-file is not ignored anymore (do not read the user's profile at startup)
 * Fixed functions `approx` and `approxfun` from the `stats` package
   * Previously they were always failing with error message "Incorrect number of arguments"
 

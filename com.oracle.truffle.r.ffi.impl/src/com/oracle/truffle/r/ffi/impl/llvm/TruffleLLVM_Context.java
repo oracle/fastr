@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
-import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
@@ -67,9 +67,11 @@ public class TruffleLLVM_Context extends RFFIContext {
                         new AltrepRFFI(AltrepDownCallNodeFactoryImpl.INSTANCE),
                         new TruffleLLVM_Call(), new TruffleLLVM_DLL(),
                         new TruffleLLVM_UserRng(),
-                        new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
-                        new LapackRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new StatsRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
-                        new ToolsRFFI(), new REmbedRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
+                        new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new PCRE2RFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new LapackRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new StatsRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
     }
 
     @SuppressWarnings("unchecked")

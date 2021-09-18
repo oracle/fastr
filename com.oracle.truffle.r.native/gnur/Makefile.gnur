@@ -99,7 +99,18 @@ ifndef FASTR_RELEASE
 RECPKGS := "--without-recommended-packages"
 endif
 
+ifdef GNUR_FC
+CONFIGURE_FC := "FC=$(GNUR_FC)"
+else
+# Hack: define it to something that is not going to hurt
+CONFIGURE_FC := "--with-x=no"
+endif
+
 GNUR_HOME_BINARY_UNPACKED_PARENT := $(dir $(GNUR_HOME_BINARY_UNPACKED))
+GNUR_CONFIG_LOG = $(GNUR_HOME_BINARY_UNPACKED)/gnur_configure.log
+GNUR_MAKE_LOG = $(GNUR_HOME_BINARY_UNPACKED)/gnur_make.log
+$(info GNUR_CONFIG_LOG = $(GNUR_CONFIG_LOG))
+$(info GNUR_MAKE_LOG = $(GNUR_MAKE_LOG))
 
 ifdef BUILD_GNUR
 $(GNUR_HOME_BINARY_UNPACKED)/gnur.done:
@@ -107,7 +118,7 @@ $(GNUR_HOME_BINARY_UNPACKED)/gnur.done:
 	rm -rf $(GNUR_HOME_BINARY_UNPACKED)
 	mkdir -p $(GNUR_HOME_BINARY_UNPACKED_PARENT)
 	(cd $(GNUR_HOME_BINARY_UNPACKED_PARENT); tar xf R-$(R_VERSION).tar.gz)
-	(cd $(GNUR_HOME_BINARY_UNPACKED); ./configure --with-x=no --with-aqua=no --with-pcre1 $(RECPKGS) $(OS_EXTRA_CONFIGURE_FLAGS) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1; $(MAKE) -j > gnur_make.log 2>&1)
+	(cd $(GNUR_HOME_BINARY_UNPACKED); ./configure --with-x=no --with-aqua=no --disable-openmp --with-pcre2 $(RECPKGS) $(OS_EXTRA_CONFIGURE_FLAGS) $(CONFIGURE_FC) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > $(GNUR_CONFIG_LOG) 2>&1; $(MAKE) -j > $(GNUR_MAKE_LOG) 2>&1) || ((tail -n 50 $(GNUR_CONFIG_LOG) $(GNUR_MAKE_LOG) || true) && exit 1)
 	touch $(GNUR_HOME_BINARY_UNPACKED)/gnur.done
 else
 $(GNUR_HOME_BINARY_UNPACKED)/gnur.done:

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -84,9 +84,9 @@ ifeq ($(OS_NAME),Darwin)
 	# On Darwin libRnative and libRllvm link to libR so that once they are loaded manually by FastR, libR is loaded
 	# Moreover, libR links with libRblas and libRlapack, so those get loaded transitively too
 	# Note that packages do not link with libR properly via @rpath, but that is OK since libR will be loaded explicitly by FastR
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) -L$(FASTR_LIB_DIR) -lRblas -lRlapack $(VERSION_FLAGS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -Wl,-undefined,dynamic_lookup -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lR -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -Wl,-undefined,dynamic_lookup -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lR -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,@loader_path/ -o $(R_LIB) -L$(FASTR_LIB_DIR) -lRblas -lRlapack $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,@loader_path/ -Wl,-undefined,dynamic_lookup -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lR -lpcre2-8 -lz $(F2C) -liconv $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,@loader_path/ -Wl,-undefined,dynamic_lookup -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lR -lpcre2-8 -lz $(F2C) -liconv $(VERSION_FLAGS)
 
 	# make the libraries that we just created relocable
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
@@ -112,16 +112,16 @@ ifeq ($(OS_NAME),Darwin)
 	# given that we use -Wl,-undefined,dynamic_lookup when building libRllvm
 	install_name_tool -change bin/libpolyglot-mock.dylib $(LLVM_LIBS_DIR)/libpolyglot-mock.dylib $(LLVM_LIB)
 
-    	# check if we captured libpcre/libz, rpath those in libR
+    	# check if we captured libpcre2-8/libz, rpath those in libR
 	python $(FASTR_R_HOME)/mx.fastr/copylib.py updatelib $(FASTR_LIB_DIR) $(FASTR_R_HOME)
 else
 	# not Darwin:
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) -L$(FASTR_LIB_DIR) -lRblas -lRlapack
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz $(F2C)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre2-8 -lz $(F2C)
     # We do not link with Rlapack and Rblas so that we can load those libraries manually later after loading libR
     # Otherwise Sulong would attempt to load Rlapack and Rblas and fail, because there is a dependency cycle:
     # libR provides xerbla_, but Rlapack/Rblas depend on it, it seems that Sulong is not able to resolve this unlike the native loader
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lpcre -lz $(F2C)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lpcre2-8 -lz $(F2C)
 endif # Darwin
 endif # managed
 
