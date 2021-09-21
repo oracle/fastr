@@ -167,9 +167,8 @@ public class TestBuiltin_sub extends TestBase {
         assertEval("{ sub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
         assertEval("{ sub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
 
-        // FIXME
         // Expected output: [1] "xaÄÄÄÄÄb"
         // FastR output: [1] "axÄÄÄÄb"
-        assertEval(Ignored.ImplementationError, "{ sub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
+        assertEval("{ sub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
     }
 }

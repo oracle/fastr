@@ -177,6 +177,6 @@ public class TestBuiltin_strsplit extends TestBase {
         // This test is ignored because it is a special case with an empty match at the beginning
         // and positive and negative lookarounds. Empty match at the beginning is normally
         // replaced by an empty character vector, but in this case gnur does not do that.
-        assertEval(Ignored.ImplementationError, "strsplit('/some/path/to/somewhere' , '^(?=/)(?!//)|(?<!^)(?<!^/)/', perl = TRUE)");
+        assertEval("strsplit('/some/path/to/somewhere' , '^(?=/)(?!//)|(?<!^)(?<!^/)/', perl = TRUE)");
     }
 }

@@ -245,9 +245,8 @@ public class TestBuiltin_gsub extends TestBase {
         // Tests with UTF-8 strings
         assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
         assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
-        assertEval(Ignored.ImplementationError, "{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
+        assertEval("{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
 
-        // FIXME: Enable once unicode support is implemented.
-        assertEval(Ignored.ImplementationError, "{ gsub('([⚽])', '\\\\1', '─', perl=TRUE)} ");
+        assertEval("{ gsub('([⚽])', '\\\\1', '─', perl=TRUE)} ");
     }
 }
