@@ -9,7 +9,6 @@ Bug fixes:
 * Fixed unexpected garbage collection of CHARSXP objects in R extensions
 * Option --no-init-file is not ignored anymore
 * Upgrade of [PCRE](https://www.pcre.org/) to PCRE2 version 10.37.
-  * Some Unicode patterns and texts are still not supported.
   * See [GNU-R changelog](https://cran.r-project.org/doc/manuals/r-devel/NEWS.html) (section MIGRATION TO PCRE2) for more details
      on potentially user visible differences between PCRE and PCRE2
 
