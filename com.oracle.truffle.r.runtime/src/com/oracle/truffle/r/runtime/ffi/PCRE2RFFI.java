@@ -414,6 +414,8 @@ public final class PCRE2RFFI {
         public CompileResult execute(String pattern, int options) {
             int[] errorCode = new int[]{0};
             int[] errorOffSet = new int[]{0};
+            // We want to enable UTF-based mathing by default.
+            options |= Option.UTF.value;
             Object pcreCode = call(NativeFunction.compile, pattern, options, errorCode, errorOffSet);
             // TODO: Fill in error message if necessary.
             return new CompileResult(pcreCode, errorCode[0], null, errorOffSet[0]);

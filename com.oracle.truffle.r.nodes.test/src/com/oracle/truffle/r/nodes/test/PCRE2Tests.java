@@ -155,6 +155,9 @@ public class PCRE2Tests extends TestBase {
                     expectedCaptureIndexes(0, new int[]{0, 3}).
                     expectedCaptureNames(new String[]{null}).
                     build(),
+            TestData.builder().pattern(".*").subject("X")
+                    .expectedMatchIndexes(new int[]{0,1, 1, 1})
+                    .build(),
             TestData.builder().pattern("(?P<word>[a-z]+)").subject("abc123").
                     expectedMatchIndexes(new int[]{0, 3}).
                     expectedCaptureIndexes(0, new int[]{0, 3}).
@@ -221,6 +224,13 @@ public class PCRE2Tests extends TestBase {
                     expectedCaptureIndexes(1, new int[]{0, 0}).
                     expectedCaptureNames(new String[]{null, null}).
                     build(),
+            // Both pattern and subject are Unicode characters
+            TestData.builder().pattern("[⚽]").subject("─")
+                    .expectedMatchIndexes(new int[]{})
+                    .build(),
+            TestData.builder().pattern("[⚽]").subject("a")
+                    .expectedMatchIndexes(new int[]{})
+                    .build(),
     };
     // @formatter:on
 
