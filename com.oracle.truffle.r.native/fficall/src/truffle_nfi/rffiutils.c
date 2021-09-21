@@ -33,6 +33,11 @@ void *unimplemented(const char *f) {
     exit(1);
 }
 
+void fatalError(const char *msg) {
+	printf("faatal error %s\n", msg);
+    exit(1);
+}
+
 void init_utils(TruffleEnv *env) {
     // nothing to initialize
 }

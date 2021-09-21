@@ -54,6 +54,7 @@ public enum NativeFunction {
     get_capture_names("((string, sint32): void, pointer): sint32", "call_pcre2_"),
     match_count("(pointer, string, sint32, sint32, uint32): sint32", "call_pcre2_"),
     pattern_free("(pointer): void", "call_pcre2_"),
+    errcode_to_string("(sint32, [uint8], uint32): void", "call_pcre2_"),
     // zip
     compress("([uint8], uint64, [uint8], uint64): sint32", "call_zip_"),
     uncompress("([uint8], uint64, [uint8], uint64): sint32", "call_zip_"),

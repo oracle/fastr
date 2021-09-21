@@ -26,6 +26,7 @@ package com.oracle.truffle.r.runtime.ffi;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -402,6 +403,9 @@ public final class PCRE2RFFI {
     }
 
     public static final class CompileNode extends NativeCallNode {
+        @Child private GetErrorStringNode getErrorStringNode = GetErrorStringNode.create();
+        @Child private InteropLibrary interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
+
         public CompileNode(DownCallNodeFactory downCallNodeFactory) {
             super(downCallNodeFactory.createDownCallNode());
         }
@@ -413,12 +417,16 @@ public final class PCRE2RFFI {
         @CompilerDirectives.TruffleBoundary
         public CompileResult execute(String pattern, int options) {
             int[] errorCode = new int[]{0};
-            int[] errorOffSet = new int[]{0};
-            // We want to enable UTF-based mathing by default.
+            int[] errorOffSet = new int[]{-1};
+            // We want to enable UTF-based matching by default.
             options |= Option.UTF.value;
             Object pcreCode = call(NativeFunction.compile, pattern, options, errorCode, errorOffSet);
-            // TODO: Fill in error message if necessary.
-            return new CompileResult(pcreCode, errorCode[0], null, errorOffSet[0]);
+            String errorMessage = null;
+            if (interop.isNull(pcreCode)) {
+                assert errorOffSet[0] >= 0;
+                errorMessage = getErrorStringNode.execute(errorCode[0]);
+            }
+            return new CompileResult(pcreCode, errorCode[0], errorMessage, errorOffSet[0]);
         }
     }
 
@@ -598,6 +606,29 @@ public final class PCRE2RFFI {
         public static MemoryReleaseNode create() {
             return RFFIFactory.getPCRE2RFFI().createMemoryReleaseNode();
         }
+    }
+
+    public static final class GetErrorStringNode extends NativeCallNode {
+        private final int buffLen = 256;
+        private final byte[] buff = new byte[buffLen];
+
+        public GetErrorStringNode(DownCallNodeFactory downCallNodeFactory) {
+            super(downCallNodeFactory.createDownCallNode());
+        }
+
+        public static GetErrorStringNode create() {
+            return RFFIFactory.getPCRE2RFFI().createGetErrorStringNode();
+        }
+
+        public String execute(int errCode) {
+            NativeCharArray charArray = new NativeCharArray(buff);
+            call(NativeFunction.errcode_to_string, errCode, charArray, buffLen);
+            return charArray.getString();
+        }
+    }
+
+    private GetErrorStringNode createGetErrorStringNode() {
+        return new GetErrorStringNode(downCallNodeFactory);
     }
 
     public MemoryReleaseNode createMemoryReleaseNode() {
