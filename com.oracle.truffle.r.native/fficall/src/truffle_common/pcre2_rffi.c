@@ -81,7 +81,7 @@ int call_pcre2_match(
     int stop_after_first_match
 );
 void call_pcre2_pattern_free(pcre2_code *compiled_pattern);
-void call_pcre2_errcode_to_string(int errcode, char *buff, size_t buff_len);
+void call_pcre2_errcode_to_string(int errcode, uint8_t *buff, size_t buff_len);
 
 // Helper functions
 static int is_valid_index(size_t index);
@@ -305,12 +305,9 @@ void call_pcre2_pattern_free(pcre2_code *compiled_pattern)
     pcre2_code_free(compiled_pattern);
 }
 
-void call_pcre2_errcode_to_string(int errcode, char *buff, size_t buff_len)
+void call_pcre2_errcode_to_string(int errcode, uint8_t *buff, size_t buff_len)
 {
-    if (errcode >= 0) {
-        fatalError("pcre2_rffi.c: errcode >= 0");
-    }
-    int rc = pcre2_get_error_message(errcode, (uint8_t *)buff, buff_len);
+    int rc = pcre2_get_error_message(errcode, buff, buff_len);
     if (rc < 0) {
         printf("Fatal error: pcre2_get_error_message returned %d\n", rc);
         exit(1);
