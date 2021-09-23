@@ -26,7 +26,6 @@ package com.oracle.truffle.r.runtime.ffi;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -419,10 +418,10 @@ public final class PCRE2RFFI {
             int[] errorCode = new int[]{0};
             int[] errorOffSet = new int[]{-1};
             // We want to enable UTF-based matching by default.
-            options |= Option.UTF.value;
+            int optionsWithUTF = options | Option.UTF.value;
             byte[] patternBytes = pattern.getBytes(StandardCharsets.UTF_8);
             NativeCharArray patternCharArray = new NativeCharArray(patternBytes);
-            Object pcreCode = call(NativeFunction.compile, patternCharArray, patternBytes.length, options, errorCode, errorOffSet);
+            Object pcreCode = call(NativeFunction.compile, patternCharArray, patternBytes.length, optionsWithUTF, errorCode, errorOffSet);
             String errorMessage = null;
             if (interop.isNull(pcreCode)) {
                 assert errorOffSet[0] >= 0;
