@@ -33,6 +33,15 @@ import com.oracle.truffle.api.library.ExportMessage;
 /**
  * A {@link TruffleObject} that represents an array of {@code unsigned char} values, that is
  * {@code NULL} terminated in the C domain.
+ *
+ * Note that {@link #getArrayLength()} returns effective length, which means that the length
+ * also includes the terminating null.
+ *
+ * Beware of using {@code strlen} on instances of this
+ * class, as it will return different results on LLVM and on NFI (on LLVM, the return value
+ * will include the terminating null). If you plan to use an instance of this class as string
+ * in native code, pass along the length of the string to the native, do not compute it in
+ * the native code via {@code strlen}.
  */
 @ExportLibrary(InteropLibrary.class)
 public final class NativeCharArray extends NativeUInt8Array {

@@ -46,7 +46,7 @@ typedef void (*match_cb_t)(size_t start_idx, size_t end_idx);
 typedef void (*capture_cb_t)(size_t capture_idx, size_t start_idx, size_t end_idx);
 typedef void (*set_capture_name_cb_t)(const char *name, int index);
 
-pcre2_code *call_pcre2_compile(char *pattern, uint32_t options, int *error_code, int *error_offset);
+pcre2_code *call_pcre2_compile(uint8_t *pattern, size_t pattern_len, uint32_t options, int *error_code, size_t *error_offset);
 uint32_t call_pcre2_capture_count(pcre2_code *re);
 /**
  * Returns the count of all the named captures. A named capture is also a capture, so the number
@@ -77,6 +77,7 @@ int call_pcre2_match(
     capture_cb_t capture_cb,
     pcre2_code *re,
     uint8_t *subject,
+    size_t subject_len,
     uint32_t options,
     int stop_after_first_match
 );
@@ -90,13 +91,10 @@ static void report_captures(capture_cb_t capture_cb, uint32_t capture_count, con
 static size_t advance_offset(size_t offset, int utf8, const uint8_t *subject, size_t subject_len);
 
 
-// TODO: error_offset should be `size_t`.
-pcre2_code *call_pcre2_compile(char *pattern_str, uint32_t options, int *error_code, int *error_offset)
+pcre2_code *call_pcre2_compile(uint8_t *pattern, size_t pattern_len, uint32_t options, int *error_code, size_t *error_offset)
 {
-    uint8_t *pattern = (uint8_t *) pattern_str;
-    size_t pattern_len = strlen(pattern);
 #ifdef FASTR_PCRE2_DEBUG
-    printf("call_pcre2_compile: pattern_str='%s', pattern_len=%u, pattern=[", pattern, pattern_len);
+    printf("call_pcre2_compile: pattern_str='%s', pattern_len=%lu, pattern=[", pattern, pattern_len);
     for (int i = 0; i < pattern_len; i++) {
         printf("%u, ", pattern[i]);
     }
@@ -147,7 +145,7 @@ int call_pcre2_get_capture_names(void (*set_capture_name_cb)(const char *name, i
         // ovector begins with match, capture groups are after that.
         int capture_idx = ovector_idx - 1;
         uint8_t *name = tabptr + 2;
-        set_capture_name_cb((const char *)name, capture_idx);
+        set_capture_name_cb((const char *)ensure_string(name), capture_idx);
         tabptr += name_entry_size;
     }
     return names_count;
@@ -158,11 +156,11 @@ int call_pcre2_match(
     capture_cb_t capture_cb,
     pcre2_code *re,
     uint8_t *subject,
+    size_t subject_len,
     uint32_t first_match_options,
     int stop_after_first_match
 )
 {
-    size_t subject_len = strlen((char *) subject);
     pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
     uint32_t capture_count = call_pcre2_capture_count(re);
 
@@ -178,6 +176,7 @@ int call_pcre2_match(
     // rc corresponds to the count of captured groups plus one, or error code if rc is negative.
     int rc = pcre2_match(re, subject, subject_len, 0, first_match_options, match_data, NULL);
     if (rc == PCRE2_ERROR_NOMATCH) {
+        pcre2_match_data_free(match_data);
         return 0;
     } else if (rc < 0) {
         pcre2_match_data_free(match_data);
