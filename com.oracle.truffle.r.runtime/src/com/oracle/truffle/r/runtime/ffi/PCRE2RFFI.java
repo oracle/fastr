@@ -420,7 +420,9 @@ public final class PCRE2RFFI {
             int[] errorOffSet = new int[]{-1};
             // We want to enable UTF-based matching by default.
             options |= Option.UTF.value;
-            Object pcreCode = call(NativeFunction.compile, pattern, options, errorCode, errorOffSet);
+            byte[] patternBytes = pattern.getBytes(StandardCharsets.UTF_8);
+            NativeCharArray patternCharArray = new NativeCharArray(patternBytes);
+            Object pcreCode = call(NativeFunction.compile, patternCharArray, patternBytes.length, options, errorCode, errorOffSet);
             String errorMessage = null;
             if (interop.isNull(pcreCode)) {
                 assert errorOffSet[0] >= 0;
@@ -478,6 +480,8 @@ public final class PCRE2RFFI {
     }
 
     public static final class MatchNode extends NativeCallNode {
+        @Child private GetErrorStringNode getErrorStringNode = RFFIFactory.getPCRE2RFFI().createGetErrorStringNode();
+
         public MatchNode(DownCallNodeFactory downCallNodeFactory) {
             super(downCallNodeFactory.createDownCallNode());
         }
@@ -499,15 +503,19 @@ public final class PCRE2RFFI {
             MatchCallback matchCallback = new MatchCallback(matchData);
             CaptureCallback captureCallback = new CaptureCallback(matchData);
             byte[] subjectBytes = subject.getBytes(StandardCharsets.UTF_8);
-            NativeCharArray nativeCharArray = new NativeCharArray(subjectBytes);
+            NativeCharArray subjectCharArray = new NativeCharArray(subjectBytes);
             Object matchCount = call(NativeFunction.match, matchCallback, captureCallback,
-                            pcreCompiledPattern, nativeCharArray, options, stopAfterFirstMatch ? 1 : 0);
+                            pcreCompiledPattern, subjectCharArray, subjectBytes.length, options, stopAfterFirstMatch ? 1 : 0);
             assert InteropLibrary.getUncached().isNumber(matchCount);
             int matchCountInt;
             try {
                 matchCountInt = InteropLibrary.getUncached().asInt(matchCount);
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
+            }
+            if (matchCountInt < 0) {
+                String errMessage = getErrorStringNode.execute(matchCountInt);
+                throw RInternalError.shouldNotReachHere("PCRE2Rffi$MatchNode: match failed with " + errMessage);
             }
             assert matchCountInt == matchData.getMatchCount();
             matchData = convertIndexes(matchData, subject, subjectBytes, captureCount);
