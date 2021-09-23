@@ -162,11 +162,16 @@ public class PCRE2Tests extends TestBase {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return null;
+            throw new AssertionError("should not reach here");
         }
     }
 
+    /**
+     * Expected data roughly corresponds to the output of some regular expression tester, like
+     * <a href="https://regex101.com/">regex101</a>.
+     */
     // @formatter:off
+    // Checkstyle: stop
     @DataPoints
     public static TestData[] testData = {
             TestData.builder().pattern("X").subject("aaa").expectedMatchIndexes(new int[]{}).build(),
@@ -255,6 +260,7 @@ public class PCRE2Tests extends TestBase {
                     .build(),
     };
     // @formatter:on
+    // Checkstyle: resume
 
     @Before
     public void init() {
@@ -265,6 +271,8 @@ public class PCRE2Tests extends TestBase {
             captureNamesNode = RFFIFactory.getPCRE2RFFI().createGetCaptureNamesNode();
             captureCountNode = RFFIFactory.getPCRE2RFFI().createGetCaptureCountNode();
             interop = InteropLibrary.getUncached();
+            // Some of the nodes that we initialize in this method have to be adopted. Therefore,
+            // we adopt them into this artificial root node.
             testRootNode = new TestRootNode();
             testRootNode.insertChildren(new Node[]{compileNode, matchNode, memoryReleaseNode, captureNamesNode, captureCountNode});
             return null;
