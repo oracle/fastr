@@ -97,50 +97,50 @@ class _LinuxDistribution:
         self.version = version
 
 def _unsupported_distribution(distr):
-    print("Unsupported Linux distribution: %s %s" % (distr.name, distr.version))
-    print("Supported distros are: %s" % ", ".join(SUPPORTED_DISTROS))
+    print("Unsupported Linux distribution: %s %s" % (distr.name, distr.version))  # pylint: disable=superfluous-parens
+    print("Supported distros are: %s" % ", ".join(SUPPORTED_DISTROS))  # pylint: disable=superfluous-parens
     exit(1)
 
 def _install_ubuntu_dependencies(distr):
     major_version = int(distr.version.split(".")[0])
     if major_version < 18:
-        print("Ubuntu is supported in version 18.04 or newer, current version is %s", distr.version)
+        print("Ubuntu is supported in version 18.04 or newer, current version is %s", distr.version)  # pylint: disable=superfluous-parens
         exit(1)
     cmd = ["sudo", "apt-get", "install"] + UBUNTU_PACKAGES
-    print("Running " + " ".join(cmd))
+    print("Running " + " ".join(cmd))  # pylint: disable=superfluous-parens
     ret = subprocess.call(cmd)
     if ret != 0:
-        print("Ubuntu dependencies installation failed")
+        print("Ubuntu dependencies installation failed")  # pylint: disable=superfluous-parens
         exit(1)
     pass
 
 def _install_fedora_dependencies(distr):
     if int(distr.version) < 34:
-        print("Fedora is supported in version 34 or newer, current version is %s" % distr.version)
+        print("Fedora is supported in version 34 or newer, current version is %s" % distr.version)  # pylint: disable=superfluous-parens
         exit(1)
     cmd = ["sudo", "dnf", "install"] + FEDORA_PACKAGES
-    print("Running " + " ".join(cmd))
+    print("Running " + " ".join(cmd))  # pylint: disable=superfluous-parens
     ret = subprocess.call(cmd)
     if ret != 0:
-        print("Fedora dependencies installation failed")
+        print("Fedora dependencies installation failed")  # pylint: disable=superfluous-parens
         exit(1)
 
 def _install_ol_dependencies(distr):
     major_version = int(distr.version.split(".")[0])
     if major_version < 8:
-        print("Oracle Linux Server is supported in version 8 or newer, current version is %s" % distr.version)
+        print("Oracle Linux Server is supported in version 8 or newer, current version is %s" % distr.version)  # pylint: disable=superfluous-parens
         exit(1)
     # dnf command is available from OL 8.
     cmd = ["sudo", "dnf", "install"] + FEDORA_PACKAGES
-    print("Running " + " ".join(cmd))
+    print("Running " + " ".join(cmd))  # pylint: disable=superfluous-parens
     ret = subprocess.call(cmd)
     if ret != 0:
-        print("oraclelinux dependencies installation failed")
+        print("oraclelinux dependencies installation failed")  # pylint: disable=superfluous-parens
         exit(1)
 
 def _get_distribution():
     if not os.path.exists("/etc/os-release"):
-        print("Unknown Linux distribution - /etc/os-release does not exist")
+        print("Unknown Linux distribution - /etc/os-release does not exist")  # pylint: disable=superfluous-parens
         exit(1)
     assert os.path.exists("/etc/os-release")
     with open("/etc/os-release", "r") as os_release_file:
@@ -157,7 +157,7 @@ def _get_distribution():
 
 def install_dependencies():
     distr = _get_distribution()
-    print("Current distribution is %s:%s" % (distr.name, distr.version))
+    print("Current distribution is %s:%s" % (distr.name, distr.version))  # pylint: disable=superfluous-parens
     if distr.name == "Ubuntu":
         _install_ubuntu_dependencies(distr)
     elif distr.name == "Fedora":
