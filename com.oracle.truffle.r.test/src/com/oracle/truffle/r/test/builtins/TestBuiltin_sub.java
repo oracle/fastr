@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -167,9 +167,8 @@ public class TestBuiltin_sub extends TestBase {
         assertEval("{ sub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
         assertEval("{ sub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
 
-        // FIXME
         // Expected output: [1] "xaÄÄÄÄÄb"
         // FastR output: [1] "axÄÄÄÄb"
-        assertEval(Ignored.ImplementationError, "{ sub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
+        assertEval("{ sub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
     }
 }

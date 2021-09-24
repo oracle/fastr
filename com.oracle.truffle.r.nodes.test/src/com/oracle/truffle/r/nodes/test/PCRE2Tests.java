@@ -24,6 +24,8 @@
 package com.oracle.truffle.r.nodes.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +53,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 @RunWith(Theories.class)
 public class PCRE2Tests extends TestBase {
+    private TestRootNode testRootNode;
     private PCRE2RFFI.CompileNode compileNode;
     private PCRE2RFFI.MatchNode matchNode;
     private PCRE2RFFI.MemoryReleaseNode memoryReleaseNode;
@@ -144,7 +151,27 @@ public class PCRE2Tests extends TestBase {
         }
     }
 
+    private static class TestRootNode extends RootNode {
+        TestRootNode() {
+            super(TruffleRLanguage.getCurrentLanguage());
+        }
+
+        void insertChildren(Node[] children) {
+            insert(children);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            throw new AssertionError("should not reach here");
+        }
+    }
+
+    /**
+     * Expected data roughly corresponds to the output of some regular expression tester, like
+     * <a href="https://regex101.com/">regex101</a>.
+     */
     // @formatter:off
+    // Checkstyle: stop
     @DataPoints
     public static TestData[] testData = {
             TestData.builder().pattern("X").subject("aaa").expectedMatchIndexes(new int[]{}).build(),
@@ -155,6 +182,9 @@ public class PCRE2Tests extends TestBase {
                     expectedCaptureIndexes(0, new int[]{0, 3}).
                     expectedCaptureNames(new String[]{null}).
                     build(),
+            TestData.builder().pattern(".*").subject("X")
+                    .expectedMatchIndexes(new int[]{0,1, 1, 1})
+                    .build(),
             TestData.builder().pattern("(?P<word>[a-z]+)").subject("abc123").
                     expectedMatchIndexes(new int[]{0, 3}).
                     expectedCaptureIndexes(0, new int[]{0, 3}).
@@ -221,13 +251,16 @@ public class PCRE2Tests extends TestBase {
                     expectedCaptureIndexes(1, new int[]{0, 0}).
                     expectedCaptureNames(new String[]{null, null}).
                     build(),
+            // Both pattern and subject are Unicode characters
+            TestData.builder().pattern("[⚽]").subject("─")
+                    .expectedMatchIndexes(new int[]{})
+                    .build(),
+            TestData.builder().pattern("[⚽]").subject("a")
+                    .expectedMatchIndexes(new int[]{})
+                    .build(),
     };
     // @formatter:on
-
-    // Declare dummy test so that `mx unittest` can discover this class.
-    @Test
-    public void dummy() {
-    }
+    // Checkstyle: resume
 
     @Before
     public void init() {
@@ -238,6 +271,10 @@ public class PCRE2Tests extends TestBase {
             captureNamesNode = RFFIFactory.getPCRE2RFFI().createGetCaptureNamesNode();
             captureCountNode = RFFIFactory.getPCRE2RFFI().createGetCaptureCountNode();
             interop = InteropLibrary.getUncached();
+            // Some of the nodes that we initialize in this method have to be adopted. Therefore,
+            // we adopt them into this artificial root node.
+            testRootNode = new TestRootNode();
+            testRootNode.insertChildren(new Node[]{compileNode, matchNode, memoryReleaseNode, captureNamesNode, captureCountNode});
             return null;
         });
     }
@@ -257,6 +294,30 @@ public class PCRE2Tests extends TestBase {
                 assertCaptureNamesEqual(testingData.expectedCaptureNames, captureNames);
             }
             freePattern(compiledPattern);
+            return null;
+        });
+    }
+
+    @Test
+    public void testFailedPatternCompilationStar() {
+        execInContext(() -> {
+            String pattern = ".**";
+            PCRE2RFFI.CompileResult compileResult = compileNode.execute(pattern, 0);
+            assertNotEquals(0, compileResult.errorCode);
+            assertNotNull(compileResult.errorMessage);
+            assertEquals(2, compileResult.errOffset);
+            return null;
+        });
+    }
+
+    @Test
+    public void testFailedPatternCompilationNoClosingBracket() {
+        execInContext(() -> {
+            String pattern = "abc[";
+            PCRE2RFFI.CompileResult compileResult = compileNode.execute(pattern, 0);
+            assertNotEquals(0, compileResult.errorCode);
+            assertNotNull(compileResult.errorMessage);
+            assertEquals(4, compileResult.errOffset);
             return null;
         });
     }

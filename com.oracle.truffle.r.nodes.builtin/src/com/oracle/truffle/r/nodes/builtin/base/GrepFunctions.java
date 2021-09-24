@@ -234,8 +234,8 @@ public class GrepFunctions {
             int options = ignoreCase ? PCRE2RFFI.Option.CASELESS.value : 0;
             PCRE2RFFI.CompileResult pcre = pcre2CompileNode.execute(pattern, options);
             if (interop.isNull(pcre.compiledPattern)) {
-                // TODO output warning if pcre.errorMessage not NULL
-                throw error(RError.Message.INVALID_REGEXP, pattern);
+                assert pcre.errorMessage != null;
+                throw error(Message.INVALID_REGEXP_REASON, pattern, pcre.errorMessage);
             }
             return pcre;
         }
@@ -266,9 +266,8 @@ public class GrepFunctions {
                 } else {
                     PCRE2RFFI.CompileResult compileResult = pcre2CompileNode.execute(pattern, 0);
                     if (interop.isNull(compileResult.compiledPattern)) {
-                        // Error occured during pattern compilation.
-                        // TODO: Inspect the error - call a PCRE specific pcre2_get_err_msg(...)
-                        throw RInternalError.unimplemented("PCRE2 error handling not yet implemented");
+                        assert compileResult.errorMessage != null;
+                        throw error(Message.INVALID_REGEXP_REASON, pattern, compileResult.errorMessage);
                     }
                     int captureCount = pcre2CaptureCountNode.execute(compileResult.compiledPattern);
                     assert !interop.isNull(compileResult.compiledPattern);
@@ -1620,8 +1619,8 @@ public class GrepFunctions {
                     if (!currentSplit.isEmpty()) {
                         pcrePatterns[i] = commonNode.pcre2CompileNode.execute(currentSplit, 0);
                         if (interop.isNull(pcrePatterns[i].compiledPattern)) {
-                            // TODO output warning if pcre.errorMessage not NULL
-                            throw error(RError.Message.INVALID_REGEXP, currentSplit);
+                            assert pcrePatterns[i].errorMessage != null;
+                            throw error(RError.Message.INVALID_REGEXP_REASON, currentSplit, pcrePatterns[i].errorMessage);
                         }
                     }
                 }

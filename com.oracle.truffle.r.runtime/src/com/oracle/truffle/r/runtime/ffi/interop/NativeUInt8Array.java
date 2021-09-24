@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
 /**
  * Parent class of {@link NativeRawArray} and {@link NativeCharArray}, that holds the common logic
- * for a C type {@code uint8*}, that may or may not be {@code NULL} terminated (in the C domain).
+ * for a C type {@code uint8_t*}, that may or may not be {@code NULL} terminated (in the C domain).
  *
  * The null termination is faked for Java arrays. If this object escapes to native code and we
  * allocate native memory for it, then the native memory will be null terminated (and one byte
