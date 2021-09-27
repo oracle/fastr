@@ -1,16 +1,7 @@
 # 21.3.0
-* Upgrade of PCRE to PCRE2 version 10.37.
-  * Some Unicode patterns and texts are still not supported.
-
-Bug fixes:
-
-* Fixed implicit make rule parameters used when building R extensions
-  * Fixes, e.g., installation of maps package version 3.3.0.
-* Fixed unexpected garbage collection of CHARSXP objects in R extensions
-* Option --no-init-file is not ignored anymore
 * Upgrade of [PCRE](https://www.pcre.org/) to PCRE2 version 10.37.
   * See [GNU-R changelog](https://cran.r-project.org/doc/manuals/r-devel/NEWS.html) (section MIGRATION TO PCRE2) for more details
-     on potentially user visible differences between PCRE and PCRE2
+    on potentially user visible differences between PCRE and PCRE2
 
 Bug fixes:
 
