@@ -99,11 +99,10 @@ ifndef FASTR_RELEASE
 RECPKGS := "--without-recommended-packages"
 endif
 
-ifdef GNUR_FC
-CONFIGURE_FC := "FC=$(GNUR_FC)"
+ifdef FASTR_FC
+CONFIGURE_FC := "FC=$(FASTR_FC)"
 else
-# Hack: define it to something that is not going to hurt
-CONFIGURE_FC := "--with-x=no"
+CONFIGURE_FC := ""
 endif
 
 GNUR_HOME_BINARY_UNPACKED_PARENT := $(dir $(GNUR_HOME_BINARY_UNPACKED))
