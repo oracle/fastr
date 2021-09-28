@@ -30,6 +30,7 @@ import mx_gate
 import mx_fastr_dists
 import mx_subst
 from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
+import mx_fastr_install_deps
 import mx_fastr_edinclude
 import mx_unittest
 
@@ -954,21 +955,13 @@ def generate_parser(args=None, out=None):
         postprocess=lambda content: cast_pattern.sub("(_localctx,", content),
         args=args, out=out)
 
-
-def install_deps(args=None):
-    '''Installs all the dependencies for FastR and GNU-R, so that FastR can be built from sources. '''
-    sys.path.append(join(_fastr_suite.dir, 'mx.fastr'))
-    from install_dependencies import install_dependencies
-    install_dependencies()
-
-
 mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
 
 
 mx_unittest.add_config_participant(_unittest_config_participant)
 
 _commands = {
-    'r-install-deps' : [install_deps],
+    'r-install-deps' : [mx_fastr_install_deps.install_dependencies, '[options]'],
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
     'rscript' : [rscript, '[options]'],
