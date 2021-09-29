@@ -30,6 +30,7 @@ import mx_gate
 import mx_fastr_dists
 import mx_subst
 from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
+import mx_fastr_install_deps
 import mx_fastr_edinclude
 import mx_unittest
 
@@ -960,6 +961,7 @@ mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suit
 mx_unittest.add_config_participant(_unittest_config_participant)
 
 _commands = {
+    'r-install-deps' : [mx_fastr_install_deps.install_dependencies, '[options]'],
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
     'rscript' : [rscript, '[options]'],
