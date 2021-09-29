@@ -50,7 +50,6 @@ UBUNTU_PACKAGES = [
     "libpcre3",
     # libpcre2-8-0 is installed on Ubuntu by default, but we enumerate it here just to be sure
     "libpcre2-8-0",
-    "zlibc",
     "curl",
     "gfortran",
     "bzip2",
@@ -59,6 +58,7 @@ UBUNTU_PACKAGES = [
     "libpcre3-dev",
     "libpcre2-dev",
     "libreadline-dev",
+    "zlib1g",
     "zlib1g-dev",
     "libbz2-dev",
     "libcurl4",
