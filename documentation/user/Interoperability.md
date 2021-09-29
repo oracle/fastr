@@ -116,4 +116,4 @@ For more information see the `R --help` message and try these examples:
 * `export`
 * `import`
 
-See the [Polyglot Programming](../polyglot-programming.md) reference for more information about interoperability with other programming languages.
+See the [Polyglot Programming](https://github.com/oracle/graal/blob/master/docs/reference-manual/polyglot-programming.md) reference for more information about interoperability with other programming languages.

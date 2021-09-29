@@ -14,7 +14,7 @@ The project name behind GraalVM's R runtime development is [FastR](https://githu
 
 ## Installing R
 
-The R language runtime is not provided by default, and can be added to GraalVM with the [GraalVM Updater](../graalvm-updater.md), `gu`, tool:
+The R language runtime is not provided by default, and can be added to GraalVM with the [GraalVM Updater](https://github.com/oracle/graal/blob/master/docs/reference-manual/graalvm-updater.md), `gu`, tool:
 ```shell
 gu install r
 ```
@@ -74,13 +74,13 @@ R [polyglot options] [R options] [filename]
 Rscript [polyglot options] [R options] [filename]
 ```
 
-The GraalVM R runtime uses the same [polyglot options](../polyglot-programming.md/#polyglot-options) as other GraalVM languages runtimes and the same R options as [GNU R](https://cran.r-project.org/doc/manuals/r-release/R-intro.html#Invoking-R-from-the-command-line), e.g., `bin/R --vanilla`.
+The GraalVM R runtime uses the same [polyglot options](https://github.com/oracle/graal/blob/master/docs/reference-manual/polyglot-programming.md#polyglot-options) as other GraalVM languages runtimes and the same R options as [GNU R](https://cran.r-project.org/doc/manuals/r-release/R-intro.html#Invoking-R-from-the-command-line), e.g., `bin/R --vanilla`.
 Use `--help` to print the list of supported options. The most important options include:
   - `--jvm`: to enable Java interoperability
   - `--polyglot`: to enable interoperability with other GraalVM languages
   - `--vm.Djava.net.useSystemProxies=true`: to pass any options to the JVM; this will be translated to `-Djava.net.useSystemProxies=true`.
 
-Note: Unlike other GraalVM languages runtimes, R does not yet ship with a [Native Image](../native-image/README.md) version of its runtime.
+Note: Unlike other GraalVM languages runtimes, R does not yet ship with a [Native Image](https://github.com/oracle/graal/blob/master/docs/reference-manual/native-image/README.md) version of its runtime.
 Therefore the `--native` option, which is the default, will still start `Rscript` on top of the JVM,
 but for the sake of future compatibility the Java interoperability will not be available in this case.
 
@@ -96,9 +96,9 @@ the `--jvm` flag to run R again in the JVM mode.
 
 The R language integration with the GraalVM ecosystem includes:
    - seamless interoperability with other GraalVM languages and with Java
-   - debugging with [Chrome DevTools](../../tools/chrome-debugger.md)
-   - [CPU and memory profiling](../../docs/tools/profiling.md)
-   - [VisualVM integration](../../docs/tools/visualvm.md)
+   - debugging with [Chrome DevTools](https://github.com/oracle/graal/blob/master/docs/tools/chrome-debugger.md)
+   - [CPU and memory profiling](https://github.com/oracle/graal/blob/master/docs/tools/profiling.md)
+   - [VisualVM integration](https://github.com/oracle/graal/blob/master/docs/tools/visualvm.md)
 
 To start debugging R code, start the launcher with the `--inspect` option:
 ```shell
