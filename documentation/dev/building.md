@@ -21,7 +21,7 @@ is used on another system it will work regardless of whether those libraries are
 By default no recommended packages and no 3rd party dynamic libraries are bundled in FastR.
 This can be controlled by the following environment variables:
 
-* `FASTR_RELEASE` set to any value switches FastR to mode, where it builds and bundles recommended packages (may take very long unless they are cached), and captures and bundles some system libraries, which requires setting `PKG_LDFLAGS_OVERRIDE` environment variable (see [below](#non-standard-system-library-locations)). This mode is usedfor official FastR releases
+* `FASTR_RELEASE` set to any value switches FastR to mode, where it builds and bundles recommended packages (may take very long unless they are cached), and captures and bundles some system libraries, which requires setting `PKG_LDFLAGS_OVERRIDE` environment variable (see [below](#non-standard-system-library-locations)). This mode is used for official FastR releases
 and must be used when you are building a GraalVM distribution (from the `graal/vm` mx suite),
 but it can be further configured by using the following environment variables:
 * `FASTR_NO_RECOMMENDED` set to any value turns off the recommended packages build and bundling with FastR. Only applicable if `FASTR_RELEASE` is set.
@@ -30,6 +30,12 @@ but it can be further configured by using the following environment variables:
 Note for maintainers of packages for package managers like apt or yum: it is recommended to **not bundle** any 3rd party libraries with FastR, but instead use the dependency management mechanisms of your package manager. To achieve this, export `FASTR_BUNDLE_DEPENDENCIES` set to an empty value (and build FastR with `FASTR_RELEASE`).
 
 ## Pre-Requisites
+
+Use `mx r-install-deps` to install all the dependencies of GNU-R and FastR.
+This command uses the system package manager to download all the required libraries and headers.
+To see all the packages that would be installed, run `mx r-install-deps --info`.
+Note that only Debian-based and RedHat-based Linux distributions are supported.
+For more information, run `mx r-install-deps --help`.
 
 ### GNU-R
 
@@ -44,22 +50,25 @@ more details can be found in log files in the `libdownloads/R-{version}` directo
 * `libdownloads/R-{version}/gnur_configure.log`
 * `libdownloads/R-{version}/gnur_make.log`
 
-Please consult GNU-R documentation on the requirements for building GNU-R. Note: FastR builds GNU-R without the X support and with memory profiling. Simple way of satisfying GNU-R requirements is to install GNU-R via your system package manager or even better install only its build dependencies, for example:
+Please consult GNU-R documentation on the requirements for building GNU-R. 
+Running `mx r-install-deps` ensures that all the dependencies of GNU-R are installed.
+Note: FastR builds GNU-R without the X support and with memory profiling.
 
+Another way of satisfying GNU-R requirements is to install GNU-R via your system package manager or even better install only its build dependencies, for example:
 ```
 apt-get build-dep r-base # for Debian based systems
 yum-builddep R # for RedHat/CentOS based systems
 ``` 
-
 Note: you may need to enable/add additional package sources.
+Moreover, `apt-get build-dep r-base` downloads also TexLive, which unnecessary for the purpose of FastR build.
 
 If you are interested in the exact configure options we use for GNU-R,
 take a look into: `com.oracle.truffle.r.native/gnur/Makefile.gnur`.
 
 #### Using pre-built GNU-R binary
 
-By exporting environment variable `GNUR_HOME_BINARY` with path to a home directory of existing GNU-R installation,
-you can bypass the build of GUN-R from sources, however, FastR still downloads GNU-R sources during FastR build.
+By exporting environment variable `GNUR_HOME_BINARY` with path to the home directory of existing GNU-R installation,
+you can bypass the build of GNU-R from sources, however, FastR still downloads GNU-R sources during FastR build.
 
 You can find the home directory of your system GNU-R by executing `R -e 'R.home()'`.
 
@@ -77,6 +86,9 @@ These variables must point to dynamic libraries that implement the Blas/Lapack i
 
 ### FastR specific requirements
 
+Note: All the packages mentioned in this subsection can be installed via `mx r-install-deps`.
+See Pre-Requisities section.
+
 Requirements shared between FastR and GNU-R are:
 
     A Fortran compiler and libraries. Typically gfortran 4.8 or later
@@ -91,6 +103,9 @@ On top of the requirements of GNU-R, FastR also needs:
 
 A JVMCI enabled Java builds are available in the [openjdk8-jvmci-builder GitHub repository](https://github.com/graalvm/openjdk8-jvmci-builder/releases).
 The environment variable `JAVA_HOME` must be set to the location of the jvmci-enabled Java JDK.
+For convenience use `mx fetch-jdk` command to download JVMCI enabled Java SDK.
+For example, `mx fetch-jdk --jdk-id labsjdk-ce-17 --alias labsjdk-ce-17` downloads JVMCI enabled JDK 17 into `~/.mx/jdks`.
+For more information, consult `mx fetch-jdk --help`.
     
 Additional requirements in order to install and run some important R packages (required for for both GNU-R and FastR):
 
@@ -157,6 +172,7 @@ Use the following sequence of commands to download and build FastR.
     $ PATH=$PATH:$BUILD_DIR/mx
     $ git clone http://github.com/oracle/fastr
     $ cd fastr
+    $ mx r-install-deps
     $ mx build
 
 The `mx build` command will clone the Graal repository and also download various required libraries, including GNU-R.
