@@ -9,12 +9,12 @@ permalink: /reference-manual/r/ExtensionsSupport/
 The GraalVM R runtime can run [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) in two modes:
 
 * **native**: the native machine code is run directly on your CPU, the same way GNU R runs R extensions.
-* **llvm**: if the LLVM bitcode is available, it can be interpreted by the [LLVM interpreter shipped with GraalVM](https://www.graalvm.org/reference-manual/llvm/).
+* **llvm**: if the LLVM bitcode is available, it can be interpreted by the [LLVM interpreter shipped with GraalVM](https://github.com/oracle/graal/blob/master/docs/reference-manual/llvm/README.md).
 
 The *native* mode is better suited for code that does not extensively interact with the R API, for example, plain C or Fortran numerical computations working on primitive arrays.
 The *llvm* mode provides significantly better performance for extensions that frequently call between R and the C/C++ code, because GraalVM's LLVM runtime is also partially evaluated like the R code.
 Both can be inlined and optimized as one compilation unit.
-Moreover, GraalVM's LLVM runtime is supported by [GraalVM tools](https://www.graalvm.org/tools/) which allows users to, for instance, debug R and C code together.
+Moreover, GraalVM's LLVM runtime is supported by [GraalVM tools](https://github.com/oracle/graal/blob/master/docs/tools/tools.md) which allows users to, for instance, debug R and C code together.
 
 In one GraalVM R process, any R package can be loaded in either mode.
 That is, GraalVM's R runtime supports mixing packages loaded in the *native* mode with packages loaded in the *llvm* mode in one process.
