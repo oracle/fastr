@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -334,7 +334,6 @@ public final class FFIProcessor extends AbstractProcessor {
         if (needsCallTarget) {
             w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
             w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
-            w.append("import com.oracle.truffle.api.Truffle;\n");
             w.append("import com.oracle.truffle.api.CallTarget;\n");
             w.append("import com.oracle.truffle.r.runtime.context.RFFIUpCallTargets;\n");
         }
@@ -503,7 +502,7 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("    protected static CallTarget createCallTarget(ContextReference<RContext> ctxRef) {\n");
             w.append("        RFFIUpCallTargets targets = ctxRef.get().getRFFIUpCallTargets();\n");
             w.append("        if(targets.").append(nodeClassName).append(" == null) {\n");
-            w.append("            targets.").append(nodeClassName).append(" =  Truffle.getRuntime().createCallTarget(new NodeRootNode());\n");
+            w.append("            targets.").append(nodeClassName).append(" =  new NodeRootNode().getCallTarget();\n");
             w.append("        }\n");
             w.append("        return targets.").append(nodeClassName).append(";\n");
             w.append("    }\n");

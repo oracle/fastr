@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.rng.user;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
@@ -132,7 +131,7 @@ public final class UserRNG implements RandomNumberGenerator {
     @TruffleBoundary
     public void init(int seed) {
         DLLInfo dllInfo = DLL.findLibraryContainingSymbol(RContext.getInstance(), Function.Rand.symbol);
-        callGeneric = Truffle.getRuntime().createCallTarget(new GenericUserRNGRootNode());
+        callGeneric = new GenericUserRNGRootNode().getCallTarget();
         if (dllInfo == null) {
             throw RError.error(RError.NO_CALLER, RError.Message.RNG_SYMBOL, Function.Rand.symbol);
         }
@@ -157,7 +156,7 @@ public final class UserRNG implements RandomNumberGenerator {
                  */
             }
         }
-        callRand = Truffle.getRuntime().createCallTarget(new RandUserRNGRootNode());
+        callRand = new RandUserRNGRootNode().getCallTarget();
     }
 
     private static DLL.SymbolHandle findSymbol(String symbol, DLLInfo dllInfo, boolean optional) {

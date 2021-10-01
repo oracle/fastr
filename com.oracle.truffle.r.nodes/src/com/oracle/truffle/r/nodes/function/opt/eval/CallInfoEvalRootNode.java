@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function.opt.eval;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -60,7 +59,7 @@ public final class CallInfoEvalRootNode extends RootNode {
         super(RContext.getInstance().getLanguage());
         this.callNode = RCallNode.createExplicitCall(argsIdentifier);
         this.funReader = LocalReadVariableNode.create(funIdentifier, false);
-        Truffle.getRuntime().createCallTarget(this);
+        this.getCallTarget(); // Ensure call target is initialized
     }
 
     @Override

@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
@@ -827,7 +826,7 @@ public class DLL {
 
         private RFindSymbolRootNode() {
             super(RContext.getInstance().getLanguage());
-            Truffle.getRuntime().createCallTarget(this);
+            this.getCallTarget(); // Ensure call target is initialized
         }
 
         @Override

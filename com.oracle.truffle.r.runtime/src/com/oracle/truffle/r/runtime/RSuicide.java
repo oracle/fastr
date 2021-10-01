@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -84,7 +83,7 @@ public abstract class RSuicide {
         protected UserDefinedSuicideRootNode(RContext ctx) {
             super(null);
             suicideNode = ctx.getRFFI().embedRFFI.createEmbeddedSuicideNode();
-            Truffle.getRuntime().createCallTarget(this);
+            this.getCallTarget(); // Ensure call target is initialized
         }
 
         @Child private EmbeddedSuicideNode suicideNode;

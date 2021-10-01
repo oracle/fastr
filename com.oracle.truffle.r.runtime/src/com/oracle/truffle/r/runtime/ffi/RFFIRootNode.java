@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
@@ -35,7 +34,7 @@ public abstract class RFFIRootNode<T extends NodeInterface> extends RootNode {
     protected RFFIRootNode(T baseRFFINode) {
         super(RContext.getInstance().getLanguage());
         this.rffiNode = baseRFFINode;
-        Truffle.getRuntime().createCallTarget(this);
+        this.getCallTarget(); // Ensure call target is initialized
     }
 
     @Override

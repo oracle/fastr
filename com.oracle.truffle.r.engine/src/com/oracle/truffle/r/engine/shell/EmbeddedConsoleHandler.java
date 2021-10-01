@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import java.util.function.Supplier;
 import org.graalvm.polyglot.Context;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.launcher.ConsoleHandler;
@@ -211,14 +210,14 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
 
     private CallTarget getReadLineCallTarget() {
         if (readLineCallTarget == null) {
-            readLineCallTarget = Truffle.getRuntime().createCallTarget(new RootNode(null) {
+            readLineCallTarget = new RootNode(null) {
                 @Child private ReadConsoleNode readConsoleNode = ReadConsoleNode.create();
 
                 @Override
                 public Object execute(VirtualFrame frame) {
                     return readConsoleNode.execute((String) frame.getArguments()[0]);
                 }
-            });
+            }.getCallTarget();
         }
         return readLineCallTarget;
     }
@@ -238,7 +237,7 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     }
 
     private static CallTarget createWriteCallTarget(WriteConsoleBaseNode writeConsoleNode) {
-        return Truffle.getRuntime().createCallTarget(new WriteOutBaseRootNode(writeConsoleNode));
+        return new WriteOutBaseRootNode(writeConsoleNode).getCallTarget();
     }
 
     private static final class WriteOutBaseRootNode extends RootNode {

@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Scope;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -158,7 +157,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         if (rValue instanceof TruffleObject) {
             return null;
         }
-        RootCallTarget convertCallTarget = context.getOrCreateCachedCallTarget(ConvertForeignRootNode.class, () -> Truffle.getRuntime().createCallTarget(new ConvertForeignRootNode()));
+        RootCallTarget convertCallTarget = context.getOrCreateCachedCallTarget(ConvertForeignRootNode.class, () -> new ConvertForeignRootNode().getCallTarget());
         return convertCallTarget.call(rValue);
     }
 
