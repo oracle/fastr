@@ -4,6 +4,7 @@
 #include <Rversion.h>
 #include <assert.h>
 
+SEXP SelfRefSymbol;
 static SEXP *saveds=NULL;
 static R_len_t *savedtl=NULL, nalloc=0, nsaved=0;
 

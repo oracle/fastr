@@ -44,24 +44,24 @@
 
 // init.c
 void setSizes();
-SEXP char_integer64;
-SEXP char_ITime;
-SEXP char_IDate;
-SEXP char_Date;
-SEXP char_POSIXct;
-SEXP char_nanotime;
-SEXP sym_sorted;
-SEXP sym_BY;
-SEXP sym_starts, char_starts;
-SEXP sym_maxgrpn;
+extern SEXP char_integer64;
+extern SEXP char_ITime;
+extern SEXP char_IDate;
+extern SEXP char_Date;
+extern SEXP char_POSIXct;
+extern SEXP char_nanotime;
+extern SEXP sym_sorted;
+extern SEXP sym_BY;
+extern SEXP sym_starts, char_starts;
+extern SEXP sym_maxgrpn;
 Rboolean INHERITS(SEXP x, SEXP char_);
 int64_t I64(double x);
 
 // dogroups.c
 SEXP keepattr(SEXP to, SEXP from);
 SEXP growVector(SEXP x, R_len_t newlen);
-size_t sizes[100];  // max appears to be FUNSXP = 99, see Rinternals.h
-SEXP SelfRefSymbol;
+extern size_t sizes[100];  // max appears to be FUNSXP = 99, see Rinternals.h
+extern SEXP SelfRefSymbol;
 
 // assign.c
 SEXP allocNAVector(SEXPTYPE type, R_len_t n);
@@ -72,7 +72,7 @@ Rboolean isDatatable(SEXP x);
 int StrCmp(SEXP x, SEXP y);
 unsigned long long dtwiddle(void *p, int i, int order);
 unsigned long long i64twiddle(void *p, int i, int order);
-unsigned long long (*twiddle)(void *, int, int);
+extern unsigned long long (*twiddle)(void *, int, int);
 SEXP forder(SEXP DT, SEXP by, SEXP retGrp, SEXP sortStrArg, SEXP orderArg, SEXP naArg);
 
 // reorder.c
