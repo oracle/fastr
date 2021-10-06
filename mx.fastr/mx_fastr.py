@@ -54,6 +54,8 @@ _command_class_dict = {'r': ["com.oracle.truffle.r.launcher.RMain", "R"],
                         'rembed': ["com.oracle.truffle.r.engine.shell.REmbedded"],
                     }
 
+GRAAL_OPTIONS = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3',
+                 '-XX:JVMCINMethodSizeLimit=1000000']
 
 # benchmarking support
 def r_path():
@@ -158,7 +160,7 @@ def set_graal_options():
     If Graal is enabled, set some options specific to FastR
     '''
     if mx.suite("compiler", fatalIfMissing=False):
-        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
+        result = GRAAL_OPTIONS
         return result
     else:
         return []
