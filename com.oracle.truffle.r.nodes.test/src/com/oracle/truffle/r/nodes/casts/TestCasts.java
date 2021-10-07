@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ import org.junit.Test;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -114,7 +113,7 @@ public class TestCasts extends TestBase {
     }
 
     private static void testCompilation(Object[] values, TestRootNode<?> root, Object... deOptVals) {
-        RootCallTarget target = Truffle.getRuntime().createCallTarget(root);
+        RootCallTarget target = root.getCallTarget();
 
         long timeout = System.currentTimeMillis() + TIMEOUT;
         int i = 0;

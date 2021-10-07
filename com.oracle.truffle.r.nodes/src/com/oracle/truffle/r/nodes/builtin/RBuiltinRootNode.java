@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -81,7 +80,7 @@ public final class RBuiltinRootNode extends RRootNode {
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("builtin", frameDescriptor);
         // getLanguage deprecation: we cannot remove this now, because the new API does not work
         // with our unit tests
-        return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(getLanguage(RContext.getTruffleRLanguage()), factory, frameDescriptor, getFastPath()));
+        return new RBuiltinRootNode(getLanguage(RContext.getTruffleRLanguage()), factory, frameDescriptor, getFastPath()).getCallTarget();
     }
 
     @Override

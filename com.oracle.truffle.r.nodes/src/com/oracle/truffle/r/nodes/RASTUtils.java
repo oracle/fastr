@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode.WrapperNode;
@@ -394,8 +393,7 @@ public final class RASTUtils {
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, newEnv);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, bodyNode, formals,
                         name, null);
-        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
-        fun.reassignTarget(callTarget);
+        fun.reassignTarget(rootNode.getCallTarget());
         fun.reassignEnclosingFrame(newEnv);
     }
 }

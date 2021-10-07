@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.test;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -165,11 +164,11 @@ public class TestUtilities {
      * call.
      */
     public static <T extends Node> NodeHandle<T> createHandle(T node, NodeAdapter<T> invoke) {
-        return new NodeHandle<>(Truffle.getRuntime().createCallTarget(new TestRoot<>(node, invoke)));
+        return new NodeHandle<>(new TestRoot<>(node, invoke).getCallTarget());
     }
 
     public static <T extends Node> NodeHandle<T> createHandle(T node, NodeAdapter<T> invoke, TruffleRLanguage language) {
-        return new NodeHandle<>(Truffle.getRuntime().createCallTarget(new TestRoot<>(node, invoke, language)));
+        return new NodeHandle<>(new TestRoot<>(node, invoke, language).getCallTarget());
     }
 
     public interface NodeAdapter<T extends Node> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -166,7 +165,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         RBuiltinRootNode root = new RBuiltinRootNode(language, builtin, frameDescriptor, null);
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
-        return Truffle.getRuntime().createCallTarget(root);
+        return root.getCallTarget();
     }
 
     private static RFunction createFunction(TruffleRLanguage language, RBuiltinFactory builtinFactory, String methodName) {

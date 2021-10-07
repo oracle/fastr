@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -94,7 +93,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     @TruffleBoundary
     protected void setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        setSymbolCallTarget.compareAndSet(null, Truffle.getRuntime().createCallTarget(new SetSymbolRootNode()));
+        setSymbolCallTarget.compareAndSet(null, new SetSymbolRootNode().getCallTarget());
         setSymbolCallTarget.get().call(dllInfo, nstOrd, routines, index);
     }
 
