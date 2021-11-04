@@ -54,6 +54,8 @@ _command_class_dict = {'r': ["com.oracle.truffle.r.launcher.RMain", "R"],
                         'rembed': ["com.oracle.truffle.r.engine.shell.REmbedded"],
                     }
 
+GRAAL_OPTIONS = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3',
+                 '-XX:JVMCINMethodSizeLimit=1000000']
 
 # benchmarking support
 def r_path():
@@ -75,27 +77,15 @@ def get_default_jdk():
         tag = None
     return mx.get_jdk(tag=tag)
 
-def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
+def create_cmdline(args, command, extraVmArgs=None, jdk=None):
     '''
-    This is the basic function that runs a FastR process, where args have already been parsed.
-    Args:
-      args: a list of command arguments
-      command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
-      extraVmArgs: additional vm arguments
-      jdk: jdk (an mx.JDKConfig instance) to use
-      **kwargs other keyword args understood by run_java
-      nonZeroIsFatal: whether to terminate the execution run fails
-      out,err possible redirects to collect output
-
-    By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
-    The assumption is that the VM is already built and available.
+    Creates all the arguments that are passed to the JVM to run FastR.
+    For the description of the arguments, see do_run_r
+    :return: list of command-line arguments.
+    :rtype List[str]
     '''
-    env = kwargs['env'] if 'env' in kwargs else os.environ
-
-    setREnvironment(env)
     if not jdk:
         jdk = get_default_jdk()
-
     dists = ['FASTR']
     if mx.suite("sulong", fatalIfMissing=False):
         dists.append('SULONG_NATIVE')
@@ -116,7 +106,29 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
     if command:
         vmArgs.extend(_command_class_dict[command.lower()])
-    return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
+    return vmArgs + args
+
+def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
+    '''
+    This is the basic function that runs a FastR process, where args have already been parsed.
+    Args:
+      args: a list of command arguments
+      command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
+      extraVmArgs: additional vm arguments
+      jdk: jdk (an mx.JDKConfig instance) to use
+      **kwargs other keyword args understood by run_java
+      nonZeroIsFatal: whether to terminate the execution run fails
+      out,err possible redirects to collect output
+
+    By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
+    The assumption is that the VM is already built and available.
+    '''
+    if not jdk:
+        jdk = get_default_jdk()
+    env = kwargs['env'] if 'env' in kwargs else os.environ
+    setREnvironment(env)
+    all_args = create_cmdline(args, command, extraVmArgs, jdk)
+    return mx.run_java(all_args, jdk=jdk, **kwargs)
 
 def r_classpath(args):
     print(mx.classpath('FASTR', jdk=mx.get_jdk()) + ":" + mx.classpath('SULONG_NATIVE', jdk=mx.get_jdk()))  # pylint: disable=superfluous-parens
@@ -148,7 +160,7 @@ def set_graal_options():
     If Graal is enabled, set some options specific to FastR
     '''
     if mx.suite("compiler", fatalIfMissing=False):
-        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
+        result = GRAAL_OPTIONS
         return result
     else:
         return []
