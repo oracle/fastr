@@ -22,66 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Property;
-import com.oracle.truffle.api.object.Shape;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
- * The base class for the nodes obtaining a collection of attributes from an object. This class uses
- * the so-called <i>constant layouts</i> to optimize the retrieval of the list of attributes. The
- * constant layouts is a static collection of the known attribute sets in FastR stored in
- * {@link RAttributesLayout#LAYOUTS}. Since each constant layout has a field providing the list of
- * properties (i.e. attributes) it is unnecessary to invoke method {@link Shape#getPropertyList()},
- * which would be more expensive.
+ * The base class for the nodes obtaining a collection of attributes from an object.
  */
 public abstract class AttributeIterativeAccessNode extends RBaseNode {
 
-    protected int getCacheLimit() {
-        return DSLConfig.getCacheSize(RAttributesLayout.LAYOUTS.length);
+    protected static final int EXPLODE_LOOP_LIMIT = 8;
+
+    protected static int getShapeCacheLimit() {
+        return DSLConfig.getCacheSize(5);
     }
 
     protected AttributeIterativeAccessNode() {
-    }
-
-    protected ConditionProfile[] createLoopProfiles() {
-        ConditionProfile[] loopProfiles = new ConditionProfile[RAttributesLayout.LAYOUTS.length];
-        for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
-            loopProfiles[i] = ConditionProfile.createBinaryProfile();
-        }
-        return loopProfiles;
-    }
-
-    protected static Shape lookupShape(DynamicObject attrs) {
-        CompilerAsserts.neverPartOfCompilation();
-        return attrs.getShape();
-    }
-
-    @ExplodeLoop
-    protected static final AttrsLayout findLayout(DynamicObject attrs, ConditionProfile[] loopProfiles) {
-        Shape attrsShape = attrs.getShape();
-        for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
-            AttrsLayout attrsLayout = RAttributesLayout.LAYOUTS[i];
-            if (loopProfiles[i].profile(attrsLayout.shape == attrsShape)) {
-                return attrsLayout;
-            }
-        }
-        return null;
-    }
-
-    protected static boolean shapeCheck(Shape shape, DynamicObject attrs) {
-        return shape != null && shape.check(attrs);
-    }
-
-    @TruffleBoundary
-    protected static Object readProperty(DynamicObject attrs, Shape shape, final Property prop) {
-        return prop.get(attrs, shape);
     }
 }

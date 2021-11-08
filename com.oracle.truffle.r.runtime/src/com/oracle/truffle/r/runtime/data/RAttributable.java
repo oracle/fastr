@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.HiddenKey;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -46,6 +47,16 @@ public abstract class RAttributable extends RBaseObject {
      * native code.
      */
     public static final HiddenKey ATTRS_KEY = new HiddenKey("attrs");
+
+    /**
+     * This class is used as the value for the {@link #attributes}. TODO: we should change all the
+     * DynamicObject typed fields/methods to RAttributes.
+     */
+    public static final class RAttributes extends DynamicObject {
+        public RAttributes(Shape shape) {
+            super(shape);
+        }
+    }
 
     protected DynamicObject attributes;
 

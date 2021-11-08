@@ -22,23 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
-import java.util.List;
-
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Property;
-import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 
@@ -47,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
  */
 public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode {
 
-    @Child private AttributeAction actionNode;
+    private final AttributeAction actionNode;
 
     protected ForEachAttributeNode(AttributeAction actionNode) {
         this.actionNode = actionNode;
@@ -57,14 +54,14 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
         return ForEachAttributeNodeGen.create(action);
     }
 
-    public abstract Object execute(RAttributable attributable, String attributeName);
+    public abstract Object execute(RAttributable attributable, Object argument);
 
     /**
      * Return {@code false} to stop the attributes iteration prematurely. Context gives access to
-     * the parameter passed to {@link #execute(RAttributable, String)} and to the result, which
+     * the parameter passed to {@link #execute(RAttributable, Object)} and to the result, which
      * should be set by this function.
      */
-    public abstract static class AttributeAction extends Node {
+    public abstract static class AttributeAction {
         public abstract boolean action(String name, Object value, Context context);
     }
 
@@ -76,42 +73,55 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
         return attributable.getAttributes();
     }
 
-    @Specialization(limit = "getCacheLimit()", guards = {
-                    "!hasNullAttributes(attributable)",
-                    "!isRPairList(attributable)",
-                    "attrsLayout != null",
-                    "attrsLayout.shape.check(attrs)"
-    })
+    @Specialization(guards = {"!hasNullAttributes(attributable)", "!isRPairList(attributable)",
+            "cachedLen <= EXPLODE_LOOP_LIMIT", "cachedLen == keys.length"}, limit = "1")
     @ExplodeLoop
-    protected Object iterateConstLayout(@SuppressWarnings("unused") RAttributable attributable,
-                    String attributeName,
+    protected Object iterateExploded(@SuppressWarnings("unused") RAttributable attributable, Object argument,
                     @Bind("getAttributes(attributable)") DynamicObject attrs,
-                    @Cached("findLayout(attrs, createLoopProfiles())") AttrsLayout attrsLayout) {
-        final Property[] props = attrsLayout.properties;
-        Context ctx = new Context(attributeName);
-        for (int i = 0; i < props.length; i++) {
-            Object value = readProperty(attrs, attrsLayout.shape, props[i]);
-            if (!actionNode.action((String) props[i].getKey(), value, ctx)) {
+                    @CachedLibrary("attrs") DynamicObjectLibrary dylib,
+                    @Bind("dylib.getKeyArray(attrs)") Object[] keys,
+                    @Cached("keys.length") int cachedLen) {
+        Context ctx = new Context(argument);
+        for (int i = 0; i < cachedLen; i++) {
+            Object value = dylib.getOrDefault(attrs, keys[i], null);
+            if (!actionNode.action((String) keys[i], value, ctx)) {
                 break;
             }
         }
         return ctx.result;
     }
 
-    @Specialization(replaces = "iterateConstLayout", guards = {"!hasNullAttributes(attributable)", "!isRPairList(attributable)"})
-    protected Object iterateAnyLayout(RAttributable attributable, String attributeName) {
-        Context ctx = new Context(attributeName);
-        return iterateAttributes(attributable.getAttributes(), ctx);
+    @Specialization(replaces = "iterateExploded", guards = {"!hasNullAttributes(attributable)", "!isRPairList(attributable)"}, limit = "getShapeCacheLimit()")
+    protected Object iterateGeneric(@SuppressWarnings("unused") RAttributable attributable, Object argument,
+                    @Cached LoopConditionProfile loopProfile,
+                    @Bind("getAttributes(attributable)") DynamicObject attrs,
+                    @CachedLibrary("attrs") DynamicObjectLibrary dylib,
+                    @Bind("dylib.getKeyArray(attrs)") Object[] keys) {
+        Context ctx = new Context(argument);
+        return iterateGeneric(loopProfile, attrs, dylib, keys, ctx);
+    }
+
+    private Object iterateGeneric(LoopConditionProfile loopProfile, DynamicObject attrs, DynamicObjectLibrary dylib, Object[] keys, Context ctx) {
+        loopProfile.profileCounted(keys.length);
+        for (int i = 0; loopProfile.inject(i < keys.length); i++) {
+            Object value = dylib.getOrDefault(attrs, keys[i], null);
+            if (!actionNode.action((String) keys[i], value, ctx)) {
+                break;
+            }
+        }
+        return ctx.result;
     }
 
     /**
      * Pairlists need special iteration, because they do not have names attribute internally.
      */
     @Specialization(guards = {"isRPairList(pairList)"})
-    protected Object iteratePairList(RPairList pairList, String attributeName,
+    protected Object iteratePairList(RPairList pairList, Object argument,
+                    @Cached LoopConditionProfile loopProfile,
+                    @CachedLibrary(limit = "getShapeCacheLimit()") DynamicObjectLibrary dylib,
                     @Cached ConditionProfile nullAttributesProfile,
                     @Cached BranchProfile pairListHasNamesBranch) {
-        Context ctx = new Context(attributeName);
+        Context ctx = new Context(argument);
         if (pairList.getNames() != null) {
             pairListHasNamesBranch.enter();
             if (!actionNode.action(RRuntime.NAMES_ATTR_KEY, pairList.getNames(), ctx)) {
@@ -120,41 +130,24 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
         }
         DynamicObject attributes = pairList.getAttributes();
         if (nullAttributesProfile.profile(attributes == null)) {
-            return hasContextResult(ctx) ? ctx.result : RNull.instance;
+            return ctx.result != null ? ctx.result : RNull.instance;
         } else {
-            return iterateAttributes(attributes, ctx);
+            return iterateGeneric(loopProfile, attributes, dylib, dylib.getKeyArray(attributes), ctx);
         }
     }
 
-    @Fallback
-    protected Object fallback(@SuppressWarnings("unused") RAttributable attributable, @SuppressWarnings("unused") String attributeName) {
+    @Specialization(guards = {"hasNullAttributes(attributable)", "!isRPairList(attributable)"})
+    protected Object fallback(@SuppressWarnings("unused") RAttributable attributable, @SuppressWarnings("unused") Object attributeName) {
         return RNull.instance;
-    }
-
-    private Object iterateAttributes(DynamicObject attributes, Context ctx) {
-        Shape shape = attributes.getShape();
-        List<Property> props = shape.getPropertyList();
-        for (int i = 0; i < props.size(); i++) {
-            Property p = props.get(i);
-            Object value = readProperty(attributes, shape, p);
-            if (!actionNode.action((String) p.getKey(), value, ctx)) {
-                break;
-            }
-        }
-        return ctx.result;
-    }
-
-    private static boolean hasContextResult(Context ctx) {
-        return ctx.result != RNull.instance;
     }
 
     @ValueType
     public static final class Context {
-        public final Object attributeName;
+        public final Object argument;
         public Object result;
 
-        private Context(String attributeName) {
-            this.attributeName = attributeName;
+        private Context(Object argument) {
+            this.argument = argument;
             this.result = RNull.instance;
         }
     }

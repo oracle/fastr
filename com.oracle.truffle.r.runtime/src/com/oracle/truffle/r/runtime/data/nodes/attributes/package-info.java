@@ -124,25 +124,8 @@
  * {@link com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute}.
  * <ul>
  * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode}
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNode}
  * </ul>
  * The above-mentioned nodes always return a non-null instance, even if an attributable instance has
  * no attributes.
- *
- * <pre>
- * &#64;Child private IterableAttributeNode iterAttrAccess = IterableAttributeNode.create();
- *
- * &#64;Specialization
- * protected Object handleStringVector(RStringVector v) {
- *    ...
- *    for (RAttribute a : iterAttrAccess.execute(v)) {
- *      if ("foo".equals(a.getName())) {
- *          ...
- *      }
- *    }
- *    ...
- * }
- * </pre>
- *
  */
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
