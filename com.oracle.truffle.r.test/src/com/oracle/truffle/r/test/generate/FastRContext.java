@@ -22,35 +22,31 @@
  */
 package com.oracle.truffle.r.test.generate;
 
+import static com.oracle.truffle.r.test.generate.FastRSession.GET_CONTEXT;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
-import com.oracle.truffle.r.runtime.context.ChildContextInfo;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
- * Abstraction of the {@link Context}.
- *
- * This class wraps {@link Context} produced by the internal builtin
- * {@code .fastr.context.testing.new} and calls {@code .fastr.context.testing.close} in
- * {@link #close()} to properly dispose it.
+ * Wrapper around the {@link Context} and its input and output streams.
  */
-public final class FastRContext implements AutoCloseable {
-
-    private final Context mainContext;
+public class FastRContext implements AutoCloseable {
     private final Context context;
-    private final Object internalContext;
+    private final TestByteArrayInputStream input;
+    private final ByteArrayOutputStream output;
 
-    private FastRContext(Context mainContext, Context context, Object internalContext) {
+    FastRContext(Context context, TestByteArrayInputStream input, ByteArrayOutputStream output) {
         this.context = context;
-        this.internalContext = internalContext;
-        this.mainContext = mainContext;
-    }
-
-    public static FastRContext create(Context mainContext, ChildContextInfo childContextInfo) {
-        Value contextData = mainContext.eval("R", ".fastr.context.testing.new").execute(childContextInfo);
-        return new FastRContext(mainContext, contextData.getMember("context").as(Context.class), contextData);
+        this.input = input;
+        this.output = output;
     }
 
     public Value eval(Source source) {
@@ -73,10 +69,90 @@ public final class FastRContext implements AutoCloseable {
         return context;
     }
 
+    public RContext getInternalContext() {
+        return context.eval(GET_CONTEXT).asHostObject();
+    }
+
+    public TestByteArrayInputStream getInput() {
+        return input;
+    }
+
+    public ByteArrayOutputStream getOutput() {
+        return output;
+    }
+
+    public void reset() {
+    }
+
     @Override
     public void close() {
-        if (internalContext != null) {
-            mainContext.eval("R", ".fastr.context.testing.close").execute(internalContext);
+        context.close();
+        // TODO: maybe input.close(); output.close()?
+    }
+
+    /**
+     * A context shared between several test runs. We do not close the underlying context, but just
+     * try to reset the global state as much as possible.
+     */
+    public static final class SharedFastRContext extends FastRContext {
+        private Value oldSearch;
+        private final Value baseSearchFun;
+        private final Value cleanupFun;
+
+        SharedFastRContext(Context context, TestByteArrayInputStream input, ByteArrayOutputStream output) {
+            super(context, input, output);
+            baseSearchFun = context.eval("R", "base::search");
+            cleanupFun = context.eval("R", "function (oldSearch) {\n" +
+                            "  env <- .GlobalEnv\n" +
+                            "  rm(list = ls(envir = env, all.names = TRUE), envir = env)\n" +
+                            "  RNGkind(\"default\", \"default\", \"default\")\n" +
+                            "  set.seed(42)\n" +
+                            // " options(warn = 1)\n" +
+                            "  sch <- search()\n" +
+                            "  newitems <- sch[! sch %in% oldSearch]\n" +
+                            "  if(length(newitems)) supressWarnings(tools:::detachPackages(newitems), verbose=F)\n" +
+                            "  missitems <- oldSearch[! oldSearch %in% sch]\n" +
+                            "  return(missitems)\n" +
+                            "}");
+        }
+
+        public SharedFastRContext(Context context, TestByteArrayInputStream input, ByteArrayOutputStream output, Value baseSearchFun, Value cleanupFun) {
+            super(context, input, output);
+            this.baseSearchFun = baseSearchFun;
+            this.cleanupFun = cleanupFun;
+        }
+
+        @Override
+        public void reset() {
+            getOutput().reset();
+            oldSearch = baseSearchFun.execute();
+        }
+
+        @Override
+        public void close() {
+            cleanupFun.execute(oldSearch);
+        }
+
+        public SharedFastRContext newSession() {
+            return new SharedFastRContext(getContext(), getInput(), getOutput(), baseSearchFun, cleanupFun);
+        }
+    }
+
+    public static final class TestByteArrayInputStream extends ByteArrayInputStream {
+
+        TestByteArrayInputStream() {
+            super(new byte[0]);
+        }
+
+        public void setContents(String data) {
+            this.buf = data.getBytes(StandardCharsets.UTF_8);
+            this.count = this.buf.length;
+            this.pos = 0;
+        }
+
+        @Override
+        public synchronized int read() {
+            return super.read();
         }
     }
 }

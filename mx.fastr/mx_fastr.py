@@ -223,6 +223,7 @@ def setREnvironment(env=None):
 
 def setUnitTestEnvironment(args):
     env = os.environ
+    env['TZ'] = 'GMT'
     rOptions = []
     for arg in args:
         if arg.startswith("--R."):

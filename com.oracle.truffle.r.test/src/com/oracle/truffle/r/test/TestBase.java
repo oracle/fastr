@@ -111,7 +111,7 @@ public class TestBase {
     public static final Map<String, String> options = new HashMap<>();
 
     /**
-     * See {@link com.oracle.truffle.r.test.builtins.TestTestBase} for examples.
+     * See {@code TestTestBase} for examples.
      */
     public enum Output implements TestTrait {
         ImprovedErrorContext, // FastR provides a more accurate error context

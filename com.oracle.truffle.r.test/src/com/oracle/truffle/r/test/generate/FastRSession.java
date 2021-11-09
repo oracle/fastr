@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStackt
 import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.AccessibleObject;
@@ -38,7 +37,6 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -77,6 +75,8 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.engine.interop.VectorInteropTest;
+import com.oracle.truffle.r.test.generate.FastRContext.SharedFastRContext;
+import com.oracle.truffle.r.test.generate.FastRContext.TestByteArrayInputStream;
 
 public final class FastRSession implements RSession {
 
@@ -87,30 +87,7 @@ public final class FastRSession implements RSession {
 
     private static FastRSession singleton;
 
-    private final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    private final TestByteArrayInputStream input = new TestByteArrayInputStream();
-
-    private Engine mainEngine;
-    private Context mainContext;
-    private RContext mainRContext;
-
-    private static final class TestByteArrayInputStream extends ByteArrayInputStream {
-
-        TestByteArrayInputStream() {
-            super(new byte[0]);
-        }
-
-        public void setContents(String data) {
-            this.buf = data.getBytes(StandardCharsets.UTF_8);
-            this.count = this.buf.length;
-            this.pos = 0;
-        }
-
-        @Override
-        public synchronized int read() {
-            return super.read();
-        }
-    }
+    private SharedFastRContext sharedContext;
 
     public static FastRSession create() {
         if (singleton == null) {
@@ -123,16 +100,19 @@ public final class FastRSession implements RSession {
         return Source.newBuilder("R", txt, name).internal(true).interactive(true).buildLiteral();
     }
 
+    // TODO: used from the outsize: can the users use the shared context? Otherwise change them to the exclusive one
     public FastRContext createContext(ContextKind contextKind) {
-        return createContext(contextKind, true);
+        return getContext(contextKind, true);
     }
 
-    public FastRContext createContext(ContextKind contextKind, @SuppressWarnings("unused") boolean allowHostAccess) {
-        RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--no-echo", "--silent", "--no-restore"}, false), false);
-        Map<String, String> env = new HashMap<>();
-        env.put("TZ", "GMT");
-        ChildContextInfo info = ChildContextInfo.create(params, env, contextKind, contextKind == ContextKind.SHARE_NOTHING ? null : mainRContext, input, output, output);
-        return FastRContext.create(mainContext, info);
+    public FastRContext getContext(ContextKind contextKind, @SuppressWarnings("unused") boolean allowHostAccess) {
+        if (contextKind == ContextKind.SHARE_PARENT_RW) {
+            return sharedContext.newSession();
+        } else if (contextKind == ContextKind.SHARE_NOTHING) {
+            return createVanillaContext(false);
+        } else {
+            throw new IllegalStateException("Unexpected: " + contextKind);
+        }
     }
 
     public static Context.Builder getContextBuilder(String... languages) {
@@ -163,18 +143,28 @@ public final class FastRSession implements RSession {
             }
         }
         try {
-            RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--no-echo", "--silent", "--no-restore"}, false), false);
-            ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
-            RContext.childInfo = info;
-            mainEngine = Engine.newBuilder().allowExperimentalOptions(true).option("engine.UseConservativeContextReferences", "true").in(input).out(output).err(output).build();
-            mainContext = getContextBuilder("R", "llvm").engine(mainEngine).build();
-            mainRContext = mainContext.eval(GET_CONTEXT).asHostObject();
+            sharedContext = (SharedFastRContext) createVanillaContext(true);
         } finally {
             try {
-                System.out.print(output.toString("UTF-8"));
+                System.out.print(sharedContext.getOutput().toString("UTF-8"));
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private static FastRContext createVanillaContext(boolean isShared) {
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--no-echo", "--silent", "--no-restore"}, false), false);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        TestByteArrayInputStream input = new TestByteArrayInputStream();
+        ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
+        // TODO: do we need the config info in this case? -- we should eventually remove it altogether
+        RContext.childInfo = info;
+        Context truffleContext = getContextBuilder("R", "llvm").in(input).out(output).err(output).build();
+        if (isShared) {
+            return new SharedFastRContext(truffleContext, input, output);
+        } else {
+            return new FastRContext(truffleContext, input, output);
         }
     }
 
@@ -186,15 +176,14 @@ public final class FastRSession implements RSession {
     }
 
     public RContext getContext() {
-        return mainRContext;
+        return sharedContext.getInternalContext();
     }
 
-    private String readLine() {
+    private String readLine(TestByteArrayInputStream input) {
         /*
          * We cannot use an InputStreamReader because it buffers characters internally, whereas
          * readLine() should not buffer across newlines.
          */
-
         ByteBuffer bytes = ByteBuffer.allocate(16);
         CharBuffer chars = CharBuffer.allocate(16);
         StringBuilder str = new StringBuilder();
@@ -229,59 +218,10 @@ public final class FastRSession implements RSession {
 
     public String eval(TestBase testClass, String expression, ContextKind contextKind, long timeout, boolean allowHostAccess) throws Throwable {
         assert contextKind != null;
-        Timer timer = null;
-        output.reset();
-        input.setContents(expression);
-        try (FastRContext evalContext = createContext(contextKind, allowHostAccess)) {
-            // set up some interop objects used by fastr-specific tests:
-            if (testClass != null) {
-                testClass.addPolyglotSymbols(evalContext);
-            }
-            timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
-            String consoleInput = readLine();
-            while (consoleInput != null) {
-                try {
-                    try {
-                        Source src = createSource(consoleInput, RSource.Internal.UNIT_TEST.string);
-                        evalContext.eval(src);
-                        // checked exceptions are wrapped in PolyglotException
-                    } catch (PolyglotException e) {
-                        // TODO see bellow - need the wrapped exception for special handling of
-                        // ParseException, etc
-                        Throwable wt = getWrappedThrowable(e);
-                        if (wt instanceof RError) {
-                            REPL.handleError(null, evalContext.getContext(), e);
-                        }
-                        throw wt;
-                    }
-                    consoleInput = readLine();
-                } catch (IncompleteSourceException e) {
-                    String additionalInput = readLine();
-                    if (additionalInput == null) {
-                        throw e;
-                    }
-                    consoleInput += "\n" + additionalInput;
-                }
-            }
-        } catch (ParseException e) {
-            e.report(output);
-        } catch (ExitException | JumpToTopLevelException e) {
-            // exit and jumpToTopLevel exceptions are legitimate if a test case calls "q()" or "Q"
-            // during debugging
-        } catch (RError e) {
-            // nothing to do
-        } catch (Throwable t) {
-            if (!TestBase.ProcessFailedTests || TestBase.ShowFailedTestsResults) {
-                if (t instanceof RInternalError) {
-                    RInternalError.reportError(t, mainRContext);
-                }
-                t.printStackTrace();
-            }
-            throw t;
-        } finally {
-            if (timer != null) {
-                timer.cancel();
-            }
+        ByteArrayOutputStream output;
+        try (FastRContext evalContext = getContext(contextKind, allowHostAccess)) {
+            output = evalContext.getOutput();
+            eval(evalContext, testClass, expression, contextKind, timeout);
         }
         try {
             return output.toString("UTF-8");
@@ -291,21 +231,85 @@ public final class FastRSession implements RSession {
         }
     }
 
+    private void eval(FastRContext evalContext, TestBase testClass, String expression, ContextKind contextKind, long timeout) throws Throwable {
+        try {
+            evalContext.reset();
+            evalContext.getInput().setContents(expression);
+            Timer timer = null;
+            try {
+                // set up some interop objects used by fastr-specific tests:
+                if (testClass != null) {
+                    // TODO: either provide a way to reset them or disallow this with the shared
+                    // context
+                    testClass.addPolyglotSymbols(evalContext);
+                }
+                timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
+                String consoleInput = readLine(evalContext.getInput());
+                while (consoleInput != null) {
+                    try {
+                        try {
+                            Source src = createSource(consoleInput, RSource.Internal.UNIT_TEST.string);
+                            evalContext.eval(src);
+                            // checked exceptions are wrapped in PolyglotException
+                        } catch (PolyglotException e) {
+                            // TODO see bellow - need the wrapped exception for special handling of
+                            // ParseException, etc
+                            Throwable wt = getWrappedThrowable(e);
+                            if (wt instanceof RError) {
+                                REPL.handleError(null, evalContext.getContext(), e);
+                            }
+                            throw wt;
+                        }
+                        consoleInput = readLine(evalContext.getInput());
+                    } catch (IncompleteSourceException e) {
+                        String additionalInput = readLine(evalContext.getInput());
+                        if (additionalInput == null) {
+                            throw e;
+                        }
+                        consoleInput += "\n" + additionalInput;
+                    }
+                }
+            } finally {
+                if (timer != null) {
+                    timer.cancel();
+                }
+            }
+        } catch (ParseException e) {
+            e.report(evalContext.getOutput());
+        } catch (ExitException | JumpToTopLevelException e) {
+            // exit and jumpToTopLevel exceptions are legitimate if a test case calls "q()" or "Q"
+            // during debugging
+        } catch (RError e) {
+            // nothing to do
+        } catch (Throwable t) {
+            if (!TestBase.ProcessFailedTests || TestBase.ShowFailedTestsResults) {
+                if (t instanceof RInternalError) {
+                    RInternalError.reportError(t, evalContext.getInternalContext());
+                }
+                t.printStackTrace();
+            }
+            throw t;
+        }
+    }
+
     public String evalInREPL(TestBase testClass, String expression, ContextKind contextKind, long timeout, boolean allowHostAccess) throws Throwable {
         assert contextKind != null;
         Timer timer = null;
-        output.reset();
-        input.setContents(expression);
-        try (FastRContext evalContext = createContext(contextKind, allowHostAccess)) {
+        ByteArrayOutputStream output;
+        try (FastRContext evalContext = getContext(contextKind, allowHostAccess)) {
+            evalContext.reset();
+            output = evalContext.getOutput();
+            evalContext.getInput().setContents(expression);
+
             // set up some interop objects used by fastr-specific tests:
             if (testClass != null) {
                 testClass.addPolyglotSymbols(evalContext);
             }
             timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
             REPL.readEvalPrint(evalContext.getContext(), new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, null);
-            String consoleInput = readLine();
+            String consoleInput = readLine(evalContext.getInput());
             while (consoleInput != null) {
-                consoleInput = readLine();
+                consoleInput = readLine(evalContext.getInput());
             }
         } finally {
             if (timer != null) {
