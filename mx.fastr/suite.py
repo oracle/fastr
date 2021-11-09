@@ -121,6 +121,9 @@ suite = {
         "com.oracle.truffle.r.library",
         "sulong:SULONG_API",
       ],
+      "requires" : [
+        "java.logging",
+      ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
       "annotationProcessors" : [
@@ -149,6 +152,9 @@ suite = {
         "mx:JUNIT",
         "truffle:TRUFFLE_TCK",
         "com.oracle.truffle.r.engine",
+      ],
+      "requires" : [
+        "java.logging",
       ],
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
@@ -256,6 +262,9 @@ suite = {
          "org.rosuda.javaGD",
          'BATIK-ALL-1.14',
       ],
+      "requires" : [
+        "java.desktop"
+      ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
       "annotationProcessors" : [
@@ -314,6 +323,9 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.ffi.impl",
       ],
+      "requires" : [
+        "java.desktop",
+      ],
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
@@ -327,6 +339,7 @@ suite = {
     "org.rosuda.javaGD" : {
       "sourceDirs" : ["src"],
       "dependencies" : [],
+      "requires": ["java.desktop"],
       "checkstyle" : "org.rosuda.javaGD",
       "javaCompliance" : "8+",
       "workingSets" : "FastR",
