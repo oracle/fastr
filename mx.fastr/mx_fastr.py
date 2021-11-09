@@ -294,11 +294,13 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
     The tests should be compiled by mx build before they can be run.
     Each test (native application) is run and its output compared to the expected output
     file located next to the source file.
+    Since November 2021, this test is ignored on Darwin.
     '''
+    if platform.system().lower() == 'darwin':
+        return 0
     env = os.environ.copy()
     env['R_HOME'] = _fastr_suite.dir
-    so_suffix = '.dylib' if platform.system().lower() == 'darwin' else '.so'
-    env['NFI_LIB'] = join(mx.distribution('TRUFFLE_NFI_NATIVE').get_output(), 'bin', 'libtrufflenfi' + so_suffix)
+    env['NFI_LIB'] = join(mx.distribution('TRUFFLE_NFI_NATIVE').get_output(), 'bin', 'libtrufflenfi.so')
     tests_script = join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/embedded/test.sh')
     return mx.run([tests_script], env=env, nonZeroIsFatal=nonZeroIsFatal)
 
