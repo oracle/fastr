@@ -110,9 +110,9 @@ public class FastRContext implements AutoCloseable {
                             // " options(warn = 1)\n" +
                             "  sch <- search()\n" +
                             "  newitems <- sch[! sch %in% oldSearch]\n" +
-                            "  if(length(newitems)) supressWarnings(tools:::detachPackages(newitems), verbose=F)\n" +
+                            "  if(length(newitems)) tools:::detachPackages(newitems, verbose=F)\n" +
                             "  missitems <- oldSearch[! oldSearch %in% sch]\n" +
-                            "  return(missitems)\n" +
+                            "  return(any(missitems))\n" +
                             "}");
         }
 
@@ -130,7 +130,8 @@ public class FastRContext implements AutoCloseable {
 
         @Override
         public void close() {
-            cleanupFun.execute(oldSearch);
+            Value missing = cleanupFun.execute(oldSearch);
+            assert !missing.asBoolean();
         }
 
         public SharedFastRContext newSession() {
