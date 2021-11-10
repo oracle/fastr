@@ -60,11 +60,55 @@ import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.tck.DebuggerTester;
 
 public class FastRDebugTest {
+    static final class TestAction {
+        final Runnable action;
+        final RuntimeException stackTrace;
+
+        TestAction(Runnable action, RuntimeException stackTrace) {
+            this.action = action;
+            this.stackTrace = stackTrace;
+        }
+
+        void run() {
+            action.run();
+        }
+    }
+
+    static final class TestActionList {
+        final LinkedList<TestAction> actions = new LinkedList<>();
+
+        void addLast(Runnable action) {
+            actions.add(new TestAction(action, new RuntimeException()));
+        }
+
+        void clear() {
+            actions.clear();
+        }
+
+        boolean isEmpty() {
+            return actions.isEmpty();
+        }
+
+        TestAction removeFirst() {
+            return actions.removeFirst();
+        }
+    }
+
     private Debugger debugger;
     private DebuggerSession debuggerSession;
-    private final LinkedList<Runnable> run = new LinkedList<>();
+    /**
+     * Actions to perform during the test.
+     */
+    private final TestActionList run = new TestActionList();
     private SuspendedEvent suspendedEvent;
+    /**
+     * Exception thrown during execution of some action from {@link #run}.
+     */
     private Throwable ex;
+    /**
+     * trace of the point the created the action that threw ex when executed.
+     */
+    private Throwable exStackTrace;
     private Context context;
     protected final ByteArrayOutputStream out = new ByteArrayOutputStream();
     protected final ByteArrayOutputStream err = new ByteArrayOutputStream();
@@ -619,13 +663,16 @@ public class FastRDebugTest {
     }
 
     private void performWork() {
+        RuntimeException stackTrace = null;
         try {
             if (ex == null && !run.isEmpty()) {
-                Runnable c = run.removeFirst();
-                c.run();
+                TestAction action = run.actions.removeFirst();
+                stackTrace = action.stackTrace;
+                action.run();
             }
         } catch (Throwable e) {
             ex = e;
+            exStackTrace = stackTrace;
         }
     }
 
@@ -664,7 +711,7 @@ public class FastRDebugTest {
             assertEquals(expected, actualIdentifiers);
 
             if (!run.isEmpty()) {
-                run.removeFirst().run();
+                run.actions.removeFirst().run();
             }
         });
     }
@@ -798,7 +845,7 @@ public class FastRDebugTest {
         }
 
         if (!run.isEmpty()) {
-            run.removeFirst().run();
+            run.actions.removeFirst().run();
         }
     }
 
@@ -813,6 +860,18 @@ public class FastRDebugTest {
     private void assertExecutedOK() throws Throwable {
         Assert.assertTrue(getErr(), getErr().isEmpty());
         if (ex != null) {
+            if (exStackTrace != null) {
+                System.err.println("Stack trace of the location that created the failed action:");
+                // Try to print only the interesting frames:
+                StackTraceElement[] items = exStackTrace.getStackTrace();
+                for (int i = 1; i < Math.min(15, items.length); i++) {
+                    String s = items[i].toString();
+                    if (s.startsWith("sun.reflect")) {
+                        break;
+                    }
+                    System.err.println(s);
+                }
+            }
             if (ex instanceof AssertionError) {
                 throw ex;
             } else {
@@ -864,7 +923,7 @@ public class FastRDebugTest {
                     }
                 }
                 if (!run.isEmpty()) {
-                    run.removeFirst().run();
+                    run.actions.removeFirst().run();
                 }
             } catch (RuntimeException | Error e) {
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
