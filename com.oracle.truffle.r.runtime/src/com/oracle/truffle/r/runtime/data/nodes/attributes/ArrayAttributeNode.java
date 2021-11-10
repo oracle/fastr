@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,9 +51,9 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode im
     @ExplodeLoop
     @Specialization(guards = {"cachedLen <= EXPLODE_LOOP_LIMIT", "cachedLen == keyArray.length"}, limit = "getCacheSize(1)")
     protected RAttribute[] getArrayExplode(DynamicObject attrs,
-                                           @CachedLibrary("attrs") DynamicObjectLibrary dylib,
-                                           @Bind("dylib.getKeyArray(attrs)") Object[] keyArray,
-                                           @Cached("keyArray.length") int cachedLen) {
+                    @CachedLibrary("attrs") DynamicObjectLibrary dylib,
+                    @Bind("dylib.getKeyArray(attrs)") Object[] keyArray,
+                    @Cached("keyArray.length") int cachedLen) {
         RAttribute[] result = new RAttribute[cachedLen];
         for (int i = 0; i < result.length; i++) {
             Object value = dylib.getOrDefault(attrs, keyArray[i], null);
@@ -64,9 +64,9 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode im
 
     @Specialization(replaces = "getArrayExplode", limit = "getShapeCacheLimit()")
     protected RAttribute[] getArrayGeneric(DynamicObject attrs,
-                                           @Cached LoopConditionProfile loopProfile,
-                                           @CachedLibrary("attrs") DynamicObjectLibrary dylib,
-                                           @Bind("dylib.getKeyArray(attrs)") Object[] keyArray) {
+                    @Cached LoopConditionProfile loopProfile,
+                    @CachedLibrary("attrs") DynamicObjectLibrary dylib,
+                    @Bind("dylib.getKeyArray(attrs)") Object[] keyArray) {
         RAttribute[] result = new RAttribute[keyArray.length];
         loopProfile.profileCounted(result.length);
         for (int i = 0; loopProfile.inject(i < result.length); i++) {
