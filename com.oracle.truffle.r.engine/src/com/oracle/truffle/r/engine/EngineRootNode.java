@@ -27,6 +27,7 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -37,8 +38,11 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.REntryPointRootNode;
+import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
@@ -53,7 +57,7 @@ import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-class EngineRootNode extends RootNode {
+class EngineRootNode extends RootNode implements REntryPointRootNode {
     private final SourceSection sourceSection;
 
     private final MaterializedFrame executionFrame;
@@ -76,6 +80,11 @@ class EngineRootNode extends RootNode {
         return new EngineRootNode(new EngineBodyNode(engine, statements, forcePrintResult || getPrintResult(sourceSection)), context, sourceSection, executionFrame);
     }
 
+    @Override
+    public Frame getActualExecutionFrame(@SuppressWarnings("unused") Frame currentFrame) {
+        return executionFrame != null ? executionFrame : contextReference.get().stateREnvironment.getGlobalFrame();
+    }
+
     /**
      * The normal {@link REngine#doMakeCallTarget} happens first, then we actually run the call
      * using the standard FastR machinery, saving and restoring the {@link RContext}, since we have
@@ -83,7 +92,7 @@ class EngineRootNode extends RootNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        Object actualFrame = executionFrame != null ? executionFrame : contextReference.get().stateREnvironment.getGlobalFrame();
+        Object actualFrame = getActualExecutionFrame(frame);
         try {
             return r2Foreign.convert(this.bodyNode.execute(actualFrame));
         } catch (ReturnException ex) {

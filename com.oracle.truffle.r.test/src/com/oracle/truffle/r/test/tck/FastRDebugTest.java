@@ -44,6 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.api.debug.Breakpoint;
+import com.oracle.truffle.api.debug.DebugException;
 import com.oracle.truffle.api.debug.DebugScope;
 import com.oracle.truffle.api.debug.DebugStackFrame;
 import com.oracle.truffle.api.debug.DebugValue;
@@ -588,7 +589,7 @@ public class FastRDebugTest {
             debuggerSession.suspendNextExecution();
         });
         stepOver(1);
-        assertLocation(2, 1, SuspendAnchor.BEFORE, "x <- bar", false, true);
+        assertLocation(2, 1, SuspendAnchor.BEFORE, "x <- bar", false, true, "bar", 42);
         run.addLast(() -> {
             DebugValue bar = suspendedEvent.getSession().getTopScope("R").getDeclaredValue("bar");
             assertTrue(bar.isReadable());
@@ -607,7 +608,7 @@ public class FastRDebugTest {
         // The node has CallTag and SourceSection(source=internal, index=0, length=0, characters=)
         // Expected: assertLocation(2, 9, SuspendAnchor.AFTER, "x <- bar", false, true);
         stepOver(1);
-        assertLocation(3, 1, SuspendAnchor.BEFORE, "bar <- 24", false, true);
+        assertLocation(3, 1, SuspendAnchor.BEFORE, "bar <- 24", false, true, "bar", 42, "x", 42);
         run.addLast(() -> {
             DebugValue x = suspendedEvent.getSession().getTopScope("R").getDeclaredValue("x");
             assertTrue(x.isReadable());

@@ -917,6 +917,10 @@ public abstract class REnvironment extends RAttributable {
         return attributes == null ? name : RRuntime.asString(DynamicObjectLibrary.getUncached().getOrDefault(attributes, NAME_ATTR_KEY, name));
     }
 
+    public REnvFrameAccess getFrameAccess() {
+        return frameAccess;
+    }
+
     /**
      * The "print" name of an environment, i.e. what is output for {@code print(env)}.
      */
