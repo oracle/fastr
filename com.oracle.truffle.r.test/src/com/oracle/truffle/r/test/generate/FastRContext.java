@@ -95,9 +95,11 @@ public class FastRContext implements AutoCloseable {
      * try to reset the global state as much as possible.
      */
     public static final class SharedFastRContext extends FastRContext {
+        private Value setOptionsFunc;
         private Value oldSearch;
         private final Value baseSearchFun;
         private final Value cleanupFun;
+        private final Value defaultOptions;
 
         SharedFastRContext(Context context, TestByteArrayInputStream input, ByteArrayOutputStream output) {
             super(context, input, output);
@@ -114,18 +116,23 @@ public class FastRContext implements AutoCloseable {
                             "  missitems <- oldSearch[! oldSearch %in% sch]\n" +
                             "  return(any(missitems))\n" +
                             "}");
+            defaultOptions = context.eval("R", "options()");
+            setOptionsFunc = context.eval("R", "options");
         }
 
-        public SharedFastRContext(Context context, TestByteArrayInputStream input, ByteArrayOutputStream output, Value baseSearchFun, Value cleanupFun) {
+        public SharedFastRContext(Context context, TestByteArrayInputStream input, ByteArrayOutputStream output, Value baseSearchFun, Value cleanupFun, Value defaultOptions, Value setOptionsFunc) {
             super(context, input, output);
             this.baseSearchFun = baseSearchFun;
             this.cleanupFun = cleanupFun;
+            this.defaultOptions = defaultOptions;
+            this.setOptionsFunc = setOptionsFunc;
         }
 
         @Override
         public void reset() {
             getOutput().reset();
             oldSearch = baseSearchFun.execute();
+            setOptionsFunc.execute(defaultOptions);
         }
 
         @Override
@@ -135,7 +142,7 @@ public class FastRContext implements AutoCloseable {
         }
 
         public SharedFastRContext newSession() {
-            return new SharedFastRContext(getContext(), getInput(), getOutput(), baseSearchFun, cleanupFun);
+            return new SharedFastRContext(getContext(), getInput(), getOutput(), baseSearchFun, cleanupFun, defaultOptions, setOptionsFunc);
         }
     }
 

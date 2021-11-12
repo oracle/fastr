@@ -45,9 +45,29 @@ public class TestContextKind extends TestBase {
     }
 
     @Test
-    public void test3() {
+    @Ignore
+    public void testAddSymbolToGlobalEnv() {
         // .GlobalEnv should be cleaned up after every test in shared context.
         assertEval("x <- 42");
         assertEval("'x' %in% names(.GlobalEnv)");
+    }
+
+    @Test
+    @Ignore
+    public void testDigitsOption() {
+        // options should be reset
+        assertEval("{ options(digits = 3); getOption('digits') }");
+        assertEval("{ getOption('digits') }");
+        assertEval("{ 23.123456789 }");
+    }
+
+    /**
+     * Option 'error' cannot be reset in gnur, so we should run these tests in a non-shared context.
+     */
+    @Test
+    @Ignore
+    public void testErrorOption() {
+        assertEval("{ options(error = quote(cat('Err occured\n'))); non_existing_var }");
+        assertEval("{ non_existing_var }");
     }
 }
