@@ -340,6 +340,7 @@ public final class FastRSession implements RSession {
                     @Override
                     public void onSuspend(SuspendedEvent event) {
                         // print diagnostic info
+                        System.out.println("fastr unittest timeout of " + timeout + " ms reached");
                         Thread.dumpStack();
                         System.out.println(Utils.createStackTrace(true));
 
