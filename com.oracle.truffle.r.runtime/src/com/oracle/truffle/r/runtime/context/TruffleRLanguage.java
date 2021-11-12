@@ -217,17 +217,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return TruffleLanguage.getCurrentLanguage(TruffleRLanguage.class);
     }
 
-//    @Override
-//    public Iterable<Scope> findLocalScopes(RContext langContext, Node node, Frame frame) {
-//        return RScope.createLocalScopes(langContext, node, frame);
-//    }
-//
-//    @Override
-//    protected Iterable<Scope> findTopScopes(RContext langContext) {
-//        return RScope.createTopScopes(langContext);
-//    }
-
-
     @Override
     protected Object getScope(RContext context) {
         REnvironment globalEnv = REnvironment.globalEnv(context);

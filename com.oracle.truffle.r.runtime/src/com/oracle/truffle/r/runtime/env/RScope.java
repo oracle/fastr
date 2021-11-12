@@ -22,16 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.env;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.HashSet;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -41,7 +39,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RTruffleBaseObject;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -66,7 +63,12 @@ public class RScope extends RTruffleBaseObject {
      */
     private final RScope[] scopesChain;
     private final int currentScopeOffset;
-    private volatile List<String> currentNames;
+
+    /**
+     * Cached array and hash set of the local names of the current scope, initialized lazily.
+     */
+    private volatile HashSet<String> currentNames;
+    private volatile String[] currentNamesArray;
 
     public RScope(REnvironment env, REnvFrameAccess frameAccess, RootNode rootNode) {
         assert frameAccess != null;
@@ -101,12 +103,7 @@ public class RScope extends RTruffleBaseObject {
     @ExportMessage
     @TruffleBoundary
     public RScopeMembers getMembers(boolean includeInternal) {
-        ArrayList<String> names = new ArrayList<>();
-        for (int i = currentScopeOffset; i < scopesChain.length; i++) {
-            Stream<String> stringStream = scopesChain[i].getCurrentNames().stream().filter(x -> REnvironment.includeName(x, includeInternal, null));
-            names.addAll(stringStream.collect(Collectors.toList()));
-        }
-        return new RScopeMembers(names.toArray(new String[0]));
+        return new RScopeMembers(includeInternal);
     }
 
     @ExportMessage
@@ -157,14 +154,6 @@ public class RScope extends RTruffleBaseObject {
             }
         }
         return false;
-    }
-
-    private List<String> getCurrentNames() {
-        CompilerAsserts.neverPartOfCompilation();
-        if (currentNames == null) {
-            currentNames = Arrays.asList(frameAccess.ls(true, null, false).getReadonlyStringData());
-        }
-        return currentNames;
     }
 
     private boolean isActiveBinding(String member) {
@@ -292,12 +281,36 @@ public class RScope extends RTruffleBaseObject {
         return result;
     }
 
-    @ExportLibrary(InteropLibrary.class)
-    public static final class RScopeMembers extends RTruffleBaseObject {
-        private final String[] members;
+    private HashSet<String> getCurrentNames() {
+        CompilerAsserts.neverPartOfCompilation();
+        if (currentNames == null) {
+            currentNames = new HashSet<>(Arrays.asList(frameAccess.ls(true, null, false).getReadonlyStringData()));
+        }
+        return currentNames;
+    }
 
-        public RScopeMembers(String[] members) {
-            this.members = members;
+    @TruffleBoundary
+    private String[] getCurrentNamesArray() {
+        if (currentNamesArray == null) {
+            HashSet<String> currentNames = getCurrentNames();
+            currentNamesArray = currentNames.toArray(new String[0]);
+        }
+        return currentNamesArray;
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public final class RScopeMembers extends RTruffleBaseObject {
+
+        private final boolean includeInternal;
+        private final int size;
+
+        public RScopeMembers(boolean includeInternal) {
+            this.includeInternal = includeInternal;
+            int size = 0;
+            for (int i = currentScopeOffset; i < scopesChain.length; i++) {
+                size += scopesChain[i].getCurrentNamesArray().length;
+            }
+            this.size = size;
         }
 
         @ExportMessage
@@ -307,17 +320,26 @@ public class RScope extends RTruffleBaseObject {
 
         @ExportMessage
         public long getArraySize() {
-            return members.length;
+            return size;
         }
 
         @ExportMessage
         boolean isArrayElementReadable(long index) {
-            return index < members.length && index >= 0;
+            return index < size && index >= 0;
         }
 
         @ExportMessage
-        public String readArrayElement(long index) {
-            return members[(int) index];
+        public String readArrayElement(long indexL) throws InvalidArrayIndexException {
+            int currentIndex = 0;
+            int index = (int) indexL;
+            for (int i = currentScopeOffset; i < scopesChain.length; i++) {
+                String[] names = scopesChain[i].getCurrentNamesArray();
+                if (currentIndex + names.length > index) {
+                    return names[index - currentIndex];
+                }
+                currentIndex += names.length;
+            }
+            throw InvalidArrayIndexException.create(indexL);
         }
     }
 }
