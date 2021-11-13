@@ -156,6 +156,7 @@ public class RScope extends RTruffleBaseObject {
         return false;
     }
 
+    @TruffleBoundary
     private boolean isActiveBinding(String member) {
         for (int i = currentScopeOffset; i < scopesChain.length; i++) {
             REnvFrameAccess access = scopesChain[i].frameAccess;
