@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,15 @@ import com.oracle.truffle.r.test.TestBase;
  */
 public class TestSimpleErrorHandling extends TestBase {
 
+    /**
+     * Note that 'error' option cannot be simply reset in a standard R session.
+     * Running {@code old_opts <- options(); options(error = quote(cat('Nastala chyba\n'))); X; options(old_opts); X}
+     * does not produce the expected result, i.e., the second error message still contains 'Nastala chyba'.
+     */
     @Test
     public void testError() {
-        assertEval("{ options(error=quote(cat(23,'\\n'))) ; v }");
-        assertEval("{ x <- 2 ; options(error=quote(cat(x,'\\n'))) ; v }");
+        assertEval(Context.NonShared, "{ options(error=quote(cat(23,'\\n'))) ; v }");
+        assertEval(Context.NonShared, "{ x <- 2 ; options(error=quote(cat(x,'\\n'))) ; v }");
         // make sure the error handler has been reset
         assertEval("{ nonExistentVariable }");
     }
