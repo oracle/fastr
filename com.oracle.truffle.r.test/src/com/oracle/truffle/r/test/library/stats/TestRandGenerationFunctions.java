@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -137,8 +138,13 @@ public class TestRandGenerationFunctions extends TestBase {
         assertEval("{ runif(1); length(.Random.seed) }");
         assertEval("{ runif(1); print(length(.Random.seed)) }");
         assertEval("{ runif(1); length(.GlobalEnv$.Random.seed)  }");
-        assertEval("{ .Random.seed <- c(1,2,3); .Random.seed }");
-        assertEval("{ .Random.seed <- c(1,2,3); print(.Random.seed) }");
-        assertEval("{ .Random.seed <- c(1,2,3); .GlobalEnv$.Random.seed  }");
+
+        // FIXME: GR-35083
+        assertEval(Ignored.ImplementationError, "{ .Random.seed <- 1:3; .Random.seed }");
+        assertEval(Ignored.ImplementationError, "{ .Random.seed <- 1:3; print(.Random.seed) }");
+        assertEval(Ignored.ImplementationError, "{ .Random.seed <- 1:3; .GlobalEnv$.Random.seed  }");
+        // Should not generate any warning message
+        assertEval(Ignored.ImplementationError, "{ .Random.seed <- c(1,2,3); rm(list=ls(all.names=TRUE, envir=.GlobalEnv), envir=.GlobalEnv); set.seed(11) }");
+        assertEval(Ignored.ImplementationError, "{ .Random.seed <- c(1,2,3); rm(list=ls(all.names=TRUE, envir=.GlobalEnv), envir=.GlobalEnv); set.seed(11); rnorm(5) }");
     }
 }
