@@ -107,8 +107,8 @@ public class FastRContext implements AutoCloseable {
             cleanupFun = context.eval("R", "function (oldSearch) {\n" +
                             "  env <- .GlobalEnv\n" +
                             "  rm(list = ls(envir = env, all.names = TRUE), envir = env)\n" +
-                            "  RNGkind(\"default\", \"default\", \"default\")\n" +
-                            "  set.seed(42)\n" +
+                            "  RNGkind('default', 'default', 'default')\n" +
+                            "  set.seed(42, 'default')\n" +
                             // " options(warn = 1)\n" +
                             "  sch <- search()\n" +
                             "  newitems <- sch[! sch %in% oldSearch]\n" +
