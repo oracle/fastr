@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ public class TestFastrErrorsLog extends TestBase {
     @BeforeClass
     public static void setupClass() {
         FastRSession session = FastRSession.create();
-        context = session.createContext(ContextKind.SHARE_PARENT_RW);
+        context = session.getContext(ContextKind.SHARE_NOTHING, false);
     }
 
     @AfterClass
@@ -62,7 +62,7 @@ public class TestFastrErrorsLog extends TestBase {
     }
 
     @Test
-    public void testThrowInternalError() throws Exception {
+    public void testThrowInternalError() {
         FastRSession.execInContext(context, () -> {
             RContext ctx = RContext.getInstance();
             boolean origValue = ctx.getOption(PrintErrorStacktracesToFile);
