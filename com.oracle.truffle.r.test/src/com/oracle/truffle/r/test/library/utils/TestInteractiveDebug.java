@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -50,27 +51,27 @@ public class TestInteractiveDebug extends TestBase {
 
     @Test
     public void testSimple() {
-        assertEval(TIMEOUT, "f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
+        assertEval(TIMEOUT, "f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn\nundebug(f)");
         assertEval(TIMEOUT, "f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn\nundebug(f)\nf(3)\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
     }
 
     @Test
     public void testInvalidName() {
-        assertEval(TIMEOUT, "f <- function(x) {\n  `123t` <- x + 1\n  print(`123t`)\n  `123t`}\ndebug(f)\nf(5)\nx\nn\nn\n`123t`\nn\nn");
+        assertEval(TIMEOUT, "f <- function(x) {\n  `123t` <- x + 1\n  print(`123t`)\n  `123t`}\ndebug(f)\nf(5)\nx\nn\nn\n`123t`\nn\nn\nundebug(f)");
     }
 
     @Test
     public void testNoBracket() {
-        assertEval(TIMEOUT, Ignored.OutputFormatting, "f <- function(x) print(x)\ndebug(f)\nf(5)\nx\nn\n");
+        assertEval(TIMEOUT, Ignored.OutputFormatting, "f <- function(x) print(x)\ndebug(f)\nf(5)\nx\nn\nundebug(f)");
     }
 
     @Test
     public void testLoop() {
-        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n");
-        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) { cat(i) }; cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n");
-        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) { cat(i) }; cat(5) }; debug(fun); fun(3)\n\n\n\nf\n\n");
-        assertEval(TIMEOUT, "fun <- function(x) { for(j in seq(2)) for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n\n\n\n\n\n");
-        assertEval(TIMEOUT, "fun <- function(x) { for(j in seq(2)) for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\nf\nf\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\nundebug(fun)");
+        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) { cat(i) }; cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\nundebug(fun)");
+        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) { cat(i) }; cat(5) }; debug(fun); fun(3)\n\n\n\nf\n\nundebug(fun)");
+        assertEval(TIMEOUT, "fun <- function(x) { for(j in seq(2)) for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n\n\n\n\n\nundebug(fun)");
+        assertEval(TIMEOUT, "fun <- function(x) { for(j in seq(2)) for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\nf\nf\n\nundebug(fun)");
     }
 
     @Test
@@ -84,10 +85,15 @@ public class TestInteractiveDebug extends TestBase {
 
     @Test
     public void testPromise() {
-        assertEval(TIMEOUT, "fun <- function(x) { cat({ cat(x); cat('\n') }) }; debug(fun); fun(3)\n\n\n\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { cat({ cat(x); cat('\n') }) }; debug(fun); fun(3)\n\n\n\n\nundebug(fun)");
     }
 
+    /**
+     * FIXME: Ignored, because the shared context between unit tests does not handle debugging more functions at once
+     * correctly.
+     */
     @Test
+    @Ignore
     public void testNestedDebugging() {
         assertEval(TIMEOUT, Output.IgnoreDebugPath,
                         "foo <- function(rCode) { eval(parse(text=rCode)); print('foo done') }; debug(foo); foo(\"bar <- function() { print('bar') }; debug(bar); bar()\")\n\n\n\n\n\n");
@@ -117,7 +123,7 @@ public class TestInteractiveDebug extends TestBase {
         assertEval(TIMEOUT, "foo <- function() { stop('error msg') }; tryCatch(foo(), error=browser)\nprint(msg)\nc\n");
         assertEval(TIMEOUT, "do.call('browser', list())\nc\n");
         assertEval(TIMEOUT, "browser()\nwhere\nc\n");
-        assertEval(TIMEOUT, "options(error=browser); prod('a')\nwhere\nc\n");
+        assertEval(TIMEOUT, Context.NonShared, "options(error=browser); prod('a')\nwhere\nc\n");
         assertEval(TIMEOUT,
                         "{ bar <- function(vbar) do.call(browser, list(), envir = parent.frame(2));" +
                                         "baz <- function(vbaz) bar(vbaz);" +
@@ -129,9 +135,9 @@ public class TestInteractiveDebug extends TestBase {
 
     @Test
     public void testSetBreakpoint() {
-        assertEval(TIMEOUT, Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n", debugFile, debugFile));
-        assertEval(TIMEOUT, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); setBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\n", debugFile, debugFile, debugFile));
-        assertEval(TIMEOUT, Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format(
+        assertEval(TIMEOUT, Context.NonShared, Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n", debugFile, debugFile));
+        assertEval(TIMEOUT, Context.NonShared, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); setBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\n", debugFile, debugFile, debugFile));
+        assertEval(TIMEOUT, Context.NonShared, Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format(
                         "source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n\nsetBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\nsetBreakpoint('%s', 4, verbose=F); invisible(fun(10))\n\n\n\n\n\n\n\n\n",
                         debugFile, debugFile, debugFile, debugFile));
     }
