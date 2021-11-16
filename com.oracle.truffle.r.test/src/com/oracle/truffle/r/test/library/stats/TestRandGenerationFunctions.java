@@ -125,25 +125,25 @@ public class TestRandGenerationFunctions extends TestBase {
 
     @Test
     public void testDotRandomSeed() {
-        assertEval(Output.IgnoreErrorContext, "{ .Random.seed }");
-        assertEval(Output.IgnoreErrorContext, "{ print(.Random.seed) }");
-        assertEval(Output.IgnoreErrorContext, "{ get('.Random.seed', envir = .GlobalEnv, inherits = FALSE) }");
-        assertEval("{ get0('.Random.seed', envir = .GlobalEnv, inherits = FALSE) }");
-        assertEval(Output.IgnoreErrorContext, "{ get('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
-        assertEval("{ get0('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
-
-        assertEval("exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)");
-        assertEval("{ .GlobalEnv$.Random.seed  }");
+        // In shared context, .Random.seed is already initialized. Therefore, all these tests are ignored.
+        // TODO: Once the performance of non-shared context is sufficient, run these tests in non-shared context.
+        assertEval(Ignored.ImplementationError, Output.IgnoreErrorContext, "{ .Random.seed }");
+        assertEval(Ignored.ImplementationError, Output.IgnoreErrorContext, "{ print(.Random.seed) }");
+        assertEval(Ignored.ImplementationError, Output.IgnoreErrorContext, "{ get('.Random.seed', envir = .GlobalEnv, inherits = FALSE) }");
+        assertEval(Ignored.ImplementationError, "{ get0('.Random.seed', envir = .GlobalEnv, inherits = FALSE) }");
+        assertEval(Ignored.ImplementationError, Output.IgnoreErrorContext, "{ get('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
+        assertEval(Ignored.ImplementationError, "{ get0('.Random.seed', envir = .GlobalEnv, inherits = TRUE) }");
+        assertEval(Ignored.ImplementationError, "exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)");
+        assertEval(Ignored.ImplementationError, "{ .GlobalEnv$.Random.seed  }");
 
         assertEval("{ runif(1); length(.Random.seed) }");
         assertEval("{ runif(1); print(length(.Random.seed)) }");
         assertEval("{ runif(1); length(.GlobalEnv$.Random.seed)  }");
 
+        assertEval("{ .Random.seed <- 1:3; .Random.seed }");
+        assertEval("{ .Random.seed <- 1:3; print(.Random.seed) }");
+        assertEval("{ .Random.seed <- 1:3; .GlobalEnv$.Random.seed  }");
         // FIXME: GR-35083
-        assertEval(Ignored.ImplementationError, "{ .Random.seed <- 1:3; .Random.seed }");
-        assertEval(Ignored.ImplementationError, "{ .Random.seed <- 1:3; print(.Random.seed) }");
-        assertEval(Ignored.ImplementationError, "{ .Random.seed <- 1:3; .GlobalEnv$.Random.seed  }");
-        // Should not generate any warning message
         assertEval(Ignored.ImplementationError, "{ .Random.seed <- c(1,2,3); rm(list=ls(all.names=TRUE, envir=.GlobalEnv), envir=.GlobalEnv); set.seed(11) }");
         assertEval(Ignored.ImplementationError, "{ .Random.seed <- c(1,2,3); rm(list=ls(all.names=TRUE, envir=.GlobalEnv), envir=.GlobalEnv); set.seed(11); rnorm(5) }");
     }

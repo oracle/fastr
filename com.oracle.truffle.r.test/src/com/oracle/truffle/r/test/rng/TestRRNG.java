@@ -30,7 +30,6 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestRRNG extends TestBase {
     // FIXME: GR-35083
     @Test
-    @Ignore
     public void testDirectSeedAssignment() {
         // changes generator to MarsagliaMulticarry and sets its 2 seeds
         assertEval(".Random.seed <- c(401L, 1L, 2L); runif(3)");
