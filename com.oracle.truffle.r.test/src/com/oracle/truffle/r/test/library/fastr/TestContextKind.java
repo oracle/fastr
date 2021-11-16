@@ -70,4 +70,10 @@ public class TestContextKind extends TestBase {
         assertEval("{ options(error = quote(cat('Err occured\n'))); non_existing_var }");
         assertEval("{ non_existing_var }");
     }
+
+    @Test
+    public void testResetSeed() {
+        assertEval("{ set.seed(11, 'Marsaglia-Multicarry') }");
+        assertEval("{ set.seed(42); rnorm(5) }");
+    }
 }
