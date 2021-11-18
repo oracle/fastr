@@ -382,6 +382,7 @@ def _fastr_gate_runner(args, tasks):
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks, tags=[mx_gate.Tags.style]) as t:
         if t:
+            os.environ['TZ'] = 'GMT'
             mx_unittest.unittest(['-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected=true'] + _gate_unit_tests())
 
     # ----------------------------------
@@ -389,6 +390,7 @@ def _fastr_gate_runner(args, tasks):
 
     with mx_gate.Task('UnitTests', tasks, tags=[FastRGateTags.basic_tests, FastRGateTags.unit_tests]) as t:
         if t:
+            os.environ['TZ'] = 'GMT'
             mx_unittest.unittest(_gate_noapps_unit_tests())
 
     with mx_gate.Task('Rembedded', tasks, tags=[FastRGateTags.basic_tests]) as t:
