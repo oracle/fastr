@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.env;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -36,6 +36,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RTruffleBaseObject;
@@ -67,7 +68,7 @@ public class RScope extends RTruffleBaseObject {
     /**
      * Cached array and hash set of the local names of the current scope, initialized lazily.
      */
-    private volatile HashSet<String> currentNames;
+    private volatile List<String> currentNames;
     private volatile String[] currentNamesArray;
 
     public RScope(REnvironment env, REnvFrameAccess frameAccess, RootNode rootNode) {
@@ -75,7 +76,7 @@ public class RScope extends RTruffleBaseObject {
         this.env = env;
         this.rootNode = rootNode;
         this.frameAccess = frameAccess;
-        this.scopesChain = getScopesChain();
+        this.scopesChain = getScopesChain(rootNode != null);
         this.currentScopeOffset = 0;
     }
 
@@ -236,6 +237,20 @@ public class RScope extends RTruffleBaseObject {
     }
 
     @ExportMessage
+    public boolean hasSourceLocation() {
+        return rootNode != null;
+    }
+
+    @ExportMessage
+    public SourceSection getSourceLocation() throws UnsupportedMessageException {
+        if (rootNode != null) {
+            return rootNode.getSourceSection();
+        } else {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
     @Override
     @TruffleBoundary
     public Object toDisplayString(@SuppressWarnings("unused") boolean allowSideEffects) {
@@ -261,14 +276,14 @@ public class RScope extends RTruffleBaseObject {
         return "function environment" + (funName != null ? " for function " + funName : "");
     }
 
-    private RScope[] getScopesChain() {
+    private RScope[] getScopesChain(boolean localScopes) {
         if (env == null) {
             return new RScope[0];
         }
 
         int parentsCount = 0;
         REnvironment currentEnv = env;
-        while (currentEnv != null && currentEnv != REnvironment.emptyEnv()) {
+        while (currentEnv != null && acceptEnv(currentEnv, localScopes)) {
             currentEnv = currentEnv.getParent();
             parentsCount++;
         }
@@ -282,10 +297,14 @@ public class RScope extends RTruffleBaseObject {
         return result;
     }
 
-    private HashSet<String> getCurrentNames() {
+    private static boolean acceptEnv(REnvironment env, boolean localScopes) {
+        return env != REnvironment.emptyEnv() && !(localScopes && env == REnvironment.globalEnv());
+    }
+
+    private List<String> getCurrentNames() {
         CompilerAsserts.neverPartOfCompilation();
         if (currentNames == null) {
-            currentNames = new HashSet<>(Arrays.asList(frameAccess.ls(true, null, false).getReadonlyStringData()));
+            currentNames = Arrays.asList(frameAccess.ls(true, null, false).getReadonlyStringData());
         }
         return currentNames;
     }
@@ -293,7 +312,7 @@ public class RScope extends RTruffleBaseObject {
     @TruffleBoundary
     private String[] getCurrentNamesArray() {
         if (currentNamesArray == null) {
-            HashSet<String> currentNames = getCurrentNames();
+            List<String> currentNames = getCurrentNames();
             currentNamesArray = currentNames.toArray(new String[0]);
         }
         return currentNamesArray;

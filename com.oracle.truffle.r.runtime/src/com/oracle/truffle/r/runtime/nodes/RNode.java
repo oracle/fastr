@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.interop.NodeLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -110,12 +111,27 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
      */
 
     @ExportMessage
-    boolean hasScope(@SuppressWarnings("unused") Frame frame) {
-        return isInstrumentable();
+    boolean hasScope(Frame frame) {
+        if (isInstrumentable()) {
+            REnvironment env = getEnv(frame);
+            if (env == null) {
+                Object[] arguments = frame.getArguments();
+                if (arguments.length == 1 && arguments[0] instanceof MaterializedFrame) {
+                    MaterializedFrame unwrapped = (MaterializedFrame) arguments[0];
+                    if (RArguments.isRFrame(unwrapped)) {
+                        env = getEnv(unwrapped);
+                    }
+                }
+            }
+            if (env != REnvironment.globalEnv()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @ExportMessage
-    public Object getScope(Frame requestedFrame, boolean nodeEnter) {
+    public Object getScope(Frame requestedFrame, boolean nodeEnter) throws UnsupportedMessageException {
         if (requestedFrame == null) {
             // Historically we ignored this since all variables are created dynamically in R, but
             // with the new API we can at least provide the parents: global scope and the loaded
@@ -135,6 +151,9 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
             }
         }
 
+        if (env == REnvironment.globalEnv()) {
+            throw UnsupportedMessageException.create();
+        }
         if (env != null) {
             return new RScope(env, env.getFrameAccess(), getRootNode());
         }
