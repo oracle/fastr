@@ -115,6 +115,10 @@ public final class FastRSession implements RSession {
         }
     }
 
+    public RContext getContext() {
+        return sharedContext.getInternalContext();
+    }
+
     public static Context.Builder getContextBuilder(String... languages) {
         Context.Builder builder = Context.newBuilder(languages).allowExperimentalOptions(true);
         setCLIOptions(builder);
@@ -173,10 +177,6 @@ public final class FastRSession implements RSession {
     {
         decoder.onMalformedInput(CodingErrorAction.IGNORE);
         decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
-    }
-
-    public RContext getContext() {
-        return sharedContext.getInternalContext();
     }
 
     private String readLine(TestByteArrayInputStream input) {

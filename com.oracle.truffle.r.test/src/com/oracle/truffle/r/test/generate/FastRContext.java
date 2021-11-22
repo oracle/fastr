@@ -137,6 +137,7 @@ public class FastRContext implements AutoCloseable {
 
         @Override
         public void close() {
+            assert oldSearch != null : "oldSearch must be initialized - reset method has to be called before close";
             Value missing = cleanupFun.execute(oldSearch);
             assert !missing.asBoolean();
         }

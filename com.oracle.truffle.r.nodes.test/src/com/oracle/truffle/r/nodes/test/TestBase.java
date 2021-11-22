@@ -47,8 +47,9 @@ public class TestBase {
     @BeforeClass
     public static void setupClass() {
         FastRSession session = FastRSession.create();
-        testVMContext = session.getContext();
         context = session.createContext(ContextKind.SHARE_PARENT_RW);
+        testVMContext = session.getContext();
+        context.reset();
     }
 
     @AfterClass
