@@ -33,19 +33,16 @@ import org.junit.Test;
  */
 public class TestContextKind extends TestBase {
     @Test
-    @Ignore
     public void test1() {
         assertEval(Context.NonShared, "{ Sys.setenv(MY_ENV_VAR = '1') }");
     }
 
     @Test
-    @Ignore
     public void test2() {
         assertEval(Context.NonShared, "{ Sys.getenv('MY_ENV_VAR') }");
     }
 
     @Test
-    @Ignore
     public void testAddSymbolToGlobalEnv() {
         // .GlobalEnv should be cleaned up after every test in shared context.
         assertEval("x <- 42");
@@ -53,7 +50,6 @@ public class TestContextKind extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testDigitsOption() {
         // options should be reset
         assertEval("{ options(digits = 3); getOption('digits') }");
@@ -65,10 +61,9 @@ public class TestContextKind extends TestBase {
      * Option 'error' cannot be reset in gnur, so we should run these tests in a non-shared context.
      */
     @Test
-    @Ignore
     public void testErrorOption() {
-        assertEval("{ options(error = quote(cat('Err occured\n'))); non_existing_var }");
-        assertEval("{ non_existing_var }");
+        assertEval(Context.NonShared, "{ options(error = quote(cat('Err occured\n'))); non_existing_var }");
+        assertEval(Context.NonShared, "{ non_existing_var }");
     }
 
     @Test
