@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleLanguage.ContextPolicy;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
@@ -57,7 +58,7 @@ import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
 @TruffleLanguage.Registration(name = "R", id = "R", version = "4.0.3", implementationName = "FastR", characterMimeTypes = {RRuntime.R_APP_MIME,
-                RRuntime.R_TEXT_MIME}, defaultMimeType = RRuntime.R_APP_MIME, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
+                RRuntime.R_TEXT_MIME}, defaultMimeType = RRuntime.R_APP_MIME, contextPolicy = ContextPolicy.EXCLUSIVE, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootBodyTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 

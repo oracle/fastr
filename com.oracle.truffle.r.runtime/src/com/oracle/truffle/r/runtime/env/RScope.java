@@ -228,20 +228,25 @@ public class RScope extends RTruffleBaseObject {
 
     @ExportMessage
     public boolean hasScopeParent() {
-        return currentScopeOffset < scopesChain.length - 1;
+        return currentScopeOffset + 1 < scopesChain.length;
     }
 
     @ExportMessage
-    public Object getScopeParent() {
+    public Object getScopeParent() throws UnsupportedMessageException {
+        if (!hasScopeParent()) {
+            throw UnsupportedMessageException.create();
+        }
         return scopesChain[currentScopeOffset + 1];
     }
 
     @ExportMessage
+    @Override
     public boolean hasSourceLocation() {
         return rootNode != null;
     }
 
     @ExportMessage
+    @Override
     public SourceSection getSourceLocation() throws UnsupportedMessageException {
         if (rootNode != null) {
             return rootNode.getSourceSection();
