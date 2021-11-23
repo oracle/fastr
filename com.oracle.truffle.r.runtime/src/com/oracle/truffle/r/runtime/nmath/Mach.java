@@ -85,7 +85,6 @@ public final class Mach {
 
             default:
                 throw RInternalError.shouldNotReachHere();
-                // return 0;
         }
     }
 }
