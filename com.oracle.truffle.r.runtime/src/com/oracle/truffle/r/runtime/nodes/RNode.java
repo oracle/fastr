@@ -131,7 +131,7 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
     }
 
     @ExportMessage
-    public Object getScope(Frame requestedFrame, boolean nodeEnter) throws UnsupportedMessageException {
+    public Object getScope(Frame requestedFrame, @SuppressWarnings("unused") boolean nodeEnter) throws UnsupportedMessageException {
         if (requestedFrame == null) {
             // Historically we ignored this since all variables are created dynamically in R, but
             // with the new API we can at least provide the parents: global scope and the loaded

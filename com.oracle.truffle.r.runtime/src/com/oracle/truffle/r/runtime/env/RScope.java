@@ -66,10 +66,10 @@ public class RScope extends RTruffleBaseObject {
     private final int currentScopeOffset;
 
     /**
-     * Cached array and hash set of the local names of the current scope, initialized lazily.
+     * Cached collections with the local names of the current scope, initialized lazily.
      */
     private volatile List<String> currentNames;
-    private volatile String[] currentNamesArray;
+    private volatile List<String> currentNamesOnlyPublic;
 
     public RScope(REnvironment env, REnvFrameAccess frameAccess, RootNode rootNode) {
         assert frameAccess != null;
@@ -97,6 +97,7 @@ public class RScope extends RTruffleBaseObject {
     }
 
     @ExportMessage
+    @SuppressWarnings("static-method")
     final boolean hasMembers() {
         return true;
     }
@@ -121,7 +122,7 @@ public class RScope extends RTruffleBaseObject {
     @TruffleBoundary
     boolean isMemberModifiable(String member) {
         for (int i = currentScopeOffset; i < scopesChain.length; i++) {
-            if (scopesChain[i].getCurrentNames().contains(member)) {
+            if (scopesChain[i].getCurrentNames(true).contains(member)) {
                 return !frameAccess.bindingIsLocked(member);
             }
         }
@@ -150,7 +151,7 @@ public class RScope extends RTruffleBaseObject {
     @TruffleBoundary
     private boolean exists(String member) {
         for (int i = currentScopeOffset; i < scopesChain.length; i++) {
-            if (scopesChain[i].getCurrentNames().contains(member)) {
+            if (scopesChain[i].getCurrentNames(true).contains(member)) {
                 return true;
             }
         }
@@ -198,7 +199,7 @@ public class RScope extends RTruffleBaseObject {
             if (existingValue != null) {
                 try {
                     // Note: frame access takes care of active bindings
-                    scopesChain[i].frameAccess.put(member, value);
+                    scopesChain[i].frameAccess.put(member, foreign2R.convert(value));
                 } catch (PutException e) {
                     // locked binding, the member should not have been modifiable/insertable
                     throw UnsupportedMessageException.create();
@@ -207,7 +208,7 @@ public class RScope extends RTruffleBaseObject {
         }
         // Not found. By default, we'll insert into the current scope
         try {
-            frameAccess.put(member, value);
+            frameAccess.put(member, foreign2R.convert(value));
         } catch (PutException e) {
             throw UnsupportedMessageException.create();
         }
@@ -306,21 +307,19 @@ public class RScope extends RTruffleBaseObject {
         return env != REnvironment.emptyEnv() && !(localScopes && env == REnvironment.globalEnv());
     }
 
-    private List<String> getCurrentNames() {
+    private List<String> getCurrentNames(boolean includeInternal) {
         CompilerAsserts.neverPartOfCompilation();
-        if (currentNames == null) {
-            currentNames = Arrays.asList(frameAccess.ls(true, null, false).getReadonlyStringData());
+        if (includeInternal) {
+            if (currentNames == null) {
+                currentNames = Arrays.asList(frameAccess.ls(true, null, false).getReadonlyStringData());
+            }
+            return currentNames;
+        } else {
+            if (currentNamesOnlyPublic == null) {
+                currentNamesOnlyPublic = Arrays.asList(frameAccess.ls(false, null, false).getReadonlyStringData());
+            }
+            return currentNamesOnlyPublic;
         }
-        return currentNames;
-    }
-
-    @TruffleBoundary
-    private String[] getCurrentNamesArray() {
-        if (currentNamesArray == null) {
-            List<String> currentNames = getCurrentNames();
-            currentNamesArray = currentNames.toArray(new String[0]);
-        }
-        return currentNamesArray;
     }
 
     @ExportLibrary(InteropLibrary.class)
@@ -331,11 +330,11 @@ public class RScope extends RTruffleBaseObject {
 
         public RScopeMembers(boolean includeInternal) {
             this.includeInternal = includeInternal;
-            int size = 0;
+            int sizeLocal = 0;
             for (int i = currentScopeOffset; i < scopesChain.length; i++) {
-                size += scopesChain[i].getCurrentNamesArray().length;
+                sizeLocal += scopesChain[i].getCurrentNames(includeInternal).size();
             }
-            this.size = size;
+            this.size = sizeLocal;
         }
 
         @ExportMessage
@@ -358,11 +357,11 @@ public class RScope extends RTruffleBaseObject {
             int currentIndex = 0;
             int index = (int) indexL;
             for (int i = currentScopeOffset; i < scopesChain.length; i++) {
-                String[] names = scopesChain[i].getCurrentNamesArray();
-                if (currentIndex + names.length > index) {
-                    return names[index - currentIndex];
+                List<String> names = scopesChain[i].getCurrentNames(includeInternal);
+                if (currentIndex + names.size() > index) {
+                    return names.get(index - currentIndex);
                 }
-                currentIndex += names.length;
+                currentIndex += names.size();
             }
             throw InvalidArrayIndexException.create(indexL);
         }
