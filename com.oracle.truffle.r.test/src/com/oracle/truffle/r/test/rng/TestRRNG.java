@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,11 @@
  */
 package com.oracle.truffle.r.test.rng;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestRRNG extends TestBase {
-    // FIXME: GR-35083
     @Test
     public void testDirectSeedAssignment() {
         // changes generator to MarsagliaMulticarry and sets its 2 seeds

@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -125,8 +124,10 @@ public class TestRandGenerationFunctions extends TestBase {
 
     @Test
     public void testDotRandomSeed() {
-        // In shared context, .Random.seed is already initialized. Therefore, all these tests are ignored.
-        // TODO: Once the performance of non-shared context is sufficient, run these tests in non-shared context.
+        // In shared context, .Random.seed is already initialized. Therefore, all these tests are
+        // ignored.
+        // TODO: Once the performance of non-shared context is sufficient, run these tests in
+        // non-shared context.
         assertEval(Ignored.ImplementationError, Output.IgnoreErrorContext, "{ .Random.seed }");
         assertEval(Ignored.ImplementationError, Output.IgnoreErrorContext, "{ print(.Random.seed) }");
         assertEval(Ignored.ImplementationError, Output.IgnoreErrorContext, "{ get('.Random.seed', envir = .GlobalEnv, inherits = FALSE) }");

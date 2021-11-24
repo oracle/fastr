@@ -100,7 +100,8 @@ public final class FastRSession implements RSession {
         return Source.newBuilder("R", txt, name).internal(true).interactive(true).buildLiteral();
     }
 
-    // TODO: used from the outsize: can the users use the shared context? Otherwise change them to the exclusive one
+    // TODO: used from the outsize: can the users use the shared context? Otherwise change them to
+    // the exclusive one
     public FastRContext createContext(ContextKind contextKind) {
         return getContext(contextKind, true);
     }
@@ -162,7 +163,8 @@ public final class FastRSession implements RSession {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         TestByteArrayInputStream input = new TestByteArrayInputStream();
         ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
-        // TODO: do we need the config info in this case? -- we should eventually remove it altogether
+        // TODO: do we need the config info in this case? -- we should eventually remove it
+        // altogether
         RContext.childInfo = info;
         Context truffleContext = getContextBuilder("R", "llvm").in(input).out(output).err(output).build();
         if (isShared) {
@@ -221,7 +223,7 @@ public final class FastRSession implements RSession {
         ByteArrayOutputStream output;
         try (FastRContext evalContext = getContext(contextKind, allowHostAccess)) {
             output = evalContext.getOutput();
-            eval(evalContext, testClass, expression, contextKind, timeout);
+            eval(evalContext, testClass, expression, timeout);
         }
         try {
             return output.toString("UTF-8");
@@ -231,7 +233,7 @@ public final class FastRSession implements RSession {
         }
     }
 
-    private void eval(FastRContext evalContext, TestBase testClass, String expression, ContextKind contextKind, long timeout) throws Throwable {
+    private void eval(FastRContext evalContext, TestBase testClass, String expression, long timeout) throws Throwable {
         try {
             evalContext.reset();
             evalContext.getInput().setContents(expression);

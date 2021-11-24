@@ -24,8 +24,6 @@
 package com.oracle.truffle.r.test.library.fastr;
 
 import com.oracle.truffle.r.test.TestBase;
-import com.oracle.truffle.r.test.TestTrait;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**

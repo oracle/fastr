@@ -89,8 +89,8 @@ public class TestInteractiveDebug extends TestBase {
     }
 
     /**
-     * FIXME: Ignored, because the shared context between unit tests does not handle debugging more functions at once
-     * correctly.
+     * FIXME: Ignored, because the shared context between unit tests does not handle debugging more
+     * functions at once correctly.
      */
     @Test
     @Ignore
@@ -114,7 +114,8 @@ public class TestInteractiveDebug extends TestBase {
 
     @Test
     public void testDebugOnce() {
-        assertEval(TIMEOUT, Context.NonShared, Ignored.OutputFormatting, "fun0 <- function() { print('fun0') }; fun1 <- function() { print('en'); fun0(); fun0(); print('ex') }; debugonce(fun0); fun1()\nc\n");
+        assertEval(TIMEOUT, Context.NonShared, Ignored.OutputFormatting,
+                        "fun0 <- function() { print('fun0') }; fun1 <- function() { print('en'); fun0(); fun0(); print('ex') }; debugonce(fun0); fun1()\nc\n");
         assertEval(TIMEOUT, Context.NonShared, Ignored.OutputFormatting, "fun0 <- function() { print('fun0') }; debugonce(fun0); fun0()\nc\n");
     }
 
@@ -135,8 +136,10 @@ public class TestInteractiveDebug extends TestBase {
 
     @Test
     public void testSetBreakpoint() {
-        assertEval(TIMEOUT, Context.NonShared, Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n", debugFile, debugFile));
-        assertEval(TIMEOUT, Context.NonShared, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); setBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\n", debugFile, debugFile, debugFile));
+        assertEval(TIMEOUT, Context.NonShared, Output.IgnoreDebugCallString, Output.IgnoreDebugPath,
+                        String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n", debugFile, debugFile));
+        assertEval(TIMEOUT, Context.NonShared,
+                        String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); setBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\n", debugFile, debugFile, debugFile));
         assertEval(TIMEOUT, Context.NonShared, Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format(
                         "source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n\nsetBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\nsetBreakpoint('%s', 4, verbose=F); invisible(fun(10))\n\n\n\n\n\n\n\n\n",
                         debugFile, debugFile, debugFile, debugFile));

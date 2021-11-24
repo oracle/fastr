@@ -32,9 +32,10 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestSimpleErrorHandling extends TestBase {
 
     /**
-     * Note that 'error' option cannot be simply reset in a standard R session.
-     * Running {@code old_opts <- options(); options(error = quote(cat('Nastala chyba\n'))); X; options(old_opts); X}
-     * does not produce the expected result, i.e., the second error message still contains 'Nastala chyba'.
+     * Note that 'error' option cannot be simply reset in a standard R session. Running
+     * {@code old_opts <- options(); options(error = quote(cat('Nastala chyba\n'))); X; options(old_opts); X}
+     * does not produce the expected result, i.e., the second error message still contains 'Nastala
+     * chyba'.
      */
     @Test
     public void testError() {
