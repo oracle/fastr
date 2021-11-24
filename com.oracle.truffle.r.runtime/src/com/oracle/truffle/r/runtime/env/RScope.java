@@ -248,6 +248,7 @@ public class RScope extends RTruffleBaseObject {
 
     @ExportMessage
     @Override
+    @TruffleBoundary
     public SourceSection getSourceLocation() throws UnsupportedMessageException {
         if (rootNode != null) {
             return rootNode.getSourceSection();
@@ -353,6 +354,7 @@ public class RScope extends RTruffleBaseObject {
         }
 
         @ExportMessage
+        @TruffleBoundary
         public String readArrayElement(long indexL) throws InvalidArrayIndexException {
             int currentIndex = 0;
             int index = (int) indexL;
