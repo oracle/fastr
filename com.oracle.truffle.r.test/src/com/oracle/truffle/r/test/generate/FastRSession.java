@@ -83,7 +83,7 @@ public final class FastRSession implements RSession {
     public static final Source GET_CONTEXT = createSource("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT.string);
 
     private static final String TEST_TIMEOUT_PROPERTY = "fastr.test.timeout";
-    private static int timeoutValue = VectorDataLibrary.ENABLE_VERY_SLOW_ASSERTS ? 30000 : 10000;
+    private static int timeoutValue = VectorDataLibrary.ENABLE_VERY_SLOW_ASSERTS ? 40000 : 20000;
 
     private static FastRSession singleton;
 
