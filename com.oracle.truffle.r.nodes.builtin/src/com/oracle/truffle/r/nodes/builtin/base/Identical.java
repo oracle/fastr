@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttributeIterable;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
@@ -64,8 +65,6 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
@@ -115,15 +114,11 @@ public final class Identical extends RBuiltinNode.Arg8 {
     public static final class IdenticalRecursiveAttrNode extends RBaseNode {
 
         @Child private IdenticalInternal identicalRecursiveAttr;
-        @Child private IterableAttributeNode attrIterNodeX;
-        @Child private IterableAttributeNode attrIterNodeY;
 
         private static final IdenticalRecursiveAttrNode UNCACHED = new IdenticalRecursiveAttrNode(false);
 
         IdenticalRecursiveAttrNode(boolean cached) {
             identicalRecursiveAttr = cached ? IdenticalInternal.create() : IdenticalInternalNodeGen.getUncached();
-            attrIterNodeX = cached ? IterableAttributeNodeGen.create() : IterableAttributeNodeGen.getUncached();
-            attrIterNodeY = cached ? IterableAttributeNodeGen.create() : IterableAttributeNodeGen.getUncached();
         }
 
         public static IdenticalRecursiveAttrNode createOrGet(int depth) {
@@ -154,7 +149,7 @@ public final class Identical extends RBuiltinNode.Arg8 {
                         DynamicObject yAttributes, int depth) {
             if (attribAsSet) {
                 // make sure all attributes from x are in y, with identical values
-                Iterator<RAttributesLayout.RAttribute> xIter = attrIterNodeX.execute(xAttributes).iterator();
+                Iterator<RAttributesLayout.RAttribute> xIter = RAttributeIterable.create(xAttributes).iterator();
                 while (xIter.hasNext()) {
                     RAttributesLayout.RAttribute xAttr = xIter.next();
                     Object yValue = DynamicObjectLibrary.getUncached().getOrDefault(yAttributes, xAttr.getName(), null);
@@ -167,7 +162,7 @@ public final class Identical extends RBuiltinNode.Arg8 {
                     }
                 }
                 // make sure all attributes from y are in x
-                Iterator<RAttributesLayout.RAttribute> yIter = attrIterNodeY.execute(yAttributes).iterator();
+                Iterator<RAttributesLayout.RAttribute> yIter = RAttributeIterable.create(yAttributes).iterator();
                 while (xIter.hasNext()) {
                     RAttributesLayout.RAttribute yAttr = yIter.next();
                     if (!DynamicObjectLibrary.getUncached().containsKey(xAttributes, yAttr.getName())) {
@@ -175,8 +170,8 @@ public final class Identical extends RBuiltinNode.Arg8 {
                     }
                 }
             } else {
-                Iterator<RAttributesLayout.RAttribute> xIter = attrIterNodeX.execute(xAttributes).iterator();
-                Iterator<RAttributesLayout.RAttribute> yIter = attrIterNodeY.execute(yAttributes).iterator();
+                Iterator<RAttributesLayout.RAttribute> xIter = RAttributeIterable.create(xAttributes).iterator();
+                Iterator<RAttributesLayout.RAttribute> yIter = RAttributeIterable.create(yAttributes).iterator();
                 while (xIter.hasNext()) {
                     RAttributesLayout.RAttribute xAttr = xIter.next();
                     RAttributesLayout.RAttribute yAttr = yIter.next();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,29 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.interop.NodeLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RTypesGen;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.RScope;
+import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
+import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 import com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapper;
 
 @TypeSystemReference(RTypes.class)
+@ExportLibrary(NodeLibrary.class)
 public abstract class RNode extends RBaseNodeWithWarnings implements RInstrumentableNode {
 
     @Override
@@ -92,5 +104,68 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
 
     public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectByte(execute(frame));
+    }
+
+    /*
+     * NodeLibrary implementation:
+     */
+
+    @ExportMessage
+    boolean hasScope(Frame frame) {
+        if (isInstrumentable()) {
+            REnvironment env = getEnv(frame);
+            if (env == null) {
+                Object[] arguments = frame.getArguments();
+                if (arguments.length == 1 && arguments[0] instanceof MaterializedFrame) {
+                    MaterializedFrame unwrapped = (MaterializedFrame) arguments[0];
+                    if (RArguments.isRFrame(unwrapped)) {
+                        env = getEnv(unwrapped);
+                    }
+                }
+            }
+            if (env != REnvironment.globalEnv()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @ExportMessage
+    public Object getScope(Frame requestedFrame, @SuppressWarnings("unused") boolean nodeEnter) throws UnsupportedMessageException {
+        if (requestedFrame == null) {
+            // Historically we ignored this since all variables are created dynamically in R, but
+            // with the new API we can at least provide the parents: global scope and the loaded
+            // packages. (TODO)
+            return new RScope(null, new REnvEmptyFrameAccess(), getRootNode());
+        }
+        REnvironment env = getEnv(requestedFrame);
+        Frame frame = requestedFrame;
+        if (env == null) {
+            Object[] arguments = requestedFrame.getArguments();
+            if (arguments.length == 1 && arguments[0] instanceof MaterializedFrame) {
+                MaterializedFrame unwrapped = (MaterializedFrame) arguments[0];
+                if (RArguments.isRFrame(unwrapped)) {
+                    env = getEnv(unwrapped);
+                    frame = unwrapped;
+                }
+            }
+        }
+
+        if (env == REnvironment.globalEnv()) {
+            throw UnsupportedMessageException.create();
+        }
+        if (env != null) {
+            return new RScope(env, env.getFrameAccess(), getRootNode());
+        }
+
+        MaterializedFrame mFrame = frame.materialize();
+        return new RScope(null, new REnvTruffleFrameAccess(mFrame), getRootNode());
+    }
+
+    private static REnvironment getEnv(Frame frame) {
+        if (RArguments.isRFrame(frame)) {
+            return REnvironment.frameToEnvironment(frame.materialize());
+        }
+        return null;
     }
 }

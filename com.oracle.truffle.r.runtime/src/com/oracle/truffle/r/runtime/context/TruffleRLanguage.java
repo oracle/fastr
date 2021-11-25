@@ -30,16 +30,14 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Scope;
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.TruffleLanguage.ContextPolicy;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExecutableNode;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -51,6 +49,7 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags;
@@ -59,7 +58,7 @@ import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
 @TruffleLanguage.Registration(name = "R", id = "R", version = "4.0.3", implementationName = "FastR", characterMimeTypes = {RRuntime.R_APP_MIME,
-                RRuntime.R_TEXT_MIME}, defaultMimeType = RRuntime.R_APP_MIME, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
+                RRuntime.R_TEXT_MIME}, defaultMimeType = RRuntime.R_APP_MIME, contextPolicy = ContextPolicy.EXCLUSIVE, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootBodyTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
@@ -220,13 +219,9 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
-    public Iterable<Scope> findLocalScopes(RContext langContext, Node node, Frame frame) {
-        return RScope.createLocalScopes(langContext, node, frame);
-    }
-
-    @Override
-    protected Iterable<Scope> findTopScopes(RContext langContext) {
-        return RScope.createTopScopes(langContext);
+    protected Object getScope(RContext context) {
+        REnvironment globalEnv = REnvironment.globalEnv(context);
+        return new RScope(globalEnv, globalEnv.getFrameAccess(), null);
     }
 
     private static final class ConvertForeignRootNode extends RootNode {

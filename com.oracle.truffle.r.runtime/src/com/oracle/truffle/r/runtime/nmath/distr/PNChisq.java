@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2000-2015, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -149,9 +149,9 @@ public final class PNChisq implements Function3_2 {
 
         /* LDOUBLE */double lt;
         /* LDOUBLE */double t;
-        if (f2 * DBL_EPSILON > 0.125 && /* very large f and x ~= f: probably needs */
-                        MathWrapper.abs(t = x2 - f2) < /* another algorithm anyway */
-                        Math.sqrt(DBL_EPSILON) * f2) {
+        // very large f and x ~= f: probably needs
+        // another algorithm anyway
+        if (f2 * DBL_EPSILON > 0.125 && MathWrapper.abs(t = x2 - f2) < Math.sqrt(DBL_EPSILON) * f2) {
             /* evade cancellation error */
             /* t = Math.exp((1 - t)*(2 - t/(f2 + 1))) / Math.sqrt(2*M_PI*(f2 + 1)); */
             lt = (1 - t) * (2 - t / (f2 + 1)) - M_LN_SQRT_2PI - 0.5 * Math.log(f2 + 1);

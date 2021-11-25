@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.nodes.attributes;
+package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.api.frame.Frame;
 
 /**
- * The base class for the nodes obtaining a collection of attributes from an object.
+ * Truffle instruments may ask for a scope for the current Truffle frame ignoring the actual frame
+ * instance that flows through the instrumented node. In our case those two may be different for
+ * some root nodes. Such root nodes should implement this interface to allow our implementation of
+ * {@link com.oracle.truffle.api.interop.NodeLibrary} to retrieve the actual execution frame from
+ * the current Truffle frame.
  */
-public abstract class AttributeIterativeAccessNode extends RBaseNode {
-
-    protected static final int EXPLODE_LOOP_LIMIT = 8;
-
-    protected static int getShapeCacheLimit() {
-        return DSLConfig.getCacheSize(5);
-    }
-
-    protected AttributeIterativeAccessNode() {
-    }
+public interface REntryPointRootNode {
+    Frame getActualExecutionFrame(Frame currentFrame);
 }
