@@ -175,7 +175,7 @@ public class TestS4 extends TestRBase {
     @Test
     public void testActiveBindings() {
         assertEval("someSymbol0 <- 1; makeActiveBinding('someSymbol0', function(x) { x }, .GlobalEnv)");
-        assertEval(Output.IgnoreErrorMessage, "lockEnvironment(.GlobalEnv); makeActiveBinding('someSymbol1', function(x) { x }, .GlobalEnv)");
+        assertEval(Output.IgnoreErrorMessage, Context.NonShared, "lockEnvironment(.GlobalEnv); makeActiveBinding('someSymbol1', function(x) { x }, .GlobalEnv)");
         assertEval("makeActiveBinding('someSymbol2', function(x) { x }, .GlobalEnv); bindingIsActive('someSymbol2', .GlobalEnv)");
         assertEval("bindingIsActive('someSymbol3', .GlobalEnv)");
         assertEval(".Internal(bindingIsActive(as.name('someSymbol4'), .GlobalEnv))");

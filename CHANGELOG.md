@@ -1,3 +1,6 @@
+# 22.0.0
+* In unit tests, use single shared context rather than multiple inner contexts.
+
 # 21.3.0
 * Upgrade of [PCRE](https://www.pcre.org/) to PCRE2 version 10.37.
   * See [GNU-R changelog](https://cran.r-project.org/doc/manuals/r-devel/NEWS.html) (section MIGRATION TO PCRE2) for more details
