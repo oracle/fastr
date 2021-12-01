@@ -37,7 +37,7 @@ endif
 
 FASTR_R_HOME = $(abspath $(TOPDIR)/..)
 R_VERSION = 4.0.3
-# The package tar balls are copied from $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended
+# Most of the package tar balls are copied from $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended
 export GNUR_HOME_BINARY_UNPACKED = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
 
 ifndef GNUR_HOME_BINARY
@@ -120,6 +120,24 @@ install.recommended: $(ALL_RECOMMENDED_TARS)
 # ------------------------
 # If FASTR_RECOMMENDED_BINARY is not defined, we just build the packages
 else 
+
+RPART_DIR_NAME := bethatkinson-rpart-4020bb4
+RPART_BUILT_TARBALL := rpart_4.1-16.tar.gz
+# rpart package is downloaded as a tarball directly from GitHub. Unfortunately, we have to make some
+# modifications to that tarball - remove `build` directory.
+rpart.ts: $(RPART_TAR)
+	@echo 'Installing recommended package rpart'
+	tar xf $<
+	rm -rf $(RPART_DIR_NAME)/build
+	# This command creates $RPART_BUILT_TARBALL via GNU-R for better compatibility
+	$(GNUR_HOME_BINARY)/bin/R CMD build --no-build-vignettes $(RPART_DIR_NAME)
+	_R_CHECK_INSTALL_DEPENDS_=no FASTR_USE_F2C=true $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $(RPART_BUILT_TARBALL) &> $@.out || (cat $@.out && exit 1)
+	@echo Finished installing recommended package `basename $<`
+
+cluster.ts: $(CLUSTER_TAR)
+	@echo Installing recommended package `basename $<`
+	@_R_CHECK_INSTALL_DEPENDS_=no FASTR_USE_F2C=true $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
+	@echo Finished installing recommended package `basename $<`
 
 %.ts: $(GNUR_RECOMMENDED_TAR_DIR)%.tgz
 	@echo Installing recommended package `basename $<`
