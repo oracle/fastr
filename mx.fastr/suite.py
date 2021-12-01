@@ -68,13 +68,23 @@ suite = {
       "resource" : "true"
     },
 
-    # A recommended package with a fixed version rather than taken from GNU-R.
+    # A recommended package "rpart" with a fixed version rather than taken from GNU-R.
     "RPART" : {
       "path" : "libdownloads/rpart.tar.gz",
       "ext" : "tar.gz",
       "version" : "4020bb4ee8fd6739bd97e8c39931fa7e3901300c",
       "urls" : ["https://api.github.com/repos/bethatkinson/rpart/tarball/{version}"],
       "sha1" : "ec76dbd51acad10bed843a0005ba5fdcf5c7a35d",
+      "resource" : "true"
+    },
+
+    # A recommended package "cluster" with a fixed version rather than taken from GNU-R.
+    "CLUSTER" : {
+      "path" : "libdownloads/cluster.tar.gz",
+      "ext" : "tar.gz",
+      "version" : "2.1.2",
+      "urls" : ["https://cran.r-project.org/src/contrib/cluster_{version}.tar.gz"],
+      "sha1" : "47763fa44d11e0f2c2feafade3e331c05eda30d1",
       "resource" : "true"
     },
 
@@ -353,6 +363,7 @@ suite = {
     "com.oracle.truffle.r.native.recommended" : {
       "dependencies" : [
         "RPART",
+        "CLUSTER",
         "com.oracle.truffle.r.native",
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl",
