@@ -68,10 +68,25 @@ GNUR_RECOMMENDED_PKGNAMES := codetools
 endif # FASTR_RELEASE
 GNUR_RECOMMENDED_PKGNAMES_TS = $(GNUR_RECOMMENDED_PKGNAMES:=.ts)
 
+# Recommended packages that are used by fastr in a specific version, i.e., taken from other sources than GNUR_RECOMMENDED_BINARY
+PKGS_WITH_CUSTOM_VERSION := cluster rpart
+RPART_TAR := $(FASTR_R_HOME)/libdownloads/rpart.tar.gz
+
 GNUR_RECOMMENDED_TAR_DIR = $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended/
-GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_RECOMMENDED_TAR_DIR)/$(pkg)*.tar.gz)
+# We do not copy all the recommended packages from gnur's directory. Instead, there are some
+# packages that we take from different sources.
+GNUR_RECOMMENDED_TARS := \
+$(foreach pkg, \
+	$(filter-out $(PKGS_WITH_CUSTOM_VERSION),$(GNUR_RECOMMENDED_PKGNAMES)), \
+	$(GNUR_RECOMMENDED_TAR_DIR)/$(pkg)*.tar.gz \
+)
+ALL_RECOMMENDED_TARS := $(GNUR_RECOMMENDED_TARS) $(RPART_TAR)
+
 ## need to allow parallel installs
 INSTALL_OPTS = --pkglock --data-compress=xz --no-staged-install
+
+$(info GNUR_RECOMMENDED_PKGNAMES = $(GNUR_RECOMMENDED_PKGNAMES))
+$(info ALL_RECOMMENDED_TARS = $(ALL_RECOMMENDED_TARS))
 
 # in managed mode, we do nothing
 ifneq ($(FASTR_RFFI),managed)
@@ -84,7 +99,7 @@ ifdef FASTR_RECOMMENDED_BINARY
 
 $(info Using FastR recommended packages binary: $(FASTR_RECOMMENDED_BINARY))
 
-install.recommended: $(GNUR_RECOMMENDED_TARS)
+install.recommended: $(ALL_RECOMMENDED_TARS)
 #	@if ! (mx -p $(FASTR_R_HOME) r-pkgcache --print-api-checksum --vm fastr | tail -n 1 | diff -q $(FASTR_RECOMMENDED_BINARY)/api-checksum.txt -); then \
 #		echo "******************************"; \
 #		echo "ERROR:"; \
@@ -104,8 +119,6 @@ install.recommended: $(GNUR_RECOMMENDED_TARS)
 # ------------------------
 # If FASTR_RECOMMENDED_BINARY is not defined, we just build the packages
 else 
-
-$(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 
 %.ts: $(GNUR_RECOMMENDED_TAR_DIR)%.tgz
 	@echo Installing recommended package `basename $<`
