@@ -1,5 +1,5 @@
 suite = {
-  "mxversion" : "5.282.0",
+  "mxversion" : "5.316.13",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
   "imports" : {
@@ -31,8 +31,8 @@ suite = {
 
   "repositories" : {
     "snapshots" : {
-        "url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots",
-        "licenses" : ["GPLv3"]
+      "url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots",
+      "licenses" : ["GPLv3"]
     }
   },
 
@@ -48,24 +48,34 @@ suite = {
   # libraries that we depend on
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-4.0.3.tar.gz", # keep in sync with the GraalVM support distribution
-        "urls" : ["https://cran.rstudio.com/src/base/R-4/R-4.0.3.tar.gz"],
-        "sha1" : "5daba2d63e07a9f39d9b69b68f0642d71213ec5c",
-        "resource" : "true"
+      "path" : "libdownloads/R-4.0.3.tar.gz", # keep in sync with the GraalVM support distribution
+      "urls" : ["https://cran.rstudio.com/src/base/R-4/R-4.0.3.tar.gz"],
+      "sha1" : "5daba2d63e07a9f39d9b69b68f0642d71213ec5c",
+      "resource" : "true"
     },
 
     "F2C" : {
-        "path" : "libdownloads/f2c/src.tgz",
-        "urls" : ["https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/f2c/20191129/src.tgz"],
-        "sha1" : "8a26107bf9f82a2dcfa597f15549a412be75e0ee",
-        "resource" : "true"
+      "path" : "libdownloads/f2c/src.tgz",
+      "urls" : ["https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/f2c/20191129/src.tgz"],
+      "sha1" : "8a26107bf9f82a2dcfa597f15549a412be75e0ee",
+      "resource" : "true"
     },
 
     "LIBF2C" : {
-        "path" : "libdownloads/f2c/libf2c.zip",
-        "urls" : ["https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/f2c/20191129/libf2c.zip"],
-        "sha1" : "e39a00f425f8fc41dde434686080a94e94884f30",
-        "resource" : "true"
+      "path" : "libdownloads/f2c/libf2c.zip",
+      "urls" : ["https://lafo.ssw.uni-linz.ac.at/pub/graal-external-deps/f2c/20191129/libf2c.zip"],
+      "sha1" : "e39a00f425f8fc41dde434686080a94e94884f30",
+      "resource" : "true"
+    },
+
+    # A recommended package with a fixed version rather than taken from GNU-R.
+    "RPART" : {
+      "path" : "libdownloads/rpart.tar.gz",
+      "ext" : "tar.gz",
+      "version" : "4020bb4ee8fd6739bd97e8c39931fa7e3901300c",
+      "urls" : ["https://api.github.com/repos/bethatkinson/rpart/tarball/{version}"],
+      "sha1" : "ec76dbd51acad10bed843a0005ba5fdcf5c7a35d",
+      "resource" : "true"
     },
 
     "XZ-1.8" : {
@@ -342,6 +352,7 @@ suite = {
 
     "com.oracle.truffle.r.native.recommended" : {
       "dependencies" : [
+        "RPART",
         "com.oracle.truffle.r.native",
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl",
