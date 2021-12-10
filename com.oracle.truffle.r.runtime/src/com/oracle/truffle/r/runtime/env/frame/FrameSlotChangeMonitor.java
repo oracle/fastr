@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -539,7 +539,7 @@ public final class FrameSlotChangeMonitor {
 
     private static final class FrameSlotInfoImpl {
         /**
-         * This is meant to monitor updates performed on {@link FrameSlot}. Each {@link FrameSlot}
+         * This is meant to monitor updates performed on {@code FrameSlot}. Each {@code FrameSlot}
          * holds an {@link Assumption} in it's "info" field; it is valid as long as no non-local
          * update has ever taken place.<br/>
          * The background to this rather strange assumption is that non-local reads are very hard to
@@ -775,7 +775,7 @@ public final class FrameSlotChangeMonitor {
     /**
      * Retrieves the not-changed-locally {@link Assumption} for the given frame slot.
      *
-     * @return The "not changed locally" assumption of the given {@link FrameSlot}
+     * @return The "not changed locally" assumption of the given {@code FrameSlot}
      */
     public static Assumption getNotChangedNonLocallyAssumption(FrameSlot slot) {
         return getFrameSlotInfo(slot).nonLocalModifiedAssumption;
@@ -817,10 +817,10 @@ public final class FrameSlotChangeMonitor {
     // methods for changing frame slot contents
 
     /**
-     * Checks if the assumption of the given {@link FrameSlot} has to be invalidated.
+     * Checks if the assumption of the given {@code FrameSlot} has to be invalidated.
      *
      * @param curFrame
-     * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
+     * @param slot {@code FrameSlot}; its "info" is assumed to be an Assumption, throws an
      *            {@link RInternalError} otherwise
      * @param invalidateProfile Used to guard the invalidation code.
      */

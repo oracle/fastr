@@ -1,5 +1,5 @@
 # 22.0.0
-* In unit tests, use single shared context rather than multiple inner contexts.
+* Adopted [NodeLibrary](https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/interop/NodeLibrary.html).
 
 # 21.3.0
 * Upgrade of [PCRE](https://www.pcre.org/) to PCRE2 version 10.37.
