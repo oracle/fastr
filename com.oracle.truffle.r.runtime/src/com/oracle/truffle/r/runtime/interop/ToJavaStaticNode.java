@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -61,7 +62,8 @@ public abstract class ToJavaStaticNode extends RBaseNode {
                     @Cached("create()") ReadElementNode readName,
                     @Cached("create()") ExecuteMethodNode getClass,
                     @Cached("create()") ExecuteMethodNode getName,
-                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop,
+                    @CachedLibrary(limit = "1") InteropLibrary nameInterop) {
         Env e = RContext.getInstance().getEnv();
         assert e.isHostLookupAllowed() && e.isHostObject(obj) && !(e.asHostObject(obj) instanceof Class);
 
@@ -69,8 +71,12 @@ public abstract class ToJavaStaticNode extends RBaseNode {
             Object gcf = readClass.execute(obj, "getClass");
             Object clazz = getClass.execute(gcf);
             Object cnf = readName.execute(clazz, "getName");
-            String className = (String) getName.execute(cnf);
-            return (TruffleObject) e.lookupHostSymbol(className);
+            try {
+                String className = nameInterop.asString(getName.execute(cnf));
+                return (TruffleObject) e.lookupHostSymbol(className);
+            } catch (UnsupportedMessageException ex) {
+                throw CompilerDirectives.shouldNotReachHere(ex);
+            }
         }
         return null;
     }

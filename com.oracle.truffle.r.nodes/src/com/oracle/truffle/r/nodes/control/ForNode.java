@@ -296,6 +296,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         @Child private WriteVariableNode writePositionNode;
         @Child private InteropLibrary membersInterop;
         @Child private InteropLibrary rangeInterop;
+        @Child private InteropLibrary keyInterop;
 
         ForMembersRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String positionName, String lengthName, String rangeName, String membersName) {
             super(forNode, var, body, indexName, positionName, lengthName, rangeName);
@@ -305,6 +306,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
             this.readRangeNode = LocalReadVariableNode.create(rangeName, true);
             this.membersInterop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
             this.rangeInterop = InteropLibrary.getFactory().createDispatched(1);
+            this.keyInterop = InteropLibrary.getFactory().createDispatched(1);
         }
 
         @Override
@@ -314,8 +316,9 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                 assert members != null;
                 Object range = readRangeNode.execute(frame);
                 Object position = membersInterop.readArrayElement(members, index - 1);
-                if (rangeInterop.isMemberReadable(range, (String) position)) {
-                    writePositionNode.execute(frame, position);
+                String key = keyInterop.asString(position);
+                if (rangeInterop.isMemberReadable(range, key)) {
+                    writePositionNode.execute(frame, key);
                     return true;
                 } else {
                     return false;
