@@ -94,10 +94,13 @@ suite = {
             "truffle:ANTLR4",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
+      "requires" : [
+        "java.logging",
+      ],
     },
 
     "com.oracle.truffle.r.nodes" : {
@@ -106,13 +109,16 @@ suite = {
         "com.oracle.truffle.r.runtime",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
+      "requires" : [
+        "java.logging",
+      ],
     },
 
     "com.oracle.truffle.r.nodes.builtin" : {
@@ -125,7 +131,7 @@ suite = {
         "java.logging",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "annotationProcessors" : [
         "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
@@ -140,7 +146,7 @@ suite = {
         "com.oracle.truffle.r.test",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "Truffle,FastR,Test",
       "jacoco" : "include",
       "spotbugsIgnoresGenerated" : True,
@@ -160,7 +166,7 @@ suite = {
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "Truffle,FastR,Test",
       "jacoco" : "include",
       "spotbugsIgnoresGenerated" : True,
@@ -185,7 +191,7 @@ suite = {
 
     "com.oracle.truffle.r.test.packages" : {
       "sourceDirs" : ["r"],
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "FastR",
     },
 
@@ -195,8 +201,11 @@ suite = {
         "mx:JUNIT"
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "FastR",
+      "requires" : [
+        "java.logging"
+      ],
     },
 
     "com.oracle.truffle.r.engine" : {
@@ -214,10 +223,13 @@ suite = {
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
       "spotbugsIgnoresGenerated" : True,
+      "requires" : [
+        "java.logging",
+      ],
     },
 
     "com.oracle.truffle.r.runtime" : {
@@ -230,13 +242,18 @@ suite = {
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "checkstyleVersion": "8.8",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
       "spotbugsIgnoresGenerated" : True,
+      "requires" : [
+        "java.management",
+        "java.logging",
+        "jdk.unsupported" # sun.misc.Unsafe
+      ],
     },
 
     "com.oracle.truffle.r.launcher" : {
@@ -247,8 +264,9 @@ suite = {
         "sdk:JLINE3",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
-      "annotationProcessors" : [
+      "javaCompliance" : "11+",
+      "requires" : [
+        "java.management"
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -266,7 +284,7 @@ suite = {
         "java.desktop"
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
           "R_FFI_PROCESSOR",
@@ -282,15 +300,18 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.ffi.impl"
       ],
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "FastR",
     },
 
     "com.oracle.truffle.r.ffi.processor" : {
       "sourceDirs" : ["src"],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "FastR",
+      "requires" : [
+        "java.compiler"
+      ],
     },
 
     "com.oracle.truffle.r.native" : {
@@ -330,7 +351,7 @@ suite = {
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "FastR",
       "jacoco" : "include",
       "spotbugsIgnoresGenerated" : True,
@@ -341,7 +362,7 @@ suite = {
       "dependencies" : [],
       "requires": ["java.desktop"],
       "checkstyle" : "org.rosuda.javaGD",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "FastR",
       "jacoco" : "include",
     },
@@ -374,7 +395,7 @@ suite = {
         "sdk:POLYGLOT_TCK",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
+      "javaCompliance" : "11+",
       "workingSets" : "FastR,Test",
       "spotbugsIgnoresGenerated" : True,
     },
