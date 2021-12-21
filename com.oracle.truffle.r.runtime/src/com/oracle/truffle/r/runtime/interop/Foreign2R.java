@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
@@ -39,6 +38,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 /**
  * Converts 'primitive' values from the outside world to internal FastR representations. For
@@ -146,29 +146,30 @@ public abstract class Foreign2R extends Node {
         return i;
     }
 
-    @Specialization(guards = {"isForeignObject(obj)", "interop.isNull(obj)"}, limit = "getInteropLibraryCacheSize()")
-    public RNull doNull(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning,
-                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
-        return RNull.instance;
+    @Specialization
+    public Object doRObject(RTruffleObject obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
+        return obj;
     }
 
-    @Specialization(guards = {"isForeignObject(obj)", "!interop.isNull(obj)"}, limit = "getInteropLibraryCacheSize()")
-    public Object doForeignObject(TruffleObject obj, boolean preserveByte, boolean printWarning,
+    protected static boolean isNotRObject(Object obj) {
+        return !(obj instanceof RTruffleObject);
+    }
+
+    @Fallback
+    public Object doOthers(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning,
                     @Cached("create()") Foreign2R recursive,
-                    @CachedLibrary("obj") InteropLibrary interop) {
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
+        if (interop.isNull(obj)) {
+            return RNull.instance;
+        }
         try {
             Object unboxed = unbox(obj, interop);
-            if (unboxed != null) {
+            if (unboxed != null && unboxed != obj) {
                 return recursive.execute(unboxed, preserveByte, printWarning);
             }
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere();
         }
-        return obj;
-    }
-
-    @Fallback
-    public Object doObject(Object obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return obj;
     }
 
