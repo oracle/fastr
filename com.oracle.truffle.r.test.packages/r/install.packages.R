@@ -126,6 +126,7 @@ usage <- function() {
 					  "[--important-pkgs file]",
 					  "[--ignore-suggests file]",
                       "[--pkg-pattern package-pattern] \n"))
+	cat("See documentation/dev/testing.md for the full description. \n")
 	quit(status=100)
 }
 
@@ -409,7 +410,7 @@ get.pkgs <- function() {
 	}
 	tryCatch({
 			avail.pkgs <<- available.packages(type="source", filters = list(add=TRUE, function(x) x))
-		}, warning=my.warning)
+	}, warning=my.warning)
 
 	log.repos.info <- function() {
 		cat("\n=========\nDebugging info:\n")
@@ -470,7 +471,7 @@ get.pkgs <- function() {
 
 	match.fun <- set.match.fun()
 	log.output(function() {
-		cat("Filtering the packages to install: invert.pkgset=", invert.pkgset, ", pkg.pattern=", pkg.pattern, ".\n")
+		cat("Filtering the packages to install: invert.pkgset =", invert.pkgset, ", pkg.pattern =", pkg.pattern, ".\n")
 		cat("pkg.filelist:\n"); print(pkg.filelist)
 	}, level = 1)
 
@@ -1175,15 +1176,20 @@ run.setup <- function() {
 
 # Determines the directory of the script assuming that there is a "--file=" argument on the command line.
 getCurrentScriptDir <- function() {
-     cmdArgs <- commandArgs()
-     res <- startsWith(cmdArgs, '--file=')
-     fileArg <- cmdArgs[res]
-     if (length(fileArg) > 0L) {
-         p <- strsplit(fileArg, "=")[[1]][[2]]
-         dirname(p)
-     } else {
-        NULL
-     }
+	if (!interactive()) {
+		cmdArgs <- commandArgs()
+		res <- startsWith(cmdArgs, '--file=')
+		fileArg <- cmdArgs[res]
+		if (length(fileArg) > 0L) {
+			p <- strsplit(fileArg, "=")[[1]][[2]]
+			return(dirname(p))
+		}
+	} else {
+		if ("install.packages.R" %in% dir(getwd())) {
+			return (getwd())
+		}
+	}
+	return (NULL)
 }
 
 run <- function() {
@@ -1266,14 +1272,16 @@ important.pkg.table <- NULL
 ignore.suggests.file <- file.path(curScriptDir, "..", "ignore.suggests")
 
 cat("Running install.packages.R, interactive=", interactive(), file=log.file, append=T)
-options(error = function(...) {
-	log.message.always("Unexpected error occured")
-	log.output(function() {
-		print(list(...))
-		traceback(2)
+if (!interactive()) {
+	options(error = function(...) {
+		log.message.always("Unexpected error occured")
+		log.output(function() {
+			print(list(...))
+			traceback(2)
+		})
+		quit('no', status=47)
 	})
-	quit('no', status=47)
-})
+}
 if (!interactive()) {
     run()
 }

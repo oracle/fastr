@@ -190,7 +190,7 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
     } 
 
 
-    toPath <- lib
+    toPath <- file.path(lib, pkg.name)
     # extract cached package to library directory
     tryCatch({
         if (file.exists(fromPath)) {

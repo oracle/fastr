@@ -102,21 +102,24 @@ def _create_tmpdir(rvm):
     return install_tmp
 
 
-def _create_libinstall(rvm, test_installed):
+def _create_libinstall(rvm, no_install):
     '''
     Create lib.install.packages.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
-    If use_installed_pkgs is True, assume lib.install exists and is populated (development)
+    If no_install is True, assume lib.install exists and is populated (development)
     '''
     if not isinstance(rvm, RVM):
         raise TypeError("Expected object of type 'RVM' but got '%s'" % str(type(rvm)))
     libinstall = join(get_fastr_repo_dir(), "lib.install.packages." + rvm.id)
-    if not test_installed:
+    if not no_install:
         # make sure its empty
         shutil.rmtree(libinstall, ignore_errors=True)
         if os.path.exists(libinstall):
             logging.warning("could not clean temporary library dir %s" % libinstall)
         else:
             os.mkdir(libinstall)
+    else:
+        if not os.path.exists(libinstall) or len(os.listdir(libinstall)) == 0:
+            logging.warning(f"{libinstall} directory does not exist or it does not contain any installed packages")
     install_tmp = _create_tmpdir(rvm)
     rvm.create_testdir()
     return libinstall, install_tmp
@@ -256,15 +259,18 @@ def pkgtest(args):
     Package installation/testing.
 
     Options:
-        --quiet                  Reduce output during testing.
         --cache-pkgs dir=DIR     Use package cache in directory DIR (will be created if not existing).
                                  Optional parameters:
-                                     size=N        Maximum number of different API versions in the cache.
+                                     size=N             Maximum number of different API versions in the cache.
+                                     sync=[true|false]  Synchronize the cache
+                                     vm=[fastr|gnur]
         --no-install             Do not install any packages (can only test installed packages).
         --list-versions          List packages to be installed/tested without installing/testing them.
         --pkg-pattern PATTERN    A regular expression to match packages.
+        --quiet                  Reduce output during testing.
         --verbose, -v            Verbose output.
         --very-verbose, -V       Very verbose output.
+        --dry-run                Do not run anything, just print what would be run.
         --dump-preprocessed      Dump the preprocessed output files to the current working directory.
 
     Return codes:
@@ -277,9 +283,9 @@ def pkgtest(args):
     # common_install_args are shared between GnuR and FastR
     common_install_args = prepare_r_install_and_test_arguments(unknown_args)
 
-    test_installed = '--no-install' in common_install_args
-    fastr_libinstall, fastr_install_tmp = _create_libinstall(RVM_FASTR, test_installed)
-    gnur_libinstall, gnur_install_tmp = _create_libinstall(RVM_GNUR, test_installed)
+    no_install = '--no-install' in common_install_args
+    fastr_libinstall, fastr_install_tmp = _create_libinstall(RVM_FASTR, no_install)
+    gnur_libinstall, gnur_install_tmp = _create_libinstall(RVM_GNUR, no_install)
 
     common_install_args = list(common_install_args)
 

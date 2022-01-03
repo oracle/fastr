@@ -237,11 +237,9 @@ def computeApiChecksum(includeDir):
     rootDir = includeDir
     fileList = list()
     for root, _, files in os.walk(rootDir):
-        logging.log(VERY_VERBOSE, "Visiting directory %s" % root)
         for f in files:
             fileName = join(root, f)
             if fileName.endswith('.h'):
-                logging.log(VERY_VERBOSE, "Including file %s" % fileName)
                 fileList.append(fileName)
 
     # sorting makes the checksum independent of the FS traversal order
@@ -251,7 +249,6 @@ def computeApiChecksum(includeDir):
             with open(fileName) as f:
                 fileContent = f.read().encode()
                 m.update(fileContent)
-                logging.log(VERY_VERBOSE, "{0} is checksum after updating with {1}".format(m.hexdigest(), fileName))
         except IOError as e:
             # Ignore errors on broken symlinks
             if not os.path.islink(fileName) or os.path.exists(fileName):
