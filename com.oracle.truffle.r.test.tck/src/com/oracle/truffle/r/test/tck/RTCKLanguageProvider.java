@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -505,7 +505,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
              * @return the Builder
              */
             Builder emptyArrayCheck() {
-                chain = new BiFunction<Boolean, SnippetRun, Void>() {
+                chain = new BiFunction<>() {
                     private final BiFunction<Boolean, SnippetRun, Void> next = chain;
 
                     @Override
@@ -537,7 +537,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
              * @return the Builder
              */
             Builder primitiveAndArrayMismatchCheck() {
-                chain = new BiFunction<Boolean, SnippetRun, Void>() {
+                chain = new BiFunction<>() {
                     private final BiFunction<Boolean, SnippetRun, Void> next = chain;
 
                     @Override
@@ -581,7 +581,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
             // - a list with another list FAILS
             // - other kind of object with anything but null or empty list or vector FAILS
             Builder compareParametersCheck() {
-                chain = new BiFunction<Boolean, SnippetRun, Void>() {
+                chain = new BiFunction<>() {
                     private final BiFunction<Boolean, SnippetRun, Void> next = chain;
 
                     @Override

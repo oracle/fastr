@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public abstract class RSyntaxUtils {
      * formals and body to the console.
      */
     public static void verifyFunction(String desc, ArgumentsSignature signature, RSyntaxNode[] formals, RSyntaxNode body) {
-        RSyntaxVisitor<String> visitor = new RSyntaxVisitor<String>() {
+        RSyntaxVisitor<String> visitor = new RSyntaxVisitor<>() {
             int level = 0;
 
             private String space() {

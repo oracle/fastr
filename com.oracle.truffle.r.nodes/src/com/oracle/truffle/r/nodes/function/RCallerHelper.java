@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,7 +91,7 @@ public final class RCallerHelper {
     }
 
     private static Supplier<RSyntaxElement> createFromArgumentsInternal(final Object function, final RArgsValuesAndNames arguments, DynamicObject attributes) {
-        return new Supplier<RSyntaxElement>() {
+        return new Supplier<>() {
 
             RSyntaxElement syntaxNode = null;
 
@@ -152,7 +152,7 @@ public final class RCallerHelper {
      * This method calculates the signature of the permuted arguments lazily.
      */
     public static Supplier<RSyntaxElement> createFromArguments(String function, long[] preparePermutation, Object[] suppliedArguments, ArgumentsSignature suppliedSignature) {
-        return new Supplier<RSyntaxElement>() {
+        return new Supplier<>() {
 
             RSyntaxElement syntaxNode = null;
 
@@ -239,7 +239,7 @@ public final class RCallerHelper {
 
     public static RCaller getExplicitCaller(VirtualFrame virtualFrame, RPairList expr, RCaller promiseParentCaller) {
         RCaller currentCall = RArguments.getCall(virtualFrame);
-        Supplier<RSyntaxElement> callerSyntax = new Supplier<RSyntaxElement>() {
+        Supplier<RSyntaxElement> callerSyntax = new Supplier<>() {
 
             RSyntaxElement syntaxNode = null;
 
