@@ -118,6 +118,7 @@ suite = {
       "jacoco" : "include",
       "requires" : [
         "java.logging",
+        "jdk.unsupported", # sun.misc.Unsafe
       ],
     },
 
@@ -129,6 +130,7 @@ suite = {
       ],
       "requires" : [
         "java.logging",
+        "jdk.unsupported", # sun.misc.Unsafe
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "11+",
@@ -281,7 +283,8 @@ suite = {
          'BATIK-ALL-1.14',
       ],
       "requires" : [
-        "java.desktop"
+        "java.desktop",
+        "jdk.unsupported" # sun.misc.Unsafe
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "11+",
@@ -346,6 +349,7 @@ suite = {
       ],
       "requires" : [
         "java.desktop",
+        "jdk.unsupported", # sun.misc.Unsafe
       ],
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
