@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -312,7 +312,6 @@ public final class FFIProcessor extends AbstractProcessor {
         if (!returnKind.isPrimitive() && returnKind != TypeKind.VOID) {
             w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
         }
-        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallBase;");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFILog;\n");
         w.append("import com.oracle.truffle.api.interop.InteropLibrary;\n");
@@ -590,8 +589,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("// GENERATED; DO NOT EDIT\n\n");
         w.append("package com.oracle.truffle.r.ffi.impl.upcalls;\n\n");
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
-        w.append("import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;\n");
-        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n\n");
+        w.append("import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;\n\n");
         w.append("public enum Callbacks {\n");
         for (int i = 0; i < methods.length; i++) {
             ExecutableElement m = methods[i];

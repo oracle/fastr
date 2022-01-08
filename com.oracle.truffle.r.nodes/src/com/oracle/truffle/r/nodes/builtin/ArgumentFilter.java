@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ public interface ArgumentFilter<T, R> {
     interface NarrowingArgumentFilter<T, R extends T> extends ArgumentFilter<T, R> {
 
         default <S extends T> ArgumentTypeFilter<T, T> or(ArgumentFilter<T, S> other) {
-            return new ArgumentTypeFilter<T, T>() {
+            return new ArgumentTypeFilter<>() {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
@@ -51,7 +51,7 @@ public interface ArgumentFilter<T, R> {
 
         @SuppressWarnings("overloads")
         default <S extends T> ArgumentValueFilter<T> or(ArgumentValueFilter<T> other) {
-            return new ArgumentValueFilter<T>() {
+            return new ArgumentValueFilter<>() {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
@@ -68,7 +68,7 @@ public interface ArgumentFilter<T, R> {
 
         @SuppressWarnings("overloads")
         default ArgumentValueFilter<T> and(ArgumentValueFilter<T> other) {
-            return new ArgumentValueFilter<T>() {
+            return new ArgumentValueFilter<>() {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
@@ -85,7 +85,7 @@ public interface ArgumentFilter<T, R> {
 
         @SuppressWarnings("overloads")
         default <S extends T> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<T, S> other) {
-            return new ArgumentTypeFilter<T, S>() {
+            return new ArgumentTypeFilter<>() {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
@@ -101,13 +101,7 @@ public interface ArgumentFilter<T, R> {
         }
 
         default ArgumentValueFilter<T> not() {
-            return new ArgumentValueFilter<T>() {
-
-                @Override
-                public boolean test(T arg) {
-                    return !ArgumentValueFilter.this.test(arg);
-                }
-            };
+            return arg -> !ArgumentValueFilter.this.test(arg);
         }
     }
 
@@ -115,7 +109,7 @@ public interface ArgumentFilter<T, R> {
 
         @SuppressWarnings("overloads")
         default <S extends R> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<R, S> other) {
-            return new ArgumentTypeFilter<T, S>() {
+            return new ArgumentTypeFilter<>() {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
@@ -133,7 +127,7 @@ public interface ArgumentFilter<T, R> {
 
         @SuppressWarnings("overloads")
         default ArgumentTypeFilter<T, R> and(ArgumentValueFilter<R> other) {
-            return new ArgumentTypeFilter<T, R>() {
+            return new ArgumentTypeFilter<>() {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
@@ -173,7 +167,7 @@ public interface ArgumentFilter<T, R> {
 
         @SuppressWarnings("overloads")
         public <S extends T> ArgumentTypeFilter<T, S> and(ArgumentTypeFilter<T, S> other) {
-            return new ArgumentTypeFilter<T, S>() {
+            return new ArgumentTypeFilter<>() {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
@@ -190,7 +184,7 @@ public interface ArgumentFilter<T, R> {
 
         @SuppressWarnings("overloads")
         public <S extends T> ArgumentValueFilter<S> and(ArgumentValueFilter<S> other) {
-            return new ArgumentValueFilter<S>() {
+            return new ArgumentValueFilter<>() {
 
                 private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 

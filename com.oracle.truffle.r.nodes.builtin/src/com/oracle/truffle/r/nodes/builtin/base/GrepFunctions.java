@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1828,7 +1828,7 @@ public class GrepFunctions {
 
             @Override
             public Iterator<Range> iterator() {
-                return new Iterator<Range>() {
+                return new Iterator<>() {
                     private int currIdx = 0;
 
                     @Override

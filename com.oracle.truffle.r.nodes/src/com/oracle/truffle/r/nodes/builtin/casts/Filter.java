@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -397,14 +397,14 @@ public abstract class Filter<T, R extends T> {
 
     public abstract static class MatrixFilter<T extends RAbstractVector> extends Filter<T, T> {
 
-        private static final MatrixFilter<RAbstractVector> IS_MATRIX = new MatrixFilter<RAbstractVector>() {
+        private static final MatrixFilter<RAbstractVector> IS_MATRIX = new MatrixFilter<>() {
             @Override
             public <D> D acceptOperation(OperationVisitor<D> visitor, D previous) {
                 return visitor.visitIsMatrix(previous);
             }
         };
 
-        private static final MatrixFilter<RAbstractVector> IS_SQUARE_MATRIX = new MatrixFilter<RAbstractVector>() {
+        private static final MatrixFilter<RAbstractVector> IS_SQUARE_MATRIX = new MatrixFilter<>() {
             @Override
             public <D> D acceptOperation(OperationVisitor<D> visitor, D previous) {
                 return visitor.visitIsSquareMatrix(previous);
