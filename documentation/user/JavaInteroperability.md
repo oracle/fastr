@@ -25,7 +25,7 @@ The following example creates a new Java `BufferedImage` object, plots random da
 and shows an image in a window using Java's `AWT` framework.
 Note that you must start the R script with `--jvm` to have access to Java interoperability.
 
-```shell
+```R
 library(grid)
 openJavaWindow <- function () {
    # create image and register graphics
@@ -247,7 +247,7 @@ The `svg` device in GraalVM R runtime generates more lightweight SVG code than t
 Moreover, functions tailored to manipulate the SVG device are provided: `svg.off` and `svg.string`.
 The SVG device is demonstrated in the following code sample:
 
-```shell
+```R
 library(lattice)
 svg()
 mtcars$cars <- rownames(mtcars)
