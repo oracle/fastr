@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.javaGD;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +46,7 @@ public final class JavaGDContext {
 
     private final Collections.ArrayListObj<GDInterface> devices;
     private final Collections.ArrayListObj<Integer> deviceIndexes;
+    private static final String awtDeviceName = ".FASTR.AWT";
 
     private JavaGDContext(JavaGDContext parentGDCtx) {
         this.devices = parentGDCtx != null ? parentGDCtx.devices : new Collections.ArrayListObj<>();
@@ -59,6 +58,12 @@ public final class JavaGDContext {
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "AWT based grid devices are not supported.");
     }
 
+    /**
+     * Called from an up call, i.e. from native code `gdOpen`.
+     * @param gdId fastr-specific ID of JavaGD device. See {@code jGDtalk.c:javaGDDeviceCounter}.
+     * @param deviceName Template of the device name is {@code fileType::params:fileNameTemplate}.
+     *                   For example "svg::family=sans,bg=white:myfile.svg"
+     */
     @TruffleBoundary
     public GDInterface newGD(int gdId, String deviceName) {
         if (!FastRConfig.AwtSupport) {
@@ -109,18 +114,25 @@ public final class JavaGDContext {
             // no device specified, i.e. use the default device
             switch (gdLogMode) {
                 case wrap:
-                    gd = new LoggingGD(new JavaGD(new Resizer(), new DevOffCall()), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
+                    gd = new LoggingGD(createDefaultDevice(deviceName), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
                     break;
                 case headless:
                     gd = new LoggingGD(new NullGD(), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
                     break;
                 case off:
                 default:
-                    gd = new JavaGD(new Resizer(), new DevOffCall());
+                    gd = createDefaultDevice(deviceName);
             }
         }
-
         return gd;
+    }
+
+    private static GDInterface createDefaultDevice(String deviceName) {
+        if (deviceName.equals(awtDeviceName)) {
+            return new AWTGraphicsGD();
+        } else {
+            return new JavaGD(new Resizer(), new DevOffCall());
+        }
     }
 
     private static String getDefaultFileTemplate(String deviceName) {

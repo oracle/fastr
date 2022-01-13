@@ -46,11 +46,13 @@ double jGDasp  = 1.0;
 /*	4) host to connect to		*/
 /*	5) tcp port to connect to	*/
 
+#define JGD_DEBUG
+
 Rboolean newJavaGDDeviceDriver(NewDevDesc *dd,
 			    const char *disp_name,
 			    double width,
 			    double height,
-                            double initps)
+                double initps)
 {
   newJavaGDDesc *xd;
 
@@ -337,9 +339,9 @@ SEXP newJavaGD(SEXP name, SEXP sw, SEXP sh, SEXP sps) {
     h = ISNA(h) ? 300 : h;
     ps = ISNA(ps) ? 12 : ps;
     if (TYPEOF(name) != STRSXP || LENGTH(name) < 1)
-	Rf_error("invalid name");
+        Rf_error("invalid name");
     if (ISNAN(w) || w <= 0.0 || ISNAN(h) || h <= 0.0 || ISNAN(ps) || ps <= 0.0)
-	Rf_error("invalid width, height or ps");
+        Rf_error("invalid width, height or ps");
     Rf_addJavaGDDevice(CHAR(STRING_ELT(name, 0)), w, h, ps);
     return name;
 }
@@ -382,7 +384,7 @@ SEXP javaGDgetSize(SEXP sDev) {
 			    UNPROTECT(1);
 			} else {
 #ifdef JGD_DEBUG
-				printf("sizefailed>> device=%d, gd=%lx, dd=%lx\n",*dev,
+				printf("sizefailed>> device=%d, gd=%lx, dd=%lx\n", dev,
 				       (unsigned long)gd, (unsigned long)dd);
 #endif
 			}	

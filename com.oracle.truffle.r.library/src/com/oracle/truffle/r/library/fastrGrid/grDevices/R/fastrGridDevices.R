@@ -110,6 +110,14 @@ if (.fastr.option("UseInternalGridGraphics")) {
 } else { # 'UseInternalGridGraphics' is false
 	eval(expression({
 
+		awt <- function(width = NULL, height = NULL, graphicsObj = NULL) {
+			# We have to call grDevices:::C_X11, because we have to transitively call `gdOpen`.
+			invisible(.External2(grDevices:::C_X11, ".FASTR.AWT", width, height))
+			# We do not have a way how to pass `graphicsObj` to `grDevices:::C_X11`, so we have to
+			# pass it to another fastr-specific builtin.
+			.Internal(.fastr.awtSetGraphics(graphicsObj))
+		}
+
 		svg <- function (filename = if (onefile) "Rplots.svg" else "Rplot%03d.svg", width = 7, height = 7, pointsize = 12, onefile = FALSE, family = "sans", bg = "white", antialias = c("default", "none", "gray", "subpixel")) {
 			invisible(.External2(C_X11, paste0("svg::onefile=", onefile, ",family=", family, ",bg=", bg, ",antialias=", antialias, ":", filename), 72 * width, 72 * height, pointsize))
 		}

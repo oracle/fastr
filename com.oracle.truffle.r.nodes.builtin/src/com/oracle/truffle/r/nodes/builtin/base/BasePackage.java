@@ -106,6 +106,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebugNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDispatchNativeHandlers;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRGDSetGraphics;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRGDSetGraphicsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRGetExecutor;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRHelp.FastRAddHelpPath;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRHelp.FastRHelpPath;
@@ -531,6 +533,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRStackTrace.class, FastRStackTraceNodeGen::create);
         add(FastRSlotAssign.class, FastRSlotAssignNodeGen::create);
         add(FastRSyntaxTree.class, FastRSyntaxTreeNodeGen::create);
+        add(FastRGDSetGraphics.class, FastRGDSetGraphicsNodeGen::create);
         add(FastRSavePlot.class, FastRSavePlotNodeGen::create);
         add(FastRThrowIt.class, FastRThrowItNodeGen::create);
         add(FastRThrowCompilerError.class, FastRThrowCompilerError::new);

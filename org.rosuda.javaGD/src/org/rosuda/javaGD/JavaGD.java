@@ -20,7 +20,7 @@
 //
 package org.rosuda.javaGD;
 
-import java.awt.Frame;
+import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.function.Consumer;
@@ -29,7 +29,7 @@ import javax.swing.JFrame;
 
 /**
  * JavaGD is an implementation of the {@link GDInterface} protocol which displays the R graphics in
- * an AWT window (via {@link GDCanvas}). It can be used as an example gfor implementing custom
+ * an AWT window (via {@link GDCanvas}). It can be used as an example for implementing custom
  * display classes which can then be used by JavaGD. Three sample back-ends are included in the
  * JavaGD sources: {@link GDCanvas} (AWT), {@link JGDPanel} (Swing) and {@link JGDBufferedPanel}
  * (Swing with cached update).
@@ -43,12 +43,13 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     /**
      * default, public constructor - creates a new JavaGD instance. The actual window (and canvas)
-     * is not created until {@link #gdOpen} is called.
+     * is not created until {@link GDInterface#gdOpen} is called.
      */
     public JavaGD(Consumer<Integer> resizer, Consumer<Integer> devOffCall) {
         super();
         this.resizer = resizer;
         this.devOffCall = devOffCall;
+        System.out.println("Creating JavaGD(" + hashCode() + ")");
     }
 
     /**
@@ -61,12 +62,12 @@ public class JavaGD extends GDInterface implements WindowListener {
     public void gdOpen(double w, double h) {
         if (f != null)
             gdClose();
+        System.out.println("gdOpen(w=" + w + ", h=" + h + ")");
 
-        f = new JFrame("JavaGD");
+        f = new JFrame("JavaGD (JGDBufferedPanel)");
+        System.out.println("Created new JGDBufferedPanel JFrame (" + f.hashCode() + ")");
         f.addWindowListener(this);
-        // c = new GDCanvas(w, h, resizer);
         c = new JGDBufferedPanel(w, h, resizer);
-        // f.add((GDCanvas) c);
         f.add((JGDPanel) c);
         f.pack();
         f.setVisible(true);
@@ -74,6 +75,7 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     @Override
     public void gdActivate() {
+        System.out.println("gdActivate");
         super.gdActivate();
         if (f != null) {
             f.requestFocus();
@@ -83,6 +85,7 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     @Override
     public void gdClose() {
+        System.out.println("gdClose");
         super.gdClose();
         if (f != null) {
             c = null;
@@ -94,6 +97,7 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     @Override
     public void gdDeactivate() {
+        System.out.println("gdDeactivate");
         super.gdDeactivate();
         if (f != null)
             f.setTitle("JavaGD " + ((devNr > 0) ? ("(" + (devNr + 1) + ")") : ""));
