@@ -451,13 +451,7 @@ def common_pkg_tests_args(graalvm_home):
     return gvm_home_arg + ["--gnur-home", gnur_path(), "--fastr-home", _fastr_suite.dir, "--repos", "SNAPSHOT,FASTR=file://" + fastr_pkgs_repo]
 
 def cran_pkg_tests(list_file, graalvm_home=None):
-    cache_args = []
-    cache = os.environ.get('FASTR_PKGS_CACHE_OPT')
-    if cache is None:
-        mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
-    else:
-        cache_args += ['--cache-pkgs', cache]
-    result = pkgtest(["--verbose"] + cache_args + common_pkg_tests_args(graalvm_home) + ["--pkg-filelist", list_file])
+    result = pkgtest(["--verbose"] + common_pkg_tests_args(graalvm_home) + ["--pkg-filelist", list_file])
     if result != 0:
         mx.abort("package test failed")
 
@@ -815,8 +809,12 @@ def _pkgtest_args(args):
         graalvm_home = os.environ['FASTR_GRAALVM']
     elif 'GRAALVM_FASTR' in os.environ:
         graalvm_home = os.environ['GRAALVM_FASTR']
-
-    pkgtest_args = ['--very-verbose']
+    pkgtest_args = []
+    if 'FASTR_PKGS_CACHE_OPT' in os.environ:
+        pkgtest_args += ['--cache-pkgs', os.environ['FASTR_PKGS_CACHE_OPT']]
+    else:
+        mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
+    pkgtest_args += ['--very-verbose']
     pkgtest_args += ["--fastr-home"]
     pkgtest_args += [_fastr_suite.dir]
     if graalvm_home:
