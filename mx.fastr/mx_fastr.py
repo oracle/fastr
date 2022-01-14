@@ -455,7 +455,11 @@ def cran_pkg_tests(list_file, graalvm_home=None):
     if result != 0:
         mx.abort("package test failed")
 
-def internal_pkg_tests(graalvm_home=None):
+def internal_pkg_tests():
+    import mx_sdk_vm_impl
+    graalvm_home = mx_sdk_vm_impl.graalvm_home(fatalIfMissing=True)
+    if not mx.suite("compiler", fatalIfMissing=False) and not mx.suite("graal-enterprise", fatalIfMissing=False):
+        mx.abort("internal_pkg_tests must only be run with compiler or graal-enterprise suites")
     list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages/pkg-filelist')
     if os.environ.get('FASTR_RFFI') == 'llvm':
         list_file_llvm = list_file + '.llvm'
