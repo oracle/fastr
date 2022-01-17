@@ -177,6 +177,8 @@ def parse_arguments(argv, r_version_check=True):
                         help='The GnuR home directory (required).')
     parser.add_argument('--graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
                         help='The GraalVM root directory (optional).')
+    parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,
+                        help='Repos to install packages from. Can be set by "FASTR_REPOS" env var.')
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_const", const=1, default=0,
                         help='Do verbose logging.')
     parser.add_argument('-V', '--very-verbose', dest="verbose", action="store_const", const=2,
@@ -194,6 +196,11 @@ def parse_arguments(argv, r_version_check=True):
 
     global _opts
     _opts, r_args = parser.parse_known_args(args=argv)
+
+    if not _opts.repos and os.environ['FASTR_REPOS']:
+        _opts.repos = os.environ['FASTR_REPOS']
+    elif _opts.repos and os.environ['FASTR_REPOS']:
+        abort(1, 'Both --repos option and FASTR_REPOS env var set, you should set only one of them')
 
     # ensure that first arg is neither the name of this package nor a py file
     if r_args and (r_args[0] == __package__ or r_args[0].endswith(".py")):

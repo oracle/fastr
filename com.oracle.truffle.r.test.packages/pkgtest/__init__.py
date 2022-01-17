@@ -35,6 +35,7 @@ and tests, namely 'lib.install.packages.{fastr,gnur}' and 'test.{fastr,gnur}' (s
 from os.path import relpath
 import shutil, os, re
 
+import mx
 from .subproc import pkgtest_run
 from .output_filter import select_filters_for_package
 from .fuzzy_compare import fuzzy_compare
@@ -227,6 +228,9 @@ def prepare_r_install_arguments(args):
 
     # We intercept '--repos SNAPSHOT' since in GraalVM mode, we do not necessarily have a 'etc/DEFAULT_CRAN_MIRROR' for
     # GnuR in an accessible location.
+    if '--repos' not in args and get_opts().repos:
+        # repos were set by the FASTR_REPOS environment variable.
+        args += ['--repos', get_opts().repos]
     if '--repos' in args:
         repos_idx = args.index('--repos')
         if repos_idx + 1 < len(args):
@@ -259,19 +263,33 @@ def pkgtest(args):
     Package installation/testing.
 
     Options:
+        --quiet                  Reduce output during testing.
+        --verbose, -v            Verbose output.
+        --very-verbose, -V       Very verbose output.
+        --dry-run                Do not run anything, just print what would be run.
         --cache-pkgs dir=DIR     Use package cache in directory DIR (will be created if not existing).
                                  Optional parameters:
                                      size=N             Maximum number of different API versions in the cache.
                                      sync=[true|false]  Synchronize the cache
                                      vm=[fastr|gnur]
+                                 Example: '--cache-pkgs dir=DIR,size=N,sync=true,vm=fastr'
+                                 Can be set by FASTR_PKGS_CACHE_OPT environment variable.
         --no-install             Do not install any packages (can only test installed packages).
+        --repos REPO_NAME[=URL]  List of repositories to use for the package installation.
+                                 Comma separated list of name=value pairs. The names 'CRAN', 'BIOC'
+                                 and 'FASTR' are understood and have default values.
+                                 Example: '--repos FASTR=file://$HOME/fastr_repo,CRAN=file://$HOME/minicran'
+                                 Can be set by FASTR_REPOS environment variable
         --list-versions          List packages to be installed/tested without installing/testing them.
         --pkg-pattern PATTERN    A regular expression to match packages.
-        --quiet                  Reduce output during testing.
-        --verbose, -v            Verbose output.
-        --very-verbose, -V       Very verbose output.
-        --dry-run                Do not run anything, just print what would be run.
+        --print-install-status   Prints status of the installed packages.
+        --fastr-home             (Optional) The FastR standalone repo home directory. Fetched by the script.
+        --gnur-home              (Optional) The GnuR home directory. Fetched by the script.
+        --graalvm-home           The GraalVM root directory (optional)
+        --fastr-testdir          (Optional) FastR test result directory (default: 'test.fastr').
+        --gnur-testdir           (Optional) GnuR test result directory (default: 'test.gnur').
         --dump-preprocessed      Dump the preprocessed output files to the current working directory.
+        -l, --log-file           Log file name (default: 'FASTR_TESTDIR/pkgtest.log')
 
     Return codes:
         0: success
@@ -279,6 +297,10 @@ def pkgtest(args):
         2: test fail
         3: install & test fail
     '''
+    if '-h' in args or '--help' in args:
+        print(f'Usage: mx pkgtest [options]')
+        print(pkgtest.__doc__)
+        return 0
     unknown_args = parse_arguments(args)
     # common_install_args are shared between GnuR and FastR
     common_install_args = prepare_r_install_and_test_arguments(unknown_args)
@@ -1022,8 +1044,6 @@ def pkgcache(args):
                         help='Compute and print the API checksum for the specified VMs.')
     parser.add_argument('--cache-dir', metavar='DIR', dest="cache_dir", type=str, default=None,
                         help='The package cache directory.')
-    parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,
-                        help='Repos to install packages from.')
     parser.add_argument('--library', metavar='SPEC', type=str, default="",
                         help='The library folders to install to (must be specified for each used VM in form "<vm_name>=<dir>").')
     parser.add_argument('--sync', action="store_true", help='Synchronize access to the package cache.')
