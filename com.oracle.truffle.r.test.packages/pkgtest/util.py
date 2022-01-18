@@ -30,6 +30,7 @@ import sys
 import tempfile
 from datetime import datetime
 from os.path import join
+from typing import Optional, List
 
 fastr_default_testdir = 'test.fastr'
 gnur_default_testdir = 'test.gnur'
@@ -37,22 +38,22 @@ gnur_default_testdir = 'test.gnur'
 _opts = argparse.Namespace()
 
 
-def get_opts():
+def get_opts() -> argparse.Namespace:
     return _opts
 
 
-def get_fastr_repo_dir():
+def get_fastr_repo_dir() -> str:
     return _opts.fastr_home
 
 
-def get_gnur_home():
+def get_gnur_home() -> str:
     '''
     Returns path to GnuR home dir, e.g., gnur/gnur/R-3.4.0/.
     '''
     return _opts.gnur_home
 
 
-def get_gnur_rscript():
+def get_gnur_rscript() -> str:
     '''
     returns path to Rscript in sibling gnur directory
     '''
@@ -60,14 +61,14 @@ def get_gnur_rscript():
     return join(get_gnur_home(), "bin", "Rscript")
 
 
-def get_gnur_include_path():
+def get_gnur_include_path() -> str:
     # if graalvm():
     #     return join(_mx_gnur().dir, 'gnur', _mx_gnur().extensions.r_version(), 'include')
     # return join(mx_fastr._gnur_path(), "include")
     return join(get_gnur_home(), 'include')
 
 
-def get_fastr_home():
+def get_fastr_home() -> str:
     if get_graalvm_home():
         homes = [join(get_graalvm_home(), "jre", "languages", "R"), join(get_graalvm_home(), "languages", "R")]
         for result in homes:
@@ -77,23 +78,23 @@ def get_fastr_home():
     return get_fastr_repo_dir()
 
 
-def get_fastr_include_path():
+def get_fastr_include_path() -> str:
     return join(get_fastr_home(), 'include')
 
 
-def graalvm_rscript():
+def graalvm_rscript() -> str:
     assert get_graalvm_home() is not None
     return join(get_graalvm_home(), 'bin', 'Rscript')
 
 
-def get_fastr_rscript():
+def get_fastr_rscript() -> str:
     graalvm_dir = get_graalvm_home()
     if graalvm_dir is not None:
         return join(graalvm_dir, "bin", "Rscript")
     return join(get_fastr_repo_dir(), 'bin', 'Rscript')
 
 
-def get_default_cran_mirror():
+def get_default_cran_mirror() -> str:
     default_cran_mirror_file = join(get_fastr_home(), 'etc', 'DEFAULT_CRAN_MIRROR')
     url = None
     try:
@@ -114,7 +115,7 @@ def get_default_cran_mirror():
     return url
 
 
-def get_r_version(rscript_binary, tmp_dir):
+def get_r_version(rscript_binary: str, tmp_dir: str) -> str:
     r_version_file = join(tmp_dir, "R.version")
     args = [rscript_binary, "--verbose", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], file='%s', sep='')" % r_version_file]
     if not os.path.exists(rscript_binary):
@@ -123,35 +124,39 @@ def get_r_version(rscript_binary, tmp_dir):
         logging.debug("Running command: %s", args)
         output = subprocess.check_output(args, stderr=subprocess.STDOUT, universal_newlines=True)
 
-        lines = None
         with open(r_version_file, "r") as f:
-           lines = f.readlines()
+            lines = f.readlines()
         return lines[-1].strip()
     finally:
         os.unlink(r_version_file)
 
 
-def get_graalvm_home():
+def get_graalvm_home() -> Optional[str]:
     return _opts.graalvm_home
 
-def abort(status, *args):
+
+def abort(status: int, *args) -> None:
     if args:
         logging.fatal(*args)
     quit(status)
 
 
-def log_step(state, step, rvariant):
+def warn(*args) -> None:
+    logging.warning(*args)
+
+
+def log_step(state: str, step: str, rvariant: str) -> None:
     if not _opts.quiet:
         logging.info("{0} {1} with {2}".format(state, step, rvariant))
         log_timestamp()
 
 
-def log_timestamp():
+def log_timestamp() -> None:
     if not _opts.quiet:
         logging.info("timestamp: {0}".format(str(datetime.now())))
 
 
-def check_r_versions():
+def check_r_versions() -> None:
     '''
     Checks that FastR and GnuR have the same version.
     '''
@@ -165,7 +170,7 @@ def check_r_versions():
 
 VERY_VERBOSE = logging.DEBUG - 5
 
-def parse_arguments(argv, r_version_check=True):
+def parse_arguments(argv: List[str], r_version_check=True) -> List[str]:
     """
     Parses the given argument vector and stores the values of the arguments known by this script to appropriate globals.
     The unknown arguments are returned for further processing.
@@ -235,7 +240,7 @@ def parse_arguments(argv, r_version_check=True):
     return r_args
 
 
-def computeApiChecksum(includeDir):
+def computeApiChecksum(includeDir: str) -> str:
     """
     Computes a checksum of the header files found in the provided directory (recursively).
     The result is a SHA256 checksum (as string with hex digits) of all header files.
@@ -261,7 +266,7 @@ def computeApiChecksum(includeDir):
             if not os.path.islink(fileName) or os.path.exists(fileName):
                 raise e
 
-    hxdigest = m.hexdigest()
+    hxdigest = str(m.hexdigest())
     logging.debug("Computed API version checksum {0}".format(hxdigest))
     return hxdigest
 

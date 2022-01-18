@@ -35,30 +35,31 @@ and tests, namely 'lib.install.packages.{fastr,gnur}' and 'test.{fastr,gnur}' (s
 from os.path import relpath
 import shutil, os, re
 
-import mx
 from .subproc import pkgtest_run
 from .output_filter import select_filters_for_package
 from .fuzzy_compare import fuzzy_compare
 from .util import *
+from typing import List, Optional, Any, Dict, Tuple, Union
+
 
 class RVM(object):
-    def __init__(self, rvm_id, name):
+    def __init__(self, rvm_id: str, name: str):
         self.id = rvm_id
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "RVM(id=%s, name=%s)" % (self.id, self.name)
     
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, RVM):
             return self.id == other.id
         return False
 
     @staticmethod
-    def create_dir(testdir):
+    def create_dir(testdir: str) -> str:
         shutil.rmtree(testdir, ignore_errors=True)
         # Note: The existence check still makes sense because 'shutil.rmtree' won't do anything if 'testdir' is a symlink.
         if not os.path.exists(testdir):
@@ -66,10 +67,10 @@ class RVM(object):
         return testdir
 
     @staticmethod
-    def get_default_testdir(suffix):
+    def get_default_testdir(suffix: str) -> str:
         return join(get_fastr_repo_dir(), 'test.' + suffix)
 
-    def get_testdir(self):
+    def get_testdir(self) -> str:
         '''Determines the path to the test output directory depending on the 
         provided R runtime and considering the arguments.
         '''
@@ -81,8 +82,8 @@ class RVM(object):
         # default:
         return RVM.get_default_testdir(self.id)
 
-    def create_testdir(self):
-        'Actually creates the testdir on the file system.'
+    def create_testdir(self) -> str:
+        ''' Actually creates the testdir on the file system.'''
         return RVM.create_dir(self.get_testdir())
 
 
@@ -90,7 +91,7 @@ RVM_FASTR = RVM('fastr', 'FastR')
 RVM_GNUR = RVM('gnur', 'GnuR')
 
 
-def _create_tmpdir(rvm):
+def _create_tmpdir(rvm: RVM) -> str:
     if not isinstance(rvm, RVM):
         raise TypeError("Expected object of type 'RVM' but got '%s'" % str(type(rvm)))
     tmp_dir = os.environ.pop("TMPDIR", None)
@@ -103,7 +104,7 @@ def _create_tmpdir(rvm):
     return install_tmp
 
 
-def _create_libinstall(rvm, no_install):
+def _create_libinstall(rvm: RVM, no_install: bool) -> Tuple[str, str]:
     '''
     Create lib.install.packages.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
     If no_install is True, assume lib.install exists and is populated (development)
@@ -126,7 +127,7 @@ def _create_libinstall(rvm, no_install):
     return libinstall, install_tmp
 
 
-def _find_subdir(root, name, fatalIfMissing=True):
+def _find_subdir(root: str, name, fatalIfMissing=True) -> str:
     for dirpath, dnames, _ in os.walk(root):
         for f in dnames:
             if f == name:
@@ -135,31 +136,31 @@ def _find_subdir(root, name, fatalIfMissing=True):
         raise Exception(name)
 
 
-def _packages_test_project():
+def _packages_test_project() -> str:
     return 'com.oracle.truffle.r.test.packages'
 
 
-def _packages_test_project_dir():
+def _packages_test_project_dir() -> str:
     return _find_subdir(get_fastr_repo_dir(), _packages_test_project())
 
 
-def _ensure_R_on_PATH(env, bindir):
+def _ensure_R_on_PATH(env: Dict[str, str], bindir: str) -> None:
     '''
     Some packages (e.g. stringi) require that 'R' is actually on the PATH
     '''
     env['PATH'] = join(bindir) + os.pathsep + os.environ['PATH']
 
 
-def _installpkgs_script():
+def _installpkgs_script() -> str:
     packages_test = _packages_test_project_dir()
     return join(packages_test, 'r', 'install.packages.R')
 
 
-def _get_ignore_suggests_file():
+def _get_ignore_suggests_file() -> str:
     return join(_packages_test_project_dir(), 'ignore.suggests')
 
 
-def commit_fastr_builtins():
+def commit_fastr_builtins() -> int:
     '''
     There are some FastR builtins which we also want to use in GnuR (i.e. 'install.fastr.packages').
     This function deparses these functions and writes them into a file which is then loaded by GnuR.
@@ -170,7 +171,7 @@ def commit_fastr_builtins():
     return pkgtest_run(cmd_line)
 
 
-def _run_install_packages_script(rscript_path, args, kwargs):
+def _run_install_packages_script(rscript_path: str, args: List[str], **kwargs) -> int:
     """
     Runs 'install.packages.R' script with the provided 'Rscript' binary.
     """
@@ -190,23 +191,24 @@ def _run_install_packages_script(rscript_path, args, kwargs):
     return pkgtest_run(cmd_line, nonZeroIsFatal=kwargs.get("nonZeroIsFatal", True), out=out, err=err, env=env)
 
 
-def _fastr_installpkgs(args, **kwargs):
+def _fastr_installpkgs(args: List[str], **kwargs) -> int:
     """
     Runs 'install.packages.R' script with fastr.
     """
     if "FASTR_WORKING_DIR" in os.environ:
-        env["TMPDIR"] = os.environ["FASTR_WORKING_DIR"]
-    return _run_install_packages_script(get_fastr_rscript(), args, kwargs)
+        kwargs["env"]["TMPDIR"] = os.environ["FASTR_WORKING_DIR"]
+    return _run_install_packages_script(get_fastr_rscript(), args, **kwargs)
 
 
-def _gnur_installpkgs(args, **kwargs):
+def _gnur_installpkgs(args: List[str], **kwargs) -> int:
     """
     Runs 'install.packages.R' script with GnuR.
     """
-    return _run_install_packages_script(get_gnur_rscript(), args, kwargs)
+    return _run_install_packages_script(get_gnur_rscript(), args, **kwargs)
 
 
-def prepare_r_install_arguments(args):
+def prepare_r_install_arguments(args: List[str]) -> List[str]:
+    """ Called just from pkgtest """
     # also propagate verbosity flag
     verbosity_level = get_opts().verbose
     if verbosity_level == 1:
@@ -247,7 +249,8 @@ def prepare_r_install_arguments(args):
     return args
 
 
-def prepare_r_install_and_test_arguments(args):
+def prepare_r_install_and_test_arguments(args: List[str]) -> List[str]:
+    """ Called from pkgtest """
     args = prepare_r_install_arguments(args)
     # install and test the packages, unless just listing versions
     if not '--list-versions' in args:
@@ -258,7 +261,7 @@ def prepare_r_install_and_test_arguments(args):
     return args
 
 
-def pkgtest(args):
+def pkgtest(args: List[str]) -> int:
     '''
     Package installation/testing.
 
@@ -308,8 +311,6 @@ def pkgtest(args):
     no_install = '--no-install' in common_install_args
     fastr_libinstall, fastr_install_tmp = _create_libinstall(RVM_FASTR, no_install)
     gnur_libinstall, gnur_install_tmp = _create_libinstall(RVM_GNUR, no_install)
-
-    common_install_args = list(common_install_args)
 
     env = os.environ.copy()
     env["TMPDIR"] = fastr_install_tmp
@@ -367,7 +368,7 @@ def pkgtest(args):
     return rc
 
 
-def _set_pkg_cache_api_version(arg_list, include_dir):
+def _set_pkg_cache_api_version(arg_list: List[str], include_dir: str) -> List[str]:
     '''
     Looks for argument '--cache-pkgs' and appends the native API version to the value list of this argument.
     '''
@@ -387,18 +388,17 @@ def _set_pkg_cache_api_version(arg_list, include_dir):
 
 class OutputCapture:
     def __init__(self):
-        self.install_data = None
-        self.pkg = None
-        self.mode = None
+        self.install_data: Dict[str, str] = dict()
+        self.pkg: Optional[str] = None
+        self.mode: Optional[str] = None
         self.start_install_pattern = re.compile(r"^BEGIN processing:\s*(?P<package>[a-zA-Z0-9.-]+)")
         self.test_pattern = re.compile(r"^(?P<status>BEGIN|END) testing:\s*(?P<package>[a-zA-Z0-9.-]+)")
         self.time_pattern = re.compile(r"^TEST_TIME:\s*(?P<package>[a-zA-Z0-9.-]+) (?P<time>[0-9.-]+)")
         self.status_pattern = re.compile(r"^(?P<package>[a-zA-Z0-9.-]+):\s*(?P<status>OK|FAILED)")
-        self.install_data = dict()
-        self.install_status = dict()
-        self.test_info = dict()
+        self.install_status: Dict[str, bool] = dict()
+        self.test_info: Dict[str, "PkgTestStatus"] = dict()
 
-    def __call__(self, data):
+    def __call__(self, data: str) -> None:
         # The logger is always appending a newline at the end but we want to avoid double newlines.
         logging.info('subprocess output: ' + data[:-1] if data.endswith('\n') else data)
         if data == "BEGIN package installation\n":
@@ -450,17 +450,17 @@ class TestStatus(object):
         self.status = "UNKNOWN"
         self.test_time = 0.0
 
-    def set_status_indeterminate(self):
+    def set_status_indeterminate(self) -> None:
         self.status = "INDETERMINATE"
         self.test_time = -1.0
 
-    def is_status_indeterminate(self):
+    def is_status_indeterminate(self) -> bool:
         if self.status == "INDETERMINATE":
             assert self.test_time == -1.0
             return True
         return False
 
-    def set_status_code(self, new_status):
+    def set_status_code(self, new_status: str) -> None:
         if new_status == "INDETERMINATE":
             assert self.status in ["OK", "FAILED", "INDETERMINATE", "UNKNOWN"]
             self.set_status_indeterminate()
@@ -468,7 +468,9 @@ class TestStatus(object):
             self.status = "FAILED"
         elif new_status == "OK" and (self.status in ["OK", "UNKNOWN"]):
             self.status = "OK"
-        # any other transition is not possible
+        else:
+            # any other transition is not possible
+            raise Exception(f"Transition from {self.status} to {new_status} should not be possible")
 
 
 class TestFileStatus(TestStatus):
@@ -479,12 +481,14 @@ class TestFileStatus(TestStatus):
     had a .fail extension.
     '''
 
-    def __init__(self, test_status, status, abspath):
+    def __init__(self, test_status: "PkgTestStatus", status: str, abspath: str):
         super(TestFileStatus, self).__init__()
 
         self.test_status = test_status
         self.status = status
         self.abspath = abspath
+        # ok, skipped, failed
+        self.report: Tuple[int, int, int] = (-1, -1, -1)
         if status == "OK":
             # At this point, status == "OK" means that we had no '.fail' output file and we will investigate the single
             # test cases. So, initially we claim the test was skipped because if GnuR failed on the test, we state that
@@ -495,23 +499,22 @@ class TestFileStatus(TestStatus):
         else:
             raise ValueError('Invalid initial test file status: %s (allowed: "OK", "FAILED")' % status)
 
-    def set_status_code(self, new_status):
+    def set_status_code(self, new_status: str) -> None:
         super(TestFileStatus, self).set_status_code(new_status)
         self.test_status.set_status_code(new_status)
 
-    def set_report(self, ok, skipped, failed):
+    def set_report(self, ok: int, skipped: int, failed: int) -> None:
         self.report = ok, skipped, failed
 
-    def get_report(self):
+    def get_report(self) -> Tuple[int, int, int]:
         if self.is_status_indeterminate():
             ok, skipped, failed = self.report
             return ok, 0, skipped + failed
         else:
             return self.report
 
-    def __str__(self):
-        return "Test Status:\n%s (time: %s s)" % (self.status, self.test_time)
-
+    def __str__(self) -> str:
+        return f"Test Status:\n{self.status} (time: {str(self.test_time)} s)"
 
 
 class PkgTestStatus(TestStatus):
@@ -523,13 +526,13 @@ class PkgTestStatus(TestStatus):
 
     def __init__(self):
         super(PkgTestStatus, self).__init__()
-        self.testfile_outputs = dict()
+        self.testfile_outputs: Dict[str, TestFileStatus] = dict()
 
-    def __str__(self):
-        return "Overall package test status:\n%s (time: %s s)" % (self.status, self.test_time)
+    def __str__(self) -> str:
+        return f"Overall package test status:\n{self.status} (time: {str(self.test_time)} s)"
 
 
-def _pkg_testdir(rvm, pkg_name):
+def _pkg_testdir(rvm: RVM, pkg_name: str) -> str:
     '''
     Returns the path to the package-specific test directory like "test.fastr/pkg_name"
     '''
@@ -538,10 +541,10 @@ def _pkg_testdir(rvm, pkg_name):
     return join(rvm.get_testdir(), pkg_name)
 
 
-def get_pkg_test_status(test_info, pkg_name):
+def get_pkg_test_status(test_info: Dict[str, PkgTestStatus], pkg_name: str) -> PkgTestStatus:
     '''
     Get the test status (class TestStatus) for a given package.
-    It is created on demand if does not exist yet.
+    It is created on demand if it does not exist yet.
     '''
     test_status = test_info.get(pkg_name)
     if not test_status:
@@ -550,9 +553,9 @@ def get_pkg_test_status(test_info, pkg_name):
     return test_status
 
 
-def _get_test_outputs(rvm, pkg_name, test_info):
+def _get_test_outputs(rvm: RVM, pkg_name: str, test_info: Dict[str, PkgTestStatus]) -> None:
     pkg_testdir = _pkg_testdir(rvm, pkg_name)
-    test_status = None
+    test_status: Optional[PkgTestStatus] = None
     for root, _, files in os.walk(pkg_testdir):
         if not test_status:
             test_status = get_pkg_test_status(test_info, pkg_name)
@@ -576,8 +579,8 @@ def _get_test_outputs(rvm, pkg_name, test_info):
             test_status.testfile_outputs[relfile] = TestFileStatus(test_status, status, absfile)
 
 
-def _args_to_forward_to_gnur(args):
-    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs', '--test-mode', "--ignore-suggests", "--verbose", "--very-verbose"]
+def _args_to_forward_to_gnur(args: List[str]) -> List[str]:
+    forwarded_args = ('--repos', '--run-mode', '--cache-pkgs', '--test-mode', "--ignore-suggests", "--verbose", "--very-verbose")
     result = []
     i = 0
     while i < len(args):
@@ -590,7 +593,7 @@ def _args_to_forward_to_gnur(args):
     return result
 
 
-def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
+def _gnur_install_test(forwarded_args: List[str], pkgs: List[str], gnur_libinstall: str, gnur_install_tmp: str) -> None:
     '''
     Install/test with GNU R  exactly those packages that installed correctly with FastR.
     N.B. That means that regardless of how the packages were specified to pkgtest
@@ -612,7 +615,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     env["TZDIR"] = "/usr/share/zoneinfo/"
 
     # forward any explicit args to pkgtest
-    args = list(forwarded_args)
+    args = forwarded_args
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
     args += ['--test-executable', get_gnur_rscript()]
@@ -624,26 +627,24 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     log_step('END', 'install/test', 'GnuR')
 
 
-def get_contents(files):
-    def robust_readlines(file):
+def get_contents(files: List[str]) -> str:
+    def robust_readlines(file: str) -> List[str]:
         try:
             with open(file) as f:
                 return f.readlines()
         except:
             return ["Could not read the contents of " + file]
 
-    # normalize to a list
-    list = [files] if isinstance(files, str) else files
     # print contents of all the files
-    '\n'.join([format_contents(x, robust_readlines(x)) for x in list])
+    return '\n'.join([format_contents(x, robust_readlines(x)) for x in files])
 
 
-def format_contents(filename, contents):
+def format_contents(filename: str, contents: List[str]) -> str:
     return '\n' + filename + "\n########\n{0}########".format('\n'.join(contents))
 
 
-def _set_test_status(fastr_test_info):
-    def _failed_outputs(outputs):
+def _set_test_status(fastr_test_info: Dict[str, PkgTestStatus]) -> None:
+    def _failed_outputs(outputs: Dict[str, TestFileStatus]) -> Union[bool, List[str]]:
         '''
         return False iff outputs has no .fail files
         '''
@@ -652,7 +653,7 @@ def _set_test_status(fastr_test_info):
                 return [testfile_status.abspath]
         return False
 
-    gnur_test_info = dict()
+    gnur_test_info: Dict[str, PkgTestStatus] = dict()
     for pkg, _ in fastr_test_info.items():
         _get_test_outputs(RVM_GNUR, pkg, gnur_test_info)
 
@@ -670,13 +671,13 @@ def _set_test_status(fastr_test_info):
             # installed on the system so GNUR can't run the tests.
             # Ideally this never happens.
             failed_outputs = [s + '.fail' for s in gnur_failed_outputs]
-            logging.info("{0}: GnuR test had .fail outputs: {1}\n{2}".format(pkg, str(failed_outputs), get_contents(failed_outputs)))
+            logging.info(f"{pkg}: GnuR test had .fail outputs: {str(failed_outputs)}\n{get_contents(failed_outputs)}")
 
         fastr_failed_outputs = _failed_outputs(fastr_outputs)
         if fastr_failed_outputs:
             # In addition to the similar comment for GNU R, this can happen
             # if, say, the JVM crashes (possible with native code packages)
-            logging.info("{0}: FastR test had .fail outputs: {1}\n{2}".format(pkg, str(fastr_failed_outputs), get_contents(fastr_failed_outputs)))
+            logging.info(f"{pkg}: FastR test had .fail outputs: {str(fastr_failed_outputs)}\n{get_contents(fastr_failed_outputs)}")
             fastr_test_status.set_status_code("FAILED")
 
         # Now for each successful GNU R output we compare content (assuming FastR didn't fail)
@@ -686,7 +687,7 @@ def _set_test_status(fastr_test_info):
             if not gnur_test_output_relpath in fastr_outputs:
                 # FastR crashed on this test
                 fastr_test_status.set_status_code("FAILED")
-                logging.info("{0}: FastR is missing output file: {1}".format(pkg, gnur_test_output_relpath))
+                logging.info(f"{pkg}: FastR is missing output file: {gnur_test_output_relpath}")
                 continue
 
             # Get corresponding FastR test output file
@@ -704,10 +705,8 @@ def _set_test_status(fastr_test_info):
                 # "FAILED" since a test framework cannot produce ".fail" output files.
                 continue
 
-            gnur_content = None
             with open(gnur_testfile_status.abspath) as f:
                 gnur_content = f.readlines()
-            fastr_content = None
             with open(fastr_testfile_status.abspath) as f:
                 fastr_content = f.readlines()
 
@@ -805,14 +804,14 @@ def _set_test_status(fastr_test_info):
                 else:
                     logging.info("File {0} does not exist".format(test_output_file))
 
-
         with open(join(_pkg_testdir(RVM_FASTR, pkg), 'test_time'), 'w') as f:
             f.write(str(fastr_test_status.test_time))
 
         logging.info('END checking ' + pkg)
 
 
-def handle_output_file(test_output_file, test_output_file_lines):
+def handle_output_file(test_output_file: str, test_output_file_lines: List[str])\
+        -> Tuple[bool, Optional[int], Optional[int], Optional[int]]:
     """
     R package tests are usually distributed over several files. Each file can be interpreted as a test suite.
     This function parses the output file of all test suites and tries to detect if it used the testthat or RUnit.
@@ -840,20 +839,20 @@ def handle_output_file(test_output_file, test_output_file_lines):
     return (detected, ok, skipped, failed)
 
 
-def _is_testthat_result(test_output_file):
+def _is_testthat_result(test_output_file: str) -> bool:
     return os.path.basename(test_output_file) == "testthat.Rout"
 
 
-def _is_runit_result(lines):
+def _is_runit_result(lines: List[str]) -> bool:
     return any("RUNIT TEST PROTOCOL" in l for l in lines)
 
 
-def _parse_testthat_result(lines):
+def _parse_testthat_result(lines: List[str]) -> Tuple[int, int, int]:
     '''
     OK: 2 SKIPPED: 0 FAILED: 0
     '''
 
-    def _testthat_parse_part(part):
+    def _testthat_parse_part(part: str) -> int:
         '''
         parses a part like "OK: 2"
         '''
@@ -891,7 +890,7 @@ def _parse_testthat_result(lines):
         raise TestFrameworkResultException("Could not parse testthat summary: Line 'testthat results' not contained.")
 
 
-def _parse_runit_result(lines):
+def _parse_runit_result(lines: List[str]) -> Tuple[int, int, int]:
     '''
     RUNIT TEST PROTOCOL -- Thu Feb 08 10:54:42 2018
     ***********************************************
@@ -917,17 +916,16 @@ def _parse_runit_result(lines):
             "Could not parse testthat summary: Line 'RUNIT TEST PROTOCOL' not contained.")
 
 
-def installpkgs(args, **kwargs):
+def installpkgs(args: List[str], **kwargs):
     rargs = util.parse_arguments(args)
     return _fastr_installpkgs(rargs)
 
 
-def pkgtest_check(args):
+def pkgtest_check(args: List[str]) -> int:
     '''
     This function allows to do only the checking part on an existing test output
     (i.e. 'test.fastr' and 'test.gnur' directories).
     It will try to re-create
-    :param args:
     :return:
     '''
     parser = argparse.ArgumentParser(prog="pkgtest", description='FastR package testing.')
@@ -967,20 +965,21 @@ def pkgtest_check(args):
     pkg_name = _opts.pkg_name
     fastr_testdir = _pkg_testdir(RVM_FASTR, pkg_name)
     if not os.path.isdir(fastr_testdir):
-        print("test directory '%s' does not exist" % fastr_testdir)
+        print(f"test directory '{fastr_testdir}' does not exist")
         return 1
 
     gnur_testdir = _pkg_testdir(RVM_GNUR, pkg_name)
     if not os.path.isdir(gnur_testdir):
-        print("test directory '%s' does not exist" % gnur_testdir)
+        print(f"test directory '{gnur_testdir}' does not exist")
         return 1
 
-    fastr_test_info = dict()
+    fastr_test_info: Dict[str, PkgTestStatus] = dict()
     _get_test_outputs(RVM_FASTR, pkg_name, fastr_test_info)
-    return _set_test_status(fastr_test_info)
+    _set_test_status(fastr_test_info)
+    return 0
 
 
-def pkgtest_cmp(args):
+def pkgtest_cmp(args: List[str]) -> Tuple[int, int, int]:
     gnur_filename = args[0]
     fastr_filename = args[1]
     if len(args) >= 4:
@@ -989,9 +988,9 @@ def pkgtest_cmp(args):
     else:
         test_output_filters = None
         pkg_name = None
-    dump_preprocessed = args[4] if len(args) >= 5 else None
+    dump_preprocessed = args[4] if len(args) >= 5 else False
 
-    filters = select_filters_for_package(args[2], pkg_name) if len(args) >= 3 else None
+    filters = select_filters_for_package(args[2], pkg_name) if len(args) >= 3 else ()
 
     with open(gnur_filename) as f:
         gnur_content = f.readlines()
@@ -1001,11 +1000,11 @@ def pkgtest_cmp(args):
     return fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, filters, dump_preprocessed)
 
 
-def find_top100(args):
+def find_top100(args: List[str]) -> None:
     find_top(args + ["100"])
 
 
-def find_top(args):
+def find_top(args: List[str]) -> None:
     rargs = util.parse_arguments(['--use-installed-pkgs', '--find-top'] + args)
     n = args[-1]
     libinstall = join(get_fastr_repo_dir(), "top%s.tmp" % n)
@@ -1015,7 +1014,7 @@ def find_top(args):
     _fastr_installpkgs(rargs)
 
 
-def pkgcache(args):
+def pkgcache(args: List[str]) -> int:
     '''
     Explicitly install and cache packages without running tests.
 
@@ -1059,9 +1058,9 @@ def pkgcache(args):
 
     if _opts.print_api_checksum:
         if 'fastr' in _opts.vm:
-            print("fastr: " + str(computeApiChecksum(get_fastr_include_path())))
+            print("fastr: " + computeApiChecksum(get_fastr_include_path()))
         if 'gnur' in _opts.vm:
-            print("gnur: " + str(computeApiChecksum(get_gnur_include_path())))
+            print("gnur: " + computeApiChecksum(get_gnur_include_path()))
         return 0
 
     # now do the version check

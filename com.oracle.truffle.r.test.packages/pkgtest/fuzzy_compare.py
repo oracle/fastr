@@ -22,8 +22,13 @@
 #
 
 import logging
+from typing import List, Optional, Tuple, Set
 
-def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, custom_filters=None, dump_preprocessed=False):
+from pkgtest.output_filter import ContentFilter
+
+
+def fuzzy_compare(gnur_content: List[str], fastr_content: List[str], gnur_filename: str, fastr_filename: str,
+                  custom_filters: List[ContentFilter]=(), dump_preprocessed=False) -> Tuple[int, int, int]:
     """
     Compares the test output of GnuR and FastR by ignoring implementation-specific differences like header, error,
     and warning messages.
@@ -33,8 +38,8 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
     output, respectively.
     """
     logging.debug("Using custom filters:\n" + str(custom_filters))
-    gnur_content = _preprocess_content(gnur_content, custom_filters)
-    fastr_content = _preprocess_content(fastr_content, custom_filters)
+    gnur_content: List[str] = _preprocess_content(gnur_content, custom_filters)
+    fastr_content: List[str] = _preprocess_content(fastr_content, custom_filters)
     if dump_preprocessed:
         with open(gnur_filename + '.preprocessed', 'w') as f:
             f.writelines(gnur_content)
@@ -58,8 +63,8 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
     overall_result = 0
     # the local result, i.e., for the current statement
     result = 0
-    statements_passed = set()
-    statements_failed = set()
+    statements_passed: Set[int] = set()
+    statements_failed: Set[int] = set()
 
     # the first line must start with the prompt, so capture it
     gnur_prompt = _capture_prompt(gnur_content, gnur_i)
@@ -82,7 +87,7 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
         sync = False
         if gnur_line != fastr_line:
             if fastr_line.startswith('Warning') and 'FastR does not support graphics package' in fastr_content[
-                fastr_i + 1]:
+                    fastr_i + 1]:
                 # ignore warning about FastR not supporting the graphics package
                 fastr_i = fastr_i + 2
                 if fastr_content[fastr_i].startswith('NULL') and not gnur_line.startswith('NULL'):
@@ -190,7 +195,7 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
     return overall_result, len(statements_passed), len(statements_failed)
 
 
-def _get_next_line(prompt, content, content_len, line_idx):
+def _get_next_line(prompt: Optional[str], content: List[str], content_len: int, line_idx: int) -> Tuple[Optional[str], int]:
     i = line_idx
     while i < content_len:
         line = content[i]
@@ -203,12 +208,12 @@ def _get_next_line(prompt, content, content_len, line_idx):
     return None, i
 
 
-def _ignore_whitespace(gnur_line, fastr_line):
+def _ignore_whitespace(gnur_line: str, fastr_line: str) -> bool:
     translate_table = {ord(' '): None, ord('\t'): None}
     return gnur_line.translate(translate_table) == fastr_line.translate(translate_table)
 
 
-def _capture_prompt(lines, idx):
+def _capture_prompt(lines: List[str], idx: int) -> Optional[str]:
     # The prompt can be anything, so it is hard to determine it in general.
     # We will therefore just consider the default prompt.
     default_prompt = "> "
@@ -216,7 +221,8 @@ def _capture_prompt(lines, idx):
         return default_prompt
     return None
 
-def _find_start(content):
+
+def _find_start(content: List[str]) -> Optional[int]:
     marker = "Type 'q()' to quit R."
     for i in range(len(content)):
         line = content[i]
@@ -231,7 +237,7 @@ def _find_start(content):
     return None
 
 
-def _find_end(content):
+def _find_end(content: List[str]) -> int:
     marker = "Time elapsed:"
     for i in range(len(content)):
         line = content[i]
@@ -241,7 +247,7 @@ def _find_end(content):
     return len(content)
 
 
-def _find_line(gnur_line, fastr_content, fastr_i):
+def _find_line(gnur_line: str, fastr_content: List[str], fastr_i: int) -> int:
     '''
     Search forward in fastr_content from fastr_i searching for a match with gnur_line.
     Do not match empty lines!
@@ -255,14 +261,13 @@ def _find_line(gnur_line, fastr_content, fastr_i):
         fastr_i = fastr_i + 1
     return -1
 
-def _is_ignored_function(fun_name, gnur_content, gnur_stmt, fastr_content, fastr_stmt):
+
+def _is_ignored_function(fun_name: str, gnur_content: List[str], gnur_stmt: int, fastr_content: List[str], fastr_stmt: int) -> bool:
     return gnur_stmt != -1 and fun_name in gnur_content[gnur_stmt] and fastr_stmt != -1 and fun_name in fastr_content[
         fastr_stmt]
 
 
-
-
-def _is_statement_begin(captured_prompt, line):
+def _is_statement_begin(captured_prompt: Optional[str], line: Optional[str]) -> bool:
     if captured_prompt is None:
         return False
     if line is not None:
@@ -271,7 +276,7 @@ def _is_statement_begin(captured_prompt, line):
     return False
 
 
-def _preprocess_content(output, custom_filters):
+def _preprocess_content(output: List[str], custom_filters: List[ContentFilter]) -> List[str]:
     # load file with replacement actions
     if custom_filters:
         for f in custom_filters:
