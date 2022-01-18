@@ -834,8 +834,9 @@ def _pkgtest_args(args):
 
 
 def pkgtest(args, **kwargs):
+    """ See 'mx r-pkgtest --help' """
     full_args = _pkgtest_args(args)
-    mx.logv(["pkgtest"] + full_args)
+    mx.logv(["r-pkgtest"] + full_args)
     return pkgtest_load().pkgtest(full_args)
 
 
@@ -867,6 +868,7 @@ def r_pkgtest_analyze(args, **kwargs):
 
 
 def pkgcache(args, **kwargs):
+    """ See 'mx r-pkgcache --help' """
     full_args = _pkgtest_args(args)
     mx.logv(["r-pkgcache"] + full_args)
     return pkgtest_load().pkgcache(full_args)
@@ -995,11 +997,11 @@ _commands = {
     'rembed' : [rembed, '[options]'],
     'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
-    'pkgtest' : [pkgtest, ['options']],
+    'r-pkgtest' : [pkgtest, '[options]'],
     'r-pkgtest-analyze' : [r_pkgtest_analyze, ['options']],
     'r-findtop100' : [find_top100, ['options']],
     'r-findtop' : [find_top, ['options']],
-    'r-pkgcache' : [pkgcache, ['options']],
+    'r-pkgcache' : [pkgcache, '[options]'],
     'installpkgs' : [installpkgs, '[options]'],
     'edinclude' : [mx_fastr_edinclude.edinclude, '[]'],
     'gnu-r' : [gnu_r, '[]'],

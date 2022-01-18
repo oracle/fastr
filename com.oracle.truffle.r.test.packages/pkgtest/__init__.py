@@ -255,6 +255,11 @@ def prepare_r_install_arguments(args: List[str]) -> List[str]:
     # add path to file containing suggests packages that are safe to ignore
     args += ["--ignore-suggests", _get_ignore_suggests_file()]
 
+    if "--pkg-pattern" not in args and get_opts().pattern:
+        args += ["--pkg-pattern", get_opts().pattern]
+    if "--pkg-filelist" not in args and get_opts().filelist:
+        args += ["--pkg-filelist", get_opts().filelist]
+
     return args
 
 
@@ -275,10 +280,6 @@ def pkgtest(args: List[str]) -> int:
     Package installation/testing.
 
     Options:
-        --quiet                  Reduce output during testing.
-        --verbose, -v            Verbose output.
-        --very-verbose, -V       Very verbose output.
-        --dry-run                Do not run anything, just print what would be run.
         --cache-pkgs dir=DIR     Use package cache in directory DIR (will be created if not existing).
                                  Optional parameters:
                                      size=N             Maximum number of different API versions in the cache.
@@ -287,21 +288,8 @@ def pkgtest(args: List[str]) -> int:
                                  Example: '--cache-pkgs dir=DIR,size=N,sync=true,vm=fastr'
                                  Can be set by FASTR_PKGS_CACHE_OPT environment variable.
         --no-install             Do not install any packages (can only test installed packages).
-        --repos REPO_NAME[=URL]  List of repositories to use for the package installation.
-                                 Comma separated list of name=value pairs. The names 'CRAN', 'BIOC'
-                                 and 'FASTR' are understood and have default values.
-                                 Example: '--repos FASTR=file://$HOME/fastr_repo,CRAN=file://$HOME/minicran'
-                                 Can be set by FASTR_REPOS environment variable
         --list-versions          List packages to be installed/tested without installing/testing them.
-        --pkg-pattern PATTERN    A regular expression to match packages.
         --print-install-status   Prints status of the installed packages.
-        --fastr-home             (Optional) The FastR standalone repo home directory. Fetched by the script.
-        --gnur-home              (Optional) The GnuR home directory. Fetched by the script.
-        --graalvm-home           The GraalVM root directory (optional)
-        --fastr-testdir          (Optional) FastR test result directory (default: 'test.fastr').
-        --gnur-testdir           (Optional) GnuR test result directory (default: 'test.gnur').
-        --dump-preprocessed      Dump the preprocessed output files to the current working directory.
-        -l, --log-file           Log file name (default: 'FASTR_TESTDIR/pkgtest.log')
 
     Return codes:
         0: success
@@ -310,7 +298,15 @@ def pkgtest(args: List[str]) -> int:
         3: install & test fail
     '''
     if '-h' in args or '--help' in args:
-        print(f'Usage: mx pkgtest [options]')
+        print('==============================================')
+        print('Common arguments for both r-pkgtest and r-pkgcache:')
+        print('==============================================')
+        common_arg_parser = get_common_arg_parser()
+        common_arg_parser.prog = "mx r-pkgtest"
+        common_arg_parser.print_help()
+        print('\n==================================')
+        print(f'Additional help for r-pkgtest:')
+        print('==================================')
         print(pkgtest.__doc__)
         return 0
     unknown_args = parse_arguments(args)
@@ -589,7 +585,7 @@ def _get_test_outputs(rvm: RVM, pkg_name: str, test_info: Dict[str, PkgTestStatu
 
 
 def _args_to_forward_to_gnur(args: List[str]) -> List[str]:
-    forwarded_args_with_value = ('--repos', '--run-mode', '--cache-pkgs', '--test-mode', '--ignore-suggests')
+    forwarded_args_with_value = ('--repos', '--run-mode', '--cache-pkgs', '--test-mode', '--ignore-suggests', '--pkg-pattern', '--pkg-filelist')
     forwarded_args_without_value = ('--verbose', '--very-verbose')
     result = []
     i = 0
@@ -605,11 +601,19 @@ def _args_to_forward_to_gnur(args: List[str]) -> List[str]:
     return result
 
 
+def _remove_arg_with_value(argname: str, args: List[str]) -> List[str]:
+    for i in range(len(args)):
+        if args[i] == argname:
+            assert i < len(args), f"There should be some value for the argument {argname}"
+            return args[:i] + args[i+2:]
+    return args
+
+
 def _gnur_install_test(forwarded_args: List[str], pkgs: List[str], gnur_libinstall: str, gnur_install_tmp: str) -> None:
     '''
     Install/test with GNU R  exactly those packages that installed correctly with FastR.
     N.B. That means that regardless of how the packages were specified to pkgtest
-    we always use a --pkg-filelist' arg to GNU R
+    we always use a '--pkg-filelist' arg to GNU R
     '''
     if len(pkgs) == 0:
         logging.info('No packages to install/test on GNU-R (install/test failed for all packages on FastR?)')
@@ -628,6 +632,9 @@ def _gnur_install_test(forwarded_args: List[str], pkgs: List[str], gnur_libinsta
 
     # forward any explicit args to pkgtest
     args = forwarded_args
+    # Remove both --pkg-filelist and --pkg-pattern from args as they are mutually exclusive
+    args = _remove_arg_with_value('--pkg-filelist', args)
+    args = _remove_arg_with_value('--pkg-pattern', args)
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
     args += ['--test-executable', get_gnur_rscript()]
@@ -1034,38 +1041,40 @@ def pkgcache(args: List[str]) -> int:
         --cache-dir DIR                     Use package cache in directory DIR (will be created if not existing).
                                             Can be set via FASTR_PKGS_CACHE_OPT env var.
         --library [fastr=DIR][[,]gnur=DIR]  The library folders to install to.
-        --pkg-filelist FILE                 A file containing a list of packages (cannot be combined with '--pkg-pattern').
-        --pkg-pattern PATTERN               A pattern for packages to cache (cannot be combined with '--pkg-filelist').
-        --repos REPO_NAME[=URL][,...]       Repos to install from (default: SNAPSHOT).
-                                            Can be set via FASTR_REPOS env var.
+        --vm [fastr|gnur]                   Whether to install the packages on fastr or on gnur.
+                                            Defaults to both.
         --sync                              Synchronize access to the package cache.
                                             Can be set via FASTR_PKGS_CACHE_OPT env var.
-        --verbose, -v                       Verbose output.
-        --very-verbose, -V                  Very verbose output.
-                                            Can be set via FASTR_PKGS_CACHE_OPT env var.
-        --quiet                             Reduce output during testing.
-        --print-api-checksum                Compute and print the API checksum for the specified VMs.
+        --print-api-checksum                Compute and print the API checksum for the specified VMs and exit.
+        --install-opts                      R specific install options
 
     Return codes:
         0: success
         1: fail
     '''
+    if '-h' in args or '--help' in args:
+        print('==============================================')
+        print('Common arguments for both pkgtest and pkgcache:')
+        print('==============================================')
+        common_arg_parser = get_common_arg_parser()
+        common_arg_parser.prog = "mx pkgcache"
+        common_arg_parser.print_help()
+        print('\n==================================')
+        print(f'Additional help for r-pkgcache:')
+        print('==================================')
+        print(pkgcache.__doc__)
+        return 0
     unknown_args = parse_arguments(args, r_version_check=False)
 
     parser = argparse.ArgumentParser(prog="mx r-pkgcache")
-    parser.add_argument('--vm', help='fastr|gnur', default=[])
+    parser.add_argument('--vm', help='fastr|gnur', default=['fastr', 'gnur'])
     parser.add_argument('--print-api-checksum', action="store_true", dest="print_api_checksum",
                         help='Compute and print the API checksum for the specified VMs.')
     parser.add_argument('--cache-dir', metavar='DIR', dest="cache_dir", type=str, default=None,
-                        help='The package cache directory. Can be set via FASTR_PKGS_CACHE_OPT env var.')
+                        help='The package cache directory. Mutually exclusive with FASTR_PKGS_CACHE_OPT env var.')
     parser.add_argument('--library', metavar='SPEC', type=str, default="",
                         help='The library folders to install to (must be specified for each used VM in form "<vm_name>=<dir>").')
-    parser.add_argument('--sync', action="store_true", help='Synchronize access to the package cache. Can be set via FASTR_PKGS_CACHE_OPT env var')
-    pkg_spec_group = parser.add_mutually_exclusive_group()
-    pkg_spec_group.add_argument('--pkg-filelist', metavar='FILE', dest="filelist", type=str, default=None,
-                        help='File contaning a list of files to install and cache.')
-    pkg_spec_group.add_argument('--pkg-pattern', metavar='PATTERN', dest="pattern", type=str, default=None,
-                        help='Pattern of packages to install and cache.')
+    parser.add_argument('--sync', action="store_true", help='Synchronize access to the package cache. Mutually exclusive with FASTR_PKGS_CACHE_OPT env var')
     parser.add_argument('--install-opts', metavar="INSTALL_OPTS", dest="install_opts", help='R install options', default=None)
 
     from . import util
@@ -1081,14 +1090,19 @@ def pkgcache(args: List[str]) -> int:
     # now do the version check
     util.check_r_versions()
 
-    pkgcache_options = ["dir={}".format(_opts.cache_dir), "ignore=base"]
-    if _opts.sync:
-        pkgcache_options += ["sync=TRUE"]
+    install_args = []
 
-    if "FASTR_PKGS_CACHE_OPT" not in os.environ:
-        install_args = ["--cache-pkgs", ",".join(pkgcache_options)]
+    if "FASTR_PKGS_CACHE_OPT" in os.environ:
+        if _opts.sync or _opts.cache_dir:
+            abort(1, "If 'FASTR_PKGS_CACHE_OPT' env var is set, neither of --sync or --cache-dir can be set")
+        logging.info("Taking package cache settins from 'FASTR_PKGS_CACHE_OPT' env var")
+        install_args += ["--cache-pkgs", os.environ["FASTR_PKGS_CACHE_OPT"]]
     else:
-        install_args = ["--cache-pkgs", os.environ["FASTR_PKGS_CACHE_OPT"]]
+        pkgcache_options = ["dir={}".format(_opts.cache_dir), "ignore=base"]
+        if _opts.sync:
+            pkgcache_options += ["sync=TRUE"]
+        install_args += ["--cache-pkgs", ",".join(pkgcache_options)]
+
     if _opts.install_opts:
         install_args += ["--install-opts", _opts.install_opts]
     if _opts.filelist:

@@ -36,10 +36,43 @@ fastr_default_testdir = 'test.fastr'
 gnur_default_testdir = 'test.gnur'
 
 _opts = argparse.Namespace()
+_common_arg_parser = argparse.ArgumentParser()
+_common_arg_parser.add_argument('--fastr-home', metavar='FASTR_HOME', dest="fastr_home", type=str, default=None,
+                    required=True, help='The FastR standalone repo home directory (required).')
+_common_arg_parser.add_argument('--gnur-home', metavar="GNUR_HOME", dest="gnur_home", default=None, required=True,
+                    help='The GnuR home directory (required).')
+_common_arg_parser.add_argument('--graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
+                    help='The GraalVM root directory (optional).')
+_common_arg_parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,
+                    help='Repos to install packages from. Can be set by "FASTR_REPOS" env var. '
+                         'Example: "--repos FASTR=file://$HOME/fastr_repo,CRAN=file://$HOME/minicran"')
+_common_arg_parser.add_argument('-v', '--verbose', dest="verbose", action="store_const", const=1, default=0,
+                    help='Do verbose logging.')
+_common_arg_parser.add_argument('-V', '--very-verbose', dest="verbose", action="store_const", const=2,
+                    help='Do verbose logging.')
+_common_arg_parser.add_argument('--dump-preprocessed', dest="dump_preprocessed", action="store_true",
+                    help='Dump processed output files where replacement filters have been applied.')
+_common_arg_parser.add_argument('-q', '--quiet', dest="quiet", action="store_true",
+                    help='Do verbose logging.')
+_common_arg_parser.add_argument('--fastr-testdir', metavar="FASTR_TESTDIR", dest="fastr_testdir", default=fastr_default_testdir,
+                    help='FastR test result directory (default: "test.fastr").')
+_common_arg_parser.add_argument('--gnur-testdir', metavar="GNUR_TESTDIR", dest="gnur_testdir", default=gnur_default_testdir,
+                    help='GnuR test result directory (default: "test.gnur").')
+_common_arg_parser.add_argument('-l', '--log-file', dest="log_file", default="pkgtest.log",
+                    help='Log file name (default: "FASTR_TESTDIR/pkgtest.log").')
+pkg_spec_group = _common_arg_parser.add_mutually_exclusive_group()
+pkg_spec_group.add_argument('--pkg-pattern', metavar='PATTERN', dest='pattern', type=str, default=None,
+                            help='Pattern of packages to install and potentially test')
+pkg_spec_group.add_argument('--pkg-filelist', metavar='FILE', dest='filelist', type=str, default=None,
+                            help='File containing a list of packages to install and potentially test')
 
 
 def get_opts() -> argparse.Namespace:
     return _opts
+
+
+def get_common_arg_parser() -> argparse.ArgumentParser:
+    return _common_arg_parser
 
 
 def get_fastr_repo_dir() -> str:
@@ -173,34 +206,11 @@ VERY_VERBOSE = logging.DEBUG - 5
 def parse_arguments(argv: List[str], r_version_check=True) -> List[str]:
     """
     Parses the given argument vector and stores the values of the arguments known by this script to appropriate globals.
+    This represents the common arguments for both pkgtest and pkgcache.
     The unknown arguments are returned for further processing.
     """
-    parser = argparse.ArgumentParser(prog="pkgtest", description='FastR package testing.')
-    parser.add_argument('--fastr-home', metavar='FASTR_HOME', dest="fastr_home", type=str, default=None,
-                        required=True, help='The FastR standalone repo home directory (required).')
-    parser.add_argument('--gnur-home', metavar="GNUR_HOME", dest="gnur_home", default=None, required=True,
-                        help='The GnuR home directory (required).')
-    parser.add_argument('--graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
-                        help='The GraalVM root directory (optional).')
-    parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,
-                        help='Repos to install packages from. Can be set by "FASTR_REPOS" env var.')
-    parser.add_argument('-v', '--verbose', dest="verbose", action="store_const", const=1, default=0,
-                        help='Do verbose logging.')
-    parser.add_argument('-V', '--very-verbose', dest="verbose", action="store_const", const=2,
-                        help='Do verbose logging.')
-    parser.add_argument('--dump-preprocessed', dest="dump_preprocessed", action="store_true",
-                        help='Dump processed output files where replacement filters have been applied.')
-    parser.add_argument('-q', '--quiet', dest="quiet", action="store_true",
-                        help='Do verbose logging.')
-    parser.add_argument('--fastr-testdir', metavar="FASTR_TESTDIR", dest="fastr_testdir", default=fastr_default_testdir,
-                        help='FastR test result directory (default: "test.fastr").')
-    parser.add_argument('--gnur-testdir', metavar="GNUR_TESTDIR", dest="gnur_testdir", default=gnur_default_testdir,
-                        help='GnuR test result directory (default: "test.gnur").')
-    parser.add_argument('-l', '--log-file', dest="log_file", default="pkgtest.log",
-                        help='Log file name (default: "FASTR_TESTDIR/pkgtest.log").')
-
     global _opts
-    _opts, r_args = parser.parse_known_args(args=argv)
+    _opts, r_args = _common_arg_parser.parse_known_args(args=argv)
 
     if not _opts.repos and os.environ['FASTR_REPOS']:
         _opts.repos = os.environ['FASTR_REPOS']
