@@ -814,10 +814,6 @@ def _pkgtest_args(args):
     elif 'GRAALVM_FASTR' in os.environ:
         graalvm_home = os.environ['GRAALVM_FASTR']
     pkgtest_args = []
-    if 'FASTR_PKGS_CACHE_OPT' in os.environ:
-        pkgtest_args += ['--cache-pkgs', os.environ['FASTR_PKGS_CACHE_OPT']]
-    else:
-        mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
     pkgtest_args += ['--very-verbose']
     pkgtest_args += ["--fastr-home"]
     pkgtest_args += [_fastr_suite.dir]

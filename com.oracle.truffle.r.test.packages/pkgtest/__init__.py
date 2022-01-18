@@ -215,7 +215,16 @@ def prepare_r_install_arguments(args: List[str]) -> List[str]:
         args += ["--verbose"]
     elif verbosity_level > 1:
         args += ["--very-verbose"]
-    
+
+    # Set pkg cache from env var if possible
+    if "--cache-pkgs" not in args and "FASTR_PKGS_CACHE_OPT" in os.environ:
+        args += ["--cache-pkgs", os.environ["FASTR_PKGS_CACHE_OPT"]]
+    elif "--cache-pkgs" in args and "FASTR_PKGS_CACHE_OPT" in os.environ:
+        abort(1, "Both --cache-pkgs option and FASTR_PKGS_CACHE_OPT env var set. Set just one of them.")
+    elif "--cache-pkgs" not in args:
+        warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT or use "
+             "--cache-pkgs option. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
+
     # install and test the packages, unless just listing versions
     if not '--list-versions' in args:
         args += ['--run-tests']
@@ -580,15 +589,18 @@ def _get_test_outputs(rvm: RVM, pkg_name: str, test_info: Dict[str, PkgTestStatu
 
 
 def _args_to_forward_to_gnur(args: List[str]) -> List[str]:
-    forwarded_args = ('--repos', '--run-mode', '--cache-pkgs', '--test-mode', "--ignore-suggests", "--verbose", "--very-verbose")
+    forwarded_args_with_value = ('--repos', '--run-mode', '--cache-pkgs', '--test-mode', '--ignore-suggests')
+    forwarded_args_without_value = ('--verbose', '--very-verbose')
     result = []
     i = 0
     while i < len(args):
         arg = args[i]
-        if arg in forwarded_args:
+        if arg in forwarded_args_with_value:
             result.append(arg)
             i = i + 1
             result.append(args[i])
+        elif arg in forwarded_args_without_value:
+            result.append(arg)
         i = i + 1
     return result
 
@@ -1020,14 +1032,17 @@ def pkgcache(args: List[str]) -> int:
 
     Options:
         --cache-dir DIR                     Use package cache in directory DIR (will be created if not existing).
+                                            Can be set via FASTR_PKGS_CACHE_OPT env var.
         --library [fastr=DIR][[,]gnur=DIR]  The library folders to install to.
         --pkg-filelist FILE                 A file containing a list of packages (cannot be combined with '--pkg-pattern').
         --pkg-pattern PATTERN               A pattern for packages to cache (cannot be combined with '--pkg-filelist').
         --repos REPO_NAME[=URL][,...]       Repos to install from (default: SNAPSHOT).
+                                            Can be set via FASTR_REPOS env var.
         --sync                              Synchronize access to the package cache.
+                                            Can be set via FASTR_PKGS_CACHE_OPT env var.
         --verbose, -v                       Verbose output.
         --very-verbose, -V                  Very verbose output.
-        --vm [fastr[,gnur]]                 Install and cache with FastR and/or GnuR.
+                                            Can be set via FASTR_PKGS_CACHE_OPT env var.
         --quiet                             Reduce output during testing.
         --print-api-checksum                Compute and print the API checksum for the specified VMs.
 
@@ -1037,15 +1052,15 @@ def pkgcache(args: List[str]) -> int:
     '''
     unknown_args = parse_arguments(args, r_version_check=False)
 
-    parser = argparse.ArgumentParser(prog="pkgcache")
+    parser = argparse.ArgumentParser(prog="mx r-pkgcache")
     parser.add_argument('--vm', help='fastr|gnur', default=[])
     parser.add_argument('--print-api-checksum', action="store_true", dest="print_api_checksum",
                         help='Compute and print the API checksum for the specified VMs.')
     parser.add_argument('--cache-dir', metavar='DIR', dest="cache_dir", type=str, default=None,
-                        help='The package cache directory.')
+                        help='The package cache directory. Can be set via FASTR_PKGS_CACHE_OPT env var.')
     parser.add_argument('--library', metavar='SPEC', type=str, default="",
                         help='The library folders to install to (must be specified for each used VM in form "<vm_name>=<dir>").')
-    parser.add_argument('--sync', action="store_true", help='Synchronize access to the package cache.')
+    parser.add_argument('--sync', action="store_true", help='Synchronize access to the package cache. Can be set via FASTR_PKGS_CACHE_OPT env var')
     pkg_spec_group = parser.add_mutually_exclusive_group()
     pkg_spec_group.add_argument('--pkg-filelist', metavar='FILE', dest="filelist", type=str, default=None,
                         help='File contaning a list of files to install and cache.')
@@ -1070,7 +1085,10 @@ def pkgcache(args: List[str]) -> int:
     if _opts.sync:
         pkgcache_options += ["sync=TRUE"]
 
-    install_args = ["--cache-pkgs", ",".join(pkgcache_options)]
+    if "FASTR_PKGS_CACHE_OPT" not in os.environ:
+        install_args = ["--cache-pkgs", ",".join(pkgcache_options)]
+    else:
+        install_args = ["--cache-pkgs", os.environ["FASTR_PKGS_CACHE_OPT"]]
     if _opts.install_opts:
         install_args += ["--install-opts", _opts.install_opts]
     if _opts.filelist:
