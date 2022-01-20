@@ -212,10 +212,10 @@ def parse_arguments(argv: List[str], r_version_check=True) -> List[str]:
     global _opts
     _opts, r_args = _common_arg_parser.parse_known_args(args=argv)
 
-    if not _opts.repos and os.environ['FASTR_REPOS']:
+    if not _opts.repos and os.environ.get('FASTR_REPOS'):
         _opts.repos = os.environ['FASTR_REPOS']
-    elif _opts.repos and os.environ['FASTR_REPOS']:
-        abort(1, 'Both --repos option and FASTR_REPOS env var set, you should set only one of them')
+    elif _opts.repos and os.environ.get('FASTR_REPOS'):
+        warn('Both --repos option and FASTR_REPOS env var set, using value from command-line argument.')
 
     # ensure that first arg is neither the name of this package nor a py file
     if r_args and (r_args[0] == __package__ or r_args[0].endswith(".py")):
