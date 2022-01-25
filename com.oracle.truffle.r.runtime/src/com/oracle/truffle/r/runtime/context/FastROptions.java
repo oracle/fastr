@@ -88,7 +88,7 @@ public class FastROptions {
     public static final OptionKey<Boolean> InvisibleArgs = new OptionKey<>(true);
     @Option(category = OptionCategory.EXPERT, help = "Disable reference count decrements") //
     public static final OptionKey<Boolean> RefCountIncrementOnly = new OptionKey<>(false);
-    @Option(category = OptionCategory.EXPERT, help = "Whether the internal (Java) grid graphics implementation should be used") //
+    @Option(category = OptionCategory.EXPERT, deprecated = true, help = "Whether the internal (Java) grid graphics implementation should be used") //
     public static final OptionKey<Boolean> UseInternalGridGraphics = new OptionKey<>(false);
     @Option(category = OptionCategory.INTERNAL, help = "Whether the fast-path special call nodes should be created for simple enough arguments.") //
     public static final OptionKey<Boolean> UseSpecials = new OptionKey<>(true);

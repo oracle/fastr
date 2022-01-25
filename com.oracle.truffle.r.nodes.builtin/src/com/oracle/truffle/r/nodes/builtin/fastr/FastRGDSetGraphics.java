@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import java.awt.*;
 
+import com.oracle.truffle.r.runtime.RError.Message;
 import org.rosuda.javaGD.GDInterface;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,12 +42,13 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * A fastr-specific builtin that is called within {@code grDevices:::awt}.
+ * The sole purpose of this builtin is to forward a {@link Graphics} object to some graphical device.
  */
 @RBuiltin(name = ".fastr.awtSetGraphics", parameterNames = {"graphicsObject"}, visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, behavior = RBehavior.COMPLEX)
 public abstract class FastRGDSetGraphics extends RBuiltinNode.Arg1 {
     static {
         Casts casts = new Casts(FastRGDSetGraphics.class);
-        casts.arg("graphicsObject").mustNotBeNull();
+        casts.arg("graphicsObject").mustNotBeNull().defaultError(Message.GENERIC, "NULL graphicsObject not yet implemented");
     }
 
     @Specialization

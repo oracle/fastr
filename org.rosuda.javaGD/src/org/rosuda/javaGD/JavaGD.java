@@ -62,10 +62,8 @@ public class JavaGD extends GDInterface implements WindowListener {
     public void gdOpen(double w, double h) {
         if (f != null)
             gdClose();
-        System.out.println("gdOpen(w=" + w + ", h=" + h + ")");
 
         f = new JFrame("JavaGD (JGDBufferedPanel)");
-        System.out.println("Created new JGDBufferedPanel JFrame (" + f.hashCode() + ")");
         f.addWindowListener(this);
         c = new JGDBufferedPanel(w, h, resizer);
         f.add((JGDPanel) c);
@@ -75,7 +73,6 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     @Override
     public void gdActivate() {
-        System.out.println("gdActivate");
         super.gdActivate();
         if (f != null) {
             f.requestFocus();
@@ -85,7 +82,6 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     @Override
     public void gdClose() {
-        System.out.println("gdClose");
         super.gdClose();
         if (f != null) {
             c = null;

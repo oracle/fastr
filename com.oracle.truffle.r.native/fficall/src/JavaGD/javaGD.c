@@ -46,8 +46,6 @@ double jGDasp  = 1.0;
 /*	4) host to connect to		*/
 /*	5) tcp port to connect to	*/
 
-#define JGD_DEBUG
-
 Rboolean newJavaGDDeviceDriver(NewDevDesc *dd,
 			    const char *disp_name,
 			    double width,

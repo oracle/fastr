@@ -27,9 +27,6 @@ import org.rosuda.javaGD.GDInterface;
 
 import java.awt.*;
 
-/**
- *
- */
 public class AWTGraphicsGD extends GDInterface {
     private Graphics graphics;
 
@@ -42,10 +39,5 @@ public class AWTGraphicsGD extends GDInterface {
     @Override
     public void gdOpen(double w, double h) {
         c = new AWTGraphicsContainer(w, h);
-    }
-
-    @Override
-    public void gdClose() {
-        throw new UnsupportedOperationException("unimplemented");
     }
 }

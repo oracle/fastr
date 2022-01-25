@@ -94,7 +94,6 @@ class GDRect extends GDObject {
     @Override
     public void paint(Component c, GDState gs, Graphics g) {
         // System.out.println(" paint> rect: "+x1+":"+y1+" "+x2+":"+y2);
-        System.out.println("GDRect.paint(g=" + g.hashCode() + ")");
         int x = (int) (x1 + 0.5);
         int y = (int) (y1 + 0.5);
         int w = (int) (x2 + 0.5) - x;
