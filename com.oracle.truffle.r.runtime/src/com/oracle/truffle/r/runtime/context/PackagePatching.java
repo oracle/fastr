@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,11 @@ import java.util.logging.Level;
  *
  * This patching is run from during the package installation, but only for packages installed from
  * tarballs.
+ *
+ * To enable the logger, set MX_R_CMD_ARGS env var to
+ * '--log.R.com.oracle.truffle.r.runtime.context.PackagePatching.level=FINE'.
+ * Because the code here will be run in a subprocess, if you install the package via e.g.
+ * {@code install.packages}.
  */
 public class PackagePatching {
 
@@ -68,6 +73,12 @@ public class PackagePatching {
                     new Patch("R_Interactive\\s*=\\s*[01]", ""),
                     new Patch("R_isForkedChild\\s*=\\s*[01]", ""),
                     new Patch("Rf_KillAllDevices\\s*\\(\\s*\\)", ""),
+                    // This patch was first introduced because compilation of testthat 3.0.1 failed on systems
+                    // with newer glibc, as described in https://github.com/r-lib/testthat/issues/1373.
+                    // In newer glibc, SIGSTKSZ is no longer a constexpr, so it cannot be used in C++ in static array declaration.
+                    // So a workaround (as implemented in the aforementioned issue on GitHub), is to replace
+                    // globally every occurence of SIGSTKSZ with a constant.
+                    new Patch("(\\S*)\\[SIGSTKSZ\\]", "$1[32768]"),
     };
 
     @TruffleBoundary
@@ -76,10 +87,10 @@ public class PackagePatching {
             return;
         }
         AtomicBoolean error = new AtomicBoolean(false);
-        List<String> messages = Collections.synchronizedList(new ArrayList<>());
         TruffleFile source = context.getSafeTruffleFile(path);
         log("Patching package %s", path);
         FilePatch fp = new FilePatch();
+        List<String> messages = fp.messages;
         try {
             FileSystemUtils.walkFileTree(source, fp);
         } catch (IOException e) {
