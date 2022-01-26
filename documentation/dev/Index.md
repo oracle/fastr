@@ -6,6 +6,7 @@
 * Implementation of R concepts
   * [R FFI Implementation](ffi.md): implementation of the native R extensions API
   * [Vector sharing](sharing.md) implementation of value semantics which avoids copying if possible
+  * [R Graphics subsystem](graphics.md): implementation of R graphics subsystem
 * Internal implementation details
   * [Build Process Documentation](build-process.md)
   * [Testing](testing.md): unit tests and R package tests
