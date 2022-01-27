@@ -77,8 +77,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * </pre>
  *
  * The {@link NACheck} also contains facility for {@code NaN} checks. The trick is that {@code NA}
- * is of the of possible values representing {@code NaN}, so if it is necessary to check for both,
- * the patten is follows:
+ * is one of the of possible values representing {@code NaN}, so if it is necessary to check for
+ * both, the patten is follows:
  *
  * <pre>
  * if (naCheck.checkNAorNan(value)) {

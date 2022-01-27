@@ -58,7 +58,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
@@ -89,11 +88,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     private RIntVector executeOrderVector1(RAbstractVector vIn, VectorDataLibrary vecDataLib, byte naLast, boolean dec) {
         RAbstractVector v = vectorProfile.profile(vIn);
-        int n = v.getLength();
+        Object vData = v.getData();
+        int n = vecDataLib.getLength(vData);
         reportWork(n);
 
         int[] indx = createIndexes(v, vecDataLib, n, naLast);
-        initOrderVector1().execute(indx, v, naLast, dec, true);
+        initOrderVector1().execute(indx, vData, vecDataLib, naLast, dec, true);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
@@ -173,12 +173,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         casts.arg("decreasing").defaultError(INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
 
-    private int cmp(Object v, int i, int j, boolean naLast) {
+    private int cmp(Object v, int i, int j, boolean naLast, VectorDataLibrary dataLib) {
         if (cmpNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             cmpNode = insert(CmpNodeGen.create());
         }
-        return cmpNode.executeInt(v, i, j, naLast);
+        return cmpNode.executeInt(v, i, j, naLast, dataLib);
     }
 
     @SuppressWarnings("unused")
@@ -247,7 +247,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
     }
 
-    private int preprocessVectors(RArgsValuesAndNames args, ValueProfile lengthProfile) {
+    private int preprocessVectors(RArgsValuesAndNames args, VectorDataLibrary dataLib, ValueProfile lengthProfile) {
         Object[] vectors = args.getArguments();
         RAbstractVector v = castVector(vectors[0]);
         int n = v.getLength();
@@ -256,7 +256,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         int length = lengthProfile.profile(vectors.length);
         for (int i = 1; i < length; i++) {
             v = castVector2(vectors[i]);
-            if (n != v.getLength()) {
+            if (n != dataLib.getLength(v.getData())) {
                 error.enter();
                 throw error(RError.Message.ARGUMENT_LENGTHS_DIFFER);
             }
@@ -270,26 +270,29 @@ public abstract class Order extends RPrecedenceBuiltinNode {
      */
     @Specialization(guards = {"!oneVec(args)", "!noVec(args)"})
     Object orderMulti(byte naLast, boolean decreasing, RArgsValuesAndNames args,
+                    @CachedLibrary(limit = "getGenericVectorAccessCacheSize()") VectorDataLibrary vecDataLib,
                     @Cached("createEqualityProfile()") PrimitiveValueProfile lengthProfile) {
-        int n = preprocessVectors(args, lengthProfile);
+        int n = preprocessVectors(args, vecDataLib, lengthProfile);
 
         int[] indx = new int[n];
         for (int i = 0; i < indx.length; i++) {
             indx[i] = i;
         }
-        orderVector(indx, args.getArguments(), RRuntime.fromLogical(naLast), decreasing);
+        Object[] vecData = new Object[args.getLength()];
+        for (int i = 0; i < args.getLength(); i++) {
+            vecData[i] = ((RAbstractVector) args.getArgument(i)).getData();
+        }
+        orderVector(indx, vecData, vecDataLib, RRuntime.fromLogical(naLast), decreasing);
         for (int i = 0; i < indx.length; i++) {
             indx[i] = indx[i] + 1;
         }
-
         return RDataFactory.createIntVector(indx, RDataFactory.COMPLETE_VECTOR);
     }
 
-    private boolean greaterSub(int i, int j, Object[] vectors, boolean naLast, boolean dec) {
+    private boolean greaterSub(int i, int j, Object[] vecData, VectorDataLibrary dataLib, boolean naLast, boolean dec) {
         int c = -1;
-        for (int k = 0; k < vectors.length; k++) {
-            RAbstractVector v = (RAbstractVector) vectors[k];
-            c = cmp(v, i, j, naLast);
+        for (int k = 0; k < vecData.length; k++) {
+            c = cmp(vecData[k], i, j, naLast, dataLib);
             if (dec) {
                 c = -c;
             }
@@ -303,7 +306,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return (c == 0 && i < j) ? false : true;
     }
 
-    private void orderVector(int[] indx, Object[] vectors, boolean naLast, boolean dec) {
+    private void orderVector(int[] indx, Object[] vecData, VectorDataLibrary dataLib, boolean naLast, boolean dec) {
         if (indx.length > 1) {
 
             int t = 0;
@@ -313,7 +316,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 for (int i = h; i < indx.length; i++) {
                     int itmp = indx[i];
                     int j = i;
-                    while (j >= h && greaterSub(indx[j - h], itmp, vectors, naLast, dec)) {
+                    while (j >= h && greaterSub(indx[j - h], itmp, vecData, dataLib, naLast, dec)) {
                         indx[j] = indx[j - h];
                         j -= h;
                     }
@@ -331,22 +334,26 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     abstract static class OrderVector1Node extends RBaseNode {
         private final ConditionProfile decProfile = ConditionProfile.createBinaryProfile();
 
-        public abstract Object execute(int[] v, Object dv, byte naLast, boolean dec, boolean sortNA);
+        public final Object execute(int[] v, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean dec, boolean sortNA) {
+            return executeInternal(v, vectorDataLib.getType(vectorData), vectorData, vectorDataLib, naLast, dec, sortNA);
+        }
 
-        @Specialization(limit = "getGenericDataLibraryCacheSize()")
-        protected Object orderVector1(int[] indx, RIntVector dv, byte naLast, boolean decreasing, boolean sortNA,
-                        @CachedLibrary("dv.getData()") VectorDataLibrary dvDataLib) {
+        public abstract Object executeInternal(int[] v, RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean dec, boolean sortNA);
+
+        @Specialization(guards = "dataType.isInteger()")
+        protected Object orderVectorInt(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing, boolean sortNA) {
             if (indx.length < 2) {
                 return indx;
             }
             int lo = 0;
             int hi = indx.length - 1;
+            int[] data = vectorDataLib.getReadonlyIntData(vectorData);
             if (sortNA) {
                 int numNa = 0;
-                if (!dvDataLib.isComplete(dv.getData()) && !RRuntime.isNA(naLast)) {
+                if (!vectorDataLib.isComplete(vectorData) && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
-                        if (RRuntime.isNA(dvDataLib.getIntAt(dv.getData(), i))) {
+                        if (RRuntime.isNA(data[i])) {
                             isNa[i] = true;
                             numNa++;
                         }
@@ -368,12 +375,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
             }
 
-            sort(indx, dv, lo, hi, decreasing);
+            sort(indx, data, lo, hi, decreasing);
             return indx;
         }
 
-        @Specialization
-        protected Object orderVector1(int[] indx, RDoubleVector dv, byte naLast, boolean decreasing, boolean sortNA) {
+        @Specialization(guards = "dataType.isDouble()")
+        protected Object orderVectorDouble(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing, boolean sortNA,
+                        @Cached BranchProfile hasNAorNaNs) {
+            double[] data = vectorDataLib.getReadonlyDoubleData(vectorData);
             if (indx.length < 2) {
                 return indx;
             }
@@ -383,13 +392,15 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 int numNa = 0;
                 boolean[] isNa = new boolean[indx.length];
                 for (int i = 0; i < isNa.length; i++) {
-                    if (RRuntime.isNAorNaN(dv.getDataAt(i))) {
+                    if (RRuntime.isNAorNaN(data[i])) {
+                        hasNAorNaNs.enter();
                         isNa[i] = true;
                         numNa++;
                     }
                 }
 
                 if (numNa > 0) {
+                    hasNAorNaNs.enter();
                     if (!RRuntime.fromLogical(naLast)) {
                         for (int i = 0; i < isNa.length; i++) {
                             isNa[i] = !isNa[i];
@@ -404,24 +415,25 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
             }
 
-            sort(indx, dv, lo, hi, decreasing);
+            sort(indx, data, lo, hi, decreasing);
             return indx;
         }
 
-        @Specialization(limit = "getGenericDataLibraryCacheSize()")
-        protected Object orderVector1(int[] indx, RStringVector dv, byte naLast, boolean decreasing, boolean sortNA,
-                        @CachedLibrary("dv.getData()") VectorDataLibrary dvDataLib) {
+        @Specialization(guards = "dataType.isCharacter()")
+        protected Object orderVectorString(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing,
+                        boolean sortNA) {
             if (indx.length < 2) {
                 return indx;
             }
             int lo = 0;
             int hi = indx.length - 1;
+            String[] data = vectorDataLib.getReadonlyStringData(vectorData);
             if (sortNA) {
                 int numNa = 0;
-                if (!dvDataLib.isComplete(dv.getData()) && !RRuntime.isNA(naLast)) {
+                if (!vectorDataLib.isComplete(vectorData) && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
-                        if (RRuntime.isNA(dvDataLib.getStringAt(dv.getData(), i))) {
+                        if (RRuntime.isNA(data[i])) {
                             isNa[i] = true;
                             numNa++;
                         }
@@ -443,24 +455,25 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
             }
 
-            sort(indx, dv, lo, hi, decreasing);
+            sort(indx, data, lo, hi, decreasing);
             return indx;
         }
 
-        @Specialization(limit = "getGenericDataLibraryCacheSize()")
-        protected Object orderVector1(int[] indx, RComplexVector dv, byte naLast, boolean decreasing, boolean sortNA,
-                        @CachedLibrary("dv.getData()") VectorDataLibrary dvDataLib) {
+        @Specialization(guards = "dataType.isComplex()")
+        protected Object orderVectorComplex(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing,
+                        boolean sortNA) {
             if (indx.length < 2) {
                 return indx;
             }
             int lo = 0;
             int hi = indx.length - 1;
+            double[] data = vectorDataLib.getReadonlyComplexData(vectorData);
             if (sortNA) {
                 int numNa = 0;
-                if (!dvDataLib.isComplete(dv.getData()) && !RRuntime.isNA(naLast)) {
+                if (!vectorDataLib.isComplete(vectorData) && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
                     for (int i = 0; i < isNa.length; i++) {
-                        if (RRuntime.isNA(dvDataLib.getComplexAt(dv.getData(), i))) {
+                        if (RRuntime.isComplexNA(data[i * 2], data[(i * 2) + 1])) {
                             isNa[i] = true;
                             numNa++;
                         }
@@ -482,18 +495,19 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
             }
 
-            sort(indx, dv, lo, hi, decreasing);
+            sortComplex(indx, data, lo, hi, decreasing);
             return indx;
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected Object orderVector1(int[] indx, RList dv, byte naLast, boolean decreasing, boolean sortNA) {
+        @Specialization(guards = "dataType.isList()")
+        protected Object orderVector1(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing,
+                        boolean sortNA) {
             /* Only needed to satisfy .Internal(rank) in unit test */
             return indx;
         }
 
-        private void sort(int[] indx, RDoubleVector dv, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, double[] dv, int lo, int hi, boolean dec) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -505,11 +519,11 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                         int a = indx[j - h];
                         int b = itmp;
                         if (decProfile.profile(dec)) {
-                            if (!((dv.getDataAt(a)) < dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
+                            if (!((dv[a]) < dv[b] || (dv[a] == dv[b] && a > b))) {
                                 break;
                             }
                         } else {
-                            if (!((dv.getDataAt(a)) > dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
+                            if (!((dv[a]) > dv[b] || (dv[a] == dv[b] && a > b))) {
                                 break;
                             }
                         }
@@ -521,7 +535,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
         }
 
-        private void sort(int[] indx, RIntVector dv, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, int[] data, int lo, int hi, boolean dec) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -533,11 +547,11 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                         int a = indx[j - h];
                         int b = itmp;
                         if (decProfile.profile(dec)) {
-                            if (!((dv.getDataAt(a)) < dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
+                            if (!((data[a]) < data[b] || (data[a] == data[b] && a > b))) {
                                 break;
                             }
                         } else {
-                            if (!((dv.getDataAt(a)) > dv.getDataAt(b) || (dv.getDataAt(a) == dv.getDataAt(b) && a > b))) {
+                            if (!((data[a]) > data[b] || (data[a] == data[b] && a > b))) {
                                 break;
                             }
                         }
@@ -550,7 +564,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @TruffleBoundary
-        private void sort(int[] indx, RStringVector dv, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, String[] data, int lo, int hi, boolean dec) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -565,7 +579,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                         while (j >= lo + h) {
                             int a = indx[j - h];
                             int b = itmp;
-                            int c = dv.getDataAt(a).compareTo(dv.getDataAt(b));
+                            int c = data[a].compareTo(data[b]);
                             if (decProfile.profile(dec)) {
                                 if (!(c < 0 || (c == 0 && a > b))) {
                                     break;
@@ -582,11 +596,11 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                     }
                 }
             } else {
-                int length = dv.getLength();
+                int length = data.length;
                 Collator collator = RLocale.getOrderCollator(locale);
                 CollationKey[] entries = new CollationKey[length];
                 for (int i = 0; i < length; i++) {
-                    entries[i] = collator.getCollationKey(dv.getDataAt(i));
+                    entries[i] = collator.getCollationKey(data[i]);
                 }
 
                 for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
@@ -615,27 +629,27 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
         }
 
-        private static boolean lt(RComplex a, RComplex b) {
-            if (a.getRealPart() == b.getRealPart()) {
-                return a.getImaginaryPart() < b.getImaginaryPart();
+        private static boolean lt(double[] data, int a, int b) {
+            if (data[a * 2] == data[b * 2]) {
+                return data[(a * 2) + 1] < data[(b * 2) + 1];
             } else {
-                return a.getRealPart() < b.getRealPart();
+                return data[a * 2] < data[b * 2];
             }
         }
 
-        private static boolean gt(RComplex a, RComplex b) {
-            if (a.getRealPart() == b.getRealPart()) {
-                return a.getImaginaryPart() > b.getImaginaryPart();
+        private static boolean gt(double[] data, int a, int b) {
+            if (data[a * 2] == data[b * 2]) {
+                return data[(a * 2) + 1] > data[(b * 2) + 1];
             } else {
-                return a.getRealPart() > b.getRealPart();
+                return data[a * 2] > data[b * 2];
             }
         }
 
-        private static boolean eq(RComplex a, RComplex b) {
-            return a.getRealPart() == b.getRealPart() && a.getImaginaryPart() == b.getImaginaryPart();
+        private static boolean eq(double[] data, int a, int b) {
+            return data[a * 2] == data[b * 2] && data[(a * 2) + 1] == data[(b * 2) + 1];
         }
 
-        private void sort(int[] indx, RComplexVector dv, int lo, int hi, boolean dec) {
+        private void sortComplex(int[] indx, double[] data, int lo, int hi, boolean dec) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -647,11 +661,11 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                         int a = indx[j - h];
                         int b = itmp;
                         if (decProfile.profile(dec)) {
-                            if (!(lt(dv.getDataAt(a), dv.getDataAt(b)) || (eq(dv.getDataAt(a), dv.getDataAt(b)) && a > b))) {
+                            if (!(lt(data, a, b) || (eq(data, a, b) && a > b))) {
                                 break;
                             }
                         } else {
-                            if (!(gt(dv.getDataAt(a), dv.getDataAt(b)) || (eq(dv.getDataAt(a), dv.getDataAt(b)) && a > b))) {
+                            if (!(gt(data, a, b) || (eq(data, a, b) && a > b))) {
                                 break;
                             }
                         }
@@ -756,12 +770,16 @@ public abstract class Order extends RPrecedenceBuiltinNode {
      */
     abstract static class CmpNode extends RBaseNode {
 
-        public abstract int executeInt(Object v, int i, int j, boolean naLast);
+        public final int executeInt(Object vData, int i, int j, boolean naLast, VectorDataLibrary dataLib) {
+            return executeIntInternal(vData, dataLib.getType(vData), i, j, naLast, dataLib);
+        }
 
-        @Specialization
-        protected int lcmp(RLogicalVector v, int i, int j, boolean naLast) {
-            byte x = v.getDataAt(i);
-            byte y = v.getDataAt(j);
+        public abstract int executeIntInternal(Object vData, RType dataType, int i, int j, boolean naLast, VectorDataLibrary dataLib);
+
+        @Specialization(guards = "dataType.isLogical()")
+        protected int lcmp(Object vData, @SuppressWarnings("unused") RType dataType, int i, int j, boolean naLast, VectorDataLibrary dataLib) {
+            byte x = dataLib.getLogicalAt(vData, i);
+            byte y = dataLib.getLogicalAt(vData, j);
             boolean nax = RRuntime.isNA(x);
             boolean nay = RRuntime.isNA(y);
             if (nax && nay) {
@@ -782,10 +800,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return 0;
         }
 
-        @Specialization
-        protected int icmp(RIntVector v, int i, int j, boolean naLast) {
-            int x = v.getDataAt(i);
-            int y = v.getDataAt(j);
+        @Specialization(guards = "dataType.isInteger()")
+        protected int icmp(Object vData, @SuppressWarnings("unused") RType dataType, int i, int j, boolean naLast, VectorDataLibrary dataLib) {
+            int x = dataLib.getIntAt(vData, i);
+            int y = dataLib.getIntAt(vData, j);
             boolean nax = RRuntime.isNA(x);
             boolean nay = RRuntime.isNA(y);
             if (nax && nay) {
@@ -806,10 +824,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return 0;
         }
 
-        @Specialization
-        protected int rcmp(RDoubleVector v, int i, int j, boolean naLast) {
-            double x = v.getDataAt(i);
-            double y = v.getDataAt(j);
+        @Specialization(guards = "dataType.isDouble()")
+        protected int rcmp(Object vData, @SuppressWarnings("unused") RType dataType, int i, int j, boolean naLast, VectorDataLibrary dataLib) {
+            double x = dataLib.getDoubleAt(vData, i);
+            double y = dataLib.getDoubleAt(vData, j);
             boolean nax = RRuntime.isNAorNaN(x);
             boolean nay = RRuntime.isNAorNaN(y);
             if (nax && nay) {
@@ -830,10 +848,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return 0;
         }
 
-        @Specialization
-        protected int scmp(RStringVector v, int i, int j, boolean naLast) {
-            String x = v.getDataAt(i);
-            String y = v.getDataAt(j);
+        @Specialization(guards = "dataType.isCharacter()")
+        protected int scmp(Object vData, @SuppressWarnings("unused") RType dataType, int i, int j, boolean naLast, VectorDataLibrary dataLib) {
+            String x = dataLib.getStringAt(vData, i);
+            String y = dataLib.getStringAt(vData, j);
             boolean nax = RRuntime.isNA(x);
             boolean nay = RRuntime.isNA(y);
             if (nax && nay) {
@@ -854,10 +872,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return 0;
         }
 
-        @Specialization
-        protected int ccmp(RComplexVector v, int i, int j, boolean naLast) {
-            RComplex x = v.getDataAt(i);
-            RComplex y = v.getDataAt(j);
+        @Specialization(guards = "dataType.isComplex()")
+        protected int ccmp(Object vData, @SuppressWarnings("unused") RType dataType, int i, int j, boolean naLast, VectorDataLibrary dataLib) {
+            RComplex x = dataLib.getComplexAt(vData, i);
+            RComplex y = dataLib.getComplexAt(vData, j);
             // compare real parts
             boolean nax = RRuntime.isNA(x.getRealPart());
             boolean nay = RRuntime.isNA(y.getRealPart());

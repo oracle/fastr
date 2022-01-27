@@ -173,6 +173,32 @@ public enum RType implements TruffleObject {
         return precedence;
     }
 
+    // Simple isXYZ helpers for Truffle DSL usage
+
+    public boolean isInteger() {
+        return this == Integer;
+    }
+
+    public boolean isLogical() {
+        return this == Logical;
+    }
+
+    public boolean isDouble() {
+        return this == Double;
+    }
+
+    public boolean isCharacter() {
+        return this == Character;
+    }
+
+    public boolean isComplex() {
+        return this == Complex;
+    }
+
+    public boolean isList() {
+        return this == List;
+    }
+
     public boolean isNumeric() {
         switch (this) {
             case Logical:

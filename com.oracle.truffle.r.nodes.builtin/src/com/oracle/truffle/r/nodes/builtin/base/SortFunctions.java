@@ -41,7 +41,9 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -284,8 +286,10 @@ public class SortFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected Object radixSort(byte naLast, RLogicalVector decreasingVec, boolean retgrp, boolean sortstr, RArgsValuesAndNames zz) {
+        @Specialization(limit = "getVectorAccessCacheSize()")
+        protected Object radixSort(byte naLast, RLogicalVector decreasingVec, boolean retgrp, boolean sortstr, RArgsValuesAndNames zz,
+                        @Bind("decreasingVec.getData()") Object decreasingVecData,
+                        @CachedLibrary("decreasingVecData") VectorDataLibrary decreasingDataLib) {
             // Partial implementation just to get startup to work
             if (retgrp) {
                 // sortstr only has an effect when retrgrp == true
@@ -295,7 +299,7 @@ public class SortFunctions {
             if (nargs == 0) {
                 return RNull.instance;
             }
-            if (nargs != decreasingVec.getLength()) {
+            if (nargs != decreasingDataLib.getLength(decreasingVecData)) {
                 throw error(RError.Message.RADIX_SORT_DEC_MATCH);
             }
             /*
@@ -306,7 +310,7 @@ public class SortFunctions {
              */
             byte lastdb = RRuntime.LOGICAL_NA;
             for (int i = 0; i < nargs; i++) {
-                byte db = decreasingVec.getDataAt(i);
+                byte db = decreasingDataLib.getLogicalAt(decreasingVecData, i);
                 if (RRuntime.isNA(db)) {
                     throw error(RError.Message.RADIX_SORT_DEC_NOT_LOGICAL);
                 }
@@ -315,7 +319,7 @@ public class SortFunctions {
                 }
                 lastdb = db;
             }
-            boolean decreasing = RRuntime.fromLogical(decreasingVec.getDataAt(0));
+            boolean decreasing = RRuntime.fromLogical(decreasingDataLib.getLogicalAt(decreasingVecData, 0));
             Object result = orderNode.execute(naLast, decreasing, zz);
             return result;
         }
