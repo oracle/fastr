@@ -38,6 +38,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RPrecedenceBuiltinNode;
@@ -335,13 +336,20 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         private final ConditionProfile decProfile = ConditionProfile.createBinaryProfile();
 
         public final Object execute(int[] v, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean dec, boolean sortNA) {
-            return executeInternal(v, vectorDataLib.getType(vectorData), vectorData, vectorDataLib, naLast, dec, sortNA);
+            Object result = executeInternal(v, vectorDataLib.getType(vectorData), vectorData, vectorDataLib, naLast, dec, sortNA);
+            // approximation of the work done:
+            reportWork(vectorDataLib.getLength(vectorData) * (long) (SINCS.length / 2));
+            return result;
         }
 
         public abstract Object executeInternal(int[] v, RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean dec, boolean sortNA);
 
         @Specialization(guards = "dataType.isInteger()")
-        protected Object orderVectorInt(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing, boolean sortNA) {
+        protected Object orderVectorInt(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing, boolean sortNA,
+                        @Cached LoopConditionProfile outerSortLoopProfile,
+                        @Cached LoopConditionProfile innerSortLoopProfile,
+                        @Cached("createCountingProfile()") ConditionProfile sortBreakConditionProfile,
+                        @Cached LoopConditionProfile nasLoopProfile) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -352,7 +360,8 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 int numNa = 0;
                 if (!vectorDataLib.isComplete(vectorData) && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
-                    for (int i = 0; i < isNa.length; i++) {
+                    nasLoopProfile.profileCounted(isNa.length);
+                    for (int i = 0; nasLoopProfile.inject(i < isNa.length); i++) {
                         if (RRuntime.isNA(data[i])) {
                             isNa[i] = true;
                             numNa++;
@@ -365,7 +374,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                                 isNa[i] = !isNa[i];
                             }
                         }
-                        sortNA(indx, isNa, lo, hi);
+                        sortNA(indx, isNa, lo, hi, outerSortLoopProfile, innerSortLoopProfile, sortBreakConditionProfile);
                         if (RRuntime.fromLogical(naLast)) {
                             hi -= numNa;
                         } else {
@@ -375,12 +384,16 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
             }
 
-            sort(indx, data, lo, hi, decreasing);
+            sort(indx, data, lo, hi, decreasing, outerSortLoopProfile, innerSortLoopProfile, sortBreakConditionProfile);
             return indx;
         }
 
         @Specialization(guards = "dataType.isDouble()")
         protected Object orderVectorDouble(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing, boolean sortNA,
+                        @Cached LoopConditionProfile outerSortLoopProfile,
+                        @Cached LoopConditionProfile innerSortLoopProfile,
+                        @Cached("createCountingProfile()") ConditionProfile sortBreakConditionProfile,
+                        @Cached LoopConditionProfile nasLoopProfile,
                         @Cached BranchProfile hasNAorNaNs) {
             double[] data = vectorDataLib.getReadonlyDoubleData(vectorData);
             if (indx.length < 2) {
@@ -391,7 +404,8 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             if (sortNA && !RRuntime.isNA(naLast)) {
                 int numNa = 0;
                 boolean[] isNa = new boolean[indx.length];
-                for (int i = 0; i < isNa.length; i++) {
+                nasLoopProfile.profileCounted(isNa.length);
+                for (int i = 0; nasLoopProfile.inject(i < isNa.length); i++) {
                     if (RRuntime.isNAorNaN(data[i])) {
                         hasNAorNaNs.enter();
                         isNa[i] = true;
@@ -406,7 +420,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                             isNa[i] = !isNa[i];
                         }
                     }
-                    sortNA(indx, isNa, lo, hi);
+                    sortNA(indx, isNa, lo, hi, outerSortLoopProfile, innerSortLoopProfile, sortBreakConditionProfile);
                     if (RRuntime.fromLogical(naLast)) {
                         hi -= numNa;
                     } else {
@@ -415,13 +429,16 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
             }
 
-            sort(indx, data, lo, hi, decreasing);
+            sort(indx, data, lo, hi, decreasing, outerSortLoopProfile, innerSortLoopProfile, sortBreakConditionProfile);
             return indx;
         }
 
         @Specialization(guards = "dataType.isCharacter()")
         protected Object orderVectorString(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing,
-                        boolean sortNA) {
+                        boolean sortNA,
+                        @Cached LoopConditionProfile outerSortLoopProfile,
+                        @Cached LoopConditionProfile innerSortLoopProfile,
+                        @Cached("createCountingProfile()") ConditionProfile sortBreakConditionProfile) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -445,7 +462,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                                 isNa[i] = !isNa[i];
                             }
                         }
-                        sortNA(indx, isNa, lo, hi);
+                        sortNA(indx, isNa, lo, hi, outerSortLoopProfile, innerSortLoopProfile, sortBreakConditionProfile);
                         if (RRuntime.fromLogical(naLast)) {
                             hi -= numNa;
                         } else {
@@ -461,7 +478,11 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
         @Specialization(guards = "dataType.isComplex()")
         protected Object orderVectorComplex(int[] indx, @SuppressWarnings("unused") RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean decreasing,
-                        boolean sortNA) {
+                        boolean sortNA,
+                        @Cached LoopConditionProfile outerSortLoopProfile,
+                        @Cached LoopConditionProfile innerSortLoopProfile,
+                        @Cached("createCountingProfile()") ConditionProfile sortBreakConditionProfile,
+                        @Cached LoopConditionProfile nasLoopProfile) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -472,7 +493,8 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 int numNa = 0;
                 if (!vectorDataLib.isComplete(vectorData) && !RRuntime.isNA(naLast)) {
                     boolean[] isNa = new boolean[indx.length];
-                    for (int i = 0; i < isNa.length; i++) {
+                    nasLoopProfile.profileCounted(indx.length);
+                    for (int i = 0; nasLoopProfile.inject(i < isNa.length); i++) {
                         if (RRuntime.isComplexNA(data[i * 2], data[(i * 2) + 1])) {
                             isNa[i] = true;
                             numNa++;
@@ -485,7 +507,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                                 isNa[i] = !isNa[i];
                             }
                         }
-                        sortNA(indx, isNa, lo, hi);
+                        sortNA(indx, isNa, lo, hi, outerSortLoopProfile, innerSortLoopProfile, sortBreakConditionProfile);
                         if (RRuntime.fromLogical(naLast)) {
                             hi -= numNa;
                         } else {
@@ -495,7 +517,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
             }
 
-            sortComplex(indx, data, lo, hi, decreasing);
+            sortComplex(indx, data, lo, hi, decreasing, outerSortLoopProfile, innerSortLoopProfile, sortBreakConditionProfile);
             return indx;
         }
 
@@ -507,23 +529,25 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return indx;
         }
 
-        private void sort(int[] indx, double[] dv, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, double[] dv, int lo, int hi, boolean dec, LoopConditionProfile outerSortLoopProfile, LoopConditionProfile innerSortLoopProfile,
+                        ConditionProfile sortBreakCondProfile) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
-            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
+            outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
+            for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
                 for (int i = lo + h; i <= hi; i++) {
                     int itmp = indx[i];
                     int j = i;
-                    while (j >= lo + h) {
+                    while (innerSortLoopProfile.profile(j >= lo + h)) {
                         int a = indx[j - h];
                         int b = itmp;
                         if (decProfile.profile(dec)) {
-                            if (!((dv[a]) < dv[b] || (dv[a] == dv[b] && a > b))) {
+                            if (sortBreakCondProfile.profile(!((dv[a]) < dv[b] || (dv[a] == dv[b] && a > b)))) {
                                 break;
                             }
                         } else {
-                            if (!((dv[a]) > dv[b] || (dv[a] == dv[b] && a > b))) {
+                            if (sortBreakCondProfile.profile(!((dv[a]) > dv[b] || (dv[a] == dv[b] && a > b)))) {
                                 break;
                             }
                         }
@@ -535,23 +559,25 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
         }
 
-        private void sort(int[] indx, int[] data, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, int[] data, int lo, int hi, boolean dec, LoopConditionProfile outerSortLoopProfile, LoopConditionProfile innerSortLoopProfile,
+                        ConditionProfile sortBreakCondProfile) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
-            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
+            outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
+            for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
                 for (int i = lo + h; i <= hi; i++) {
                     int itmp = indx[i];
                     int j = i;
-                    while (j >= lo + h) {
+                    while (innerSortLoopProfile.profile(j >= lo + h)) {
                         int a = indx[j - h];
                         int b = itmp;
                         if (decProfile.profile(dec)) {
-                            if (!((data[a]) < data[b] || (data[a] == data[b] && a > b))) {
+                            if (sortBreakCondProfile.profile(!((data[a]) < data[b] || (data[a] == data[b] && a > b)))) {
                                 break;
                             }
                         } else {
-                            if (!((data[a]) > data[b] || (data[a] == data[b] && a > b))) {
+                            if (sortBreakCondProfile.profile(!((data[a]) > data[b] || (data[a] == data[b] && a > b)))) {
                                 break;
                             }
                         }
@@ -649,23 +675,25 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return data[a * 2] == data[b * 2] && data[(a * 2) + 1] == data[(b * 2) + 1];
         }
 
-        private void sortComplex(int[] indx, double[] data, int lo, int hi, boolean dec) {
+        private void sortComplex(int[] indx, double[] data, int lo, int hi, boolean dec, LoopConditionProfile outerSortLoopProfile, LoopConditionProfile innerSortLoopProfile,
+                        ConditionProfile sortBreakCondProfile) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
-            for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
+            outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
+            for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
                 for (int i = lo + h; i <= hi; i++) {
                     int itmp = indx[i];
                     int j = i;
-                    while (j >= lo + h) {
+                    while (innerSortLoopProfile.profile(j >= lo + h)) {
                         int a = indx[j - h];
                         int b = itmp;
                         if (decProfile.profile(dec)) {
-                            if (!(lt(data, a, b) || (eq(data, a, b) && a > b))) {
+                            if (sortBreakCondProfile.profile(!(lt(data, a, b) || (eq(data, a, b) && a > b)))) {
                                 break;
                             }
                         } else {
-                            if (!(gt(data, a, b) || (eq(data, a, b) && a > b))) {
+                            if (sortBreakCondProfile.profile(!(gt(data, a, b) || (eq(data, a, b) && a > b)))) {
                                 break;
                             }
                         }
@@ -678,18 +706,20 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
     }
 
-    private static void sortNA(int[] indx, boolean[] isNa, int lo, int hi) {
+    private static void sortNA(int[] indx, boolean[] isNa, int lo, int hi, LoopConditionProfile outerSortLoopProfile, LoopConditionProfile innerSortLoopProfile,
+                    ConditionProfile sortBreakCondProfile) {
         int t = 0;
         for (; SINCS[t] > indx.length; t++) {
         }
-        for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {
+        outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
+        for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
             for (int i = lo + h; i <= hi; i++) {
                 int itmp = indx[i];
                 int j = i;
-                while (j >= lo + h) {
+                while (innerSortLoopProfile.profile(j >= lo + h)) {
                     int a = indx[j - h];
                     int b = itmp;
-                    if (!((isNa[a] && !isNa[b]) || (isNa[a] == isNa[b] && a > b))) {
+                    if (sortBreakCondProfile.profile(!((isNa[a] && !isNa[b]) || (isNa[a] == isNa[b] && a > b)))) {
                         break;
                     }
                     indx[j] = indx[j - h];
