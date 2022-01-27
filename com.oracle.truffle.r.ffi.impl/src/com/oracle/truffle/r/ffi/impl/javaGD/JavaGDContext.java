@@ -96,10 +96,10 @@ public final class JavaGDContext {
             String fileNameTemplate = nm;
             switch (gdLogMode) {
                 case wrap:
-                    gd = new LoggingGD(newGD(gdId, deviceName, LoggingGD.Mode.off), fileNameTemplate + ".Rgd", gdId, deviceName, false);
+                    gd = new LoggingGD(newGD(gdId, deviceName, LoggingGD.Mode.off), fileNameTemplate + ".Rgd", gdId, deviceName);
                     break;
                 case headless:
-                    gd = new LoggingGD(new NullGD(), fileNameTemplate, gdId, deviceName, false);
+                    gd = new LoggingGD(new NullGD(), fileNameTemplate, gdId, deviceName);
                     break;
                 case off:
                 default:
@@ -114,10 +114,10 @@ public final class JavaGDContext {
             // no device specified, i.e. use the default device
             switch (gdLogMode) {
                 case wrap:
-                    gd = new LoggingGD(createDefaultDevice(deviceName), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
+                    gd = new LoggingGD(createDefaultDevice(deviceName), getDefaultFileTemplate(deviceName), gdId, deviceName);
                     break;
                 case headless:
-                    gd = new LoggingGD(new NullGD(), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
+                    gd = new LoggingGD(new NullGD(), getDefaultFileTemplate(deviceName), gdId, deviceName);
                     break;
                 case off:
                 default:

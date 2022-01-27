@@ -23,7 +23,7 @@
 
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 import com.oracle.truffle.r.runtime.RError.Message;
 import org.rosuda.javaGD.GDInterface;

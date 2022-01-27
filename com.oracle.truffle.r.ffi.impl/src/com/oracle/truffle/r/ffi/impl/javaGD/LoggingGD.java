@@ -44,6 +44,7 @@ import com.oracle.truffle.r.ffi.impl.javaGD.FileOutputContainer.SaveImageExcepti
 import com.oracle.truffle.r.launcher.RVersionNumber;
 
 public class LoggingGD extends GDInterface {
+    private static final boolean logReturns = false;
 
     public enum Mode {
         off,
@@ -71,14 +72,12 @@ public class LoggingGD extends GDInterface {
     private double width;
     private double height;
 
-    private final boolean logReturns;
 
-    public LoggingGD(GDInterface delegate, String fileNameTemplate, int gdId, String deviceName, boolean logReturns) {
+    public LoggingGD(GDInterface delegate, String fileNameTemplate, int gdId, String deviceName) {
         this.delegate = delegate;
         this.fileNameTemplate = fileNameTemplate;
         this.gdId = gdId;
         this.deviceName = deviceName;
-        this.logReturns = logReturns;
     }
 
     @TruffleBoundary

@@ -49,7 +49,6 @@ public class JavaGD extends GDInterface implements WindowListener {
         super();
         this.resizer = resizer;
         this.devOffCall = devOffCall;
-        System.out.println("Creating JavaGD(" + hashCode() + ")");
     }
 
     /**
@@ -63,7 +62,7 @@ public class JavaGD extends GDInterface implements WindowListener {
         if (f != null)
             gdClose();
 
-        f = new JFrame("JavaGD (JGDBufferedPanel)");
+        f = new JFrame("JavaGD");
         f.addWindowListener(this);
         c = new JGDBufferedPanel(w, h, resizer);
         f.add((JGDPanel) c);
@@ -93,7 +92,6 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     @Override
     public void gdDeactivate() {
-        System.out.println("gdDeactivate");
         super.gdDeactivate();
         if (f != null)
             f.setTitle("JavaGD " + ((devNr > 0) ? ("(" + (devNr + 1) + ")") : ""));
