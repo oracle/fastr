@@ -336,10 +336,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         private final ConditionProfile decProfile = ConditionProfile.createBinaryProfile();
 
         public final Object execute(int[] v, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean dec, boolean sortNA) {
-            Object result = executeInternal(v, vectorDataLib.getType(vectorData), vectorData, vectorDataLib, naLast, dec, sortNA);
-            // approximation of the work done:
-            reportWork(vectorDataLib.getLength(vectorData) * (long) (SINCS.length / 2));
-            return result;
+            return executeInternal(v, vectorDataLib.getType(vectorData), vectorData, vectorDataLib, naLast, dec, sortNA);
         }
 
         public abstract Object executeInternal(int[] v, RType dataType, Object vectorData, VectorDataLibrary vectorDataLib, byte naLast, boolean dec, boolean sortNA);
@@ -535,6 +532,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
             outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
+            long loopCount = 0;
             for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
                 for (int i = lo + h; i <= hi; i++) {
                     int itmp = indx[i];
@@ -553,10 +551,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                         }
                         indx[j] = indx[j - h];
                         j -= h;
+                        if (CompilerDirectives.hasNextTier()) {
+                            loopCount++;
+                        }
                     }
                     indx[j] = itmp;
                 }
             }
+            reportWork(loopCount);
         }
 
         private void sort(int[] indx, int[] data, int lo, int hi, boolean dec, LoopConditionProfile outerSortLoopProfile, LoopConditionProfile innerSortLoopProfile,
@@ -565,6 +567,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
             outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
+            long loopCount = 0;
             for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
                 for (int i = lo + h; i <= hi; i++) {
                     int itmp = indx[i];
@@ -583,10 +586,14 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                         }
                         indx[j] = indx[j - h];
                         j -= h;
+                        if (CompilerDirectives.hasNextTier()) {
+                            loopCount++;
+                        }
                     }
                     indx[j] = itmp;
                 }
             }
+            reportWork(loopCount);
         }
 
         @TruffleBoundary
@@ -681,6 +688,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
             outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
+            long loopCount = 0;
             for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
                 for (int i = lo + h; i <= hi; i++) {
                     int itmp = indx[i];
@@ -699,34 +707,43 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                         }
                         indx[j] = indx[j - h];
                         j -= h;
+                        if (CompilerDirectives.hasNextTier()) {
+                            loopCount++;
+                        }
                     }
                     indx[j] = itmp;
                 }
             }
+            reportWork(loopCount);
         }
-    }
 
-    private static void sortNA(int[] indx, boolean[] isNa, int lo, int hi, LoopConditionProfile outerSortLoopProfile, LoopConditionProfile innerSortLoopProfile,
-                    ConditionProfile sortBreakCondProfile) {
-        int t = 0;
-        for (; SINCS[t] > indx.length; t++) {
-        }
-        outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
-        for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
-            for (int i = lo + h; i <= hi; i++) {
-                int itmp = indx[i];
-                int j = i;
-                while (innerSortLoopProfile.profile(j >= lo + h)) {
-                    int a = indx[j - h];
-                    int b = itmp;
-                    if (sortBreakCondProfile.profile(!((isNa[a] && !isNa[b]) || (isNa[a] == isNa[b] && a > b)))) {
-                        break;
-                    }
-                    indx[j] = indx[j - h];
-                    j -= h;
-                }
-                indx[j] = itmp;
+        private void sortNA(int[] indx, boolean[] isNa, int lo, int hi, LoopConditionProfile outerSortLoopProfile, LoopConditionProfile innerSortLoopProfile,
+                        ConditionProfile sortBreakCondProfile) {
+            int t = 0;
+            for (; SINCS[t] > indx.length; t++) {
             }
+            outerSortLoopProfile.profileCounted(SINCS.length - t - 1);
+            long loopCount = 0;
+            for (int h = SINCS[t]; outerSortLoopProfile.inject(t < SINCS.length - 1); h = SINCS[++t]) {
+                for (int i = lo + h; i <= hi; i++) {
+                    int itmp = indx[i];
+                    int j = i;
+                    while (innerSortLoopProfile.profile(j >= lo + h)) {
+                        int a = indx[j - h];
+                        int b = itmp;
+                        if (sortBreakCondProfile.profile(!((isNa[a] && !isNa[b]) || (isNa[a] == isNa[b] && a > b)))) {
+                            break;
+                        }
+                        indx[j] = indx[j - h];
+                        j -= h;
+                        if (CompilerDirectives.hasNextTier()) {
+                            loopCount++;
+                        }
+                    }
+                    indx[j] = itmp;
+                }
+            }
+            reportWork(loopCount);
         }
     }
 
