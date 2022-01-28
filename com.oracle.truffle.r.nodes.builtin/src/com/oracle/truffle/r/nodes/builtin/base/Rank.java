@@ -38,11 +38,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
@@ -99,13 +97,12 @@ public abstract class Rank extends RBuiltinNode.Arg3 {
 
     @Specialization
     protected Object rank(RAbstractVector xa, int inN, String tiesMethod,
-                    @CachedLibrary(limit = "getVectorAccessCacheSize()") VectorDataLibrary vecDataLib,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+                    @CachedLibrary(limit = "getVectorAccessCacheSize()") VectorDataLibrary vecDataLib) {
         int n = inN;
         Object xaData = xa.getData();
         if (n > vecDataLib.getLength(xaData)) {
             errorProfile.enter();
-            n = xa.getLength();
+            n = vecDataLib.getLength(xaData);
             warning(RANK_LARGE_N);
         }
 
