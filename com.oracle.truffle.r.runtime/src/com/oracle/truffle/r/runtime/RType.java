@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -171,6 +171,32 @@ public enum RType implements TruffleObject {
 
     public int getPrecedence() {
         return precedence;
+    }
+
+    // Simple isXYZ helpers for Truffle DSL usage
+
+    public boolean isInteger() {
+        return this == Integer;
+    }
+
+    public boolean isLogical() {
+        return this == Logical;
+    }
+
+    public boolean isDouble() {
+        return this == Double;
+    }
+
+    public boolean isCharacter() {
+        return this == Character;
+    }
+
+    public boolean isComplex() {
+        return this == Complex;
+    }
+
+    public boolean isList() {
+        return this == List;
     }
 
     public boolean isNumeric() {

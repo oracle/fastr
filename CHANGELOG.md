@@ -1,3 +1,6 @@
+# 22.1.0
+* Improved performance of the `order` and `rank` builtin functions
+
 # 22.0.0
 * Adopted [NodeLibrary](https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/interop/NodeLibrary.html).
 * In unit tests, use single shared context rather than multiple inner contexts.
