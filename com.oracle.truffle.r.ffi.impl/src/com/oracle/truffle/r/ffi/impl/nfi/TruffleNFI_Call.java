@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,11 +31,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.nfi.api.SignatureLibrary;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CallFactory.TruffleNFI_InvokeCallNodeGen;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -49,27 +49,24 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class TruffleNFI_Call implements CallRFFI {
 
-    private static String getSignatureForArity(int arity) {
-        CompilerAsserts.neverPartOfCompilation();
-        StringBuilder str = new StringBuilder(10 * (arity + 2)).append("(");
-        for (int i = 0; i < arity + 1; i++) {
-            str.append(i > 0 ? ", " : "");
-            str.append("pointer");
-        }
-        return str.append("): pointer").toString();
-    }
+    abstract static class NodeAdapter extends Node {
+        @Child private SignatureLibrary signatures = SignatureLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
 
-    private abstract static class NodeAdapter extends Node {
-        @Child private InteropLibrary interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
+        static Object getSignatureForArity(int arity) {
+            CompilerAsserts.neverPartOfCompilation();
+            StringBuilder str = new StringBuilder(10 * (arity + 2)).append("(");
+            for (int i = 0; i < arity + 1; i++) {
+                str.append(i > 0 ? ", " : "");
+                str.append("pointer");
+            }
+            String signature = str.append("): pointer").toString();
+            return TruffleNFI_Context.parseSignature(signature);
+        }
 
         @TruffleBoundary
-        protected TruffleObject getFunction(String name, String signature) {
+        protected TruffleObject getFunction(String name, Object signature) {
             DLL.SymbolHandle symbolHandle = DLL.findSymbol(name, TruffleNFI_Context.getInstance().getRLibDLLInfo());
-            try {
-                return (TruffleObject) interop.invokeMember(symbolHandle.asTruffleObject(), "bind", signature);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            return (TruffleObject) signatures.bind(signature, symbolHandle.asTruffleObject());
         }
     }
 
@@ -78,7 +75,12 @@ public class TruffleNFI_Call implements CallRFFI {
 
         @TruffleBoundary
         protected TruffleObject getFunction(int arity) {
-            return getFunction("dot_call" + arity, getSignatureForArity(arity));
+            return getFunction(arity, getSignatureForArity(arity));
+        }
+
+        @TruffleBoundary
+        protected TruffleObject getFunction(int arity, Object signature) {
+            return getFunction("dot_call" + arity, signature);
         }
 
         @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
@@ -99,9 +101,10 @@ public class TruffleNFI_Call implements CallRFFI {
                         @Cached("createMaterializeNodess(cachedArgsLength)") FFIMaterializeNode[] ffiMaterializeNode,
                         @Cached("createWrapperNodes(cachedArgsLength)") FFIToNativeMirrorNode[] ffiToNativeMirrorNodes,
                         @Cached("create()") FFIUnwrapNode unwrap,
+                        @Cached("getSignatureForArity(cachedArgsLength)") Object cachedSignature,
                         @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
-            return doInvoke(nativeCallInfo, nativeCallInfo.address.asTruffleObject(), getFunction(cachedArgsLength), args, cachedArgsLength, ffiMaterializeNode, ffiToNativeMirrorNodes, interop,
-                            unwrap);
+            return doInvoke(nativeCallInfo, nativeCallInfo.address.asTruffleObject(), getFunction(cachedArgsLength, cachedSignature), args, cachedArgsLength, ffiMaterializeNode,
+                            ffiToNativeMirrorNodes, interop, unwrap);
         }
 
         private static Object doInvoke(NativeCallInfo nativeCallInfo, TruffleObject address, TruffleObject function, Object[] args, int cachedArgsLength, FFIMaterializeNode[] ffiMaterializeNode,
@@ -151,13 +154,13 @@ public class TruffleNFI_Call implements CallRFFI {
                 switch (args.length) {
                     case 0:
                         logCall(nativeCallInfo.name, args);
-                        TruffleObject callVoid0Function = getFunction("dot_call_void0", CallVoid0Sig);
+                        TruffleObject callVoid0Function = getFunction("dot_call_void0", TruffleNFI_Context.parseSignature(CallVoid0Sig));
                         execute0Interop.execute(callVoid0Function, nativeCallInfo.address.asTruffleObject());
                         break;
                     case 1:
                         logCall(nativeCallInfo.name, args);
                         wrappedArgs = ffiWrap.wrapAll(args, ffiMaterialize1, ffiWrapper1);
-                        TruffleObject callVoid1Function = getFunction("dot_call_void1", CallVoid1Sig);
+                        TruffleObject callVoid1Function = getFunction("dot_call_void1", TruffleNFI_Context.parseSignature(CallVoid1Sig));
                         execute1Interop.execute(callVoid1Function, nativeCallInfo.address.asTruffleObject(), wrappedArgs[0]);
                         break;
                     default:
