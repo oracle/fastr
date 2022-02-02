@@ -131,7 +131,7 @@ public class TruffleNFI_Context extends RFFIContext {
         return Type.NFI;
     }
 
-    static Object parseSignature(String signature) {
+    public static Object parseSignature(String signature) {
         CompilerAsserts.neverPartOfCompilation();
         Source sigSource = Source.newBuilder("nfi", signature, "(nfi-signature)").build();
         return RContext.getInstance().getEnv().parseInternal(sigSource).call();
