@@ -300,6 +300,7 @@ suite = {
          "com.oracle.truffle.r.ffi.processor",
          "com.oracle.truffle.r.nodes",
          "org.rosuda.javaGD",
+         "truffle:TRUFFLE_NFI",
          'BATIK-ALL-1.14',
       ],
       "requires" : [
