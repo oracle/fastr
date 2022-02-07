@@ -121,6 +121,29 @@ if (.fastr.option("UseInternalGridGraphics")) {
 		svg <- function (filename = if (onefile) "Rplots.svg" else "Rplot%03d.svg", width = 7, height = 7, pointsize = 12, onefile = FALSE, family = "sans", bg = "white", antialias = c("default", "none", "gray", "subpixel")) {
 			invisible(.External2(C_X11, paste0("svg::onefile=", onefile, ",family=", family, ",bg=", bg, ",antialias=", antialias, ":", filename), 72 * width, 72 * height, pointsize))
 		}
+
+		# Allows to get the SVG code from SVG device, it also closes the device,
+		# but the contents are not saved to the given file.
+		svg.off <- function(which = dev.cur()) {
+			if (which == 1) {
+				stop("cannot shut down device 1 (the null device)")
+			}
+			if (which != dev.cur()) {
+				stop("svg.off for a different device than dev.cur() is not supported yet")
+			}
+			svg_contents <- .Internal(.fastr.svg.get.content())
+			svg_fname <- .Internal(.fastr.svg.filename())
+			# We explicitly close the device here, as it would be difficult to close it in the
+			# FastR builtin function.
+			dev.off(which)
+			# dev.off creates the SVG file, as a workaround, we delete the file.
+			# Note that in current gnur's graphics engine (4.0.3), we cannot easily kill the
+			# device without invoking any shutdown hooks. Therefore, we do this workaround.
+			stopifnot(file.exists(svg_fname))
+			unlink(svg_fname)
+			return(svg_contents)
+		}
+
 		gdlog <- function (logfilename, width, height, pointsize) .External2(C_X11, paste0("log::", logfilename), width, height, pointsize)
 		
 		gdOpen <- function (name, w, h, compare = FALSE) if (!compare) .Call(C_api_gdOpen, name, w, h) else gdOpenCmpArg(name, w, h)

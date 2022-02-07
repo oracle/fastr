@@ -44,6 +44,10 @@ public abstract class FileOutputContainer implements GDContainer {
         return pageNumber;
     }
 
+    public String getFileNameTemplate() {
+        return fileNameTemplate;
+    }
+
     @Override
     public void reset(int explicitPageNumber) {
         saveImage();

@@ -84,7 +84,7 @@ public abstract class AbstractImageContainer extends FileOutputContainer {
     }
 
     @TruffleBoundary
-    protected void repaint() {
+    public void repaint() {
         Graphics graphics = getGraphics();
         graphics.clearRect(0, 0, size.width, size.height);
         for (GDObject o : objects) {
