@@ -336,6 +336,9 @@ if (.fastr.option("UseInternalGridGraphics")) {
 		}
 
 		savePlot <- function (filename = paste("Rplot", type, sep = "."), type = c("png", "jpeg", "bmp"), device = dev.cur()) {
+			if (device != dev.cur()) {
+				error("Only dev.cur() device is supported in savePlot")
+			}
 			.Internal(.fastr.savePlot(filename, type, device))
 		}
 

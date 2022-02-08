@@ -69,8 +69,6 @@ public abstract class FastRSavePlot extends RBuiltinNode.Arg3 {
     @Specialization
     @CompilerDirectives.TruffleBoundary
     protected Object doSavePlot(String filePath, String fileType, @SuppressWarnings("unused") int deviceId) {
-        warning(RError.Message.GENERIC, "Only `dev.cur()` device is supported in `savePlot`");
-
         RContext ctx = RContext.getInstance();
         if (!(ctx.gridContext instanceof JavaGDContext)) {
             throw RInternalError.shouldNotReachHere(FastRSavePlot.class.getSimpleName() + " should be used only with JavaGD package, not with internal grid graphics");
