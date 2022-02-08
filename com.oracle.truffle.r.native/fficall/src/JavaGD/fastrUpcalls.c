@@ -100,9 +100,10 @@ void gdMode(int gdId, int mode) {
     checkExitCall();
 }
 
-void gdOpen(int gdId, const char *name, double w, double h) {
-	((call_gdOpen) callbacks[gdOpen_x])(gdId, ensure_string(name), w, h);
+Rboolean gdOpen(int gdId, const char *name, double w, double h) {
+	Rboolean result = ((call_gdOpen) callbacks[gdOpen_x])(gdId, ensure_string(name), w, h);
     checkExitCall();
+    return result;
 }
 
 void gdClose(int gdId) {

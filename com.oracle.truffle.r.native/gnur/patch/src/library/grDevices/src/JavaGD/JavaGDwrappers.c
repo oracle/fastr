@@ -137,13 +137,12 @@ SEXP api_gdMode(SEXP mode) {
     return R_NilValue;
 }
 
-extern void gdOpen(int gdId, const char*, double, double);
+extern Rboolean gdOpen(int gdId, const char*, double, double);
 
 SEXP api_gdOpen(SEXP name, SEXP w, SEXP h) {
 	const char *nm = CHAR(STRING_ELT(name, 0));
 	gdId = javaGDDeviceCounter++;
-	gdOpen(gdId, nm, REAL(w)[0], REAL(h)[0]);
-    return R_NilValue;
+	return gdOpen(gdId, nm, REAL(w)[0], REAL(h)[0]);
 }
 
 extern void gdClose(int gdId);

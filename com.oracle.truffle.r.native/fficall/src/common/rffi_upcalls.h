@@ -558,7 +558,7 @@ typedef int (*call_R_isGlobal)(void* c);
 typedef int (*call_R_isEqual)(void* x, void* y);
 
 // JavaGD
-typedef void (*call_gdOpen)(int gdId, const char *name, double w, double h);
+typedef Rboolean (*call_gdOpen)(int gdId, const char *name, double w, double h);
 typedef void (*call_gdClose)(int gdId);
 typedef void (*call_gdActivate)(int gdId);
 typedef void (*call_gdDeactivate)(int gdId);

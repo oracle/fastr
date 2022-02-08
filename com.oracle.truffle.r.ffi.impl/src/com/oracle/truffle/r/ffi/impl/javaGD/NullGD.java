@@ -29,9 +29,10 @@ public class NullGD extends GDInterface {
     private double height;
 
     @Override
-    public void gdOpen(double w, double h) {
+    public boolean gdOpen(double w, double h) {
         this.width = w;
         this.height = h;
+        return true;
     }
 
     @Override

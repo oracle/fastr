@@ -386,26 +386,22 @@ Rboolean newJavaGD_Open(NewDevDesc *dd, newJavaGDDesc *xd, const char *dsp, doub
     xd->windowHeight = h;
     xd->holdlevel = 0;
         
-    {
-        if(!xd) {
-            gdWarning("gdOpen: xd or talk is null");
-            return FALSE;
-        }
-        
-        /* we're not using dsp atm! */
-//         mid = (*env)->GetMethodID(env, xd->talkClass, "gdOpen", "(DD)V");
-//         if (mid)
-//             (*env)->CallVoidMethod(env, xd->talk, mid, w, h);
-//         else {
-//             gdWarning("gdOpen: can't get mid");
-// 			chkX(env);
-//             return FALSE;
-//         }
-// 		chkX(env);
-		gdOpen(xd->gdId, dsp, w, h);
+    if(!xd) {
+        gdWarning("gdOpen: xd or talk is null");
+        return FALSE;
     }
-    
-    return TRUE;
+        
+    /* we're not using dsp atm! */
+//     mid = (*env)->GetMethodID(env, xd->talkClass, "gdOpen", "(DD)V");
+//     if (mid)
+//         (*env)->CallVoidMethod(env, xd->talk, mid, w, h);
+//     else {
+//        gdWarning("gdOpen: can't get mid");
+//        chkX(env);
+//         return FALSE;
+//     }
+// 		chkX(env);
+    return gdOpen(xd->gdId, dsp, w, h);
 }
 
 static double* newDoubleArray(int n, double *ct)

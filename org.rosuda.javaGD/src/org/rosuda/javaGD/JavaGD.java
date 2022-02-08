@@ -53,21 +53,24 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     /**
      * creates a new graphics window containing a canvas
-     *
-     * @param w width of the canvas
+     *  @param w width of the canvas
      * @param h height of the canvas
      */
     @Override
-    public void gdOpen(double w, double h) {
+    public boolean gdOpen(double w, double h) {
         if (f != null)
             gdClose();
-
-        f = new JFrame("JavaGD");
+        try {
+            f = new JFrame("JavaGD");
+        } catch (HeadlessException e) {
+            return false;
+        }
         f.addWindowListener(this);
         c = new JGDBufferedPanel(w, h, resizer);
         f.add((JGDPanel) c);
         f.pack();
         f.setVisible(true);
+        return true;
     }
 
     @Override

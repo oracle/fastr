@@ -87,10 +87,10 @@ public class LoggingGD extends GDInterface {
     }
 
     @Override
-    public void gdOpen(double w, double h) {
+    public boolean gdOpen(double w, double h) {
         this.width = w;
         this.height = h;
-        delegate.gdOpen(w, h);
+        return delegate.gdOpen(w, h);
     }
 
     @Override

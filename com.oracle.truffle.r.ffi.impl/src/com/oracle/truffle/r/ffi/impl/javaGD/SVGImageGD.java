@@ -57,8 +57,9 @@ public class SVGImageGD extends GDInterface {
     }
 
     @Override
-    public void gdOpen(double width, double height) {
+    public boolean gdOpen(double width, double height) {
         super.gdOpen(width, height);
         c = new SVGImageContainer((int) width, (int) height, fileNameTemplate, onefile, family, bg, antialias);
+        return true;
     }
 }

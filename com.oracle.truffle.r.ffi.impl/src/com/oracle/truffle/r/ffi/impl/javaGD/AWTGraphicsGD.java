@@ -37,7 +37,8 @@ public class AWTGraphicsGD extends GDInterface {
     }
 
     @Override
-    public void gdOpen(double w, double h) {
+    public boolean gdOpen(double w, double h) {
         c = new AWTGraphicsContainer(w, h);
+        return true;
     }
 }

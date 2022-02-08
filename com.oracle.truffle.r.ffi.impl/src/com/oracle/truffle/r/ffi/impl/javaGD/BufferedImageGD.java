@@ -43,9 +43,10 @@ public final class BufferedImageGD extends GDInterface {
     }
 
     @Override
-    public void gdOpen(double width, double height) {
+    public boolean gdOpen(double width, double height) {
         super.gdOpen(width, height);
         c = new BufferedImageContainer((int) width, (int) height, fileType, fileNameTemplate, quality);
+        return true;
     }
 
 }

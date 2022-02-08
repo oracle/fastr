@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 
 public interface JavaGDUpCalls {
 
-    void gdOpen(int gdId, @RFFICstring String deviceName, double w, double h, @RFFIInject RContext ctx);
+    boolean gdOpen(int gdId, @RFFICstring String deviceName, double w, double h, @RFFIInject RContext ctx);
 
     void gdClose(int gdId, @RFFIInject RContext ctx);
 

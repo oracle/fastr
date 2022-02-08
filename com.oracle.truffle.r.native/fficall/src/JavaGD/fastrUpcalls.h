@@ -40,7 +40,7 @@ void gdFlush(int, int);
 double* gdLocator();
 void gdLine(int, double, double, double, double);
 void gdMode(int, int);
-void gdOpen(int, const char*, double, double);
+Rboolean gdOpen(int, const char*, double, double);
 void gdPath(int, int, int*, int, double*, double*, Rboolean);
 void gdPolygon(int, int, double*, double*);
 void gdPolyline(int, int, double*, double*);
