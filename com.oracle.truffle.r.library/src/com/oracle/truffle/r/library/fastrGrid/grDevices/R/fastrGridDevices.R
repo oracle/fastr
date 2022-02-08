@@ -342,9 +342,10 @@ if (.fastr.option("UseInternalGridGraphics")) {
 			.Internal(.fastr.savePlot(filename, type, device))
 		}
 
+		# export new public functions
 		exports <- asNamespace("grDevices")[[".__NAMESPACE__."]][['exports']]
-		
 		assign('svg', 'svg', envir = exports)
+		assign('svg.off', 'svg.off', envir = exports)
 		assign('gdlog', 'gdlog', envir = exports)
 		assign('replayGDLogs', 'replayGDLogs', envir = exports)
 		assign('compareGDLogs', 'compareGDLogs', envir = exports)
