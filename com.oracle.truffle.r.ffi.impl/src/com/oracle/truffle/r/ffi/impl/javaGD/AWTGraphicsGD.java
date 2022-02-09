@@ -31,7 +31,7 @@ public class AWTGraphicsGD extends GDInterface {
     private Graphics graphics;
 
     public void setGraphics(Graphics graphics) {
-        assert this.graphics == null: "graphics field should be initialized just once";
+        assert this.graphics == null : "graphics field should be initialized just once";
         this.graphics = graphics;
         ((AWTGraphicsContainer) c).setGraphics(graphics);
     }

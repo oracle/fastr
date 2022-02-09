@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,14 +48,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 /**
- * A FastR-specific `savePlot` builtin function, defined in `grDevices` package.
- * We expect that this node is instantiated iff UseInternalGridGraphics option is false, therefore,
- * JavaGD package is used instead of internal fastr-grid.
+ * A FastR-specific `savePlot` builtin function, defined in `grDevices` package. We expect that this
+ * node is instantiated iff UseInternalGridGraphics option is false, therefore, JavaGD package is
+ * used instead of internal fastr-grid.
  *
- * We do not support other device than `dev.cur()`, because it is currently not possible
- * to map grid-specific device IDs (where `dev.cur()` is a grid-specific ID) to JavaGD-specific IDs.
- * grid-specific IDs are tracked in {@code devices.c:R_CurrentDevice} and JavaGD-specific IDs
- * are tracked in {@code jGDtalk.c:javaGDDeviceController}.
+ * We do not support other device than `dev.cur()`, because it is currently not possible to map
+ * grid-specific device IDs (where `dev.cur()` is a grid-specific ID) to JavaGD-specific IDs.
+ * grid-specific IDs are tracked in {@code devices.c:R_CurrentDevice} and JavaGD-specific IDs are
+ * tracked in {@code jGDtalk.c:javaGDDeviceController}.
  */
 @RBuiltin(name = ".fastr.savePlot", parameterNames = {"filename", "type", "device"}, visibility = OFF, kind = INTERNAL, behavior = COMPLEX)
 public abstract class FastRSavePlot extends RBuiltinNode.Arg3 {
@@ -85,7 +85,8 @@ public abstract class FastRSavePlot extends RBuiltinNode.Arg3 {
         } catch (NotSupportedImageFormatException e) {
             throw error(RError.Message.GENERIC, "Unsupported image format: " + fileType);
         }
-        // imageOutputContainer is now empty, we have to copy all the GDObjects from the `device` into `imageOutputContainer`.
+        // imageOutputContainer is now empty, we have to copy all the GDObjects from the `device`
+        // into `imageOutputContainer`.
         Collection<GDObject> gdObjects = deviceContainer.getGDObjects();
         for (GDObject gdObject : gdObjects) {
             imageOutputContainer.add(gdObject);

@@ -60,9 +60,10 @@ public final class JavaGDContext {
 
     /**
      * Called from an up call, i.e. from native code `gdOpen`.
+     * 
      * @param gdId fastr-specific ID of JavaGD device. See {@code jGDtalk.c:javaGDDeviceCounter}.
      * @param deviceName Template of the device name is {@code fileType::params:fileNameTemplate}.
-     *                   For example "svg::family=sans,bg=white:myfile.svg"
+     *            For example "svg::family=sans,bg=white:myfile.svg"
      */
     @TruffleBoundary
     public GDInterface newGD(int gdId, String deviceName) {
@@ -146,10 +147,11 @@ public final class JavaGDContext {
     }
 
     /**
-     * Returns the current device ID, as tracked by javagd package.
-     * Note that this should be mapped to value in {@code jGDtalk.c:javaGDDeviceController}.
-     * Also note that this is a different value than `dev.cur()` returns.
-     * `dev.cur()` is mapped to {@code devices.c:R_CurrentDevice} and is tracked by grDevices.
+     * Returns the current device ID, as tracked by javagd package. Note that this should be mapped
+     * to value in {@code jGDtalk.c:javaGDDeviceController}. Also note that this is a different
+     * value than `dev.cur()` returns. `dev.cur()` is mapped to {@code devices.c:R_CurrentDevice}
+     * and is tracked by grDevices.
+     * 
      * @return Current ID of a JavaGD device. -1 if there is no active JavaGD device.
      */
     public int getCurrentGdId() {

@@ -41,8 +41,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
- * A fastr-specific builtin that is called within {@code grDevices:::awt}.
- * The sole purpose of this builtin is to forward a {@link Graphics} object to some graphical device.
+ * A fastr-specific builtin that is called within {@code grDevices:::awt}. The sole purpose of this
+ * builtin is to forward a {@link Graphics} object to some graphical device.
  */
 @RBuiltin(name = ".fastr.awtSetGraphics", parameterNames = {"graphicsObject"}, visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, behavior = RBehavior.COMPLEX)
 public abstract class FastRGDSetGraphics extends RBuiltinNode.Arg1 {

@@ -53,7 +53,8 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     /**
      * creates a new graphics window containing a canvas
-     *  @param w width of the canvas
+     * 
+     * @param w width of the canvas
      * @param h height of the canvas
      */
     @Override

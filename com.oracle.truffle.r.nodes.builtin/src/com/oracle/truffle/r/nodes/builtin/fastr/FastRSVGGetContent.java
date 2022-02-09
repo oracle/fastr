@@ -48,8 +48,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 @RBuiltin(name = ".fastr.svg.get.content", parameterNames = {}, visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, behavior = RBehavior.COMPLEX)
 public abstract class FastRSVGGetContent extends RBuiltinNode.Arg0 {
     /**
-     * Only current device is supported and expected to be svg device.
-     * The caller is responsible for closing the device, as it would be difficult to do it from here.
+     * Only current device is supported and expected to be svg device. The caller is responsible for
+     * closing the device, as it would be difficult to do it from here.
+     * 
      * @return Contents of the current SVG device.
      */
     @Specialization

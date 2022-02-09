@@ -52,7 +52,7 @@ public class AWTGraphicsContainer implements GDContainer {
     }
 
     public void setGraphics(Graphics graphics) {
-        assert this.graphics == null: "graphics field should be set just once";
+        assert this.graphics == null : "graphics field should be set just once";
         assert this.objects.size() == 0;
         this.graphics = graphics;
         // clearRect is necessary so that objects created with, e.g., `grid.rect` are visible

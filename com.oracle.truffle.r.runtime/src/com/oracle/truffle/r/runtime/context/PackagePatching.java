@@ -53,9 +53,8 @@ import java.util.logging.Level;
  * tarballs.
  *
  * To enable the logger, set MX_R_CMD_ARGS env var to
- * '--log.R.com.oracle.truffle.r.runtime.context.PackagePatching.level=FINE'.
- * Because the code here will be run in a subprocess, if you install the package via e.g.
- * {@code install.packages}.
+ * '--log.R.com.oracle.truffle.r.runtime.context.PackagePatching.level=FINE'. Because the code here
+ * will be run in a subprocess, if you install the package via e.g. {@code install.packages}.
  */
 public class PackagePatching {
 
@@ -73,10 +72,14 @@ public class PackagePatching {
                     new Patch("R_Interactive\\s*=\\s*[01]", ""),
                     new Patch("R_isForkedChild\\s*=\\s*[01]", ""),
                     new Patch("Rf_KillAllDevices\\s*\\(\\s*\\)", ""),
-                    // This patch was first introduced because compilation of testthat 3.0.1 failed on systems
-                    // with newer glibc, as described in https://github.com/r-lib/testthat/issues/1373.
-                    // In newer glibc, SIGSTKSZ is no longer a constexpr, so it cannot be used in C++ in static array declaration.
-                    // So a workaround (as implemented in the aforementioned issue on GitHub), is to replace
+                    // This patch was first introduced because compilation of testthat 3.0.1 failed
+                    // on systems
+                    // with newer glibc, as described in
+                    // https://github.com/r-lib/testthat/issues/1373.
+                    // In newer glibc, SIGSTKSZ is no longer a constexpr, so it cannot be used in
+                    // C++ in static array declaration.
+                    // So a workaround (as implemented in the aforementioned issue on GitHub), is to
+                    // replace
                     // globally every occurence of SIGSTKSZ with a constant.
                     new Patch("(\\S*)\\[SIGSTKSZ\\]", "$1[32768]"),
     };

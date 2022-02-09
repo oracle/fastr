@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.test.library.utils;
 
 import static org.junit.Assert.assertThat;
 
-import com.oracle.truffle.r.runtime.context.FastROptions;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 

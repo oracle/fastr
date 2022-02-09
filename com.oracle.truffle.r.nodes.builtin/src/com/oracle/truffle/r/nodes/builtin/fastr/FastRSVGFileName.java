@@ -46,8 +46,8 @@ import java.util.regex.Pattern;
 @RBuiltin(name = ".fastr.svg.filename", parameterNames = {}, visibility = RVisibility.OFF, kind = RBuiltinKind.INTERNAL, behavior = RBehavior.COMPLEX)
 public abstract class FastRSVGFileName extends RBuiltinNode.Arg0 {
     /**
-     * Returns filename (filename template) from the current SVG device.
-     * It is expected that the current device is an SVG device and has created only 1 page.
+     * Returns filename (filename template) from the current SVG device. It is expected that the
+     * current device is an SVG device and has created only 1 page.
      */
     @Specialization
     @TruffleBoundary

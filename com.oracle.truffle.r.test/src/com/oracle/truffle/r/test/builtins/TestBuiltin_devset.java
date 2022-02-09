@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,8 @@ public class TestBuiltin_devset extends TestBase {
 
     @Test
     public void validationTest() {
-        // In native grid graphics, `dev.set(100L)` tries to create a new device with `X11()`, just like
+        // In native grid graphics, `dev.set(100L)` tries to create a new device with `X11()`, just
+        // like
         // GNU-R does. And that fails in unit testing with `java.awt.HeadlessException`.
         assertEval(Ignored.NativeGridGraphics, "{ dev.set(100L) }");
         assertEval(Ignored.NativeGridGraphics, "{ dev.set(-100L) }");

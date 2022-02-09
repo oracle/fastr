@@ -37,8 +37,8 @@ public interface GDContainer {
     public void add(GDObject o);
 
     /**
-     * Returns all GDObjects located in this container.
-     * fastr-specific method.
+     * Returns all GDObjects located in this container. fastr-specific method.
+     * 
      * @return All GDObjects there have been added to this container.
      */
     public Collection<GDObject> getGDObjects();

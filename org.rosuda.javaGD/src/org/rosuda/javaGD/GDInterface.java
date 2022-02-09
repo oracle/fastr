@@ -115,7 +115,8 @@ public class GDInterface {
 
     /**
      * requests a new device of the specified size
-     *  @param w width of the device
+     * 
+     * @param w width of the device
      * @param h height of the device
      * @return false iff there was a failure during the device opening.
      */
