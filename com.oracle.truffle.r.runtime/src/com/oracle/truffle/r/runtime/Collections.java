@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -561,8 +561,7 @@ public final class Collections {
         @ExportMessage
         public Object pop() {
             if (size <= 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw new ArrayIndexOutOfBoundsException("cannot pop from empty list");
+                throw CompilerDirectives.shouldNotReachHere("Cannot pop from empty list");
             }
             size--;
             Object removed = data[size];
@@ -573,8 +572,7 @@ public final class Collections {
         @ExportMessage
         public Object peek() {
             if (size <= 0) {
-                CompilerDirectives.transferToInterpreter();
-                throw new ArrayIndexOutOfBoundsException("cannot peek from empty list");
+                throw CompilerDirectives.shouldNotReachHere("Cannot peek empty list");
             }
             return data[size - 1];
         }
