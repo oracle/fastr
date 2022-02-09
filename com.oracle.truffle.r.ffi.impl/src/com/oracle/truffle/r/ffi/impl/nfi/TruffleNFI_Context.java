@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -32,6 +33,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.nfi.api.SignatureLibrary;
 import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLL;
@@ -129,6 +131,12 @@ public class TruffleNFI_Context extends RFFIContext {
         return Type.NFI;
     }
 
+    public static Object parseSignature(String signature) {
+        CompilerAsserts.neverPartOfCompilation();
+        Source sigSource = Source.newBuilder("nfi", signature, "(nfi-signature)").build();
+        return RContext.getInstance().getEnv().parseInternal(sigSource).call();
+    }
+
     /**
      * Looks up the given given function and returns the NFI function object.
      */
@@ -156,8 +164,9 @@ public class TruffleNFI_Context extends RFFIContext {
             }
             try {
                 InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-                TruffleObject symbol = ((TruffleObject) interop.readMember(dllInfo, function.getCallName()));
-                TruffleObject target = (TruffleObject) interop.invokeMember(symbol, "bind", function.getSignature());
+                Object symbol = interop.readMember(dllInfo, function.getCallName());
+                Object signature = parseSignature(function.getSignature());
+                TruffleObject target = (TruffleObject) SignatureLibrary.getUncached().bind(signature, symbol);
                 nativeFunctions[index] = target;
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -219,8 +228,8 @@ public class TruffleNFI_Context extends RFFIContext {
         try {
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
             Object getCallbacksAddress = interop.readMember(getLibRHandle(), "Rinternals_getCallbacksAddress");
-            TruffleObject getCallbacksAddressFunction = (TruffleObject) interop.invokeMember(getCallbacksAddress, "bind", "(): sint64");
-            return (long) interop.execute(getCallbacksAddressFunction);
+            Object signature = parseSignature("(): sint64");
+            return (long) SignatureLibrary.getUncached().call(signature, getCallbacksAddress);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -231,6 +240,7 @@ public class TruffleNFI_Context extends RFFIContext {
             // create and fill a new callbacks table
             callbacks = NativeMemory.allocate(Callbacks.values().length * (long) Long.BYTES, "callbacks");
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+            SignatureLibrary signatures = SignatureLibrary.getUncached();
             Object addCallback;
             try {
                 addCallback = interop.readMember(getLibRHandle(), "Rinternals_addCallback");
@@ -240,9 +250,8 @@ public class TruffleNFI_Context extends RFFIContext {
             try {
                 Callbacks.createCalls(new TruffleNFI_UpCallsRFFIImpl());
                 for (Callbacks callback : Callbacks.values()) {
-                    String addCallbackSignature = String.format("(env, sint64, sint32, %s): void", callback.nfiSignature);
-                    TruffleObject addCallbackFunction = (TruffleObject) interop.invokeMember(addCallback, "bind", addCallbackSignature);
-                    interop.execute(addCallbackFunction, callbacks, callback.ordinal(), callback.call);
+                    Object addCallbackSignature = parseSignature(String.format("(env, sint64, sint32, %s): void", callback.nfiSignature));
+                    signatures.call(addCallbackSignature, addCallback, callbacks, callback.ordinal(), callback.call);
                 }
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);

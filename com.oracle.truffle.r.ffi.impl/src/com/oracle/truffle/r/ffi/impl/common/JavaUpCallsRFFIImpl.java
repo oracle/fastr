@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,12 +37,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.nfi.api.SignatureLibrary;
 import com.oracle.truffle.r.ffi.impl.javaGD.JavaGDContext;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Context;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -1415,15 +1416,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     private static AltrepMethodDescriptor createAltrepMethodDescriptor(Object method, String signature) {
         InteropLibrary interop = InteropLibrary.getUncached();
         if (!interop.isExecutable(method)) {
-            if (interop.isMemberInvocable(method, "bind")) {
-                try {
-                    Object boundMethod = interop.invokeMember(method, "bind", signature);
-                    return new AltrepMethodDescriptor(boundMethod, Type.NFI);
-                } catch (InteropException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
+            if (interop.isPointer(method)) {
+                Object parsedSignature = TruffleNFI_Context.parseSignature(signature);
+                Object boundMethod = SignatureLibrary.getUncached().bind(parsedSignature, method);
+                return new AltrepMethodDescriptor(boundMethod, Type.NFI);
             } else {
-                throw RInternalError.shouldNotReachHere("method is from NFI, it should have 'bind' invocable member");
+                throw RInternalError.shouldNotReachHere("method is from NFI, it should be a pointer");
             }
         }
         return new AltrepMethodDescriptor(method, Type.LLVM);
