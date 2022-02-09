@@ -43,11 +43,8 @@ public class TestHelp extends TestBase {
 
     @Test
     public void testGrDevicesHelp() {
-        // Test only if we use internal grid graphics
-        if (FastROptions.UseInternalGridGraphics.getDefaultValue()) {
-            assertHelpResult(fastREval("?svg.off", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
-            assertHelpResult(fastREval("help(svg.off)", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
-        }
+        assertHelpResult(fastREval("?svg.off", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
+        assertHelpResult(fastREval("help(svg.off)", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
     }
 
     private static void assertHelpResult(String result, String startsWith, String... contains) {

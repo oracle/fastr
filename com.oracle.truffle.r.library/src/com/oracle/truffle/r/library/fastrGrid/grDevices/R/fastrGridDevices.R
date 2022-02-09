@@ -356,5 +356,7 @@ if (.fastr.option("UseInternalGridGraphics")) {
 		assign('replayGDLogs', 'replayGDLogs', envir = exports)
 		assign('compareGDLogs', 'compareGDLogs', envir = exports)
 
-	}), asNamespace("grDevices"))	
+		# add help files for the new public functions
+		.fastr.addHelpPath('/com/oracle/truffle/r/library/fastrGrid/grDevices/Rd')
+	}), asNamespace("grDevices"))
 }
