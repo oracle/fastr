@@ -236,15 +236,13 @@ Supported rJava features:
 * The `$` and `[` operators work the same as described above.
 
 ## Java Graphics Interoperability
+GraalVM R runtime's graphics subsystem is mostly compatible with GNU-R's graphics subsystem, i.e., most of the functions provided by `grid` and `graphics` base packages are supported.
+See [Reference of GNU-R's graphical subsystem](https://cran.r-project.org/doc/manuals/r-release/R-ints.html#Graphics-Devices).
 
-The GraalVM R runtime includes its own Java-based implementation of the `grid` package and the following graphics devices: `png`, `jpeg`, `bmp`, `svg`, and `awt` (`X11` is aliased to `awt`).
-The `graphics` package and most of its functions are not supported at the moment.
-
+Aside from all the GNU-R graphics functionality, we provide an additional `awt` device and functions tailored to manipulate the SVG device: `svg.off` and `sv.string`.
 The `awt` device is based on the Java `Graphics2D` object and users can pass it to their own `Graphics2D` object instance when opening the device using the `awt` function, as shown in the Java interop example.
 When the `Graphics2D` object is not provided to `awt`, it opens a new window similar to `X11`.
 
-The `svg` device in GraalVM R runtime generates more lightweight SVG code than the `svg` implementation in GNU R.
-Moreover, functions tailored to manipulate the SVG device are provided: `svg.off` and `svg.string`.
 The SVG device is demonstrated in the following code sample:
 
 ```R
