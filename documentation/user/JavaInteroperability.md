@@ -239,7 +239,7 @@ Supported rJava features:
 GraalVM R runtime's graphics subsystem is mostly compatible with GNU-R's graphics subsystem, i.e., most of the functions provided by `grid` and `graphics` base packages are supported.
 See [Reference of GNU-R's graphical subsystem](https://cran.r-project.org/doc/manuals/r-release/R-ints.html#Graphics-Devices).
 
-Aside from all the GNU-R graphics functionality, we provide an additional `awt` device and functions tailored to manipulate the SVG device: `svg.off` and `sv.string`.
+Aside from all the GNU-R graphics functionality, GraalVM R runtime provides an additional `awt` device and functions tailored to manipulate the SVG device: `svg.off` and `sv.string`.
 The `awt` device is based on the Java `Graphics2D` object and users can pass it to their own `Graphics2D` object instance when opening the device using the `awt` function, as shown in the Java interop example.
 When the `Graphics2D` object is not provided to `awt`, it opens a new window similar to `X11`.
 

@@ -34,8 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Implementation of {@link GDContainer} that wraps {@link Graphics}. Used in our java-interop
- * example ({@code java-interop.R}).
+ * Implementation of {@link GDContainer} that wraps {@link Graphics}.
  */
 public class AWTGraphicsContainer implements GDContainer {
     private final GDState gdState;

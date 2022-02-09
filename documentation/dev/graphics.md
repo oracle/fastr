@@ -18,14 +18,13 @@ The main difference between the upstream version of JavaGD and our version is th
 Java sources of the forked `JavaGD` are located in `com.oracle.truffle.r.ffi.impl.javaGD`, and C sources are located in `com.oracle.truffle.r.native/fficall/src/JavaGD`.
 
 SVG device uses Apache Batik library to generate SVG pictures.
-We cannot use `svglite` package for this purpose, as `svglite` has `gdtools` dependency which requires that `cairo` and `freetype2` are installed as system libraries.
 
 ### FastRGrid (deprecated)
 Internal grid graphics is a FastR internal implementation of `grid` package functionality.
 Most of the R functions defined in `grid` package are reused as is, however, most native functions are reimplemented in Java.
 The disadvantage is that whenever there is a modification of some native function in `grid` package, we should also update our Java implementation.
 The initial motivation for our custom grid implementation was performance, however with the pace of upstream updates, we were not able to maintain this custom implementation anymore.
-Currently, this functionality is marked as deprecated in FastR, and is stuck on `grid` version 3.6.1, i.e., `grid` taken from GNU-R version 3.6.1.
+Currently, this functionality is marked as deprecated in FastR, and is stuck on patched version of the `grid` package, because of the changes to the grid units internal representation in 4.0.3.
 You can switch to this (now experimental) functionality with `--R.UseInternalGridGraphics=true` option.
 
 The external functions implemented by fastr grid are routed through `com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup.java`.
