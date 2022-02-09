@@ -144,6 +144,11 @@ if (.fastr.option("UseInternalGridGraphics")) {
 			return(svg_contents)
 		}
 
+		svg.string <- function() {
+			svg_contents <- .Internal(.fastr.svg.get.content())
+			return(svg_contents)
+		}
+
 		gdlog <- function (logfilename, width, height, pointsize) .External2(C_X11, paste0("log::", logfilename), width, height, pointsize)
 		
 		gdOpen <- function (name, w, h, compare = FALSE) if (!compare) .Call(C_api_gdOpen, name, w, h) else gdOpenCmpArg(name, w, h)
@@ -346,6 +351,7 @@ if (.fastr.option("UseInternalGridGraphics")) {
 		exports <- asNamespace("grDevices")[[".__NAMESPACE__."]][['exports']]
 		assign('svg', 'svg', envir = exports)
 		assign('svg.off', 'svg.off', envir = exports)
+		assign('svg.string', 'svg.string', envir = exports)
 		assign('gdlog', 'gdlog', envir = exports)
 		assign('replayGDLogs', 'replayGDLogs', envir = exports)
 		assign('compareGDLogs', 'compareGDLogs', envir = exports)
