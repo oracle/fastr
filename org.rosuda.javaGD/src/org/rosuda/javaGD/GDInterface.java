@@ -111,6 +111,7 @@ public class GDInterface {
 
     /** synchronization object for locator calls */
     public LocatorSync ls = null;
+    private int createdPages;
 
     /**
      * requests a new device of the specified size
@@ -257,6 +258,7 @@ public class GDInterface {
 
     /** create a new, blank page (old API, not used anymore) */
     public void gdNewPage() {
+        createdPages++;
         if (c != null)
             c.reset(-1);
     }
@@ -271,6 +273,7 @@ public class GDInterface {
     public void gdNewPage(@SuppressWarnings("hiding") int devNr, int pageNumber) { // new API:
                                                                                    // provides the
                                                                                    // device
+        createdPages++;
         // Nr.
         this.devNr = devNr;
         if (c != null) {
@@ -433,5 +436,9 @@ public class GDInterface {
      */
     public int getDeviceNumber() {
         return (c == null) ? devNr : c.getDeviceNumber();
+    }
+
+    public int getCreatedPagesCount() {
+        return createdPages;
     }
 }

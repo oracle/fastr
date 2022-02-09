@@ -28,6 +28,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.ffi.impl.javaGD.JavaGDContext;
 import com.oracle.truffle.r.ffi.impl.javaGD.SVGImageContainer;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
@@ -45,22 +47,28 @@ import java.util.regex.Pattern;
 public abstract class FastRSVGFileName extends RBuiltinNode.Arg0 {
     /**
      * Returns filename (filename template) from the current SVG device.
-     * It is expected that the current device is an SVG device.
+     * It is expected that the current device is an SVG device and has created only 1 page.
      */
     @Specialization
     @TruffleBoundary
     public Object svgGetFileName() {
         JavaGDContext javaGDCtx = JavaGDContext.getContext(RContext.getInstance());
         GDInterface currGD = javaGDCtx.getGD(javaGDCtx.getCurrentGdId());
+        if (currGD.getCreatedPagesCount() > 1) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "SVG device opened more than one page");
+        }
         GDContainer currContainer = currGD.c;
         if (!(currContainer instanceof SVGImageContainer)) {
             throw RInternalError.shouldNotReachHere(".fastr.svg.filename() must be called when current device is an SVG device");
         }
         String fnameTemplate = ((SVGImageContainer) currContainer).getFileNameTemplate();
+        String fname;
         if (fileNameTemplateSupportsMorePages(fnameTemplate)) {
-            throw RInternalError.shouldNotReachHere("Filename template in the SVG file supports more than one page");
+            fname = String.format(fnameTemplate, 1);
+        } else {
+            fname = fnameTemplate;
         }
-        return RDataFactory.createStringVectorFromScalar(fnameTemplate);
+        return RDataFactory.createStringVectorFromScalar(fname);
     }
 
     private static boolean fileNameTemplateSupportsMorePages(String fileNameTemplate) {

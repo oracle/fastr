@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import java.io.StringWriter;
 
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.apache.batik.svggen.SVGGraphics2DIOException;
 import org.rosuda.javaGD.GDContainer;
@@ -55,6 +57,9 @@ public abstract class FastRSVGGetContent extends RBuiltinNode.Arg0 {
     public Object svgGetContent() {
         JavaGDContext javaGDContext = JavaGDContext.getContext(RContext.getInstance());
         GDInterface currGD = javaGDContext.getGD(javaGDContext.getCurrentGdId());
+        if (currGD.getCreatedPagesCount() > 1) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "SVG device opened more than one page");
+        }
         GDContainer currContainer = currGD.c;
         if (!(currContainer instanceof SVGImageContainer)) {
             throw RInternalError.shouldNotReachHere(".fastr.svg.get.content() must be called when current device is an SVG device");
