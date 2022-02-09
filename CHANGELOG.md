@@ -1,3 +1,8 @@
+# 22.1.0
+* Use JavaGD as the default graphical subsystem.
+  * Deprecate `--R.UseInternalGridGraphics` option.
+  * The FastR's graphical subsystem is mostly compatible with GNU-R's, see [graphics docs](./documentation/dev/graphics.md).
+
 # 22.0.0
 * Adopted [NodeLibrary](https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/interop/NodeLibrary.html).
 * In unit tests, use single shared context rather than multiple inner contexts.
