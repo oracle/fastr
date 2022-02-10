@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class FileOutputContainer implements GDContainer {
 
-    protected final String fileNameTemplate;
+    protected String fileNameTemplate;
 
     private int pageNumber = 0;
 
@@ -46,6 +46,10 @@ public abstract class FileOutputContainer implements GDContainer {
 
     public String getFileNameTemplate() {
         return fileNameTemplate;
+    }
+
+    public void setFileNameTemplate(String fileNameTemplate) {
+        this.fileNameTemplate = fileNameTemplate;
     }
 
     @Override

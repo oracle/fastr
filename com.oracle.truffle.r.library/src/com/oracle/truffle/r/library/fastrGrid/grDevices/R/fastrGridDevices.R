@@ -132,15 +132,9 @@ if (.fastr.option("UseInternalGridGraphics")) {
 				stop("svg.off for a different device than dev.cur() is not supported yet")
 			}
 			svg_contents <- .Internal(.fastr.svg.get.content())
-			svg_fname <- .Internal(.fastr.svg.filename())
-			# We explicitly close the device here, as it would be difficult to close it in the
-			# FastR builtin function.
+			# Set the filename to /dev/null so that dev.off() does not save to any file.
+			.Internal(.fastr.svg.set.filename("/dev/null"))
 			dev.off(which)
-			# dev.off creates the SVG file, as a workaround, we delete the file.
-			# Note that in current gnur's graphics engine (4.0.3), we cannot easily kill the
-			# device without invoking any shutdown hooks. Therefore, we do this workaround.
-			stopifnot(file.exists(svg_fname))
-			unlink(svg_fname)
 			return(svg_contents)
 		}
 

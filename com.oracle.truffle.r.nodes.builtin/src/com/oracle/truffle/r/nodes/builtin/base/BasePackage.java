@@ -149,6 +149,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGFileName;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGFileNameNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGGetContent;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGGetContentNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGSetFileName;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGSetFileNameNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSavePlot;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSavePlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSetConsoleHandler;
@@ -540,6 +542,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRGDSetGraphics.class, FastRGDSetGraphicsNodeGen::create);
         add(FastRSVGGetContent.class, FastRSVGGetContentNodeGen::create);
         add(FastRSVGFileName.class, FastRSVGFileNameNodeGen::create);
+        add(FastRSVGSetFileName.class, FastRSVGSetFileNameNodeGen::create);
         add(FastRSavePlot.class, FastRSavePlotNodeGen::create);
         add(FastRThrowIt.class, FastRThrowItNodeGen::create);
         add(FastRThrowCompilerError.class, FastRThrowCompilerError::new);
