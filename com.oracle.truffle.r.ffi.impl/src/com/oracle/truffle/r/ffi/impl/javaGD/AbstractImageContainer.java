@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -59,6 +60,11 @@ public abstract class AbstractImageContainer extends FileOutputContainer {
         objects.add(o);
     }
 
+    @Override
+    public Collection<GDObject> getGDObjects() {
+        return objects;
+    }
+
     protected abstract void resetGraphics();
 
     @Override
@@ -78,7 +84,7 @@ public abstract class AbstractImageContainer extends FileOutputContainer {
     }
 
     @TruffleBoundary
-    protected void repaint() {
+    public void repaint() {
         Graphics graphics = getGraphics();
         graphics.clearRect(0, 0, size.width, size.height);
         for (GDObject o : objects) {
@@ -87,7 +93,7 @@ public abstract class AbstractImageContainer extends FileOutputContainer {
     }
 
     @Override
-    protected final void saveImage(TruffleFile file) throws IOException {
+    public final void saveImage(TruffleFile file) throws IOException {
         repaint();
         dumpImage(file);
     }

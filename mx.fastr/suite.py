@@ -149,6 +149,7 @@ suite = {
         "sulong:SULONG_API",
       ],
       "requires" : [
+        "java.desktop",
         "java.logging",
         "jdk.unsupported", # sun.misc.Unsafe
       ],

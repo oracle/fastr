@@ -107,12 +107,42 @@ if (.fastr.option("UseInternalGridGraphics")) {
 	
 	# add help files for the new public functions
 	.fastr.addHelpPath('/com/oracle/truffle/r/library/fastrGrid/grDevices/Rd')
-} else {
+} else { # 'UseInternalGridGraphics' is false
 	eval(expression({
+
+		awt <- function(width = NULL, height = NULL, graphicsObj = NULL) {
+			# We have to call grDevices:::C_X11, because we have to transitively call `gdOpen`.
+			invisible(.External2(grDevices:::C_X11, ".FASTR.AWT", width, height))
+			# We do not have a way how to pass `graphicsObj` to `grDevices:::C_X11`, so we have to
+			# pass it to another fastr-specific builtin.
+			.Internal(.fastr.awtSetGraphics(graphicsObj))
+		}
 
 		svg <- function (filename = if (onefile) "Rplots.svg" else "Rplot%03d.svg", width = 7, height = 7, pointsize = 12, onefile = FALSE, family = "sans", bg = "white", antialias = c("default", "none", "gray", "subpixel")) {
 			invisible(.External2(C_X11, paste0("svg::onefile=", onefile, ",family=", family, ",bg=", bg, ",antialias=", antialias, ":", filename), 72 * width, 72 * height, pointsize))
 		}
+
+		# Allows to get the SVG code from SVG device, it also closes the device,
+		# but the contents are not saved to the given file.
+		svg.off <- function(which = dev.cur()) {
+			if (which == 1) {
+				stop("cannot shut down device 1 (the null device)")
+			}
+			if (which != dev.cur()) {
+				stop("svg.off for a different device than dev.cur() is not supported yet")
+			}
+			svg_contents <- .Internal(.fastr.svg.get.content())
+			# Set the filename to /dev/null so that dev.off() does not save to any file.
+			.Internal(.fastr.svg.set.filename("/dev/null"))
+			dev.off(which)
+			return(svg_contents)
+		}
+
+		svg.string <- function() {
+			svg_contents <- .Internal(.fastr.svg.get.content())
+			return(svg_contents)
+		}
+
 		gdlog <- function (logfilename, width, height, pointsize) .External2(C_X11, paste0("log::", logfilename), width, height, pointsize)
 		
 		gdOpen <- function (name, w, h, compare = FALSE) if (!compare) .Call(C_api_gdOpen, name, w, h) else gdOpenCmpArg(name, w, h)
@@ -304,12 +334,23 @@ if (.fastr.option("UseInternalGridGraphics")) {
 			}
 		}
 
+		savePlot <- function (filename = paste("Rplot", type, sep = "."), type = c("png", "jpeg", "bmp"), device = dev.cur()) {
+			if (device != dev.cur()) {
+				error("Only dev.cur() device is supported in savePlot")
+			}
+			.Internal(.fastr.savePlot(filename, type, device))
+		}
+
+		# export new public functions
 		exports <- asNamespace("grDevices")[[".__NAMESPACE__."]][['exports']]
-		
 		assign('svg', 'svg', envir = exports)
+		assign('svg.off', 'svg.off', envir = exports)
+		assign('svg.string', 'svg.string', envir = exports)
 		assign('gdlog', 'gdlog', envir = exports)
 		assign('replayGDLogs', 'replayGDLogs', envir = exports)
 		assign('compareGDLogs', 'compareGDLogs', envir = exports)
 
-	}), asNamespace("grDevices"))	
+		# add help files for the new public functions
+		.fastr.addHelpPath('/com/oracle/truffle/r/library/fastrGrid/grDevices/Rd')
+	}), asNamespace("grDevices"))
 }

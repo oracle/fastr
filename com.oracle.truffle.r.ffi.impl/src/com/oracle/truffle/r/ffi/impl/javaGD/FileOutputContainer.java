@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class FileOutputContainer implements GDContainer {
 
-    protected final String fileNameTemplate;
+    protected String fileNameTemplate;
 
     private int pageNumber = 0;
 
@@ -42,6 +42,14 @@ public abstract class FileOutputContainer implements GDContainer {
 
     protected int getPageNumber() {
         return pageNumber;
+    }
+
+    public String getFileNameTemplate() {
+        return fileNameTemplate;
+    }
+
+    public void setFileNameTemplate(String fileNameTemplate) {
+        this.fileNameTemplate = fileNameTemplate;
     }
 
     @Override

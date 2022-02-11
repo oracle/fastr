@@ -2901,8 +2901,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public void gdOpen(int gdId, String deviceName, double w, double h, RContext ctx) {
-        JavaGDContext.getContext(ctx).newGD(gdId, deviceName).gdOpen(w, h);
+    public boolean gdOpen(int gdId, String deviceName, double w, double h, RContext ctx) {
+        boolean result = JavaGDContext.getContext(ctx).newGD(gdId, deviceName).gdOpen(w, h);
+        return result;
     }
 
     @Override

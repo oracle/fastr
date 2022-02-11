@@ -3,7 +3,7 @@
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1997--2003  Robert Gentleman, Ross Ihaka and the
  *			      R Development Core Team
- *  Copyright (c) 2020, 2021, Oracle and/or its affiliates
+ *  Copyright (c) 2020, 2022, Oracle and/or its affiliates
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ Rboolean newJavaGDDeviceDriver(NewDevDesc *dd,
 			    const char *disp_name,
 			    double width,
 			    double height,
-                            double initps)
+                double initps)
 {
   newJavaGDDesc *xd;
 
@@ -337,9 +337,9 @@ SEXP newJavaGD(SEXP name, SEXP sw, SEXP sh, SEXP sps) {
     h = ISNA(h) ? 300 : h;
     ps = ISNA(ps) ? 12 : ps;
     if (TYPEOF(name) != STRSXP || LENGTH(name) < 1)
-	Rf_error("invalid name");
+        Rf_error("invalid name");
     if (ISNAN(w) || w <= 0.0 || ISNAN(h) || h <= 0.0 || ISNAN(ps) || ps <= 0.0)
-	Rf_error("invalid width, height or ps");
+        Rf_error("invalid width, height or ps");
     Rf_addJavaGDDevice(CHAR(STRING_ELT(name, 0)), w, h, ps);
     return name;
 }
@@ -382,7 +382,7 @@ SEXP javaGDgetSize(SEXP sDev) {
 			    UNPROTECT(1);
 			} else {
 #ifdef JGD_DEBUG
-				printf("sizefailed>> device=%d, gd=%lx, dd=%lx\n",*dev,
+				printf("sizefailed>> device=%d, gd=%lx, dd=%lx\n", dev,
 				       (unsigned long)gd, (unsigned long)dd);
 #endif
 			}	

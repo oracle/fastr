@@ -30,6 +30,7 @@ import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.Collection;
 import java.util.Vector;
 import java.util.function.Consumer;
 
@@ -101,6 +102,11 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
     public synchronized void add(GDObject o) {
         l.add(o);
         listChanged = true;
+    }
+
+    @Override
+    public Collection<GDObject> getGDObjects() {
+        return l;
     }
 
     @Override
