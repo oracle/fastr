@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,16 +43,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
@@ -65,13 +62,13 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
 
@@ -173,12 +170,11 @@ public class SysFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doSysSetEnv(VirtualFrame frame, RStringVector names, RStringVector values,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected RLogicalVector doSysSetEnv(VirtualFrame frame, RStringVector names, RStringVector values) {
             if (names.getLength() != values.getLength()) {
                 throw error(RError.Message.ARGUMENT_WRONG_LENGTH);
             }
-            checkNSLoad(ctxRef.get(), frame, names, values, true);
+            checkNSLoad(getRContext(), frame, names, values, true);
             return doSysSetEnv(names, values);
         }
 
@@ -203,9 +199,8 @@ public class SysFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doSysUnSetEnv(VirtualFrame frame, RStringVector names,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            checkNSLoad(ctxRef.get(), frame, names, null, false);
+        protected RLogicalVector doSysUnSetEnv(VirtualFrame frame, RStringVector names) {
+            checkNSLoad(getRContext(), frame, names, null, false);
             return doSysUnSetEnv(names);
         }
 
@@ -308,15 +303,14 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector sysChmod(RStringVector pathVec, RIntVector octmode, @SuppressWarnings("unused") boolean useUmask,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected RLogicalVector sysChmod(RStringVector pathVec, RIntVector octmode, @SuppressWarnings("unused") boolean useUmask) {
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String path = pathVec.getDataAt(i);
                 if (path.length() == 0 || RRuntime.isNA(path)) {
                     continue;
                 }
-                int result = FileSystemUtils.chmod(ctxRef.get().getSafeTruffleFile(path), octmode.getDataAt(i % octmode.getLength()));
+                int result = FileSystemUtils.chmod(getRContext().getSafeTruffleFile(path), octmode.getDataAt(i % octmode.getLength()));
                 data[i] = RRuntime.asLogical(result == 0);
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
@@ -427,10 +421,9 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected byte sysSetFileTime(String path, int time,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected byte sysSetFileTime(String path, int time) {
             try {
-                ctxRef.get().getSafeTruffleFile(path).setLastModifiedTime(FileTime.from(time, TimeUnit.SECONDS));
+                getRContext().getSafeTruffleFile(path).setLastModifiedTime(FileTime.from(time, TimeUnit.SECONDS));
                 return RRuntime.LOGICAL_TRUE;
             } catch (IOException ex) {
                 return RRuntime.LOGICAL_FALSE;

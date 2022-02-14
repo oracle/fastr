@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -49,7 +48,6 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -59,7 +57,7 @@ class EngineRootNode extends RootNode implements REntryPointRootNode {
     private final SourceSection sourceSection;
 
     private final MaterializedFrame executionFrame;
-    private final ContextReference<RContext> contextReference;
+    private final RContext context;
 
     @Child private EngineBodyNode bodyNode;
     @Child private R2Foreign r2Foreign = R2Foreign.create();
@@ -70,7 +68,7 @@ class EngineRootNode extends RootNode implements REntryPointRootNode {
         this.sourceSection = sourceSection;
         this.bodyNode = bodyNode;
         this.executionFrame = executionFrame;
-        this.contextReference = lookupContextReference(TruffleRLanguage.class);
+        this.context = RContext.getInstance(this);
     }
 
     public static EngineRootNode createEngineRoot(REngine engine, RContext context, List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame,
@@ -80,7 +78,7 @@ class EngineRootNode extends RootNode implements REntryPointRootNode {
 
     @Override
     public Frame getActualExecutionFrame(@SuppressWarnings("unused") Frame currentFrame) {
-        return executionFrame != null ? executionFrame : contextReference.get().stateREnvironment.getGlobalFrame();
+        return executionFrame != null ? executionFrame : context.stateREnvironment.getGlobalFrame();
     }
 
     /**

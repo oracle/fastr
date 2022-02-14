@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,8 +63,6 @@ import java.util.stream.Stream;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
@@ -78,7 +76,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -108,11 +105,10 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object fileAccess(RStringVector names, int mode,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected Object fileAccess(RStringVector names, int mode) {
             int[] data = new int[names.getLength()];
             for (int i = 0; i < data.length; i++) {
-                TruffleFile file = ctxRef.get().getSafeTruffleFile(names.getDataAt(i));
+                TruffleFile file = getRContext().getSafeTruffleFile(names.getDataAt(i));
                 if (file.exists()) {
                     if ((mode & EXECUTE) != 0 && !file.isExecutable()) {
                         data[i] = -1;
@@ -142,8 +138,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector doFileAppend(RStringVector file1Vec, RStringVector file2Vec,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected RLogicalVector doFileAppend(RStringVector file1Vec, RStringVector file2Vec) {
             /*
              * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
              * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
@@ -166,7 +161,7 @@ public class FileFunctions {
             if (len1 == 1) {
                 String file1 = file1Vec.getDataAt(0);
                 if (!RRuntime.isNA(file1)) {
-                    RContext context = ctxRef.get();
+                    RContext context = getRContext();
                     try (BufferedOutputStream out = new BufferedOutputStream(context.getSafeTruffleFile(file1).newOutputStream(StandardOpenOption.APPEND))) {
                         for (int f2 = 0; f2 < len2; f2++) {
                             String file2 = file2Vec.getDataAt(f2);
@@ -187,7 +182,7 @@ public class FileFunctions {
                 for (int f = 0; f < len; f++) {
                     String file1 = file1A[f];
                     if (!RRuntime.isNA(file1)) {
-                        RContext context = ctxRef.get();
+                        RContext context = getRContext();
                         try (BufferedOutputStream out = new BufferedOutputStream(
                                         context.getSafeTruffleFile(file1).newOutputStream(StandardOpenOption.APPEND))) {
                             String file2 = file2A[f];
@@ -244,8 +239,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object doFileCreate(RStringVector vec, byte showWarnings,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected Object doFileCreate(RStringVector vec, byte showWarnings) {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
@@ -254,7 +248,7 @@ public class FileFunctions {
                 } else {
                     boolean ok = true;
                     try {
-                        ctxRef.get().getSafeTruffleFile(path).newOutputStream().close();
+                        getRContext().getSafeTruffleFile(path).newOutputStream().close();
                     } catch (IOException ex) {
                         ok = false;
                         if (showWarnings == RRuntime.LOGICAL_TRUE) {
@@ -290,8 +284,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RList doFileInfo(RStringVector vec, @SuppressWarnings("unused") Boolean extraCols,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected RList doFileInfo(RStringVector vec, @SuppressWarnings("unused") Boolean extraCols) {
             /*
              * Create a list, the elements of which are vectors of length vec.getLength() containing
              * the information. The R closure that called the .Internal turns the result into a
@@ -313,7 +306,7 @@ public class FileFunctions {
             }
             for (int i = 0; i < vecLength; i++) {
                 String vecPath = vec.getDataAt(i);
-                TruffleFile file = ctxRef.get().getSafeTruffleFile(vecPath);
+                TruffleFile file = getRContext().getSafeTruffleFile(vecPath);
                 // missing defaults to NA
                 if (file.exists()) {
                     double size = RRuntime.DOUBLE_NA;
@@ -487,9 +480,8 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object doFileLink(RStringVector vecFrom, RStringVector vecTo,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return doFileLink(ctxRef.get(), vecFrom, vecTo, false);
+        protected Object doFileLink(RStringVector vecFrom, RStringVector vecTo) {
+            return doFileLink(getRContext(), vecFrom, vecTo, false);
         }
     }
 
@@ -504,9 +496,8 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object doFileSymLink(RStringVector vecFrom, RStringVector vecTo,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return doFileLink(ctxRef.get(), vecFrom, vecTo, true);
+        protected Object doFileSymLink(RStringVector vecFrom, RStringVector vecTo) {
+            return doFileLink(getRContext(), vecFrom, vecTo, true);
         }
     }
 
@@ -520,15 +511,14 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object doFileRemove(RStringVector vec,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected Object doFileRemove(RStringVector vec) {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
                 if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    TruffleFile f = ctxRef.get().getSafeTruffleFile(path);
+                    TruffleFile f = getRContext().getSafeTruffleFile(path);
                     boolean ok;
                     try {
                         f.delete();
@@ -559,8 +549,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object doFileRename(RStringVector vecFrom, RStringVector vecTo,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected Object doFileRename(RStringVector vecFrom, RStringVector vecTo) {
             int len = vecFrom.getLength();
             if (len != vecTo.getLength()) {
                 throw error(RError.Message.FROM_TO_DIFFERENT);
@@ -576,7 +565,7 @@ public class FileFunctions {
                 } else {
                     boolean ok;
                     try {
-                        RContext context = ctxRef.get();
+                        RContext context = getRContext();
                         context.getSafeTruffleFile(from).move(context.getSafeTruffleFile(to));
                         ok = true;
                     } catch (IOException ex) {
@@ -602,15 +591,14 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object doFileExists(RStringVector vec,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected Object doFileExists(RStringVector vec) {
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
                 if (RRuntime.isNA(path) || path.isEmpty()) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    TruffleFile f = ctxRef.get().getSafeTruffleFile(path);
+                    TruffleFile f = getRContext().getSafeTruffleFile(path);
                     // TODO R's notion of exists may not match Java - check
                     if (f.exists()) {
                         try {
@@ -655,16 +643,14 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector doListFiles(RStringVector vec, RNull patternVec, boolean allFiles, boolean fullNames, boolean recursive, boolean ignoreCase, boolean includeDirs,
-                        boolean noDotDot,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return doListFilesBody(vec, null, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot, ctxRef.get());
+                        boolean noDotDot) {
+            return doListFilesBody(vec, null, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
         @Specialization
         @TruffleBoundary
         protected RStringVector doListFiles(RStringVector vec, RStringVector patternVec, boolean allFiles, boolean fullNames, boolean recursive, boolean ignoreCase,
-                        boolean includeDirs, boolean noDotDot,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+                        boolean includeDirs, boolean noDotDot) {
             /*
              * Pattern in first element of vector, remaining elements are ignored (as per GnuR).
              * N.B. The pattern matches file names not paths, which means we cannot just use the
@@ -679,12 +665,11 @@ public class FileFunctions {
                     pattern = patternVec.getDataAt(0);
                 }
             }
-
-            return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot, ctxRef.get());
+            return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
-        private static RStringVector doListFilesBody(RStringVector vec, String patternString, boolean allFiles, boolean fullNames, boolean recursive,
-                        boolean ignoreCase, boolean includeDirsIn, boolean noDotDot, RContext context) {
+        private RStringVector doListFilesBody(RStringVector vec, String patternString, boolean allFiles, boolean fullNames, boolean recursive,
+                        boolean ignoreCase, boolean includeDirsIn, boolean noDotDot) {
             boolean includeDirs = !recursive || includeDirsIn;
             int flags = ignoreCase ? Pattern.CASE_INSENSITIVE : 0;
             Pattern pattern = null;
@@ -695,6 +680,7 @@ public class FileFunctions {
                 String regexpPatternString = Utils.wildcardToRegex(patternString);
                 pattern = Pattern.compile(regexpPatternString, flags);
             }
+            RContext context = getRContext();
             // Curiously the result is not a vector of same length as the input,
             // as typical for R, but a single vector, which means duplicates may occur
             ArrayList<String> files = new ArrayList<>();
@@ -825,12 +811,11 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector listDirs(RStringVector paths, boolean fullNames, boolean recursive,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected RStringVector listDirs(RStringVector paths, boolean fullNames, boolean recursive) {
             ArrayList<String> dirList = new ArrayList<>();
             for (int i = 0; i < paths.getLength(); i++) {
                 String vecPathString = paths.getDataAt(i);
-                RContext context = ctxRef.get();
+                RContext context = getRContext();
                 TruffleFile root = context.getSafeTruffleFile(vecPathString);
                 if (!root.exists()) {
                     continue;
@@ -995,8 +980,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector fileCopy(RStringVector vecFrom, RStringVector vecTo, boolean overwrite, boolean recursiveA, boolean copyMode, boolean copyDate,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected RLogicalVector fileCopy(RStringVector vecFrom, RStringVector vecTo, boolean overwrite, boolean recursiveA, boolean copyMode, boolean copyDate) {
             boolean recursive = recursiveA;
             int lenFrom = vecFrom.getLength();
             byte[] status = new byte[lenFrom];
@@ -1018,7 +1002,7 @@ public class FileFunctions {
                     copyOptions[0] = StandardCopyOption.REPLACE_EXISTING;
                 }
                 TruffleFile toDir = null;
-                RContext context = ctxRef.get();
+                RContext context = getRContext();
                 if (vecTo.getLength() == 1) {
                     TruffleFile vecTo0Path = context.getSafeTruffleFile(vecTo.getDataAt(0));
                     if (vecTo0Path.isDirectory()) {
@@ -1154,9 +1138,8 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RNull show(RStringVector files, RStringVector header, RStringVector title, boolean deleteFile, @SuppressWarnings("unused") String pager,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            RContext ctx = ctxRef.get();
+        protected RNull show(RStringVector files, RStringVector header, RStringVector title, boolean deleteFile, @SuppressWarnings("unused") String pager) {
+            RContext ctx = getRContext();
             ConsoleIO console = ctx.getConsole();
             for (int i = 0; i < title.getLength(); i++) {
                 console.println("==== " + title.getDataAt(i) + " ====");
@@ -1209,12 +1192,12 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doDirName(RStringVector vec,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return doXyzName(vec, ctxRef.get(), (context, name) -> {
+        protected RStringVector doDirName(RStringVector vec) {
+            RContext ctx = getRContext();
+            return doXyzName(vec, ctx, (context, name) -> {
                 TruffleFile path = context.getSafeTruffleFile(name);
                 TruffleFile parent = path.getParent();
-                return parent != null ? parent.toString() : (path.getAbsoluteFile().getParent() != null ? "." : ctxRef.get().getEnv().getFileNameSeparator());
+                return parent != null ? parent.toString() : (path.getAbsoluteFile().getParent() != null ? "." : ctx.getEnv().getFileNameSeparator());
             });
         }
     }
@@ -1229,12 +1212,11 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doDirName(RStringVector vec,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return doXyzName(vec, ctxRef.get(), (context, name) -> {
+        protected RStringVector doDirName(RStringVector vec) {
+            return doXyzName(vec, getRContext(), (context, name) -> {
                 TruffleFile path = context.getSafeTruffleFile(name);
                 String fileName = path.getName();
-                return fileName != null ? fileName.toString() : name;
+                return fileName != null ? fileName : name;
             });
         }
     }
@@ -1252,8 +1234,7 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected static int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, boolean expand,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected int doUnlink(RStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force, boolean expand) {
             int result = 0;
             for (int i = -0; i < vec.getLength(); i++) {
                 String pathPattern = vec.getDataAt(i);
@@ -1261,14 +1242,15 @@ public class FileFunctions {
                     continue;
                 }
                 int firstGlobCharIdx = containsGlobChar(pathPattern);
+                RContext context = getRContext();
                 if (firstGlobCharIdx >= 0) {
-                    result = removeGlob(ctxRef.get(), pathPattern, recursive, firstGlobCharIdx, result);
+                    result = removeGlob(context, pathPattern, recursive, firstGlobCharIdx, result);
                 } else {
                     TruffleFile file;
                     if (!expand && pathPattern.startsWith("~")) {
-                        file = ctxRef.get().getEnv().getInternalTruffleFile(pathPattern);
+                        file = context.getEnv().getInternalTruffleFile(pathPattern);
                     } else {
-                        file = ctxRef.get().getSafeTruffleFile(Utils.tildeExpand(pathPattern));
+                        file = context.getSafeTruffleFile(Utils.tildeExpand(pathPattern));
                     }
                     result = removeFile(file, recursive, result);
                 }
@@ -1362,15 +1344,14 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected byte dirCreate(String pathIn, boolean showWarnings, boolean recursive, int octMode,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected byte dirCreate(String pathIn, boolean showWarnings, boolean recursive, int octMode) {
             boolean ok;
             if (RRuntime.isNA(pathIn)) {
                 ok = false;
             } else {
                 ok = true;
                 String path = pathIn;
-                TruffleFile newDir = ctxRef.get().getSafeTruffleFile(path);
+                TruffleFile newDir = getRContext().getSafeTruffleFile(path);
                 if (newDir.exists()) {
                     ok = false;
                     if (showWarnings) {
@@ -1433,12 +1414,11 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector dirExists(RStringVector pathVec,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected RLogicalVector dirExists(RStringVector pathVec) {
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String pathString = pathVec.getDataAt(i);
-                TruffleFile path = ctxRef.get().getSafeTruffleFile(pathString);
+                TruffleFile path = getRContext().getSafeTruffleFile(pathString);
                 data[i] = RRuntime.asLogical(path.isDirectory());
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);

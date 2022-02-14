@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.function.Predicate;
@@ -36,21 +38,16 @@ import java.util.zip.ZipInputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import java.io.OutputStream;
-import java.nio.file.attribute.FileTime;
 
 public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
 
@@ -66,9 +63,8 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
     }
 
     @Specialization
-    protected Object unzip(String zipfile, @SuppressWarnings("unused") RNull files, String exdir, boolean list, boolean overwrite, boolean junkpaths, boolean setTimes,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-        return unzipImpl(zipfile, (RStringVector) null, exdir, list, overwrite, junkpaths, setTimes, ctxRef.get());
+    protected Object unzip(String zipfile, @SuppressWarnings("unused") RNull files, String exdir, boolean list, boolean overwrite, boolean junkpaths, boolean setTimes) {
+        return unzipImpl(zipfile, (RStringVector) null, exdir, list, overwrite, junkpaths, setTimes);
     }
 
     @Override
@@ -77,13 +73,13 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
     }
 
     @Specialization
-    protected Object unzip(String zipfile, RStringVector files, String exdir, boolean list, boolean overwrite, boolean junkpaths, boolean setTimes,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-        return unzipImpl(zipfile, files, exdir, list, overwrite, junkpaths, setTimes, ctxRef.get());
+    protected Object unzip(String zipfile, RStringVector files, String exdir, boolean list, boolean overwrite, boolean junkpaths, boolean setTimes) {
+        return unzipImpl(zipfile, files, exdir, list, overwrite, junkpaths, setTimes);
     }
 
     @TruffleBoundary
-    private Object unzipImpl(String zipfile, RStringVector files, String exdir, boolean list, boolean overwrite, boolean junkpaths, boolean setTimes, RContext context) throws RError {
+    private Object unzipImpl(String zipfile, RStringVector files, String exdir, boolean list, boolean overwrite, boolean junkpaths, boolean setTimes) throws RError {
+        RContext context = getRContext();
         if (list) {
             return list(context, zipfile);
         }

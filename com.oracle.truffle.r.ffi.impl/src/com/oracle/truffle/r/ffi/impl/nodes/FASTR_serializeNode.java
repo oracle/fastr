@@ -24,9 +24,7 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -37,7 +35,6 @@ import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Context;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
@@ -86,7 +83,6 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
      */
     @Specialization
     protected Object doIt(Object object, @SuppressWarnings("unused") int type, int version, Object stream, Object outBytesFunc,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
                     @Cached BindSignatureNode bind,
                     @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interopLibrary) {
 
@@ -100,7 +96,7 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
         assert interopLibrary.isExecutable(outBytesFuncExecutable);
 
         // TODO: Pass type instead of RSerialize.XDR
-        byte[] serializedBuff = RSerialize.serialize(ctxRef.get(), object, RSerialize.XDR, version, null);
+        byte[] serializedBuff = RSerialize.serialize(RContext.getInstance(this), object, RSerialize.XDR, version, null);
         NativeCharArray nativeBuff = new NativeCharArray(serializedBuff);
 
         try {

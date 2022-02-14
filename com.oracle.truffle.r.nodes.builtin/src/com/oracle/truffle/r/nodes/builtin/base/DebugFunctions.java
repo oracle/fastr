@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,8 +34,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
@@ -47,8 +45,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -144,8 +140,7 @@ public class DebugFunctions {
         }
 
         @Specialization
-        protected Object setBreakpoint(String fileLine, @SuppressWarnings("unused") RMissing lineNr, boolean clear,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected Object setBreakpoint(String fileLine, @SuppressWarnings("unused") RMissing lineNr, boolean clear) {
 
             int hashIdx = fileLine.lastIndexOf('#');
             if (hashIdx != -1) {
@@ -153,7 +148,7 @@ public class DebugFunctions {
                 String fileName = fileLine.substring(0, hashIdx);
                 int lnr = RRuntime.string2intNoCheck(fileLine.substring(hashIdx));
                 if (lnr != RRuntime.INT_NA) {
-                    return setBreakpoint(fileName, lnr, clear, ctxRef);
+                    return setBreakpoint(fileName, lnr, clear);
                 }
             }
 
@@ -162,11 +157,10 @@ public class DebugFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object setBreakpoint(String fileName, int lineNr, boolean clear,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected Object setBreakpoint(String fileName, int lineNr, boolean clear) {
 
             try {
-                Source fromSrcfile = RSource.fromFileName(ctxRef.get(), fileName, false);
+                Source fromSrcfile = RSource.fromFileName(getRContext(), fileName, false);
                 if (!clear) {
                     DebugHandling.enableLineDebug(fromSrcfile, lineNr);
                 } else {

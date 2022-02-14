@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,13 +35,10 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
 
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import org.graalvm.polyglot.Context;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
@@ -58,13 +55,13 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -392,23 +389,20 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected Object r(RStringVector args, RStringVector env, boolean intern, int timeoutSecs,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(ctxRef.get(), prependCommand(args, "R"), env.materialize().getDataCopy(), intern, timeoutSecs);
+        protected Object r(RStringVector args, RStringVector env, boolean intern, int timeoutSecs) {
+            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(getRContext(), prependCommand(args, "R"), env.materialize().getDataCopy(), intern, timeoutSecs);
             return rc;
         }
 
         @Specialization
-        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern, timeoutSecs, ctxRef);
+        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs) {
+            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern, timeoutSecs);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object r(@SuppressWarnings("unused") RMissing args, RStringVector env, boolean intern, int timeoutSecs,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return r(RDataFactory.createEmptyStringVector(), env, intern, timeoutSecs, ctxRef);
+        protected Object r(@SuppressWarnings("unused") RMissing args, RStringVector env, boolean intern, int timeoutSecs) {
+            return r(RDataFactory.createEmptyStringVector(), env, intern, timeoutSecs);
         }
     }
 
@@ -432,16 +426,14 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected Object rscript(RStringVector args, RStringVector env, boolean intern, int timeoutSecs,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return RContext.getRRuntimeASTAccess().rscriptMain(ctxRef.get(), prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern, timeoutSecs);
+        protected Object rscript(RStringVector args, RStringVector env, boolean intern, int timeoutSecs) {
+            return RContext.getRRuntimeASTAccess().rscriptMain(getRContext(), prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern, timeoutSecs);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object rscript(RStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return rscript(args, RDataFactory.createEmptyStringVector(), intern, timeoutSecs, ctxRef);
+        protected Object rscript(RStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs) {
+            return rscript(args, RDataFactory.createEmptyStringVector(), intern, timeoutSecs);
         }
     }
 

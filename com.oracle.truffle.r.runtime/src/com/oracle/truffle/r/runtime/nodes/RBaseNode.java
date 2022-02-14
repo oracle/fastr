@@ -238,6 +238,10 @@ public abstract class RBaseNode extends Node {
         return getRootNode().getLanguage(RContext.getTruffleRLanguage());
     }
 
+    protected final RContext getRContext() {
+        return RContext.getInstance(this);
+    }
+
     protected static boolean isRAbstractContainer(Object value) {
         return value instanceof RAbstractContainer;
     }

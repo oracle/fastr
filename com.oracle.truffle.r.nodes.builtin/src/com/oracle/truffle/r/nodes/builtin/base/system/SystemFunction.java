@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -37,8 +35,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 @RBuiltin(name = "system", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"command", "intern", "timeout"}, behavior = COMPLEX)
 public abstract class SystemFunction extends RBuiltinNode.Arg3 {
@@ -52,9 +48,8 @@ public abstract class SystemFunction extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected Object system(VirtualFrame frame, String command, boolean intern, int timeout,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-        Object result = SystemFunctionFactory.getInstance().execute(frame, command.trim(), intern, timeout, ctxRef.get());
+    protected Object system(VirtualFrame frame, String command, boolean intern, int timeout) {
+        Object result = SystemFunctionFactory.getInstance().execute(frame, command.trim(), intern, timeout, getRContext());
         visibility.execute(frame, intern);
         return result;
     }

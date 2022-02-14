@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,25 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.io.IOException;
+import java.nio.file.StandardCopyOption;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
-import java.io.IOException;
-import java.nio.file.StandardCopyOption;
 
 @RBuiltin(name = "fastr.useDebugMakevars", visibility = OFF, kind = PRIMITIVE, parameterNames = {"use"}, behavior = COMPLEX)
 public abstract class FastRUseDebugMakevars extends RBuiltinNode.Arg1 {
@@ -52,9 +49,8 @@ public abstract class FastRUseDebugMakevars extends RBuiltinNode.Arg1 {
 
     @TruffleBoundary
     @Specialization
-    protected RNull useDebugMakevars(boolean use,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-        TruffleFile rHome = REnvVars.getRHomeTruffleFile(ctxRef.get());
+    protected RNull useDebugMakevars(boolean use) {
+        TruffleFile rHome = REnvVars.getRHomeTruffleFile(getRContext());
         TruffleFile dst = rHome.resolve("etc").resolve("Makevars.site");
         try {
             if (use) {

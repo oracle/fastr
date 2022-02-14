@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,13 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFILog;
@@ -50,9 +47,8 @@ public abstract class UnprotectPtrNode extends FFIUpCallNode.Arg1 {
     @Specialization
     Object unprotect(RBaseObject x,
                     @Cached("createBinaryProfile()") ConditionProfile registerNativeRefNopProfile,
-                    @Cached BranchProfile registerNativeRefProfile,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-        RFFIContext ctx = ctxRef.get().getStateRFFI();
+                    @Cached BranchProfile registerNativeRefProfile) {
+        RFFIContext ctx = RContext.getInstance(this).getStateRFFI();
         Collections.ArrayListObj<RBaseObject> stack = ctx.rffiContextState.protectStack;
         for (int i = stack.size() - 1; i >= 0; i--) {
             RBaseObject current = stack.get(i);

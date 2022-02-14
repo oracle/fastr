@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,10 +23,8 @@
 package com.oracle.truffle.r.ffi.impl.mixed;
 
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL;
@@ -37,7 +35,6 @@ import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -77,9 +74,8 @@ public class TruffleMixed_DLL implements DLLRFFI {
         }
 
         @Specialization
-        public LibHandle exec(String path, boolean local, boolean now,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) throws UnsatisfiedLinkError {
-            RContext context = ctxRef.get();
+        public LibHandle exec(String path, boolean local, boolean now) throws UnsatisfiedLinkError {
+            RContext context = RContext.getInstance(this);
             TruffleFile libPath = context.getSafeTruffleFile(path);
             if (!libPath.exists()) {
                 throw new UnsatisfiedLinkError(String.format("Shared library %s not found", path));
