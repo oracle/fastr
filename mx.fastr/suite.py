@@ -274,6 +274,7 @@ suite = {
       "spotbugsIgnoresGenerated" : True,
       "requires" : [
         "java.management",
+        "java.desktop",
         "java.logging",
         "jdk.unsupported" # sun.misc.Unsafe
       ],

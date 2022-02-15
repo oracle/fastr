@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -343,6 +343,8 @@ if (.fastr.option("UseInternalGridGraphics")) {
 
 		# export new public functions
 		exports <- asNamespace("grDevices")[[".__NAMESPACE__."]][['exports']]
+		assign('awt', 'awt', envir = exports)
+		assign('JavaGD', 'X11', envir = exports)
 		assign('svg', 'svg', envir = exports)
 		assign('svg.off', 'svg.off', envir = exports)
 		assign('svg.string', 'svg.string', envir = exports)
