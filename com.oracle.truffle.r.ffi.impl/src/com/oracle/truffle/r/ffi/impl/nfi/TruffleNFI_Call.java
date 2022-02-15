@@ -30,13 +30,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.nfi.api.SignatureLibrary;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CallFactory.TruffleNFI_InvokeCallNodeGen;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CallFactory.TruffleNFI_InvokeVoidCallNodeGen;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
@@ -135,32 +135,30 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    private static class TruffleNFI_InvokeVoidCallNode extends NodeAdapter implements InvokeVoidCallNode {
-        private static final String CallVoid1Sig = "(pointer, pointer): void";
-        private static final String CallVoid0Sig = "(pointer): void";
+    @ImportStatic(DSLConfig.class)
+    public abstract static class TruffleNFI_InvokeVoidCallNode extends NodeAdapter implements InvokeVoidCallNode {
+        protected static final String CallVoid1Sig = "(pointer, pointer): void";
+        protected static final String CallVoid0Sig = "(pointer): void";
 
-        @Child private InteropLibrary execute0Interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
-        @Child private InteropLibrary execute1Interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
-        @Children private final FFIMaterializeNode[] ffiMaterialize0 = FFIMaterializeNode.create(0);
-        @Children private final FFIToNativeMirrorNode[] ffiWrapper0 = FFIToNativeMirrorNode.create(0);
-        @Children private final FFIMaterializeNode[] ffiMaterialize1 = FFIMaterializeNode.create(1);
-        @Children private final FFIToNativeMirrorNode[] ffiWrapper1 = FFIToNativeMirrorNode.create(1);
-
-        @Override
-        public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
+        @Specialization
+        public void invokeVoidCallCached(NativeCallInfo nativeCallInfo, Object[] args,
+                        @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary execute0Interop,
+                        @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary execute1Interop,
+                        @Cached("createMaterializeNodes(1)") FFIMaterializeNode[] ffiMaterialize1,
+                        @Cached("createWrapperNodes(1)") FFIToNativeMirrorNode[] ffiWrapper1,
+                        @Cached("getCallVoid0Function()") TruffleObject callVoid0Function,
+                        @Cached("getCallVoid1Function()") TruffleObject callVoid1Function) {
             FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length);
             try {
                 Object[] wrappedArgs;
                 switch (args.length) {
                     case 0:
                         logCall(nativeCallInfo.name, args);
-                        TruffleObject callVoid0Function = getFunction("dot_call_void0", TruffleNFI_Context.parseSignature(CallVoid0Sig));
                         execute0Interop.execute(callVoid0Function, nativeCallInfo.address.asTruffleObject());
                         break;
                     case 1:
                         logCall(nativeCallInfo.name, args);
                         wrappedArgs = ffiWrap.wrapAll(args, ffiMaterialize1, ffiWrapper1);
-                        TruffleObject callVoid1Function = getFunction("dot_call_void1", TruffleNFI_Context.parseSignature(CallVoid1Sig));
                         execute1Interop.execute(callVoid1Function, nativeCallInfo.address.asTruffleObject(), wrappedArgs[0]);
                         break;
                     default:
@@ -171,6 +169,24 @@ public class TruffleNFI_Call implements CallRFFI {
             } finally {
                 ffiWrap.close();
             }
+        }
+
+        protected TruffleObject getCallVoid0Function() {
+            Object callVoid0Sig = TruffleNFI_Context.parseSignature(CallVoid0Sig);
+            return getFunction("dot_call_void0", callVoid0Sig);
+        }
+
+        protected TruffleObject getCallVoid1Function() {
+            Object callVoid1Sig = TruffleNFI_Context.parseSignature(CallVoid1Sig);
+            return getFunction("dot_call_void1", callVoid1Sig);
+        }
+
+        protected static FFIMaterializeNode[] createMaterializeNodes(int count) {
+            return FFIMaterializeNode.create(count);
+        }
+
+        protected static FFIToNativeMirrorNode[] createWrapperNodes(int count) {
+            return FFIToNativeMirrorNode.create(count);
         }
     }
 
@@ -187,7 +203,7 @@ public class TruffleNFI_Call implements CallRFFI {
 
     @Override
     public InvokeVoidCallNode createInvokeVoidCallNode() {
-        return new TruffleNFI_InvokeVoidCallNode();
+        return TruffleNFI_InvokeVoidCallNodeGen.create();
     }
 
 }
