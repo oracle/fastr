@@ -99,7 +99,7 @@ public class SysFunctions {
         @Specialization
         @TruffleBoundary
         protected Object sysGetEnv(RStringVector x, String unset) {
-            Map<String, String> envMap = RContext.getInstance().stateREnvVars.getMap();
+            Map<String, String> envMap = getRContext().stateREnvVars.getMap();
             int len = x.getLength();
             if (zeroLengthProfile.profile(len == 0)) {
                 String[] data = new String[envMap.size()];

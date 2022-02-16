@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -201,7 +201,7 @@ public class FrameFunctions {
                 // Note: this is optimization and necessity, because in the case of invocation of R
                 // function from another "main" language, there will be no actual Truffle frame
                 // for global environment
-                return REnvironment.globalEnv().getFrame();
+                return REnvironment.globalEnv(getRContext()).getFrame();
             } else {
                 MaterializedFrame current = null;
                 if (RArguments.getDepth(frame) - frameDepth <= ITERATE_LEVELS) {
@@ -647,7 +647,7 @@ public class FrameFunctions {
         protected REnvironment sysFrame(VirtualFrame frame, int which) {
             REnvironment result;
             if (zeroProfile.profile(which == 0)) {
-                result = REnvironment.globalEnv();
+                result = REnvironment.globalEnv(getRContext());
             } else {
                 MaterializedFrame callerFrame = getFrameHelper().getMaterializedFrame(frame, which);
                 result = REnvironment.frameToEnvironment(callerFrame);
@@ -1098,7 +1098,7 @@ public class FrameFunctions {
             RCaller call = iterState.call;
             if (!RCaller.isValidCaller(iterState.call)) {
                 nullCallerProfile.enter();
-                return REnvironment.globalEnv();
+                return REnvironment.globalEnv(getRContext());
             }
 
             REnvironment sysParent = RCaller.unwrapSysParent(call, unwrapSysParentProfile);

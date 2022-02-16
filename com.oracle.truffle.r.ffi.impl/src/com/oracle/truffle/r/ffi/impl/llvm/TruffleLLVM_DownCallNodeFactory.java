@@ -74,7 +74,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
             if (fn == NativeFunction.initEventLoop) {
                 return new InitEventLoop();
             }
-            return ctx.getRFFI(TruffleLLVM_Context.class).lookupNativeFunction(fn);
+            return ctx.getRFFI(TruffleLLVM_Context.class).lookupNativeFunction(fn, ctx);
         }
 
         @Override
@@ -94,7 +94,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
                     args[i] = new NativeCharArray(getStringBytes((String) obj));
                 }
             }
-            return RContext.getInstance().getRFFI(TruffleLLVM_Context.class).beforeDowncall(maybeMaterializeFrame(frame, nativeFunction),
+            return RContext.getInstance(this).getRFFI(TruffleLLVM_Context.class).beforeDowncall(maybeMaterializeFrame(frame, nativeFunction),
                             RFFIFactory.Type.LLVM);
         }
 
@@ -108,7 +108,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
         protected void afterCall(Frame frame, Object before, NativeFunction fn, TruffleObject target, Object[] args) {
             assert !(target instanceof RFunction);
 
-            (RContext.getInstance().getRFFI(TruffleLLVM_Context.class)).afterDowncall(before, RFFIFactory.Type.LLVM, AfterDownCallProfiles.getUncached());
+            (RContext.getInstance(this).getRFFI(TruffleLLVM_Context.class)).afterDowncall(before, RFFIFactory.Type.LLVM, AfterDownCallProfiles.getUncached());
 
             for (int i = 0; i < args.length; i++) {
                 Object obj = args[i];

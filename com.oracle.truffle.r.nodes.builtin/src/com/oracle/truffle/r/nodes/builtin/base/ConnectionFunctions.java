@@ -272,9 +272,9 @@ public abstract class ConnectionFunctions {
             }
         }
 
-        private static String checkTemp(String path) {
+        private String checkTemp(String path) {
             if (path.length() == 0) {
-                return TempPathName.createNonExistingFilePath(RContext.getInstance(), "Rf", TempPathName.tempDirPath(RContext.getInstance()), "");
+                return TempPathName.createNonExistingFilePath(getRContext(), "Rf", TempPathName.tempDirPath(RContext.getInstance()), "");
             } else {
                 return path;
             }
@@ -1253,7 +1253,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RIntVector getConnection(int what) {
-            BaseRConnection con = RContext.getInstance().stateRConnection.getConnection(what, false);
+            BaseRConnection con = getRContext().stateRConnection.getConnection(what, false);
             if (con == null) {
                 throw error(RError.Message.NO_SUCH_CONNECTION, what);
             } else {
@@ -1267,7 +1267,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RIntVector getAllConnections() {
-            return RContext.getInstance().stateRConnection.getAllConnections();
+            return getRContext().stateRConnection.getAllConnections();
         }
     }
 
@@ -1433,7 +1433,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RIntVector channelConnection(TruffleObject channel, String open, String encoding) {
             try {
-                TruffleLanguage.Env env = RContext.getInstance().getEnv();
+                TruffleLanguage.Env env = getRContext().getEnv();
                 if (env.isHostObject(channel)) {
                     Object obj = env.asHostObject(channel);
                     if (obj instanceof ByteChannel) {

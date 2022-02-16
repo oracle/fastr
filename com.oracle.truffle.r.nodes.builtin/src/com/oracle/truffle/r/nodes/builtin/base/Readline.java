@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
@@ -44,10 +43,10 @@ public abstract class Readline extends RBuiltinNode.Arg1 {
     @Specialization
     @TruffleBoundary
     protected String readline(RStringVector prompt) {
-        if (!RContext.getInstance().isInteractive()) {
+        if (!getRContext().isInteractive()) {
             return "";
         }
-        ConsoleIO consoleHandler = RContext.getInstance().getConsole();
+        ConsoleIO consoleHandler = getRContext().getConsole();
         String savedPrompt = consoleHandler.getPrompt();
         consoleHandler.setPrompt(prompt.getDataAt(0));
         String input = consoleHandler.readLine();

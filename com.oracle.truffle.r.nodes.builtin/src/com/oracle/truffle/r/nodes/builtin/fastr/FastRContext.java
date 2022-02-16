@@ -197,7 +197,7 @@ public class FastRContext {
         @TruffleBoundary
         protected RIntVector spawn(RStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
-            if (RContext.getInstance().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
+            if (getRContext().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
             }
             handleSharedContexts(contextKind);
@@ -222,7 +222,7 @@ public class FastRContext {
 
             // create eval threads which may already set values to shared slots
             for (int i = 0; i < length; i++) {
-                threads[i] = new EvalThread(RContext.getInstance().threads, childContextInfos[i],
+                threads[i] = new EvalThread(getRContext().threads, childContextInfos[i],
                                 RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
             }
             for (int i = 0; i < length; i++) {
@@ -250,7 +250,7 @@ public class FastRContext {
                 int[] multiSlotIndices = new int[handle.getLength()];
                 for (int i = 0; i < handle.getLength(); i++) {
                     int id = handle.getDataAt(i);
-                    Thread thread = RContext.getInstance().threads.get(id);
+                    Thread thread = getRContext().threads.get(id);
                     if (EvalThread.idToMultiSlotTable.containsKey(id)) {
                         multiSlotIndices[i] = EvalThread.idToMultiSlotTable.remove(id);
                     }
@@ -288,7 +288,7 @@ public class FastRContext {
         protected RNull eval(RIntVector handle) {
             for (int i = 0; i < handle.getLength(); i++) {
                 int id = handle.getDataAt(i);
-                Thread thread = RContext.getInstance().threads.get(id);
+                Thread thread = getRContext().threads.get(id);
                 if (thread == null) {
                     // already done
                     continue;
@@ -315,7 +315,7 @@ public class FastRContext {
     public abstract static class Eval extends RBuiltinNode.Arg2 {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RContext.getInstance().getOption(SharedContexts) ? "SHARE_ALL" : "SHARE_NOTHING"};
+            return new Object[]{RMissing.instance, getRContext().getOption(SharedContexts) ? "SHARE_ALL" : "SHARE_NOTHING"};
         }
 
         static {
@@ -328,7 +328,7 @@ public class FastRContext {
         @TruffleBoundary
         protected Object eval(RStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
-            if (RContext.getInstance().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
+            if (getRContext().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
             }
             handleSharedContexts(contextKind);
@@ -345,7 +345,7 @@ public class FastRContext {
                 int[] multiSlotIndices = new int[length];
                 for (int i = 0; i < length; i++) {
                     ChildContextInfo info = createContextInfo(contextKind);
-                    threads[i] = new EvalThread(RContext.getInstance().threads, info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
+                    threads[i] = new EvalThread(getRContext().threads, info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                     multiSlotIndices[i] = info.getMultiSlotInd();
                 }
                 if (contextKind == ContextKind.SHARE_ALL) {

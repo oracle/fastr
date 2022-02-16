@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
@@ -49,14 +48,14 @@ public abstract class CacheClass extends RBuiltinNode.Arg2 {
     @TruffleBoundary
     @Specialization
     protected RStringVector cacheClass(String cl, RStringVector ext) {
-        RContext.getInstance().putS4Extends(cl, ext.materialize());
+        getRContext().putS4Extends(cl, ext.materialize());
         return ext;
     }
 
     @TruffleBoundary
     @Specialization
     protected RNull uncacheClass(String klass, RNull rNull) {
-        RContext.getInstance().removeS4Extends(klass);
+        getRContext().removeS4Extends(klass);
         return rNull;
     }
 }

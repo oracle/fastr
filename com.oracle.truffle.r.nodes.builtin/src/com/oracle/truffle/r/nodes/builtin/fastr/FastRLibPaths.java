@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -48,16 +47,16 @@ public abstract class FastRLibPaths extends RBuiltinNode.Arg1 {
 
     @Specialization
     public Object setLibPaths(RStringVector paths) {
-        RContext.getInstance().libraryPaths.clear();
+        getRContext().libraryPaths.clear();
         for (int i = 0; i < paths.getLength(); i++) {
-            RContext.getInstance().libraryPaths.add(paths.getDataAt(i));
+            getRContext().libraryPaths.add(paths.getDataAt(i));
         }
         return paths;
     }
 
     @Specialization
     public Object srcInfo(@SuppressWarnings("unused") RMissing path) {
-        String[] libPaths = RContext.getInstance().libraryPaths.toArray(new String[0]);
+        String[] libPaths = getRContext().libraryPaths.toArray(new String[0]);
         return RDataFactory.createStringVector(libPaths, true);
     }
 }

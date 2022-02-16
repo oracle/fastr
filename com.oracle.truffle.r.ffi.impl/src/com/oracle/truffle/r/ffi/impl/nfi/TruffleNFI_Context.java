@@ -22,6 +22,15 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -65,15 +74,6 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 public class TruffleNFI_Context extends RFFIContext {
 
@@ -141,7 +141,7 @@ public class TruffleNFI_Context extends RFFIContext {
      * Looks up the given given function and returns the NFI function object.
      */
     @Override
-    public TruffleObject lookupNativeFunction(NativeFunction function) {
+    public TruffleObject lookupNativeFunction(NativeFunction function, RContext ctx) {
         int index = function.ordinal();
         if (nativeFunctions[index] == null) {
             // The look-up is one-off thing
@@ -150,7 +150,7 @@ public class TruffleNFI_Context extends RFFIContext {
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 dllInfo = TruffleNFI_Context.getInstance().defaultLibrary;
             } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
-                DLLInfo lib = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
+                DLLInfo lib = DLL.findLibraryContainingSymbol(ctx, function.getCallName());
                 if (lib == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
                 }
@@ -193,16 +193,17 @@ public class TruffleNFI_Context extends RFFIContext {
                     }
                     try {
                         InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                        RContext ctx = RContext.getInstance();
                         if (value instanceof Double) {
-                            interop.execute(lookupNativeFunction(NativeFunction.initvar_double), i, value);
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_double, ctx), i, value);
                         } else if (value instanceof Integer) {
-                            interop.execute(lookupNativeFunction(NativeFunction.initvar_int), i, value);
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_int, ctx), i, value);
                         } else if (value instanceof String) {
-                            interop.execute(lookupNativeFunction(NativeFunction.initvar_string), i, value);
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_string, ctx), i, value);
                         } else {
                             FFIDownCallWrap ffiWrap = new FFIDownCallWrap();
                             try {
-                                interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, ffiWrap.wrapUncached(value));
+                                interop.execute(lookupNativeFunction(NativeFunction.initvar_obj, ctx), i, ffiWrap.wrapUncached(value));
                             } catch (Exception ex) {
                                 throw RInternalError.shouldNotReachHere(ex);
                             } finally {

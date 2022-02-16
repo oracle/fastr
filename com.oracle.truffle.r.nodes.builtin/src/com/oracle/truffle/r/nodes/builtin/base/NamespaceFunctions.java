@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,16 +30,16 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class NamespaceFunctions {
@@ -60,7 +60,7 @@ public class NamespaceFunctions {
 
         @Specialization
         protected Object doGetRegisteredNamespace(RStringVector name) {
-            Object result = REnvironment.getRegisteredNamespace(name.getDataAt(0));
+            Object result = REnvironment.getRegisteredNamespace(getRContext(), name.getDataAt(0));
             if (result == null) {
                 return RNull.instance;
             } else {
@@ -131,7 +131,7 @@ public class NamespaceFunctions {
     public abstract static class GetNamespaceRegistry extends RBuiltinNode.Arg0 {
         @Specialization
         protected REnvironment doGetNamespaceRegistry() {
-            return REnvironment.getNamespaceRegistry();
+            return REnvironment.getNamespaceRegistry(getRContext());
         }
     }
 

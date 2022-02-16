@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "pos.to.env", kind = PRIMITIVE, parameterNames = {"pos"}, behavior = READS_STATE)
@@ -60,7 +59,7 @@ public abstract class PosToEnv extends RBuiltinNode.Arg1 {
     @Specialization(guards = "!isMinusOne(x)")
     protected REnvironment doPosToEnv(int x) {
         try {
-            return REnvironment.getFromSearchPath(RContext.getInstance(), x - 1);
+            return REnvironment.getFromSearchPath(getRContext(), x - 1);
         } catch (IndexOutOfBoundsException ex) {
             throw error(Message.INVALID_ARG, "'pos'");
         }

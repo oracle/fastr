@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,7 +120,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         @Specialization
         protected REnvironment cast(@SuppressWarnings("unused") RNull env, @SuppressWarnings("unused") RNull enclos) {
-            return REnvironment.baseEnv();
+            return REnvironment.baseEnv(getRContext());
         }
 
         @Specialization
@@ -157,7 +157,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             lazyCreateRList2EnvNode();
 
             // This can happen when envir is a list and enclos is explicitly set to NULL
-            return rList2EnvNode.execute(list, null, null, REnvironment.baseEnv());
+            return rList2EnvNode.execute(list, null, null, REnvironment.baseEnv(getRContext()));
         }
 
         @Specialization(guards = "!list.isLanguage()")
@@ -165,7 +165,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             lazyCreateRList2EnvNode();
 
             // This can happen when envir is a pairlist and enclos is explicitly set to NULL
-            return rList2EnvNode.execute(list.toRList(), null, null, REnvironment.baseEnv());
+            return rList2EnvNode.execute(list.toRList(), null, null, REnvironment.baseEnv(getRContext()));
         }
 
         private void lazyCreateRList2EnvNode() {
@@ -228,8 +228,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
     private Object doEvalLanguageSlowPath(VirtualFrame frame, RPairList expr, REnvironment environment, RCaller rCaller) {
         try {
-            RFunction evalFun = getFunctionArgument();
-            return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
+            RFunction evalFun = getFunctionArgument(getRContext());
+            return getRContext().getThisEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
         } finally {
             visibility.executeAfterCall(frame, rCaller);
         }
@@ -242,8 +242,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         RCaller call = RArguments.getCall(frame);
         RCaller rCaller = getCaller(frame, call.isValidCaller() ? () -> call.getSyntaxNode() : null);
         try {
-            RFunction evalFun = getFunctionArgument();
-            return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
+            RFunction evalFun = getFunctionArgument(getRContext());
+            return getRContext().getThisEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
         } catch (ReturnException ret) {
             if (returnTopLevelProfile.profile(ret.getTarget() == rCaller)) {
                 return ret.getResult();
@@ -259,8 +259,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
      * This follows GNU-R. If you asks for sys.function, of the 'eval' frame, you get
      * ".Primitive('eval')", which can be invoked.
      */
-    private static RFunction getFunctionArgument() {
-        return RContext.getInstance().lookupBuiltin("eval");
+    private static RFunction getFunctionArgument(RContext ctx) {
+        return ctx.lookupBuiltin("eval");
     }
 
     protected static Get createGet() {
@@ -344,7 +344,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
      */
     abstract static class CachedCallInfoEvalNode extends AbstractCallInfoEvalNode {
 
-        private final RFunction evalFunction = getFunctionArgument();
+        private final RFunction evalFunction = getFunctionArgument(getRContext());
 
         static CachedCallInfoEvalNode create() {
             return CachedCallInfoEvalNodeGen.create();
@@ -368,7 +368,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
 
             RArgsValuesAndNames args = callInfo.prepareArgumentsExploded(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNodes);
-            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, expr);
+            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, getRContext(), expr);
 
             Object resultValue = callNode.execute(evalFrame, callInfo.function, args, caller,
                             materializedFrame);
@@ -391,7 +391,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
             RArgsValuesAndNames args = callInfo.prepareArgumentsExploded(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNodes);
 
-            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, expr);
+            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, getRContext(), expr);
 
             Object resultValue = slowPathCallNode.execute(evalFrame, materializedFrame, caller, callInfo.function, args);
 
@@ -412,7 +412,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
             RArgsValuesAndNames args = callInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNode);
 
-            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, expr);
+            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, getRContext(), expr);
 
             Object resultValue = slowPathCallNode.execute(evalFrame, materializedFrame, caller, callInfo.function, args);
 
@@ -426,9 +426,9 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             SetVisibilityNode.executeSlowPath(frame, GetVisibilityNode.executeSlowPath(clonedFrame));
         }
 
-        private static RCaller createCaller(CallInfo callInfo, RCaller evalCaller, MaterializedFrame evalFrame, RPairList expr) {
+        private static RCaller createCaller(CallInfo callInfo, RCaller evalCaller, MaterializedFrame evalFrame, RContext context, RPairList expr) {
             RCaller promiseCaller;
-            if (callInfo.env == REnvironment.globalEnv()) {
+            if (callInfo.env == REnvironment.globalEnv(context)) {
                 promiseCaller = RCaller.createForPromise(evalCaller, evalCaller, null);
             } else {
                 promiseCaller = RCaller.createForPromise(evalCaller, callInfo.env, evalCaller, null);

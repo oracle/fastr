@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.oracle.truffle.r.library.parallel;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * The .Call support for the parallel package.
@@ -34,7 +33,7 @@ public class ParallelFunctions {
     public abstract static class MCIsChild extends RExternalBuiltinNode.Arg0 {
         @Specialization
         protected byte mcIsChild() {
-            return RRuntime.asLogical(RContext.getInstance().getParent() != null);
+            return RRuntime.asLogical(getRContext().getParent() != null);
         }
     }
 }

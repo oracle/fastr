@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -430,7 +430,7 @@ public final class MiscNodes {
             if (fun.isBuiltin()) {
                 return RNull.instance;
             } else {
-                return RContext.getInstance().getRFFI().getOrCreateFunctionFormals(fun, RASTUtils::createFormals);
+                return RContext.getInstance(this).getRFFI().getOrCreateFunctionFormals(fun, RASTUtils::createFormals);
             }
         }
 
@@ -467,7 +467,7 @@ public final class MiscNodes {
         protected Object body(RFunction fun, Object body) {
             if (!fun.isBuiltin()) {
                 RASTUtils.modifyFunction(fun, body, RASTUtils.createFormals(fun), fun.getEnclosingFrame());
-                RContext.getInstance().getRFFI().removeFunctionBody(fun);
+                RContext.getInstance(this).getRFFI().removeFunctionBody(fun);
             }
             return RNull.instance;
         }
@@ -486,7 +486,7 @@ public final class MiscNodes {
         protected Object formals(RFunction fun, Object formals) {
             if (!fun.isBuiltin()) {
                 RASTUtils.modifyFunction(fun, GetFunctionBody.body(fun), formals, fun.getEnclosingFrame());
-                RContext.getInstance().getRFFI().removeFunctionFormals(fun);
+                RContext.getInstance(this).getRFFI().removeFunctionFormals(fun);
             }
             return RNull.instance;
         }
@@ -537,7 +537,8 @@ public final class MiscNodes {
     public abstract static class RfPrintValueNode extends FFIUpCallNode.Arg1 {
         @Specialization
         public Object exec(Object value) {
-            RContext.getEngine().printResult(RContext.getInstance(), value);
+            RContext ctx = RContext.getInstance(this);
+            ctx.getThisEngine().printResult(ctx, value);
             return RNull.instance;
         }
 

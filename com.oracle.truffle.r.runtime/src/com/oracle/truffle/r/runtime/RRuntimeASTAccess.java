@@ -92,7 +92,7 @@ public interface RRuntimeASTAccess {
      * implementation and not part of the user-visible execution debug handling is disabled across
      * the call.
      */
-    Object callback(RFunction f, Object[] args);
+    Object callback(RFunction f, RContext context, Object[] args);
 
     /**
      * Force a promise by slow-path evaluation.
@@ -190,8 +190,6 @@ public interface RRuntimeASTAccess {
     String encodeComplex(RComplex x, int digits);
 
     RStringVector getClassHierarchy(RAttributable value);
-
-    RContext getCurrentContext(Node node);
 
     Object createLanguageElement(RSyntaxElement element);
 

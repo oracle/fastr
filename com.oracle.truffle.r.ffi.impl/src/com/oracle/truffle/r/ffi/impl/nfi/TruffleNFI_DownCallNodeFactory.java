@@ -66,14 +66,14 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
 
         @Override
         protected TruffleObject createTarget(RContext ctx, NativeFunction fn) {
-            return ctx.getRFFI(TruffleNFI_Context.class).lookupNativeFunction(fn);
+            return ctx.getRFFI(TruffleNFI_Context.class).lookupNativeFunction(fn, ctx);
         }
 
         @Override
         @ExplodeLoop
         protected Object beforeCall(Frame frame, NativeFunction fn, TruffleObject target, Object[] args) {
+            RContext context = RContext.getInstance(this);
             for (int i = 0; i < args.length; i++) {
-                RContext context = RContext.getInstance();
                 Object obj = args[i];
                 if (obj instanceof double[]) {
                     args[i] = context.getEnv().asGuestValue(obj);
@@ -94,8 +94,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                     args[i] = context.getEnv().asGuestValue(data);
                 }
             }
-
-            return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(maybeMaterializeFrame(frame, fn), RFFIFactory.Type.NFI);
+            return context.getRFFI(TruffleNFI_Context.class).beforeDowncall(maybeMaterializeFrame(frame, fn), RFFIFactory.Type.NFI);
         }
 
         @TruffleBoundary
@@ -109,7 +108,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
         @Override
         @ExplodeLoop
         protected void afterCall(Frame frame, Object before, NativeFunction fn, TruffleObject target, Object[] args) {
-            (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI, AfterDownCallProfiles.getUncached());
+            (RContext.getInstance(this).getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI, AfterDownCallProfiles.getUncached());
             for (Object obj : args) {
                 // TODO: can this ever happen in NFI?
                 if (obj instanceof NativeArray) {

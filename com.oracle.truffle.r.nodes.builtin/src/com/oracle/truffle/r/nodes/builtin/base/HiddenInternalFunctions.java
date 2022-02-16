@@ -147,7 +147,7 @@ public class HiddenInternalFunctions {
                      * holds an {@link RBuiltin} that is a {@link RBuiltinKind#SUBSTITUTE}. This is
                      * not an error, but is used as an override mechanism.
                      */
-                    if (!RContext.getInstance().getLoadingBase()) {
+                    if (!getRContext().getLoadingBase()) {
                         throw error(ex);
                     }
                 }
@@ -238,7 +238,7 @@ public class HiddenInternalFunctions {
                         CallRFunctionCachedNode callCache) {
             String dbPath = datafile.getDataAt(0);
             String packageName = context.getSafeTruffleFile(dbPath).getName();
-            byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(context, dbPath);
+            byte[] dbData = getRContext().stateLazyDBCache.getData(context, dbPath);
             int dotIndex;
             if ((dotIndex = packageName.lastIndexOf('.')) > 0) {
                 packageName = packageName.substring(0, dotIndex);
@@ -322,7 +322,7 @@ public class HiddenInternalFunctions {
             }
 
             public Object execute(RPromise promise) {
-                REnvironment globalEnv = REnvironment.globalEnv(RContext.getInstance());
+                REnvironment globalEnv = REnvironment.globalEnv(RContext.getInstance(this));
                 return shareObjectNode.execute(promiseHelperNode.evaluate(globalEnv.getFrame(), promise));
             }
         }
@@ -450,7 +450,7 @@ public class HiddenInternalFunctions {
             };
 
             try {
-                byte[] data = RSerialize.serialize(RContext.getInstance(), value, type, RSerialize.DEFAULT_VERSION, callHook);
+                byte[] data = RSerialize.serialize(getRContext(), value, type, RSerialize.DEFAULT_VERSION, callHook);
                 // See comment in LazyLoadDBFetch for format
                 int outLen;
                 int offset;
@@ -533,7 +533,7 @@ public class HiddenInternalFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull doLazyLoadDBFlush(RStringVector dbPath) {
-            RContext.getInstance().stateLazyDBCache.remove(dbPath.getDataAt(0));
+            getRContext().stateLazyDBCache.remove(dbPath.getDataAt(0));
             return RNull.instance;
         }
     }

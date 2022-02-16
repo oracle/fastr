@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
@@ -62,7 +61,7 @@ public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
 
     @Override
     public Object call(VirtualFrame frame, RArgsValuesAndNames actualArgs) {
-        RInternalCode internalCode = RInternalCode.lookup(RContext.getInstance(), basePackage, code);
+        RInternalCode internalCode = RInternalCode.lookup(getRContext(), basePackage, code);
         RFunction function = internalCode.lookupFunction(functionName);
         if (function == null) {
             CompilerDirectives.transferToInterpreter();
