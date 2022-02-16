@@ -50,6 +50,10 @@ In this file, we enumerate all the fastr-related environment variables
     - `dir` points to the directory where the cache should exist, created if necessary.
     - `vm` is either `fastr` or `gnur`
     - `sync` is either `TRUE` or `FALSE`. If `TRUE`, the write access to the package cache is synchronized.
+- `R_GCTORTURE=<steps>`/`FASTR_GCTORTURE=<steps>`
+  - After `steps` NFI upcalls, GC will be invoked.
+  - Can be used for debugging problems with "Unknown native references".
+  - See `com.oracle.truffle.r.runtime.context.GCTortureState`.
 - `GDLOG`
   - See `com.oracle.truffle.r.ffi.impl.javaGD.LoggingGD.java`
 - `JAVAGD_CLASS_NAME`
