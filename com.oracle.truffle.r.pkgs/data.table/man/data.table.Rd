@@ -396,6 +396,9 @@ DT[, {tmp <- mean(y);
       }, by=x]                        # anonymous lambdain 'j', j accepts any valid 
                                       # expression. TO REMEMBER: every element of 
                                       # the list becomes a column in result.
+pdf("new.pdf")
+DT[, plot(a,b), by=x]                 # can also plot in 'j'
+dev.off()
 
 # using rleid, get max(y) and min of all cols in .SDcols for each consecutive run of 'v'
 DT[, c(.(y=max(y)), lapply(.SD, min)), by=rleid(v), .SDcols=v:b]
