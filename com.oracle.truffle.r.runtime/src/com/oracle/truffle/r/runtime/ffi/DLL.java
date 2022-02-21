@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,9 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -60,7 +58,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
@@ -648,8 +645,8 @@ public class DLL {
 
         @TruffleBoundary
         @Specialization
-        public DLLInfo exec(String path, boolean local, boolean now,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) throws DLLException {
+        public DLLInfo exec(String path, boolean local, boolean now) throws DLLException {
+            RContext ctx = RContext.getInstance(this);
             String absPath = Utils.tildeExpand(path);
             ContextStateImpl contextState = getContextState();
             for (DLLInfo dllInfo : contextState.list) {
@@ -658,7 +655,7 @@ public class DLL {
                     return dllInfo;
                 }
             }
-            DLLInfo dllInfo = doLoad(ctxRef.get(), absPath, local, now, true);
+            DLLInfo dllInfo = doLoad(ctx, absPath, local, now, true);
 
             // Search for an init method
             String pkgInit = R_INIT_PREFIX + dllInfo.name;

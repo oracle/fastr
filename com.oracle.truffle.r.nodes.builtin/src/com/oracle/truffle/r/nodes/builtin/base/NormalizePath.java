@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,16 +34,12 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
@@ -63,14 +59,13 @@ public abstract class NormalizePath extends RBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector doNormalizePath(RStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+    protected RStringVector doNormalizePath(RStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
         String[] results = new String[pathVec.getLength()];
         for (int i = 0; i < results.length; i++) {
             String path = pathVec.getDataAt(i);
             String normPath = path;
             try {
-                normPath = ctxRef.get().getSafeTruffleFile(path).getCanonicalFile().toString();
+                normPath = getRContext().getSafeTruffleFile(path).getCanonicalFile().toString();
             } catch (IOException e) {
                 if (doesNotNeedToWork.profile(mustWork == RRuntime.LOGICAL_FALSE)) {
                     // no error or warning

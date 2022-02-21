@@ -51,7 +51,6 @@ import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -602,7 +601,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
 
-            Locale locale = RContext.getInstance().stateRLocale.getLocale(RLocale.COLLATE);
+            Locale locale = getRContext().stateRLocale.getLocale(RLocale.COLLATE);
             if (locale == Locale.ROOT) {
                 // simple comparison based on numeric value of characters
                 for (int h = SINCS[t]; t < 16; h = SINCS[++t]) {

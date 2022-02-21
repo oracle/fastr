@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -160,8 +159,10 @@ public abstract class RBaseObject extends RTruffleBaseObject {
 
     @ExportMessage
     @TruffleBoundary
-    public Object toDisplayString(boolean allowSideEffects,
-                    @CachedContext(TruffleRLanguage.class) RContext ctx) {
+    @Override
+    public Object toDisplayString(boolean allowSideEffects) {
+        // Uncached context, since this method should always be behind TruffleBoundary.
+        RContext ctx = RContext.getInstance();
         return TruffleRLanguage.toDisplayString(ctx, this, allowSideEffects);
     }
 }

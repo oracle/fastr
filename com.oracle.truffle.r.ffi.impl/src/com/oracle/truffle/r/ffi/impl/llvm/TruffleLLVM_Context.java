@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,10 +81,6 @@ public class TruffleLLVM_Context extends RFFIContext {
         return (C) this;
     }
 
-    static TruffleLLVM_Context getContextState() {
-        return RContext.getInstance().getStateRFFI(TruffleLLVM_Context.class);
-    }
-
     static TruffleLLVM_Context getContextState(RContext context) {
         return context.getStateRFFI(TruffleLLVM_Context.class);
     }
@@ -142,7 +138,7 @@ public class TruffleLLVM_Context extends RFFIContext {
     @CompilationFinal(dimensions = 1) private final TruffleObject[] nativeFunctions = new TruffleObject[NativeFunction.values().length];
 
     @Override
-    public TruffleObject lookupNativeFunction(NativeFunction function) {
+    public TruffleObject lookupNativeFunction(NativeFunction function, RContext ctx) {
         int index = function.ordinal();
         if (nativeFunctions[index] == null) {
             // one-off event:
@@ -151,7 +147,7 @@ public class TruffleLLVM_Context extends RFFIContext {
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 lookupObject = ((LLVM_Handle) DLL.getRdllInfo().handle).handle;
             } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
-                DLLInfo dllInfo = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
+                DLLInfo dllInfo = DLL.findLibraryContainingSymbol(ctx, function.getCallName());
                 if (dllInfo == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
                 }

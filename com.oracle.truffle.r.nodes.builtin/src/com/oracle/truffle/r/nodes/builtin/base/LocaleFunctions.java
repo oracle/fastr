@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,7 +112,7 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object setLocale(int category, String value) {
-            RContext context = RContext.getInstance();
+            RContext context = getRContext();
             if (category == LC_ALL) {
                 for (RLocale locale : SET_ALL) {
                     context.stateRLocale.setLocale(locale, value);
@@ -129,7 +129,7 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object localeconv() {
-            RLocale.ContextStateImpl stateRLocale = RContext.getInstance().stateRLocale;
+            RLocale.ContextStateImpl stateRLocale = getRContext().stateRLocale;
             Locale numericLocale = stateRLocale.getLocale(RLocale.NUMERIC);
             Locale monetaryLocale = stateRLocale.getLocale(RLocale.MONETARY);
             NumberFormat numericFormat = NumberFormat.getNumberInstance(numericLocale);
@@ -214,7 +214,7 @@ public class LocaleFunctions {
         protected RList l10nInfo() {
             Object[] data = new Object[NAMES.getLength()];
             // TODO check locale properly
-            final Charset codeset = RContext.getInstance().stateRLocale.getCharset(RLocale.CTYPE);
+            final Charset codeset = getRContext().stateRLocale.getCharset(RLocale.CTYPE);
             data[0] = RRuntime.LOGICAL_TRUE;
             data[1] = codeset.toString().equalsIgnoreCase("UTF-8") ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
             data[2] = RRuntime.LOGICAL_FALSE;

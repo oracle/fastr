@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.interop.NodeLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -111,7 +112,8 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
      */
 
     @ExportMessage
-    boolean hasScope(Frame frame) {
+    boolean hasScope(Frame frame,
+                    @CachedLibrary("this") NodeLibrary nodeLib) {
         if (isInstrumentable()) {
             REnvironment env = getEnv(frame);
             if (env == null) {
@@ -123,7 +125,8 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
                     }
                 }
             }
-            if (env != REnvironment.globalEnv()) {
+            RContext ctx = RContext.getInstance(nodeLib);
+            if (env != REnvironment.globalEnv(ctx)) {
                 return true;
             }
         }
@@ -131,7 +134,8 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
     }
 
     @ExportMessage
-    public Object getScope(Frame requestedFrame, @SuppressWarnings("unused") boolean nodeEnter) throws UnsupportedMessageException {
+    public Object getScope(Frame requestedFrame, @SuppressWarnings("unused") boolean nodeEnter,
+                    @CachedLibrary("this") NodeLibrary nodeLib) throws UnsupportedMessageException {
         if (requestedFrame == null) {
             // Historically we ignored this since all variables are created dynamically in R, but
             // with the new API we can at least provide the parents: global scope and the loaded
@@ -151,7 +155,8 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
             }
         }
 
-        if (env == REnvironment.globalEnv()) {
+        RContext ctx = RContext.getInstance(nodeLib);
+        if (env == REnvironment.globalEnv(ctx)) {
             throw UnsupportedMessageException.create();
         }
         if (env != null) {

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ public class ConditionFunctions {
         @Specialization(guards = "isRNull(classes) || isRNull(handlers)")
         @TruffleBoundary
         protected Object addCondHands(Object classes, Object handlers, Object parentEnv, Object target, byte calling) {
-            return getHandlerStack();
+            return getHandlerStack(getRContext());
         }
 
         protected FrameSlot createHandlerFrameSlot(VirtualFrame frame) {
@@ -86,7 +86,7 @@ public class ConditionFunctions {
                 if (!frame.isObject(handlerFrameSlot) || FrameSlotChangeMonitor.getObject(handlerFrameSlot, frame) == null) {
                     // We save the original condition handlers to a frame slot, so that
                     // FunctionDefinitionNode can restore them on function exit
-                    FrameSlotChangeMonitor.setObject(frame, handlerFrameSlot, RErrorHandling.getHandlerStack());
+                    FrameSlotChangeMonitor.setObject(frame, handlerFrameSlot, RErrorHandling.getHandlerStack(getRContext()));
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();

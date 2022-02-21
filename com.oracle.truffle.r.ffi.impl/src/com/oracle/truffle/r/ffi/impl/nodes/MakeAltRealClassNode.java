@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,10 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.context.AltRepContext;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 /**
  * This node represents R_make_altreal_class upcall and returns a
@@ -41,9 +39,8 @@ public abstract class MakeAltRealClassNode extends FFIUpCallNode.Arg3 {
     }
 
     @Specialization
-    protected Object makeAltRealClass(String className, String packageName, @SuppressWarnings("unused") Object dllInfo,
-                    @CachedContext(TruffleRLanguage.class) RContext context) {
-        AltRepContext altRepCtx = context.altRepContext;
+    protected Object makeAltRealClass(String className, String packageName, @SuppressWarnings("unused") Object dllInfo) {
+        AltRepContext altRepCtx = RContext.getInstance(this).altRepContext;
         return altRepCtx.registerNewAltRealClass(className, packageName);
     }
 }

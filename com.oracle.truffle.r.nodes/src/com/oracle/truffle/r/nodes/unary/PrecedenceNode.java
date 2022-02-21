@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,23 +45,23 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairList.PairListIterator;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class, ConvertForeignObjectNode.class, Foreign2R.class})
@@ -271,7 +271,7 @@ public abstract class PrecedenceNode extends RBaseNode {
                     @Cached("create()") Foreign2R foreign2R) {
         int precedence = -1;
         try {
-            RContext context = RContext.getInstance();
+            RContext context = getRContext();
             if (context.getEnv().isHostObject(obj)) {
                 Object o = context.getEnv().asHostObject(obj);
                 Class<?> ct = o.getClass().getComponentType();

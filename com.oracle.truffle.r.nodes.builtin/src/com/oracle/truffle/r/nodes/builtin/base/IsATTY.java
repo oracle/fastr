@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,9 +34,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections.StdConnection;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "isatty", kind = INTERNAL, parameterNames = {"con"}, behavior = PURE)
 public abstract class IsATTY extends RBuiltinNode.Arg1 {
@@ -52,7 +51,7 @@ public abstract class IsATTY extends RBuiltinNode.Arg1 {
             RStringVector clazz = ClassHierarchyNode.getClassHierarchy(con);
             for (int i = 0; i < clazz.getLength(); i++) {
                 if ("connection".equals(clazz.getDataAt(i))) {
-                    RConnection connection = RContext.getInstance().stateRConnection.getConnection(con.getDataAt(0), false);
+                    RConnection connection = getRContext().stateRConnection.getConnection(con.getDataAt(0), false);
                     if (connection != null) {
                         return RRuntime.asLogical(connection instanceof StdConnection);
                     } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -31,8 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.PackagePatching;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = ".fastr.patch.package", kind = PRIMITIVE, parameterNames = {"pkgpath"}, behavior = COMPLEX)
@@ -44,9 +40,8 @@ public abstract class FastRPatchPackage extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    public Object doIt(String pkgpath,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-        PackagePatching.patchPackage(ctxRef.get(), pkgpath);
+    public Object doIt(String pkgpath) {
+        PackagePatching.patchPackage(getRContext(), pkgpath);
         return RNull.instance;
     }
 }

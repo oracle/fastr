@@ -22,7 +22,6 @@ package com.oracle.truffle.r.runtime;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -150,8 +149,8 @@ public enum RType implements TruffleObject {
 
         @Specialization
         static boolean multiSlots(RType receiver, MultiSlotData multiSlotData,
-                        @CachedLibrary("receiver") InteropLibrary interopLib,
-                        @CachedContext(TruffleRLanguage.class) RContext ctx) {
+                        @CachedLibrary("receiver") InteropLibrary interopLib) {
+            RContext ctx = RContext.getInstance(interopLib);
             try {
                 return interopLib.isMetaInstance(receiver, multiSlotData.get(ctx.getMultiSlotInd()));
             } catch (UnsupportedMessageException ex) {

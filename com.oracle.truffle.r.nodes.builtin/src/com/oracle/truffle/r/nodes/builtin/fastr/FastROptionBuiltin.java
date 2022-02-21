@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,16 +26,17 @@ import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.util.Iterator;
+
+import org.graalvm.options.OptionDescriptor;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.data.RNull;
-import java.util.Iterator;
-import org.graalvm.options.OptionDescriptor;
 
 /**
  * Allows to read {@link FastROptions} from (e.g. internal) R code.
@@ -52,7 +53,7 @@ public abstract class FastROptionBuiltin extends RBuiltinNode.Arg1 {
     @TruffleBoundary
     protected Object getOption(String fastrOptionName) {
         if ("hostLookup".equals(fastrOptionName)) {
-            return RRuntime.asLogical(RContext.getInstance().getEnv().isHostLookupAllowed());
+            return RRuntime.asLogical(getRContext().getEnv().isHostLookupAllowed());
         }
         Object opt = null;
         String keyName = fastrOptionName.startsWith("R.") ? fastrOptionName : "R." + fastrOptionName;
@@ -60,7 +61,7 @@ public abstract class FastROptionBuiltin extends RBuiltinNode.Arg1 {
         while (it.hasNext()) {
             OptionDescriptor d = it.next();
             if (d.getName().equals(keyName)) {
-                opt = RContext.getInstance().getOption(d.getKey());
+                opt = getRContext().getOption(d.getKey());
                 break;
             }
         }

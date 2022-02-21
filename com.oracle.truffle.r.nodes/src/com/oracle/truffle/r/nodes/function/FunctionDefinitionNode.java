@@ -360,7 +360,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     FrameSlot slot = getHandlerFrameSlot(frame);
                     if (frame.isObject(slot)) {
                         try {
-                            RErrorHandling.restoreHandlerStack(frame.getObject(slot));
+                            RErrorHandling.restoreHandlerStack(frame.getObject(slot), RContext.getInstance(this));
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }
@@ -370,7 +370,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     FrameSlot slot = getRestartFrameSlot(frame);
                     if (frame.isObject(slot)) {
                         try {
-                            RErrorHandling.restoreRestartStack(frame.getObject(slot));
+                            RErrorHandling.restoreRestartStack(frame.getObject(slot), RContext.getInstance(this));
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }

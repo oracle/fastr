@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
+
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -58,8 +60,6 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
-
-import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 
 public final class TruffleLLVM_Call implements CallRFFI {
 
@@ -227,7 +227,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
         @Override
         public Object dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
-            TruffleLLVM_Context rffiCtx = TruffleLLVM_Context.getContextState();
+            TruffleLLVM_Context rffiCtx = TruffleLLVM_Context.getContextState(RContext.getInstance(this));
             pushCallbacks.execute(rffiCtx.callState.setCallbacksAddress, rffiCtx.callState.callbacks);
             try {
                 return InvokeCallNode.super.dispatch(frame, nativeCallInfo, args);

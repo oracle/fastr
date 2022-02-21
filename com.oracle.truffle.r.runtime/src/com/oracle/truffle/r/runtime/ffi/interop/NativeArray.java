@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
@@ -55,7 +54,8 @@ public abstract class NativeArray implements RTruffleObject {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    public final Object getNativeType(@CachedContext(TruffleRLanguage.class) RContext ctx) {
+    public final Object getNativeType(@CachedLibrary("this") NativeTypeLibrary nativeTypeLib) {
+        RContext ctx = RContext.getInstance(nativeTypeLib);
         return getSulongArrayType(ctx);
     }
 

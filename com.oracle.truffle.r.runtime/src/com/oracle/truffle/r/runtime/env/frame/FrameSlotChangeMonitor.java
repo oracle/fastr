@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -61,7 +60,6 @@ import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -525,9 +523,9 @@ public final class FrameSlotChangeMonitor {
 
         @ExportMessage
         Object send(Message message, Object[] args,
-                        @CachedContext(TruffleRLanguage.class) RContext ctx,
                         @Cached BranchProfile notFoundProfile,
                         @CachedLibrary(limit = "5") ReflectionLibrary reflection) throws Exception {
+            RContext ctx = RContext.getInstance(reflection);
             Object value = data[ctx.getMultiSlotInd()];
             if (value == null) {
                 notFoundProfile.enter();

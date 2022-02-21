@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import java.nio.charset.StandardCharsets;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -35,7 +35,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DownCallNodeFactoryFactory.LLVMDownCallNodeGen;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
@@ -46,8 +45,6 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeIntegerArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativePointer;
-
-import java.nio.charset.StandardCharsets;
 
 public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
@@ -68,17 +65,16 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Specialization
-        protected Object doCall(Frame frame, NativeFunction f, Object[] args,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-            return doCallImpl(frame, f, args, ctxRef);
+        protected Object doCall(Frame frame, NativeFunction f, Object[] args) {
+            return doCallImpl(frame, f, args);
         }
 
         @Override
-        protected TruffleObject createTarget(ContextReference<RContext> ctxRef, NativeFunction fn) {
+        protected TruffleObject createTarget(RContext ctx, NativeFunction fn) {
             if (fn == NativeFunction.initEventLoop) {
                 return new InitEventLoop();
             }
-            return ctxRef.get().getRFFI(TruffleLLVM_Context.class).lookupNativeFunction(fn);
+            return ctx.getRFFI(TruffleLLVM_Context.class).lookupNativeFunction(fn, ctx);
         }
 
         @Override
@@ -98,7 +94,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
                     args[i] = new NativeCharArray(getStringBytes((String) obj));
                 }
             }
-            return RContext.getInstance().getRFFI(TruffleLLVM_Context.class).beforeDowncall(maybeMaterializeFrame(frame, nativeFunction),
+            return RContext.getInstance(this).getRFFI(TruffleLLVM_Context.class).beforeDowncall(maybeMaterializeFrame(frame, nativeFunction),
                             RFFIFactory.Type.LLVM);
         }
 
@@ -112,7 +108,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
         protected void afterCall(Frame frame, Object before, NativeFunction fn, TruffleObject target, Object[] args) {
             assert !(target instanceof RFunction);
 
-            (RContext.getInstance().getRFFI(TruffleLLVM_Context.class)).afterDowncall(before, RFFIFactory.Type.LLVM, AfterDownCallProfiles.getUncached());
+            (RContext.getInstance(this).getRFFI(TruffleLLVM_Context.class)).afterDowncall(before, RFFIFactory.Type.LLVM, AfterDownCallProfiles.getUncached());
 
             for (int i = 0; i < args.length; i++) {
                 Object obj = args[i];

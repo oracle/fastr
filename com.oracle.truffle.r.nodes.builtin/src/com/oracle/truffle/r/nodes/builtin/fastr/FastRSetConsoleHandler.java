@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = ".fastr.set.consoleHandler", kind = PRIMITIVE, parameterNames = {"handler"}, behavior = COMPLEX)
@@ -43,7 +42,7 @@ public abstract class FastRSetConsoleHandler extends RBuiltinNode.Arg1 {
     @Specialization
     @TruffleBoundary
     protected RNull setHandler(TruffleObject handler) {
-        RContext.getInstance().getConsole().setHandler(handler);
+        getRContext().getConsole().setHandler(handler);
         return RNull.instance;
     }
 }

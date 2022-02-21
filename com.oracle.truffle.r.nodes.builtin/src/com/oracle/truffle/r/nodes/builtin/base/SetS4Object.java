@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import com.oracle.truffle.r.nodes.objects.AsS4;
 import com.oracle.truffle.r.nodes.objects.AsS4NodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
@@ -56,10 +55,10 @@ public abstract class SetS4Object extends RBuiltinNode.Arg3 {
     @TruffleBoundary
     protected RNull asS4(RNull object, boolean flag, @SuppressWarnings("unused") int complete) {
         if (flag) {
-            RContext.getInstance().setNullS4Object(true);
+            getRContext().setNullS4Object(true);
         } else {
-            boolean wasS4 = RContext.getInstance().isNullS4Object();
-            RContext.getInstance().setNullS4Object(false);
+            boolean wasS4 = getRContext().isNullS4Object();
+            getRContext().setNullS4Object(false);
             if (wasS4) {
                 throw error(RError.Message.GENERIC, "object of class \"NULL\" does not correspond to a valid S3 object");
             }

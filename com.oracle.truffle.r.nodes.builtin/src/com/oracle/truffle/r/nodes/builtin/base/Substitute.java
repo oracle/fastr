@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,7 +107,7 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
     private Object doSubstituteWithEnv(RPromise expr, REnvironment env) {
         // In the global environment, substitute behaves like quote
         // TODO It may be too early to do this check, GnuR doesn't work this way (re promises)
-        if (env == REnvironment.globalEnv()) {
+        if (env == REnvironment.globalEnv(getRContext())) {
             if (quote == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 quote = insert(QuoteNodeGen.create());

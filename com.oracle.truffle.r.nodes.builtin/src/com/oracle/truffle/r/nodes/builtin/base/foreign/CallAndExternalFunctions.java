@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,7 +95,6 @@ import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
-import com.oracle.truffle.r.runtime.data.nodes.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
@@ -115,6 +114,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.nodes.MaterializeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -925,7 +925,7 @@ public class CallAndExternalFunctions {
         private Object getOp() {
             if (op == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                op = RContext.getInstance().lookupBuiltin(".External2");
+                op = getRContext().lookupBuiltin(".External2");
             }
             return op;
         }

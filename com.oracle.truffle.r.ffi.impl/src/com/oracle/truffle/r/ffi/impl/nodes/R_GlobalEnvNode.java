@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,9 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 @GenerateUncached
 public abstract class R_GlobalEnvNode extends FFIUpCallNode.Arg0 {
@@ -41,8 +38,8 @@ public abstract class R_GlobalEnvNode extends FFIUpCallNode.Arg0 {
     }
 
     @Specialization
-    Object get(@CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-        RContext ctx = ctxRef.get();
+    Object get() {
+        RContext ctx = RContext.getInstance(this);
         return ctx.stateREnvironment.getGlobalEnv();
     }
 }

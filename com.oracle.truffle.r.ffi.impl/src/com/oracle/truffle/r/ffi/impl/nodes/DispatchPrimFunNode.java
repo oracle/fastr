@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -34,7 +32,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -65,17 +62,17 @@ public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
         return context.rffiContextState.currentDowncallFrame;
     }
 
-    static FrameDescriptor getCurrentRFrameDescriptor(RContext ctxRef) {
-        return getCurrentRFrame(ctxRef).getFrameDescriptor();
+    protected FrameDescriptor getCurrentRFrameDescriptor() {
+        return getCurrentRFrame(RContext.getInstance(this)).getFrameDescriptor();
     }
 
-    @Specialization(guards = "getCurrentRFrameDescriptor(ctxRef.get()) == cachedFrameDesc", limit = "3")
+    @Specialization(guards = "getCurrentRFrameDescriptor() == cachedFrameDesc")
     @ExplodeLoop
-    static Object dispatchCached(@SuppressWarnings("unused") Object call, RFunction function, RPairList args, @SuppressWarnings("unused") Object rho,
+    Object dispatchCached(@SuppressWarnings("unused") Object call, RFunction function, RPairList args, @SuppressWarnings("unused") Object rho,
                     @Cached(value = "createFunctionCallNode()", uncached = "createSlowPathFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                    @SuppressWarnings("unused") @Cached("getCurrentRFrameDescriptor(ctxRef.get())") FrameDescriptor cachedFrameDesc) {
+                    @SuppressWarnings("unused") @Cached("getCurrentRFrameDescriptor()") FrameDescriptor cachedFrameDesc) {
         RList argsList = args.toRList();
+        RContext ctx = RContext.getInstance(this);
         RArgsValuesAndNames argsAndNames;
         if (argsList.getLength() == 0) {
             argsAndNames = RArgsValuesAndNames.EMPTY;
@@ -88,11 +85,11 @@ public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
             argsAndNames = new RArgsValuesAndNames(argsWrapped, argSig);
         }
 
-        boolean primFunBeingDispatchedSaved = ctxRef.get().getStateRFFI().rffiContextState.primFunBeingDispatched;
+        boolean primFunBeingDispatchedSaved = ctx.getStateRFFI().rffiContextState.primFunBeingDispatched;
 
-        ctxRef.get().getStateRFFI().rffiContextState.primFunBeingDispatched = true;
+        ctx.getStateRFFI().rffiContextState.primFunBeingDispatched = true;
         try {
-            return callNode.call(getCurrentRFrame(ctxRef.get()), function, argsAndNames);
+            return callNode.call(getCurrentRFrame(ctx), function, argsAndNames);
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (ReturnException e) {
@@ -102,15 +99,14 @@ public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
                 throw e;
             }
         } finally {
-            ctxRef.get().getStateRFFI().rffiContextState.primFunBeingDispatched = primFunBeingDispatchedSaved;
+            ctx.getStateRFFI().rffiContextState.primFunBeingDispatched = primFunBeingDispatchedSaved;
         }
     }
 
     @Specialization(replaces = "dispatchCached")
-    static Object dispatchGeneric(@SuppressWarnings("unused") Object call, RFunction function, RPairList args, @SuppressWarnings("unused") Object rho,
-                    @Cached(value = "createSlowPathFunctionCallNode()", uncached = "createSlowPathFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-        return dispatchCached(call, function, args, rho, callNode, ctxRef, null);
+    Object dispatchGeneric(@SuppressWarnings("unused") Object call, RFunction function, RPairList args, @SuppressWarnings("unused") Object rho,
+                    @Cached(value = "createSlowPathFunctionCallNode()", uncached = "createSlowPathFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode) {
+        return dispatchCached(call, function, args, rho, callNode, null);
     }
 
 }

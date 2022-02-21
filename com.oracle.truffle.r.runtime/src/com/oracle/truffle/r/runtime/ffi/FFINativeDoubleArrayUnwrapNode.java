@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -40,7 +38,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
@@ -56,8 +53,8 @@ public abstract class FFINativeDoubleArrayUnwrapNode extends RBaseNode {
         return x instanceof RObjectDataPtr;
     }
 
-    static Object getSulongDoubleArrayType(ContextReference<RContext> ctxRef) {
-        return ctxRef.get().getRFFI().getSulongArrayType(42.2);
+    protected Object getSulongDoubleArrayType() {
+        return RContext.getInstance(this).getRFFI().getSulongArrayType(42.2);
     }
 
     @Specialization
@@ -69,8 +66,7 @@ public abstract class FFINativeDoubleArrayUnwrapNode extends RBaseNode {
     protected double[] doInterop(@SuppressWarnings("unused") Object length, Object x,
                     @SuppressWarnings("unused") @CachedLibrary("x") NativeTypeLibrary typeLib,
                     @CachedLibrary("x") InteropLibrary interopLib,
-                    @SuppressWarnings("unused") @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                    @SuppressWarnings("unused") @Cached(value = "getSulongDoubleArrayType(ctxRef)", uncached = "getSulongDoubleArrayType(ctxRef)") Object sulongDoubleArrayType) {
+                    @SuppressWarnings("unused") @Cached(value = "getSulongDoubleArrayType()", uncached = "getSulongDoubleArrayType()") Object sulongDoubleArrayType) {
         try {
             int size = (int) interopLib.getArraySize(x);
             double[] result = new double[size];

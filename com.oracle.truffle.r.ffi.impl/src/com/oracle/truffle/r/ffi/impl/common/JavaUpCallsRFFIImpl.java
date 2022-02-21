@@ -423,7 +423,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public void Rf_warningcall(Object call, String msg) {
-        RErrorHandling.warningcallRFFI(call, msg);
+        RErrorHandling.warningcallRFFI(call, RContext.getInstance(), msg);
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
@@ -41,7 +40,7 @@ public abstract class Menu extends RExternalBuiltinNode.Arg1 {
     @Specialization
     @TruffleBoundary
     protected int menu(RStringVector choices) {
-        ConsoleIO console = RContext.getInstance().getConsole();
+        ConsoleIO console = getRContext().getConsole();
         int first = choices.getLength() + 1;
         console.print("Selection: ");
         String line = console.readLine();

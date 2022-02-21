@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = ".fastr.stacktrace", visibility = OFF, kind = PRIMITIVE, parameterNames = {"print.frame.contents"}, behavior = COMPLEX)
@@ -52,7 +51,7 @@ public abstract class FastRStackTrace extends RBuiltinNode.Arg1 {
     @TruffleBoundary
     @Specialization
     protected RNull printStackTrace(boolean printFrameContents) {
-        RContext.getInstance().getConsole().print(Utils.createStackTrace(printFrameContents));
+        getRContext().getConsole().print(Utils.createStackTrace(printFrameContents));
         return RNull.instance;
     }
 }

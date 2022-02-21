@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,10 +36,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.HasAttributesNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.IsNotObject;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
@@ -48,16 +44,19 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.HasAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "names<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -173,7 +172,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
     private RFunction getAsCharacterFunction() {
         if (asCharacterFunction == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            Object value = REnvironment.baseEnv(RContext.getInstance()).findFunction("as.character");
+            Object value = REnvironment.baseEnv(getRContext()).findFunction("as.character");
             if (!(value instanceof RFunction)) {
                 throw error(Message.GENERIC, "Could not find function 'as.character' in the base environment.");
             }

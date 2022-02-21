@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -398,7 +398,7 @@ public abstract class REnvironment extends RAttributable {
     }
 
     /**
-     * Value returned by {@code globalenv()}.
+     * Fast-path of version {@link #globalEnv()}.
      */
     public static REnvironment globalEnv(RContext ctx) {
         return ctx.stateREnvironment.getGlobalEnv();
@@ -423,14 +423,15 @@ public abstract class REnvironment extends RAttributable {
     }
 
     /**
-     * Value returned by {@code baseenv()}. This is the "package:base" environment.
+     * Value returned by {@code baseenv()}. This is the "package:base" environment. Slow-path
+     * version.
      */
     public static REnvironment baseEnv() {
         return baseEnv(RContext.getInstance());
     }
 
     /**
-     * Value returned by {@code baseenv()}. This is the "package:base" environment.
+     * Fast-path version of {@link #baseEnv()}.
      */
     public static REnvironment baseEnv(RContext ctx) {
         Base baseEnv = ctx.stateREnvironment.getBaseEnv();
@@ -440,9 +441,18 @@ public abstract class REnvironment extends RAttributable {
 
     /**
      * Value set in {@code .baseNameSpaceEnv} variable. This is the "namespace:base" environment.
+     * Slow-path version.
      */
     public static REnvironment baseNamespaceEnv() {
-        Base baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
+        return baseNamespaceEnv(RContext.getInstance());
+    }
+
+    /**
+     * Fast-path version of {@link #baseNamespaceEnv()}.
+     */
+    public static REnvironment baseNamespaceEnv(RContext context) {
+        RContext ctx = context != null ? context : RContext.getInstance();
+        Base baseEnv = ctx.stateREnvironment.getBaseEnv();
         assert baseEnv != null;
         return baseEnv.getNamespace();
     }
@@ -682,6 +692,10 @@ public abstract class REnvironment extends RAttributable {
 
     public static REnvironment getNamespaceRegistry() {
         return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
+    }
+
+    public static REnvironment getNamespaceRegistry(RContext ctx) {
+        return ctx.stateREnvironment.getNamespaceRegistry();
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,6 @@ import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
-import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -108,6 +107,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -669,7 +669,7 @@ final class REngine implements Engine, Engine.Timings {
                 if (printResult && result != null) {
                     assert topLevel;
                     if (visibility.execute(vf)) {
-                        printResultImpl(RContext.getInstance(), result);
+                        printResultImpl(RContext.getInstance(this), result);
                     }
                 }
                 if (topLevel) {
