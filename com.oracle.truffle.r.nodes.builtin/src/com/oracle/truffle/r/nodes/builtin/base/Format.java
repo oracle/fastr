@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -121,9 +121,9 @@ public abstract class Format extends RBuiltinNode.Arg9 {
         return decimalMark.length() == 0 ? '.' : decimalMark.charAt(0);
     }
 
-    private static PrintParameters getParameters(int digits, int scientific) {
+    private PrintParameters getParameters(int digits, int scientific) {
         PrintParameters pp = new PrintParameters();
-        pp.setDefaults();
+        pp.setDefaults(getRContext());
         if (!RRuntime.isNA(digits)) {
             pp.setDigits(digits);
         }

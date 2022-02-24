@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode;
@@ -145,7 +144,8 @@ abstract class LoadMethod extends RBaseNode {
                                 loadMethodFunction.getEnclosingFrame(), null);
             } else {
                 // slow path
-                ret = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), caller, true, null, fdef, fname, REnvironment.frameToEnvironment(frame.materialize()));
+                ret = (RFunction) getRContext().getThisEngine().evalFunction(currentFunction, frame.materialize(), caller, true, null, fdef, fname,
+                                REnvironment.frameToEnvironment(frame.materialize()));
             }
         } else {
             ret = fdef;

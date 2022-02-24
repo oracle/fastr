@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,7 +89,8 @@ public final class Closure implements Cloneable {
         } else {
             this.stringConstant = null;
         }
-        cacheLock = RContext.getInstance().getOption(FastROptions.EnableClosureCallTargetsCache) ? new Object() : null;
+        RContext context = RContext.getInstance(expr);
+        cacheLock = context.getOption(FastROptions.EnableClosureCallTargetsCache) ? new Object() : null;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.Base64;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.r.library.fastrGrid.GridColorUtils;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
@@ -214,6 +215,7 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         data.append("/>\n");
     }
 
+    @TruffleBoundary
     private void saveFile() throws DeviceCloseException {
         closeSVGDocument(data);
         try {

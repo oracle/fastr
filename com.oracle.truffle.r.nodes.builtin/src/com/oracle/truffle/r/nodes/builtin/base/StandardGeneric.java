@@ -93,8 +93,9 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
 
     private Object stdGenericInternal(VirtualFrame frame, String fname, RFunction fdef) {
         RFunction def = fdef;
+        RContext context = getRContext();
         if (isBuiltinProfile.profile(def.isBuiltin())) {
-            def = getRContext().getPrimitiveMethodsInfo().getPrimGeneric(def.getRBuiltin().getPrimMethodIndex());
+            def = context.getPrimitiveMethodsInfo().getPrimGeneric(def.getRBuiltin().getPrimMethodIndex());
             if (isDeferredProfile.profile(def == null)) {
                 return RRuntime.DEFERRED_DEFAULT_MARKER;
             }
@@ -105,9 +106,9 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             // mtable can be null the first time around, but the following call will initialize it
             // and this slow path should not be executed again
-            REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
+            REnvironment methodsEnv = REnvironment.getRegisteredNamespace(context, "methods");
             RFunction currentFunction = ReadVariableNode.lookupFunction(".getMethodsTable", methodsEnv.getFrame(), true, true);
-            mtable = (REnvironment) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), true, null, def);
+            mtable = (REnvironment) context.getThisEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, getOriginalCall()), true, null, def);
         }
         RList sigArgs = (RList) readSigARgs.execute(null, fnFrame);
         int sigLength = (int) castIntScalar.doCast(readSigLength.execute(null, fnFrame));

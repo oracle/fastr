@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -67,6 +66,6 @@ public abstract class Xtfrm extends RBuiltinNode.Arg1 {
             env = REnvironment.frameToEnvironment(frame.materialize());
         }
         RFunction func = (RFunction) getNode.execute(frame, "xtfrm.default", env, RType.Function.getName(), true);
-        return RContext.getEngine().evalFunction(func, null, null, true, null, x);
+        return getRContext().getThisEngine().evalFunction(func, null, null, true, null, x);
     }
 }
