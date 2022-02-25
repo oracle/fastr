@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.TruffleLogger;
-
 import static com.oracle.truffle.r.runtime.RRuntime.R_LANGUAGE_ID;
+
+import com.oracle.truffle.api.TruffleLogger;
 
 /**
  * Some specialized loggers going beyond the scope of basic class level logging.<br/>
@@ -112,6 +112,8 @@ public class RLogger {
      * Log some return values and information from functions wrapping around PCRE2.
      */
     public static final String LOGGER_PCRE = "com.oracle.truffle.r.pcre";
+
+    public static final String LOGGER_FRAMES = "com.oracle.truffle.r.frames";
 
     public static TruffleLogger getLogger(String name) {
         return TruffleLogger.getLogger(R_LANGUAGE_ID, name);

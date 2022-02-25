@@ -25,11 +25,14 @@ package com.oracle.truffle.r.runtime.env.frame;
 import static com.oracle.truffle.r.runtime.context.FastROptions.SearchPathForcePromises;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -39,6 +42,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -56,6 +60,7 @@ import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.FastROptions;
@@ -71,6 +76,8 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
  * make sure that code is properly deoptimized.
  */
 public final class FrameSlotChangeMonitor {
+
+    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_FRAMES);
 
     /*
      * The following classes describe the result of a previous lookup that successfully delivered a
@@ -229,6 +236,16 @@ public final class FrameSlotChangeMonitor {
 
         public Assumption getContainsNoActiveBindingAssumption() {
             return containsNoActiveBindingAssumption;
+        }
+
+        @TruffleBoundary
+        @Override
+        public String toString() {
+            return "FrameDescriptorMetaData{" +
+                            "@" + hashCode() +
+                            ", name='" + name + '\'' +
+                            ", previousLookups=" + previousLookups +
+                            '}';
         }
     }
 
@@ -973,13 +990,125 @@ public final class FrameSlotChangeMonitor {
      */
     public static synchronized void initializeNonFunctionFrameDescriptor(String name, MaterializedFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        frameDescriptors.put(handleBaseNamespaceEnv(frame), new FrameDescriptorMetaData(name, frame));
+        FrameDescriptor key = handleBaseNamespaceEnv(frame);
+        FrameDescriptorMetaData descriptorMetaData = new FrameDescriptorMetaData(name, frame);
+        logger.fine(() -> String.format("initializing Non-function frame descriptor: name='%s', frameDescriptor={%s}, descriptorMetadata={%s}",
+                        name, frameDescriptorToString(key), logFrameDescriptorMetadata(descriptorMetaData)));
+        frameDescriptors.put(key, descriptorMetaData);
     }
 
     public static synchronized FrameDescriptor initializeFunctionFrameDescriptor(String name, FrameDescriptor frameDescriptor) {
         CompilerAsserts.neverPartOfCompilation();
-        frameDescriptors.put(frameDescriptor, new FrameDescriptorMetaData(name, null));
+        FrameDescriptor key = frameDescriptor;
+        FrameDescriptorMetaData descriptorMetaData = new FrameDescriptorMetaData(name, null);
+        logger.fine(() -> String.format("initializing function frame descriptor: name='%s', frameDescriptor={%s}, descriptorMetadata={%s}",
+                        name, frameDescriptorToString(key), logFrameDescriptorMetadata(descriptorMetaData)));
+        frameDescriptors.put(key, descriptorMetaData);
         return frameDescriptor;
+    }
+
+    public static String findAndLogFrameDescriptorByName(String frameName) {
+        Entry<FrameDescriptor, FrameDescriptorMetaData> entry = FrameSlotChangeMonitor.findFrameDescriptorByName(frameName);
+        if (entry == null) {
+            return null;
+        }
+        return frameDescriptorToString(entry);
+    }
+
+    public static String findAndLogFrameDescriptorByIdx(int frameIdx) {
+        if (frameIdx > frameDescriptors.entrySet().size()) {
+            return null;
+        }
+        Object element = frameDescriptors.entrySet().toArray()[frameIdx];
+        var entry = (Map.Entry<FrameDescriptor, FrameDescriptorMetaData>) element;
+        return frameDescriptorToString(entry);
+    }
+
+    private static String frameDescriptorToString(Entry<FrameDescriptor, FrameDescriptorMetaData> entry) {
+        StringBuilder sb = new StringBuilder();
+        FrameDescriptor frameDescriptor = entry.getKey();
+        sb.append("FrameDescriptor{");
+        sb.append("size = ").append(frameDescriptor.getSize()).append(", ");
+        FrameDescriptorMetaData metaData = getMetaData(frameDescriptor);
+        sb.append("metaData = {");
+        sb.append("name = '").append(metaData.name).append("' ");
+        sb.append("lookupResults = [");
+        metaData.lookupResults.forEach((key, lookupResult) -> {
+            sb.append("{");
+            var referent = lookupResult.get();
+            if (referent != null) {
+                sb.append("isValid = ").append(referent.isValid()).append(", ");
+                try {
+                    sb.append("value = ").append(referent.getValue().toString());
+                } catch (InvalidAssumptionException e) {
+                    sb.append("InvalidAssumptionException");
+                }
+            } else {
+                sb.append("null");
+            }
+            sb.append("}");
+        });
+        if (metaData.lookupResults.size() > 0) {
+            sb.delete(sb.length() - 2, sb.length());
+        }
+        sb.append("]"); // End of lookupResults
+        sb.append("}, "); // End of metadata
+        sb.append("slots = [");
+        for (FrameSlot slot : frameDescriptor.getSlots()) {
+            sb.append(slotToString(slot)).append(", ");
+        }
+        if (frameDescriptor.getSlots().size() > 0) {
+            sb.delete(sb.length() - 2, sb.length());
+        }
+        sb.append("]"); // End of slots
+        sb.append("}"); // End of FrameDescriptor
+        return sb.toString();
+    }
+
+    private static String slotToString(FrameSlot frameSlot) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        sb.append("identifier = '").append(frameSlot.getIdentifier().toString()).append("', ");
+        sb.append("kind = ").append(frameSlot.getKind().name()).append(", ");
+        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        sb.append("info = {");
+        sb.append("invalidationCount = ").append(info.invalidationCount).append(", ");
+        sb.append("stableValue = ").append(info.stableValue != null ? info.stableValue.toString() : "null").append(", ");
+        sb.append("nonLocalModifiedAssumption = ").append(info.nonLocalModifiedAssumption.toString());
+        sb.append("}");
+        sb.append("}");
+        return sb.toString();
+    }
+
+    @TruffleBoundary
+    private static String frameDescriptorToString(FrameDescriptor frameDescriptor) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("numberOfSlots = ").append(frameDescriptor.getNumberOfSlots()).append(", ");
+        return sb.toString();
+    }
+
+    @TruffleBoundary
+    private static String logFrameDescriptorMetadata(FrameDescriptorMetaData frameDescriptorMetaData) {
+        return frameDescriptorMetaData.toString();
+    }
+
+    @TruffleBoundary
+    public static Map.Entry<FrameDescriptor, FrameDescriptorMetaData> findFrameDescriptorByName(String name) {
+        for (var entry : frameDescriptors.entrySet()) {
+            if (entry.getValue().name.equals(name)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    @TruffleBoundary
+    public static List<String> getFrameDescriptorNames() {
+        List<String> names = new ArrayList<>();
+        for (var entry : frameDescriptors.entrySet()) {
+            names.add(entry.getValue().name);
+        }
+        return names;
     }
 
     public static synchronized Assumption getEnclosingFrameDescriptorAssumption(FrameDescriptor descriptor) {
