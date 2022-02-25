@@ -45,13 +45,7 @@ LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 # to keep the Java side simpler, we (may) copy them to $(FASTR_LIB_DIR) unless
 # they were found in the standard system locations
 ifdef FASTR_RELEASE
-ifeq ($(OSNAME), Linux)
-  FASTR_CAPTURE_DEPENDENCIES ?= pcre2-8 z gfortran quadmath gcc_s
-else ifeq ($(OSNAME), Darwin)
   FASTR_CAPTURE_DEPENDENCIES ?= pcre2-8 gfortran quadmath gcc_s
-else
-  $(error OS $(OSNAME) is not supported)
-endif
 endif # FASTR_RELEASE
 
 $(info ***** FastR Libraries configuration *****)
