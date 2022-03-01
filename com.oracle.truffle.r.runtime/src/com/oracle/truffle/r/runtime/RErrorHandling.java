@@ -204,7 +204,7 @@ public class RErrorHandling {
     private static final Object RESTART_TOKEN = new Object();
 
     private static ContextStateImpl getRErrorHandlingState() {
-        return RContext.getInstance().stateRErrorHandling;
+        return getRErrorHandlingState(RContext.getInstance());
     }
 
     private static ContextStateImpl getRErrorHandlingState(RContext ctx) {
@@ -218,7 +218,7 @@ public class RErrorHandling {
     }
 
     public static Object getHandlerStack() {
-        return getRErrorHandlingState().handlerStack;
+        return getHandlerStack(RContext.getInstance());
     }
 
     public static Object getHandlerStack(RContext ctx) {
@@ -226,7 +226,11 @@ public class RErrorHandling {
     }
 
     public static Object getRestartStack() {
-        return getRErrorHandlingState().restartStack;
+        return getRestartStack(RContext.getInstance());
+    }
+
+    public static Object getRestartStack(RContext ctx) {
+        return getRErrorHandlingState(ctx).restartStack;
     }
 
     /**
@@ -235,7 +239,11 @@ public class RErrorHandling {
      * followed by {@link #restoreStacks} after the evaluation completes.
      */
     public static void resetStacks() {
-        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        resetStacks(RContext.getInstance());
+    }
+
+    public static void resetStacks(RContext ctx) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState(ctx);
         errorHandlingState.handlerStack = RNull.instance;
         errorHandlingState.restartStack = RNull.instance;
     }
@@ -244,38 +252,33 @@ public class RErrorHandling {
         restoreStacks(handlerStacks.handlerStack, handlerStacks.restartStack);
     }
 
+    @TruffleBoundary
     public static void restoreStacks(Object savedHandlerStack, Object savedRestartStack) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         errorHandlingState.handlerStack = savedHandlerStack;
         errorHandlingState.restartStack = savedRestartStack;
     }
 
-    /**
-     * Slow-path version.
-     */
     public static void restoreHandlerStack(Object savedHandlerStack) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         errorHandlingState.handlerStack = savedHandlerStack;
     }
 
     /**
-     * Fast-path version.
+     * Fast-path version of {@link #restoreHandlerStack(Object)}.
      */
     public static void restoreHandlerStack(Object savedHandlerStack, RContext ctx) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState(ctx);
         errorHandlingState.handlerStack = savedHandlerStack;
     }
 
-    /**
-     * Slow-path version.
-     */
     public static void restoreRestartStack(Object savedRestartStack) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         errorHandlingState.restartStack = savedRestartStack;
     }
 
     /**
-     * Fast-path version.
+     * Fast-path version of {@link #restoreRestartStack(Object)}.
      */
     public static void restoreRestartStack(Object savedRestartStack, RContext ctx) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState(ctx);
@@ -358,8 +361,8 @@ public class RErrorHandling {
         return ((REnvironment) restart.getDataAt(1)).getFrame();
     }
 
-    public static Object getRestart(int index) {
-        Object list = getRestartStack();
+    public static Object getRestart(int index, RContext context) {
+        Object list = getRestartStack(context);
         int i = index;
         while (list != RNull.instance && i > 1) {
             RPairList pList = (RPairList) list;

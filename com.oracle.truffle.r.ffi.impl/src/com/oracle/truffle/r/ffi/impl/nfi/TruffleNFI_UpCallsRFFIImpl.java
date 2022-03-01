@@ -74,6 +74,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     @Override
+    @TruffleBoundary
     public Object R_alloc(int n, int size) {
         long result = NativeMemory.allocate(n * (long) size, "R_alloc");
         getContext().transientAllocations.peek().add(result);

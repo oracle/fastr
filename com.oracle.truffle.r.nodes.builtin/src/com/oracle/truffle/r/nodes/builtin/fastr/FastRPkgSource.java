@@ -93,7 +93,7 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
         CompilerDirectives.transferToInterpreter();
         for (int i = 0; i < pkgs.getLength(); i++) {
             String pkg = pkgs.getDataAt(i);
-            REnvironment env = REnvironment.getRegisteredNamespace(pkg);
+            REnvironment env = REnvironment.getRegisteredNamespace(getRContext(), pkg);
             if (env == null) {
                 notFound(pkg);
             } else {

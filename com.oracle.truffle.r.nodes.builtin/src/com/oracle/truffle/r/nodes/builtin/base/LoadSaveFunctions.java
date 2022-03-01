@@ -306,7 +306,7 @@ public class LoadSaveFunctions {
                 }
                 prev = pl;
             }
-            doSaveConn(toSave, RConnection.fromIndex(con), ascii, version);
+            doSaveConn(toSave, RConnection.fromIndex(con, getRContext()), ascii, version);
             return RNull.instance;
         }
 

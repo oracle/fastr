@@ -1226,9 +1226,8 @@ public final class RContext {
      * request. If so, break the playing back of the display list for the waiting repaint request to
      * be processed.
      */
-    public static void checkPendingRepaintRequest() {
-        RContext rCtx = RContext.getInstance();
-        if (rCtx.getStateRFFI().rffiContextState.primFunBeingDispatched && rCtx.interruptResize.get()) {
+    public void checkPendingRepaintRequest() {
+        if (getStateRFFI().rffiContextState.primFunBeingDispatched && interruptResize.get()) {
             throw new ReturnException(RUnboundValue.instance, dispatchPrimFunNodeCaller);
         }
     }

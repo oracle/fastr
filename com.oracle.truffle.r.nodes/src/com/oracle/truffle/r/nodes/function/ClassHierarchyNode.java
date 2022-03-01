@@ -252,7 +252,7 @@ abstract class S4Class extends RBaseNode {
         // we operate under this assumption already
         RStringVector s4Extends = getRContext().getS4Extends(classAttr);
         if (s4Extends == null) {
-            REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
+            REnvironment methodsEnv = REnvironment.getRegisteredNamespace(getRContext(), "methods");
             RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame());
             // the assumption here is that the R function can only return either a String or
             // RStringVector

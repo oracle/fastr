@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -41,6 +42,7 @@ public final class WindowDevice {
         // only static members
     }
 
+    @TruffleBoundary
     public static GridDevice createWindowDevice(boolean byGridServer, int width, int height) {
         return createWindowDevice(RContext.getInstance(), byGridServer, width, height);
     }

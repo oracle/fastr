@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -302,6 +303,7 @@ public final class AltrepRFFI {
         public static DataptrNode getUncached() {
             return new DataptrNode() {
                 @Override
+                @TruffleBoundary
                 public long execute(Object altrepVector, boolean writeable) {
                     AltrepDownCallNode downCallNode = AltrepDownCallNode.getUncached();
                     InteropLibrary retValueInterop = InteropLibrary.getUncached();

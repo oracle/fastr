@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,13 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetPropertyNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetPropertyNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 // Transcribed from src/main/attrib.c file (R_has_slot function)
@@ -68,11 +68,12 @@ public abstract class HasSlotNode extends BaseAccessSlotNode {
     @Specialization(guards = {"!slotAccessAllowed(object)", "isDotData(name)"})
     protected boolean getSlotNonS4(RAttributable object, @SuppressWarnings("unused") String name) {
         // TODO: any way to cache it or use a mechanism similar to overrides?
-        REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
+        RContext context = getRContext();
+        REnvironment methodsNamespace = REnvironment.getRegisteredNamespace(context, "methods");
         RFunction dataPart = getDataPartFunction(methodsNamespace);
 
         // TODO will throw an error if ".data" does not exists but should not
-        Object result = RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, object);
+        Object result = context.getThisEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, object);
         return result != null;
     }
 

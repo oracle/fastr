@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -78,7 +77,7 @@ public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
 
         int savedReturn = beforeGraphicsOpNode.execute();
         try {
-            return RContext.getEngine().eval(expr, createEnv(list, env), rCaller);
+            return getRContext().getThisEngine().eval(expr, createEnv(list, env), rCaller);
         } finally {
             RFunction currentFunction = RArguments.getFunction(frame);
             RPairList opCall = RDataFactory.createPairList(expr, RDataFactory.createPairList(list, RDataFactory.createPairList(env)));
@@ -95,7 +94,7 @@ public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
     protected Object doEval(VirtualFrame frame, RExpression expr, RList list, REnvironment env) {
         RCaller rCaller = RCaller.create(frame, getOriginalCall());
         try {
-            return RContext.getEngine().eval(expr, createEnv(list, env), rCaller);
+            return getRContext().getThisEngine().eval(expr, createEnv(list, env), rCaller);
         } finally {
             visibility.executeAfterCall(frame, rCaller);
         }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,9 @@
  * https://www.R-project.org/Licenses/
  */
 package com.oracle.truffle.r.runtime.rng;
+
+import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.REJECTION;
+import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.ROUNDING;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
@@ -42,8 +45,6 @@ import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
-import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.REJECTION;
-import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.ROUNDING;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
@@ -289,6 +290,7 @@ public class RRNG {
         return getContextState(ctx).currentNormKind;
     }
 
+    @TruffleBoundary
     public static SampleKind currentSampleKind() {
         return getContextState().currentSampleKind;
     }
@@ -297,7 +299,14 @@ public class RRNG {
      * Ask the current generator for a random double. (cf. {@code unif_rand} in RNG.c.
      */
     public static double unifRand() {
-        return currentGenerator().genrandDouble();
+        return unifRand(RContext.getInstance());
+    }
+
+    /**
+     * Fast-path version of {@link #unifRand()}.
+     */
+    public static double unifRand(RContext ctx) {
+        return currentGenerator(ctx).genrandDouble();
     }
 
     private static double ru() {
@@ -337,6 +346,7 @@ public class RRNG {
         return v & ((one64 << bits) - 1);
     }
 
+    @TruffleBoundary
     public static double unifIndex(double dn) {
         return unifIndex(null, dn);
     }

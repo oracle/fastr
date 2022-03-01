@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+
+import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.MapCursor;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.r.runtime.Collections;
@@ -30,14 +39,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import org.graalvm.collections.EconomicMap;
-import org.graalvm.collections.MapCursor;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 
 /**
  * Support for logging R FFI.
@@ -87,22 +88,27 @@ public class RFFILog {
         return String.format("[%s, native mirror: %s]", Utils.getDebugInfo(obj), mirror);
     }
 
+    @TruffleBoundary
     public static void logUpCall(String name, List<Object> args) {
         logCall(CallMode.UP, name, getContext().getCallDepth(), args.toArray());
     }
 
+    @TruffleBoundary
     public static void logUpCall(String name, Object... args) {
         logCall(CallMode.UP, name, getContext().getCallDepth(), args);
     }
 
+    @TruffleBoundary
     public static void logUpCallReturn(String name, Object result) {
         logCall(CallMode.UP_RETURN, name, getContext().getCallDepth(), result);
     }
 
+    @TruffleBoundary
     public static void logDownCall(String name, Object... args) {
         logCall(CallMode.DOWN, name, getContext().getCallDepth(), args);
     }
 
+    @TruffleBoundary
     public static void logDownCallReturn(String name, Object result) {
         logCall(CallMode.DOWN_RETURN, name, getContext().getCallDepth(), result);
     }
