@@ -41,7 +41,7 @@ LAPACK_SOURCE ?= $(BLAS_LAPACK_DIR)/libRlapack$(DYLIB_EXT)
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
 LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 
-# at a minimum we need to know where libpcre/libz/libgfortran/libquadmath are located,
+# at a minimum we need to know where libpcre/libgfortran/libquadmath are located,
 # to keep the Java side simpler, we (may) copy them to $(FASTR_LIB_DIR) unless
 # they were found in the standard system locations
 ifdef FASTR_RELEASE
