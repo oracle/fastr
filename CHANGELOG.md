@@ -1,5 +1,7 @@
 # 22.1.0
 * Improved performance of the `order` and `rank` builtin functions
+* FastR does not ship with its own copy of libz.so
+  * System installation of this library becomes a requirement for FastR, but zlib is installed by default on MacOS and in most modern Linux distributions.
 * Use JavaGD as the default graphical subsystem.
   * Deprecate `--R.UseInternalGridGraphics` option.
   * The FastR's graphical subsystem is now mostly compatible with GNU-R's, i.e., most functions from `graphics`, `grid`, and `grDevices` base packages are now supported.
