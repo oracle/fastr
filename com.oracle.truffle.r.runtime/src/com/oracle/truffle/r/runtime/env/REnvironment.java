@@ -192,7 +192,7 @@ public abstract class REnvironment extends RAttributable {
                 ContextStateImpl parentState = context.getParent().stateREnvironment;
                 newGlobalFrame = parentState.getGlobalFrame();
             } else {
-                newGlobalFrame = RRuntime.createNonFunctionFrame("global");
+                newGlobalFrame = RRuntime.createNonFunctionFrameNew("global");
             }
             return new ContextStateImpl(newGlobalFrame);
         }
@@ -1197,7 +1197,7 @@ public abstract class REnvironment extends RAttributable {
 
         @Override
         protected REnvironment cloneEnv(MaterializedFrame globalFrame) {
-            Base newBase = new Base(RRuntime.createNonFunctionFrame("base"), globalFrame);
+            Base newBase = new Base(RRuntime.createNonFunctionFrameNew("base"), globalFrame);
             this.copyBindings(newBase);
             return newBase;
         }

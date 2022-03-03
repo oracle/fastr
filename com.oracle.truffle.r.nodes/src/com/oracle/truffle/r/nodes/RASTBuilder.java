@@ -335,8 +335,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             access.setFormals(formals);
         }
 
-        FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", descriptor);
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptorNew(name != null && !name.isEmpty() ? name : "<function>");
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(language, source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
 
         if (RContext.getInstance().getOption(ForceSources)) {

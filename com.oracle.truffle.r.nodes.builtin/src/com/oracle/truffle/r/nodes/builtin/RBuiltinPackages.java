@@ -163,9 +163,8 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RootCallTarget createArgumentsCallTarget(TruffleRLanguage language, RBuiltinFactory builtin) {
         CompilerAsserts.neverPartOfCompilation();
 
-        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        FrameDescriptor frameDescriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptorNew(builtin.getName());
         RBuiltinRootNode root = new RBuiltinRootNode(language, builtin, frameDescriptor, null);
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
         return root.getCallTarget();
     }
 

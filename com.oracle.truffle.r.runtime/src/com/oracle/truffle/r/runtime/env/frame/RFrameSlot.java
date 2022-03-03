@@ -40,15 +40,35 @@ public final class RFrameSlot {
 
     private final String name;
     private final boolean multiSlot;
+    private final int frameIdx;
 
     private RFrameSlot(String name, boolean multiSlot) {
+        this(name, multiSlot, -1);
+    }
+
+    private RFrameSlot(String name, boolean multiSlot, int frameIdx) {
         this.name = name;
         this.multiSlot = multiSlot;
+        this.frameIdx = frameIdx;
     }
 
     @Override
     public String toString() {
         return name == null ? "TempFrameSlot" : name;
+    }
+
+    /**
+     * Gets index into Truffle frame slot. See {@link #isIndexedSlot()}.
+     */
+    public int getFrameIdx() {
+        return frameIdx;
+    }
+
+    /**
+     * Returns true iff this RFrameSlot is represented by an indexed Truffle frame slot.
+     */
+    public boolean isIndexedSlot() {
+        return frameIdx != -1;
     }
 
     public boolean isTemp() {

@@ -316,7 +316,7 @@ public final class RArguments {
         Object[] arguments = frame.getArguments();
         assert arguments[INDEX_ENCLOSING_FRAME] == null;
         arguments[INDEX_ENCLOSING_FRAME] = newEnclosingFrame;
-        FrameSlotChangeMonitor.initializeEnclosingFrame(frame, newEnclosingFrame);
+        FrameSlotChangeMonitor.initializeEnclosingFrameNew(frame, newEnclosingFrame);
     }
 
     /**

@@ -174,7 +174,7 @@ final class REngine implements Engine, Engine.Timings {
 
     private void initializeNonShared() {
         suppressWarnings = true;
-        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame("base");
+        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrameNew("base");
         REnvironment.baseInitialize(baseFrame, globalFrame);
         context.getStateRFFI().initializeVariables(context);
         RBuiltinPackages.loadBase(context, baseFrame);
@@ -374,9 +374,8 @@ final class REngine implements Engine, Engine.Timings {
         }
 
         // Create RFunction
-        FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<as.function.default>", descriptor);
-        FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, REnvironment.globalEnv().getFrame());
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptorNew("<as.function.default>");
+        FrameSlotChangeMonitor.initializeEnclosingFrameNew(descriptor, REnvironment.globalEnv().getFrame());
         TruffleRLanguage rLanguage = RContext.getInstance().getLanguage();
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(rLanguage, RSyntaxNode.INTERNAL, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction",
                         null);

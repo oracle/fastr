@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 public final class SetVisibilityNode extends Node {
 
     @CompilationFinal private FrameSlot frameSlot;
+    @CompilationFinal private int visibilitySlot = -1;
 
     private SetVisibilityNode() {
     }
@@ -59,6 +60,9 @@ public final class SetVisibilityNode extends Node {
         if (frameSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
+        }
+        if (visibilitySlot == -1) {
+
         }
     }
 

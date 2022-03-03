@@ -679,7 +679,7 @@ public final class RDataFactory {
 
         @TruffleBoundary
         public final REnvironment createInternalEnv() {
-            return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), REnvironment.UNNAMED));
+            return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrameNew("<internal-env-" + environmentCount.incrementAndGet() + ">"), REnvironment.UNNAMED));
         }
 
         @TruffleBoundary
@@ -689,12 +689,12 @@ public final class RDataFactory {
 
         @TruffleBoundary
         public final REnvironment.NewEnv createNewEnv(String name) {
-            return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name));
+            return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrameNew("<new-env-" + environmentCount.incrementAndGet() + ">"), name));
         }
 
         @TruffleBoundary
         public final REnvironment createNewEnv(String name, boolean hashed, int initialSize) {
-            REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name);
+            REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrameNew("<new-env-" + environmentCount.incrementAndGet() + ">"), name);
             env.setHashed(hashed);
             env.setInitialSize(initialSize);
             return traceDataCreated(env);
@@ -1315,7 +1315,7 @@ public final class RDataFactory {
 
     @TruffleBoundary
     public static REnvironment createInternalEnv(String name) {
-        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), name));
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrameNew("<internal-env-" + environmentCount.incrementAndGet() + ">"), name));
     }
 
     public static REnvironment createInternalEnv() {
@@ -1329,12 +1329,12 @@ public final class RDataFactory {
 
     @TruffleBoundary
     public static REnvironment.NewEnv createNewEnv(String name) {
-        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name));
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrameNew("<new-env-" + environmentCount.incrementAndGet() + ">"), name));
     }
 
     @TruffleBoundary
     public static REnvironment createNewEnv(String name, boolean hashed, int initialSize) {
-        REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<new-env-" + environmentCount.incrementAndGet() + ">"), name);
+        REnvironment.NewEnv env = new REnvironment.NewEnv(RRuntime.createNonFunctionFrameNew("<new-env-" + environmentCount.incrementAndGet() + ">"), name);
         env.setHashed(hashed);
         env.setInitialSize(initialSize);
         return traceDataCreated(env);
