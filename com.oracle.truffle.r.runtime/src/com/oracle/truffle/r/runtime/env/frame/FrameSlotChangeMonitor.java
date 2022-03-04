@@ -162,19 +162,19 @@ public final class FrameSlotChangeMonitor {
 
     public static final class FrameAndSlotLookupResult extends LookupResult {
         private final MaterializedFrame frame;
-        private final FrameSlot slot;
+        private final FrameIndex frameIndex;
 
-        private FrameAndSlotLookupResult(String identifier, MaterializedFrame frame, FrameSlot slot) {
+        private FrameAndSlotLookupResult(String identifier, MaterializedFrame frame, FrameIndex frameIndex) {
             super(identifier);
             this.frame = frame;
-            this.slot = slot;
+            this.frameIndex = frameIndex;
         }
 
         @Override
         public Object getValue() {
             // fast path execution should use getFrame / getSlot
             CompilerAsserts.neverPartOfCompilation("FrameAndSlotLookupResult.getValue() should not be used in fast path execution");
-            return FrameSlotChangeMonitor.getValue(slot, frame);
+            return FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
         }
 
         public MaterializedFrame getFrame() throws InvalidAssumptionException {
@@ -182,9 +182,9 @@ public final class FrameSlotChangeMonitor {
             return frame;
         }
 
-        public FrameSlot getSlot() throws InvalidAssumptionException {
+        public FrameIndex getFrameIndex() throws InvalidAssumptionException {
             assumption.check();
-            return slot;
+            return frameIndex;
         }
     }
 
@@ -253,6 +253,11 @@ public final class FrameSlotChangeMonitor {
             return null;
         }
 
+        public Collection<Object> getIdentifiers() {
+            CompilerAsserts.neverPartOfCompilation();
+            return indexes.keySet();
+        }
+
         public void updateEnclosingFrameDescriptor(FrameDescriptor newEnclosingDescriptor) {
             CompilerAsserts.neverPartOfCompilation();
             if (enclosingFrameDescriptorAssumption != null) {
@@ -294,9 +299,9 @@ public final class FrameSlotChangeMonitor {
      * the static knowledge about the frame descriptor hierarchy and stable bindings. Returns
      * {@code null} in case this was not possible.
      */
-    public static synchronized LookupResult lookup(Frame frame, Object identifier) {
+    public static LookupResult lookup(Frame frame, Object identifier) {
         CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptorMetaData metaData = getMetaData(frame);
+        FrameDescriptorMetaData metaData = getDescriptorMetadata(frame);
         WeakReference<LookupResult> weakResult = metaData.lookupResults.get(identifier);
         LookupResult result = weakResult == null ? null : weakResult.get();
         if (result != null && result.isValid()) {
@@ -304,10 +309,10 @@ public final class FrameSlotChangeMonitor {
         }
         Frame current = frame;
         while (true) {
-            FrameSlot slot = current.getFrameDescriptor().findFrameSlot(identifier);
-            if (slot != null) {
+            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            if (frameIndex != null) {
                 LookupResult lookupResult;
-                StableValue<Object> stableValue = getFrameSlotInfo(slot).stableValue;
+                StableValue<Object> stableValue = getFrameSlotInfoNew(current, frameIndex).stableValue;
                 // if stableValue.getValue() == null, then this is a frame slot that doesn't have a
                 // value, which can happen, e.g., when package creates a value in its namespace, but
                 // then removes it in .onLoad
@@ -315,13 +320,13 @@ public final class FrameSlotChangeMonitor {
                     if (stableValue != null) {
                         lookupResult = new StableValueLookupResult(identifier.toString(), stableValue);
                     } else {
-                        FrameDescriptorMetaData currentMetaData = getMetaData(current);
+                        FrameDescriptorMetaData currentMetaData = getDescriptorMetadata(current);
                         if (currentMetaData.singletonFrame == null) {
                             // no stable value and no singleton frame
                             return null;
                         } else {
                             assert currentMetaData.singletonFrame.get() != null;
-                            lookupResult = new FrameAndSlotLookupResult(identifier.toString(), currentMetaData.singletonFrame.get(), slot);
+                            lookupResult = new FrameAndSlotLookupResult(identifier.toString(), currentMetaData.singletonFrame.get(), frameIndex);
                         }
                     }
                     addPreviousLookups(frame, current, identifier);
@@ -362,7 +367,7 @@ public final class FrameSlotChangeMonitor {
     private static void addPreviousLookups(Frame from, Frame to, Object identifier) {
         Frame mark = from;
         while (true) {
-            FrameDescriptorMetaData lookupMetaData = getMetaData(mark);
+            FrameDescriptorMetaData lookupMetaData = getDescriptorMetadata(mark);
             lookupMetaData.previousLookups.add(identifier);
             if (mark == to) {
                 break;
@@ -373,7 +378,7 @@ public final class FrameSlotChangeMonitor {
 
     private static boolean isEnclosingFrameDescriptor(Frame current, Frame next) {
         assert current != null;
-        FrameDescriptorMetaData metaData = getMetaData(current);
+        FrameDescriptorMetaData metaData = getDescriptorMetadata(current);
         FrameDescriptor nextDesc = next == null ? null : handleBaseNamespaceEnv(next);
         return metaData.getEnclosingFrameDescriptor() == nextDesc;
     }
@@ -390,7 +395,7 @@ public final class FrameSlotChangeMonitor {
                 }
             }
             for (FrameDescriptor descriptor : metaData.subDescriptors) {
-                FrameDescriptorMetaData sub = getMetaData(descriptor);
+                FrameDescriptorMetaData sub = getDescriptorMetadata(descriptor);
                 invalidateNames(sub, identifiers);
             }
         }
@@ -411,12 +416,7 @@ public final class FrameSlotChangeMonitor {
         return result;
     }
 
-    @Deprecated
-    private static FrameDescriptorMetaData getMetaData(Frame frame) {
-        return getMetaData(handleBaseNamespaceEnv(frame));
-    }
-
-    private static FrameDescriptorMetaData getMetaDataNew(FrameDescriptor frameDescriptor) {
+    private static FrameDescriptorMetaData getDescriptorMetadata(FrameDescriptor frameDescriptor) {
         Object descriptorInfo = frameDescriptor.getInfo();
         if (!(descriptorInfo instanceof FrameDescriptorMetaData)) {
             throw RInternalError.shouldNotReachHere("FrameDescriptor metadata should only be instances of FrameDescriptorMetaData");
@@ -424,16 +424,8 @@ public final class FrameSlotChangeMonitor {
         return (FrameDescriptorMetaData) descriptorInfo;
     }
 
-    private static FrameDescriptorMetaData getMetaDataNew(Frame frame) {
-        return getMetaDataNew(handleBaseNamespaceEnv(frame));
-    }
-
-    @Deprecated
-    private static FrameDescriptorMetaData getDescriptorMetaData(FrameDescriptor descriptor) {
-        assert descriptor != null : "initializing enclosing of null descriptor";
-        FrameDescriptorMetaData target = getMetaData(descriptor);
-        assert target != null : "frame descriptor wasn't registered properly";
-        return target;
+    private static FrameDescriptorMetaData getDescriptorMetadata(Frame frame) {
+        return getDescriptorMetadata(handleBaseNamespaceEnv(frame));
     }
 
     public static FrameSlotKind getFrameSlotKindNew(FrameDescriptor frameDescriptor, FrameIndex index) {
@@ -441,7 +433,6 @@ public final class FrameSlotChangeMonitor {
             case NormalIndex:
                 return frameDescriptor.getSlotKind(index.index);
             case AuxiliaryIndex:
-                // TODO: Anything in auxiliary index is always object frame slot kind?
                 return FrameSlotKind.Object;
             default:
                 throw RInternalError.shouldNotReachHere();
@@ -456,17 +447,15 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static synchronized boolean isEnclosingFrameDescriptor(FrameDescriptor descriptor, Frame newEnclosingFrame) {
+    public static boolean isEnclosingFrameDescriptor(FrameDescriptor descriptor, Frame newEnclosingFrame) {
         CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptorMetaData target = getDescriptorMetaData(descriptor);
+        FrameDescriptorMetaData target = getDescriptorMetadata(descriptor);
         FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
         return target.getEnclosingFrameDescriptor() == newEnclosingDescriptor;
     }
 
-    @Deprecated
-    public static synchronized void initializeEnclosingFrame(FrameDescriptor descriptor, Frame newEnclosingFrame) {
-        CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptorMetaData target = getDescriptorMetaData(descriptor);
+    public static void initializeEnclosingFrame(FrameDescriptor frameDescriptor, Frame newEnclosingFrame) {
+        FrameDescriptorMetaData target = getDescriptorMetadata(frameDescriptor);
 
         FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
 
@@ -477,42 +466,19 @@ public final class FrameSlotChangeMonitor {
 
             target.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
             if (newEnclosingDescriptor != null) {
-                FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingDescriptor);
-                newEnclosing.subDescriptors.add(descriptor);
-            }
-        }
-    }
-
-    public static void initializeEnclosingFrameNew(FrameDescriptor frameDescriptor, Frame newEnclosingFrame) {
-        FrameDescriptorMetaData target = getMetaDataNew(frameDescriptor);
-
-        FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
-
-        // this function can be called multiple times with the same enclosing descriptor
-        if (target.getEnclosingFrameDescriptor() != newEnclosingDescriptor) {
-            assert target.getEnclosingFrameDescriptor() == null : "existing enclosing descriptor while initializing " + target.name;
-            assert target.lookupResults.isEmpty() : "existing lookup results while initializing " + target.name;
-
-            target.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
-            if (newEnclosingDescriptor != null) {
-                FrameDescriptorMetaData newEnclosing = getMetaDataNew(newEnclosingDescriptor);
+                FrameDescriptorMetaData newEnclosing = getDescriptorMetadata(newEnclosingDescriptor);
                 newEnclosing.subDescriptors.add(frameDescriptor);
             }
         }
     }
 
-    @Deprecated
-    public static synchronized void initializeEnclosingFrame(Frame frame, Frame newEnclosingFrame) {
+    public static void initializeEnclosingFrame(Frame frame, Frame newEnclosingFrame) {
         initializeEnclosingFrame(handleBaseNamespaceEnv(frame), newEnclosingFrame);
     }
 
-    public static void initializeEnclosingFrameNew(Frame frame, Frame newEnclosingFrame) {
-        initializeEnclosingFrameNew(handleBaseNamespaceEnv(frame), newEnclosingFrame);
-    }
-
-    private static synchronized void setEnclosingFrame(FrameDescriptor descriptor, MaterializedFrame newEnclosingFrame, MaterializedFrame oldEnclosingFrame) {
+    private static void setEnclosingFrame(FrameDescriptor descriptor, MaterializedFrame newEnclosingFrame, MaterializedFrame oldEnclosingFrame) {
         CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptorMetaData target = getMetaData(descriptor);
+        FrameDescriptorMetaData target = getDescriptorMetadata(descriptor);
         assert target != null : "frame descriptor wasn't registered properly for " + descriptor;
 
         // invalidate existing lookups
@@ -525,19 +491,19 @@ public final class FrameSlotChangeMonitor {
         if (oldEnclosingDescriptor != null) {
             assert newEnclosingDescriptor == oldEnclosingDescriptor || oldEnclosingDescriptor == oldEnclosingFrame.getFrameDescriptor() : "mismatch " + oldEnclosingDescriptor + " / " +
                             oldEnclosingFrame.getFrameDescriptor();
-            FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
+            FrameDescriptorMetaData oldEnclosing = getDescriptorMetadata(oldEnclosingDescriptor);
             oldEnclosing.subDescriptors.remove(descriptor);
         }
         target.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
 
         if (newEnclosingDescriptor != null) {
-            FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingDescriptor);
+            FrameDescriptorMetaData newEnclosing = getDescriptorMetadata(newEnclosingDescriptor);
             assert !newEnclosing.name.equals("global") || !target.name.equals("base");
             newEnclosing.subDescriptors.add(descriptor);
         }
     }
 
-    public static synchronized void setEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame, MaterializedFrame oldEnclosingFrame) {
+    public static void setEnclosingFrame(Frame frame, MaterializedFrame newEnclosingFrame, MaterializedFrame oldEnclosingFrame) {
         setEnclosingFrame(handleBaseNamespaceEnv(frame), newEnclosingFrame, oldEnclosingFrame);
     }
 
@@ -552,20 +518,20 @@ public final class FrameSlotChangeMonitor {
         if (!target.previousLookups.isEmpty()) {
             target.previousLookups.clear();
             for (FrameDescriptor sub : target.subDescriptors) {
-                invalidateAllNames(getMetaData(sub));
+                invalidateAllNames(getDescriptorMetadata(sub));
             }
         }
     }
 
-    public static synchronized void detach(Frame frame) {
+    public static void detach(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptorMetaData position = getMetaData(frame);
+        FrameDescriptorMetaData position = getDescriptorMetadata(frame);
         FrameDescriptor oldEnclosingDescriptor = position.getEnclosingFrameDescriptor();
-        FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
+        FrameDescriptorMetaData oldEnclosing = getDescriptorMetadata(oldEnclosingDescriptor);
         FrameDescriptor newEnclosingDescriptor = oldEnclosing.getEnclosingFrameDescriptor();
-        FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingDescriptor);
+        FrameDescriptorMetaData newEnclosing = getDescriptorMetadata(newEnclosingDescriptor);
 
-        invalidateNames(oldEnclosing, oldEnclosingDescriptor.getIdentifiers());
+        invalidateNames(oldEnclosing, oldEnclosing.getIdentifiers());
 
         position.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
         oldEnclosing.updateEnclosingFrameDescriptor(null);
@@ -574,15 +540,15 @@ public final class FrameSlotChangeMonitor {
         newEnclosing.subDescriptors.add(frame.getFrameDescriptor());
     }
 
-    public static synchronized void attach(Frame frame, Frame newEnclosingFrame) {
+    public static void attach(Frame frame, Frame newEnclosingFrame) {
         CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptorMetaData position = getMetaData(frame);
-        FrameDescriptorMetaData newEnclosing = getMetaData(newEnclosingFrame);
+        FrameDescriptorMetaData position = getDescriptorMetadata(frame);
+        FrameDescriptorMetaData newEnclosing = getDescriptorMetadata(newEnclosingFrame);
         FrameDescriptor oldEnclosingDescriptor = position.getEnclosingFrameDescriptor();
-        FrameDescriptorMetaData oldEnclosing = getMetaData(oldEnclosingDescriptor);
+        FrameDescriptorMetaData oldEnclosing = getDescriptorMetadata(oldEnclosingDescriptor);
 
         invalidateAllNames(newEnclosing);
-        invalidateNames(position, newEnclosingFrame.getFrameDescriptor().getIdentifiers());
+        invalidateNames(position, newEnclosing.getIdentifiers());
 
         newEnclosing.previousLookups.clear();
         newEnclosing.previousLookups.addAll(oldEnclosing.previousLookups);
@@ -963,7 +929,7 @@ public final class FrameSlotChangeMonitor {
         assert frame.getAuxiliarySlot(auxFrameIdx) == null : "FrameSlotInfo for an aux slot should be initialized just once";
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         assert 0 <= auxFrameIdx && auxFrameIdx < frameDescriptor.getNumberOfAuxiliarySlots();
-        FrameDescriptorMetaData metadata = getMetaDataNew(frameDescriptor);
+        FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
         var frameSlotInfo = new FrameSlotInfoImpl(metadata, identifier);
         var auxSlotInfo = new AuxiliarySlotValue(frameSlotInfo, identifier);
         frame.setAuxiliarySlot(auxFrameIdx, auxSlotInfo);
@@ -1002,7 +968,7 @@ public final class FrameSlotChangeMonitor {
 
     public static FrameIndex findOrAddAuxiliaryFrameSlotNew(FrameDescriptor frameDescriptor, Object identifier) {
         CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptorMetaData descriptorMetadata = getMetaDataNew(frameDescriptor);
+        FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
         int auxSlotIdx = frameDescriptor.findOrAddAuxiliarySlot(identifier);
         if (descriptorMetadata.getIndex(identifier) == null) {
             var frameIndex = new FrameIndex(IndexType.AuxiliaryIndex, auxSlotIdx);
@@ -1011,8 +977,12 @@ public final class FrameSlotChangeMonitor {
         return descriptorMetadata.getIndex(identifier);
     }
 
+    /**
+     * Returns index of the identifier.
+     * @return null if the given identifier is not in the frame descriptor
+     */
     public static FrameIndex getIndexOfIdentifier(FrameDescriptor frameDescriptor, Object identifier) {
-        FrameDescriptorMetaData descriptorMetadata = getMetaDataNew(frameDescriptor);
+        FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
         return descriptorMetadata.getIndex(identifier);
     }
 
@@ -1153,7 +1123,6 @@ public final class FrameSlotChangeMonitor {
      */
     private static void setAuxiliaryValueNew(Frame frame, int auxFrameIdx, Object identifier, Object value) {
         assert identifier != null;
-        assertFrameStructureNew(frame);
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         assert 0 <= auxFrameIdx && auxFrameIdx < frameDescriptor.getNumberOfAuxiliarySlots();
         Object auxiliarySlotValue = frame.getAuxiliarySlot(auxFrameIdx);
@@ -1329,6 +1298,51 @@ public final class FrameSlotChangeMonitor {
         return ret;
     }
 
+    public static byte getByteNew(Frame frame, FrameIndex frameIndex) {
+        checkSharedContextAfterFrameMigration();
+        assertFrameIndexInBoundsNew(frame, frameIndex);
+        byte ret;
+        if (frameIndex.indexType == IndexType.NormalIndex) {
+            ret = frame.getByte(frameIndex.index);
+        } else {
+            Object object = getObjectNew(frame, frameIndex);
+            assert object instanceof Byte;
+            ret = (byte) object;
+        }
+        assertFrameStructureNew(frame);
+        return ret;
+    }
+
+    public static int getIntNew(Frame frame, FrameIndex frameIndex) {
+        checkSharedContextAfterFrameMigration();
+        assertFrameIndexInBoundsNew(frame, frameIndex);
+        int ret;
+        if (frameIndex.indexType == IndexType.NormalIndex) {
+            ret = frame.getInt(frameIndex.index);
+        } else {
+            Object object = getObjectNew(frame, frameIndex);
+            assert object instanceof Integer;
+            ret = (int) object;
+        }
+        assertFrameStructureNew(frame);
+        return ret;
+    }
+
+    public static double getDoubleNew(Frame frame, FrameIndex frameIndex) {
+        checkSharedContextAfterFrameMigration();
+        assertFrameIndexInBoundsNew(frame, frameIndex);
+        double ret;
+        if (frameIndex.indexType == IndexType.NormalIndex) {
+            ret = frame.getDouble(frameIndex.index);
+        } else {
+            Object object = getObjectNew(frame, frameIndex);
+            assert object instanceof Double;
+            ret = (double) object;
+        }
+        assertFrameStructureNew(frame);
+        return ret;
+    }
+
     public static void setBooleanNew(Frame frame, FrameIndex frameIndex, boolean newValue) {
         assertFrameIndexInBoundsNew(frame, frameIndex);
         checkSharedContextAfterFrameMigration();
@@ -1344,7 +1358,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setObjectNew(Frame frame, Object identifier, Object newValue) {
         checkSharedContextAfterFrameMigration();
-        FrameDescriptorMetaData descriptorMetaData = getMetaDataNew(frame);
+        FrameDescriptorMetaData descriptorMetaData = getDescriptorMetadata(frame);
         FrameIndex index = descriptorMetaData.getIndex(identifier);
         if (index == null) {
             throw RInternalError.shouldNotReachHere("A frame slot should first be added with findOrAddAuxiliaryFrameSlot");
@@ -1356,6 +1370,19 @@ public final class FrameSlotChangeMonitor {
         checkSharedContextAfterFrameMigration();
         Object identifier = getIdentifierNew(frame, frameIndex);
         setObjectNew(frame, frameIndex, identifier, newValue);
+    }
+
+    public static boolean containsIndexNew(Frame frame, FrameIndex frameIndex) {
+        assertFrameStructureNew(frame);
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        switch (frameIndex.indexType) {
+            case NormalIndex:
+                return 0 <= frameIndex.index && frameIndex.index < frameDescriptor.getNumberOfSlots();
+            case AuxiliaryIndex:
+                return 0 <= frameIndex.index && frameIndex.index < frameDescriptor.getNumberOfAuxiliarySlots();
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
     }
 
     private static void assertFrameIndexInBoundsNew(Frame frame, FrameIndex frameIndex) {
@@ -1376,7 +1403,7 @@ public final class FrameSlotChangeMonitor {
             return;
         }
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        FrameDescriptorMetaData metadata = getMetaDataNew(frameDescriptor);
+        FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
         int normalSlotsCount = frameDescriptor.getNumberOfSlots();
         int auxSlotsCount = frameDescriptor.getNumberOfAuxiliarySlots();
         int totalSlotsCount = normalSlotsCount + auxSlotsCount;
@@ -1428,26 +1455,27 @@ public final class FrameSlotChangeMonitor {
         assert frameIndex != null;
         assertFrameIndexInBoundsNew(frame, frameIndex);
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        Object identifier = null;
         switch (frameIndex.indexType) {
             case NormalIndex:
-                return frameDescriptor.getSlotName(frameIndex.index);
+                identifier = frameDescriptor.getSlotName(frameIndex.index);
+                break;
             case AuxiliaryIndex:
                 AuxiliarySlotValue auxiliarySlotValue = (AuxiliarySlotValue) frame.getAuxiliarySlot(frameIndex.index);
                 if (auxiliarySlotValue == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    Object identifier = getMetaDataNew(frameDescriptor).getIdentifier(frameIndex);
+                    identifier = getDescriptorMetadata(frameDescriptor).getIdentifier(frameIndex);
                     assert identifier != null;
-                    return identifier;
                 } else {
-                    return auxiliarySlotValue.identifier;
+                    identifier = auxiliarySlotValue.identifier;
                 }
-            default:
-                throw RInternalError.shouldNotReachHere();
+                break;
         }
+        return identifier;
     }
 
     public static boolean containsIdentifierNew(FrameDescriptor frameDescriptor, Object identifier) {
-        FrameDescriptorMetaData metadata = getMetaDataNew(frameDescriptor);
+        FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
         FrameIndex frameIndex = metadata.getIndex(identifier);
         return frameIndex != null;
     }
@@ -1481,7 +1509,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void initializeNonFunctionFrameDescriptorNew(FrameDescriptor frameDescriptor, MaterializedFrame singletonFrame) {
         assert singletonFrame != null;
-        FrameDescriptorMetaData metaData = getMetaDataNew(frameDescriptor);
+        FrameDescriptorMetaData metaData = getDescriptorMetadata(frameDescriptor);
         metaData.setSingletonFrame(singletonFrame);
     }
 
@@ -1608,7 +1636,7 @@ public final class FrameSlotChangeMonitor {
         StringBuilder sb = new StringBuilder();
         sb.append("numberOfSlots = ").append(frameDescriptor.getNumberOfSlots()).append(", ");
         sb.append("numberOfAuxiliarySlots = ").append(frameDescriptor.getNumberOfAuxiliarySlots()).append(", ");
-        FrameDescriptorMetaData metadata = getMetaDataNew(frameDescriptor);
+        FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
         sb.append("metadata = {").append(metadata).append("}");
         return sb.toString();
     }
@@ -1651,7 +1679,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static Assumption getEnclosingFrameDescriptorAssumptionNew(FrameDescriptor frameDescriptor) {
-        return getMetaDataNew(frameDescriptor).getEnclosingFrameDescriptorAssumption();
+        return getDescriptorMetadata(frameDescriptor).getEnclosingFrameDescriptorAssumption();
     }
 
     @Deprecated
@@ -1661,14 +1689,14 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static Assumption getContainsNoActiveBindingAssumptionNew(FrameDescriptor descriptor) {
-        return getMetaDataNew(descriptor).getContainsNoActiveBindingAssumption();
+        return getDescriptorMetadata(descriptor).getContainsNoActiveBindingAssumption();
     }
 
-    public static synchronized StableValue<Object> getStableValueAssumption(FrameDescriptor descriptor, FrameSlot frameSlot, Object value) {
+    public static StableValue<Object> getStableValueAssumption(Frame frame, FrameIndex frameIndex, Object value) {
         CompilerAsserts.neverPartOfCompilation();
-        StableValue<Object> stableValue = getFrameSlotInfo(frameSlot).getStableValue();
+        StableValue<Object> stableValue = getFrameSlotInfoNew(frame, frameIndex).getStableValue();
         if (stableValue != null) {
-            assert getMetaData(descriptor).singletonFrame != null : "single frame slot within non-singleton descriptor";
+            assert getDescriptorMetadata(frame).singletonFrame != null : "single frame slot within non-singleton descriptor";
             assert stableValue.getValue() == value || (stableValue.getValue() != null && (stableValue.getValue().equals(value) || !stableValue.getAssumption().isValid())) : stableValue.getValue() +
                             " vs. " + value;
         }
@@ -1685,7 +1713,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static boolean isValidFrameDescriptorNew(FrameDescriptor frameDescriptor) {
-        return getMetaDataNew(frameDescriptor) != null;
+        return getDescriptorMetadata(frameDescriptor) != null;
     }
 
     /*
