@@ -77,6 +77,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
@@ -346,19 +347,19 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     private final class Mismatch extends FrameLevel {
 
         private final FrameLevel next;
-        private final FrameSlot slot;
+        private final FrameIndex frameIndex;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
-        private Mismatch(FrameLevel next, FrameSlot slot) {
+        private Mismatch(FrameLevel next, FrameIndex frameIndex) {
             this.next = next;
-            this.slot = slot;
+            this.frameIndex = frameIndex;
         }
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
             Frame profiledVariableFrame = frameProfile.profile(variableFrame);
-            Object value = profiledGetValue(profiledVariableFrame, slot);
+            Object value = profiledGetValue(profiledVariableFrame, frameIndex);
             if (checkType(frame, value, isNullProfile)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new LayoutChangedException();
@@ -396,18 +397,18 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
     private final class Match extends FrameLevel {
 
-        private final FrameSlot slot;
+        private final FrameIndex frameIndex;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
         private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
-        private Match(FrameSlot slot) {
-            this.slot = slot;
+        private Match(FrameIndex frameIndex) {
+            this.frameIndex = frameIndex;
         }
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            Object value = valueProfile.profile(profiledGetValue(frameProfile.profile(variableFrame), slot));
+            Object value = valueProfile.profile(profiledGetValue(frameProfile.profile(variableFrame), frameIndex));
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
@@ -522,27 +523,16 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     private final class Polymorphic extends FrameLevel {
 
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
-        @CompilationFinal private FrameSlot frameSlot;
-        @CompilationFinal private Assumption notInFrame;
+        @CompilationFinal private FrameIndex frameIndex;
 
         private Polymorphic(Frame variableFrame) {
-            frameSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
-            notInFrame = frameSlot == null ? variableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
+            frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrame.getFrameDescriptor(), identifier);
         }
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            // check if the slot is missing / wrong type in current frame
-            if (frameSlot == null) {
-                try {
-                    notInFrame.check();
-                } catch (InvalidAssumptionException e) {
-                    frameSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
-                    notInFrame = frameSlot == null ? variableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
-                }
-            }
-            if (frameSlot != null) {
-                Object value = FrameSlotChangeMonitor.getObject(frameSlot, variableFrame);
+            if (frameIndex != null) {
+                Object value = FrameSlotChangeMonitor.getObjectNew(variableFrame, frameIndex);
                 if (checkType(frame, value, isNullProfile)) {
                     return value;
                 }
@@ -565,8 +555,8 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
         @TruffleBoundary
         private Object getValue(MaterializedFrame current) {
-            FrameSlot slot = current.getFrameDescriptor().findFrameSlot(identifier);
-            return slot == null ? null : FrameSlotChangeMonitor.getValue(slot, current);
+            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            return frameIndex == null ? null : FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
         }
 
         @Override
@@ -612,7 +602,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
         @Override
         public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(frameProfile.profile(lookup.getFrame()), lookup.getSlot());
+            Object value = profiledGetValue(frameProfile.profile(lookup.getFrame()), lookup.getFrameIndex());
             if (!checkType(frame, value, isNullProfile)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new LayoutChangedException();
@@ -644,16 +634,16 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
          * Check whether we can fulfill the lookup by only looking at the current frame, and thus
          * without additional dependencies on frame descriptor layouts.
          */
-        FrameSlot localSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
+        FrameIndex localFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrame.getFrameDescriptor(), identifier);
         // non-local reads can only be handled in a simple way if they are successful
-        if (localSlot != null) {
-            Object val = getValue(variableFrame, localSlot);
+        if (localFrameIndex != null) {
+            Object val = getValue(variableFrame, localFrameIndex);
             if (checkTypeSlowPath(frame, val)) {
                 if (val instanceof MultiSlotData) {
                     RError.performanceWarning("polymorphic (slow path) lookup of symbol \"" + identifier + "\" from a multi slot");
                     return new Polymorphic(variableFrame);
                 } else {
-                    return new Match(localSlot);
+                    return new Match(localFrameIndex);
                 }
             }
         }
@@ -692,7 +682,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         ArrayList<Assumption> assumptions = new ArrayList<>();
         FrameLevel lastLevel = createLevels(frame, variableFrame, assumptions);
         if (!assumptions.isEmpty()) {
-            lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[assumptions.size()]));
+            lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[0]));
         }
 
         if (getRContext().getOption(PrintComplexLookups)) {
@@ -717,12 +707,12 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             return new Unknown();
         }
         // see if the current frame has a value of the given name
-        FrameDescriptor currentDescriptor = variableFrame.getFrameDescriptor();
-        FrameSlot frameSlot = currentDescriptor.findFrameSlot(identifier);
-        if (frameSlot != null) {
-            Object value = getValue(variableFrame, frameSlot);
+        FrameDescriptor variableFrameDescriptor = variableFrame.getFrameDescriptor();
+        FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrameDescriptor, identifier);
+        if (frameIndex != null) {
+            Object value = getValue(variableFrame, frameIndex);
             if (checkTypeSlowPath(frame, value)) {
-                StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, value);
+                StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(variableFrame, frameIndex, value);
                 if (valueAssumption != null) {
                     Assumption assumption = valueAssumption.getAssumption();
                     assert value == valueAssumption.getValue() || value.equals(valueAssumption.getValue()) : value + " vs. " + valueAssumption.getValue();
@@ -735,7 +725,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
                     }
                     return new DescriptorStableMatch(assumption, value);
                 } else {
-                    return new Match(frameSlot);
+                    return new Match(frameIndex);
                 }
             }
         }
@@ -757,21 +747,22 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             }
         }
 
-        Assumption enclosingDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(currentDescriptor);
+        Assumption enclosingDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumptionNew(variableFrameDescriptor);
         if (lastLevel instanceof DescriptorLevel && enclosingDescriptorAssumption != null) {
             assumptions.add(enclosingDescriptorAssumption);
         } else {
             lastLevel = new NextFrameLevel(lastLevel, next == null ? null : next.getFrameDescriptor());
         }
 
-        if (frameSlot == null) {
-            assumptions.add(currentDescriptor.getNotInFrameAssumption(identifier));
+        if (frameIndex == null) {
+            // TODO: getNotInFrameAssumption
+            //assumptions.add(variableFrameDescriptor.getNotInFrameAssumption(identifier));
         } else {
-            StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, getValue(variableFrame, frameSlot));
+            StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(variableFrame, frameIndex, getValue(variableFrame, frameIndex));
             if (valueAssumption != null && lastLevel instanceof DescriptorLevel) {
                 assumptions.add(valueAssumption.getAssumption());
             } else {
-                lastLevel = new Mismatch(lastLevel, frameSlot);
+                lastLevel = new Mismatch(lastLevel, frameIndex);
             }
         }
         return lastLevel;
@@ -786,9 +777,9 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
-            FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(identifier);
-            if (frameSlot != null) {
-                Object value = FrameSlotChangeMonitor.getValue(frameSlot, current);
+            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            if (frameIndex != null) {
+                Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
 
                 if (value != null) {
                     if (value == RMissing.instance) {
@@ -826,9 +817,9 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
-            FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(identifier);
-            if (frameSlot != null) {
-                Object value = FrameSlotChangeMonitor.getValue(frameSlot, current);
+            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            if (frameIndex != null) {
+                Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
 
                 if (value != null) {
                     if (value == RMissing.instance) {
@@ -853,9 +844,9 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
-            FrameSlot frameSlot = current.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
-            if (frameSlot != null) {
-                Object value = FrameSlotChangeMonitor.getValue(frameSlot, current);
+            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
+            if (frameIndex != null) {
+                Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
 
                 if (value != null) {
                     if (value == RNull.instance) {

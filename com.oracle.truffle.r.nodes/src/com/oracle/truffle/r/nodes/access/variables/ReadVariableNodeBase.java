@@ -25,10 +25,10 @@ package com.oracle.truffle.r.nodes.access.variables;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -44,37 +44,30 @@ public class ReadVariableNodeBase extends RBaseNode {
         return (set & (1 << kind.ordinal())) != 0;
     }
 
-    protected final Object getValue(Frame variableFrame, FrameSlot frameSlot) {
-        assert variableFrame.getFrameDescriptor().getSlots().contains(frameSlot) : frameSlot.getIdentifier();
-        Object value = variableFrame.getValue(frameSlot);
-        if (variableFrame.isObject(frameSlot)) {
-            value = FrameSlotChangeMonitor.getValue(frameSlot, variableFrame);
-            this.seenValueKinds = setKind(this.seenValueKinds, FrameSlotKind.Object);
-        } else if (variableFrame.isByte(frameSlot)) {
-            this.seenValueKinds = setKind(this.seenValueKinds, FrameSlotKind.Byte);
-        } else if (variableFrame.isInt(frameSlot)) {
-            this.seenValueKinds = setKind(this.seenValueKinds, FrameSlotKind.Int);
-        } else if (variableFrame.isDouble(frameSlot)) {
-            this.seenValueKinds = setKind(this.seenValueKinds, FrameSlotKind.Double);
-        }
+    protected final Object getValue(Frame variableFrame, FrameIndex frameIndex) {
+        assert FrameSlotChangeMonitor.containsIndexNew(variableFrame, frameIndex);
+        Object value = FrameSlotChangeMonitor.getObjectNew(variableFrame, frameIndex);
+        FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKindNew(variableFrame.getFrameDescriptor(), frameIndex);
+        this.seenValueKinds = setKind(this.seenValueKinds, valueKind);
         return value;
     }
 
-    final Object profiledGetValue(Frame variableFrame, FrameSlot frameSlot) {
-        assert variableFrame.getFrameDescriptor().getSlots().contains(frameSlot) : frameSlot.getIdentifier();
+    final Object profiledGetValue(Frame variableFrame, FrameIndex frameIndex) {
+        assert FrameSlotChangeMonitor.containsIndexNew(variableFrame, frameIndex);
+        FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKindNew(variableFrame.getFrameDescriptor(), frameIndex);
         try {
-            if (hasKind(this.seenValueKinds, FrameSlotKind.Object) && variableFrame.isObject(frameSlot)) {
-                return FrameSlotChangeMonitor.getObject(frameSlot, variableFrame);
-            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Byte) && variableFrame.isByte(frameSlot)) {
-                return variableFrame.getByte(frameSlot);
-            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Int) && variableFrame.isInt(frameSlot)) {
-                return variableFrame.getInt(frameSlot);
-            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Double) && variableFrame.isDouble(frameSlot)) {
-                return variableFrame.getDouble(frameSlot);
+            if (hasKind(this.seenValueKinds, FrameSlotKind.Object) && valueKind == FrameSlotKind.Object) {
+                return FrameSlotChangeMonitor.getObjectNew(variableFrame, frameIndex);
+            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Byte) && valueKind == FrameSlotKind.Byte) {
+                return FrameSlotChangeMonitor.getByteNew(variableFrame, frameIndex);
+            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Int) && valueKind == FrameSlotKind.Int) {
+                return FrameSlotChangeMonitor.getIntNew(variableFrame, frameIndex);
+            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Double) && valueKind == FrameSlotKind.Double) {
+                return FrameSlotChangeMonitor.getDoubleNew(variableFrame, frameIndex);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 // re-profile to widen the set of expected types
-                return getValue(variableFrame, frameSlot);
+                return getValue(variableFrame, frameIndex);
             }
         } catch (FrameSlotTypeException e) {
             CompilerDirectives.transferToInterpreter();

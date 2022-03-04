@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypesGen;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public final class LocalReadVariableNode extends ReadVariableNodeBase {
@@ -56,9 +57,8 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
     @CompilationFinal private ConditionProfile isMissingProfile;
     @CompilationFinal private ConditionProfile isPromiseProfile;
 
-    @CompilationFinal private FrameSlot frameSlot;
+    @CompilationFinal private FrameIndex frameIndex;
     @CompilationFinal private FrameDescriptor frameDescriptor;
-    @CompilationFinal private Assumption notInFrame;
     @CompilationFinal private Assumption containsNoActiveBindingAssumption;
 
     private final ValueProfile frameProfile = ValueProfile.createClassProfile();
@@ -83,42 +83,32 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
 
     public Object execute(VirtualFrame frame, Frame variableFrame) {
         Frame profiledVariableFrame = frameProfile.profile(variableFrame);
-        if (frameSlot == null && notInFrame == null || (frameSlot != null && frameDescriptor != profiledVariableFrame.getFrameDescriptor())) {
+        if (frameIndex == null || frameDescriptor != profiledVariableFrame.getFrameDescriptor()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (identifier.toString().isEmpty()) {
                 throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             frameDescriptor = profiledVariableFrame.getFrameDescriptor();
-            frameSlot = frameDescriptor.findFrameSlot(identifier);
-            notInFrame = frameSlot == null ? profiledVariableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
+            frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
         }
-        // check if the slot is missing / wrong type in current frame
-        if (frameSlot == null) {
-            try {
-                notInFrame.check();
-            } catch (InvalidAssumptionException e) {
-                frameSlot = profiledVariableFrame.getFrameDescriptor().findFrameSlot(identifier);
-                notInFrame = frameSlot == null ? profiledVariableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
-            }
-        }
-        if (frameSlot == null) {
+        if (frameIndex == null) {
             return null;
         }
-        Object result = null;
+
         if (isMissingProfile == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             valueProfile = ValueProfile.createClassProfile();
             isNullProfile = ConditionProfile.createBinaryProfile();
             isMissingProfile = ConditionProfile.createBinaryProfile();
         }
-        result = valueProfile.profile(profiledGetValue(profiledVariableFrame, frameSlot));
+        Object result = valueProfile.profile(profiledGetValue(profiledVariableFrame, frameIndex));
         if (isNullProfile.profile(result == null) || isMissingProfile.profile(result == RMissing.instance)) {
             return null;
         }
 
         if (containsNoActiveBindingAssumption == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(profiledVariableFrame.getFrameDescriptor());
+            containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumptionNew(profiledVariableFrame.getFrameDescriptor());
         }
         // special treatment for active binding: call bound function
         if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result)) {
