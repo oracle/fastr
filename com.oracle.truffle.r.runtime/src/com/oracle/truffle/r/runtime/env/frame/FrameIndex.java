@@ -41,4 +41,12 @@ public class FrameIndex {
         this.indexType = indexType;
         this.index = index;
     }
+
+    @Override
+    public String toString() {
+        return "FrameIndex{" +
+                            "indexType=" + indexType +
+                            ", index=" + index +
+                            '}';
+    }
 }

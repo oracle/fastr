@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@Deprecated
 public abstract class FrameSlotNode extends RBaseNode {
 
     public abstract boolean hasValue(Frame frame);

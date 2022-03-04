@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.env.frame;
 import java.util.ArrayList;
 
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex.IndexType;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -40,13 +41,14 @@ public final class RFrameSlot {
 
     private final String name;
     private final boolean multiSlot;
-    private final int frameIdx;
+    // May be null if an auxiliary frame slot should be assigned
+    private final FrameIndex frameIdx;
 
     private RFrameSlot(String name, boolean multiSlot) {
-        this(name, multiSlot, -1);
+        this(name, multiSlot, null);
     }
 
-    private RFrameSlot(String name, boolean multiSlot, int frameIdx) {
+    private RFrameSlot(String name, boolean multiSlot, FrameIndex frameIdx) {
         this.name = name;
         this.multiSlot = multiSlot;
         this.frameIdx = frameIdx;
@@ -57,18 +59,8 @@ public final class RFrameSlot {
         return name == null ? "TempFrameSlot" : name;
     }
 
-    /**
-     * Gets index into Truffle frame slot. See {@link #isIndexedSlot()}.
-     */
-    public int getFrameIdx() {
+    public FrameIndex getFrameIdx() {
         return frameIdx;
-    }
-
-    /**
-     * Returns true iff this RFrameSlot is represented by an indexed Truffle frame slot.
-     */
-    public boolean isIndexedSlot() {
-        return frameIdx != -1;
     }
 
     public boolean isTemp() {

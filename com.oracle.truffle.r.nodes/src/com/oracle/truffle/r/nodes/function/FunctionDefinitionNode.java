@@ -47,7 +47,7 @@ import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.access.FrameIndexNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.control.BreakException;
@@ -76,6 +76,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairList.PairListIterator;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
@@ -114,7 +115,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private final RNodeClosureCache closureCache = new RNodeClosureCache();
 
-    @Child private FrameSlotNode onExitSlot;
+    @Child private FrameIndexNode onExitSlot;
     @Child private InlineCacheNode onExitExpressionCache;
     @Child private InteropLibrary exceptionInterop;
     @Child private RPairListLibrary exitSlotsPlLib;
@@ -152,12 +153,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         super(language, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
         this.formalArguments = formals;
         this.argSourceSections = argSourceSections;
-        assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
+        assert FrameSlotChangeMonitor.isValidFrameDescriptorNew(frameDesc);
         assert src != null;
         this.sourceSectionR = src;
         this.body = new FunctionBodyNode(saveArguments, body.asRNode());
         this.name = name;
-        this.onExitSlot = FrameSlotNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
+        this.onExitSlot = FrameIndexNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
@@ -382,7 +383,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         onExitExpressionCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(3)));
                     }
-                    RPairList current = getCurrentOnExitList(frame, onExitSlot.executeFrameSlot(frame));
+                    RPairList current = getCurrentOnExitList(frame, onExitSlot.executeFrameIndex(frame));
                     /*
                      * We do not need to preserve visibility, since visibility.executeEndOfFunction
                      * was already called.
@@ -423,9 +424,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return returnTopLevelProfile.profile(condition);
     }
 
-    private static RPairList getCurrentOnExitList(VirtualFrame frame, FrameSlot slot) {
+    private static RPairList getCurrentOnExitList(VirtualFrame frame, FrameIndex frameIndex) {
         try {
-            return (RPairList) FrameSlotChangeMonitor.getObject(slot, frame);
+            return (RPairList) FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere();
         }
