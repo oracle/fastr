@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class FrameIndexNode extends RBaseNode {
 
-    public abstract FrameIndex executeFrameIndex(Frame frame);
+    public abstract int executeFrameIndex(Frame frame);
 
     public abstract boolean hasValue(Frame frame);
 
@@ -57,16 +57,16 @@ public abstract class FrameIndexNode extends RBaseNode {
     }
 
     private static FrameIndexNode createInitializedInternal(FrameDescriptor frameDescriptor, Object identifier, boolean createIfAbsent) {
-        FrameIndex frameIndex;
+        int frameIndex;
         if (createIfAbsent) {
             frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, identifier);
         } else {
             frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
         }
-        if (frameIndex != null) {
-            return new PresentFrameIndexNode(frameIndex);
-        } else {
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             return new AbsentFrameIndexNode(frameDescriptor, identifier);
+        } else {
+            return new PresentFrameIndexNode(frameIndex);
         }
     }
 
@@ -89,7 +89,7 @@ public abstract class FrameIndexNode extends RBaseNode {
         }
 
         @Override
-        public FrameIndex executeFrameIndex(Frame frame) {
+        public int executeFrameIndex(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             return resolveFrameIndex(frame).executeFrameIndex(frame);
         }
@@ -106,14 +106,14 @@ public abstract class FrameIndexNode extends RBaseNode {
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
-        private final FrameIndex frameIndex;
+        private final int frameIndex;
 
-        public PresentFrameIndexNode(FrameIndex frameIndex) {
+        public PresentFrameIndexNode(int frameIndex) {
             this.frameIndex = frameIndex;
         }
 
         @Override
-        public FrameIndex executeFrameIndex(Frame frame) {
+        public int executeFrameIndex(Frame frame) {
             return frameIndex;
         }
 
@@ -146,18 +146,18 @@ public abstract class FrameIndexNode extends RBaseNode {
         }
 
         @Override
-        public FrameIndex executeFrameIndex(Frame frame) {
+        public int executeFrameIndex(Frame frame) {
             throw CompilerDirectives.shouldNotReachHere();
         }
 
         // TODO: Implement via an assumption?
         @Override
         public boolean hasValue(Frame frame) {
-            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
-            if (frameIndex != null) {
-                return replace(new PresentFrameIndexNode(frameIndex)).hasValue(frame);
-            } else {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return false;
+            } else {
+                return replace(new PresentFrameIndexNode(frameIndex)).hasValue(frame);
             }
         }
     }

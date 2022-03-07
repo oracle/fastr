@@ -266,11 +266,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected FunctionDispatch createUninitializedCall() {
-        return FunctionDispatchNodeGen.create(this, explicitArgs != null, null);
+        return FunctionDispatchNodeGen.create(this, explicitArgs != null, FrameIndex.UNITIALIZED_INDEX);
     }
 
     protected FunctionDispatch createUninitializedExplicitCall() {
-        return FunctionDispatchNodeGen.create(this, true, null);
+        return FunctionDispatchNodeGen.create(this, true, FrameIndex.UNITIALIZED_INDEX);
     }
 
     /**
@@ -333,7 +333,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             throw error(RError.Message.ARGUMENT_EMPTY, 1);
         }
 
-        FrameIndex dispatchTempSlotIdx = dispatchTempSlot.initialize(frame, dispatchObject);
+        int dispatchTempSlotIdx = dispatchTempSlot.initialize(frame, dispatchObject);
         try {
             boolean isFieldAccess = builtin.isFieldAccess();
             if (internalDispatchCall == null) {
@@ -381,7 +381,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
-    private void createInternDispatchCall(boolean isFieldAccess, FrameIndex slotIdx) {
+    private void createInternDispatchCall(boolean isFieldAccess, int slotIdx) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         AlteredArguments alteredArguments = null;
         if (isFieldAccess) {
@@ -447,7 +447,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected CallArgumentsNode createGenericDispatchArguments() {
-        return signature == null ? null : createArguments(null, false, true);
+        return signature == null ? null : createArguments(FrameIndex.UNITIALIZED_INDEX, false, true);
     }
 
     protected boolean isGroupGenericDispatch(RFunction function) {
@@ -749,14 +749,14 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected ForeignExecute createForeignCall() {
-        return new ForeignExecute(this, createArguments(null, true, true));
+        return new ForeignExecute(this, createArguments(FrameIndex.UNITIALIZED_INDEX, true, true));
     }
 
     /**
      * Creates a foreign invoke node for a call of structure {@code lhsReceiver$lhsMember(args)}.
      */
     protected ForeignInvoke createForeignInvoke() {
-        return new ForeignInvoke(this, createArguments(null, true, true));
+        return new ForeignInvoke(this, createArguments(FrameIndex.UNITIALIZED_INDEX, true, true));
     }
 
     protected static boolean isForeignObject(Object value) {
@@ -775,21 +775,21 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         throw RError.error(RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
     }
 
-    public CallArgumentsNode createArguments(FrameIndex tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll) {
+    public CallArgumentsNode createArguments(int tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll) {
         return createArguments(tempFrameSlotIdx, modeChange, modeChangeAppliesToAll, arguments, varArgIndexes, signature);
     }
 
-    public CallArgumentsNode createArguments(FrameIndex tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll, AlteredArguments alteredArguments) {
+    public CallArgumentsNode createArguments(int tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll, AlteredArguments alteredArguments) {
         RSyntaxNode[] args = alteredArguments == null ? arguments : alteredArguments.arguments;
         int[] varArgIdx = alteredArguments == null ? varArgIndexes : alteredArguments.varArgIndexes;
         return createArguments(tempFrameSlotIdx, modeChange, modeChangeAppliesToAll, args, varArgIdx, signature);
     }
 
-    private static CallArgumentsNode createArguments(FrameIndex tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll, RSyntaxNode[] arguments, int[] varArgIndexes,
+    private static CallArgumentsNode createArguments(int tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll, RSyntaxNode[] arguments, int[] varArgIndexes,
                     ArgumentsSignature signature) {
         RNode[] args = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            if (tempFrameSlotIdx != null && i == 0) {
+            if (FrameIndex.isInitializedIndex(tempFrameSlotIdx) && i == 0) {
                 args[i] = new GetTempNode(tempFrameSlotIdx, arguments[i]);
             } else {
                 args[i] = arguments[i] == null ? null : RASTUtils.cloneNode(arguments[i].asRNode());
@@ -825,11 +825,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     public static final class GetTempNode extends RNode {
 
-        private final FrameIndex slotIdx;
+        private final int slotIdx;
         private final RSyntaxNode arg;
 
-        GetTempNode(FrameIndex slotIdx, RSyntaxNode arg) {
-            assert slotIdx != null;
+        GetTempNode(int slotIdx, RSyntaxNode arg) {
+            assert FrameIndex.isInitializedIndex(slotIdx);
             this.slotIdx = slotIdx;
             this.arg = arg;
         }
@@ -874,16 +874,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         private final AlteredArguments alteredArguments;
         private final boolean explicitArgs;
 
-        private final FrameIndex tempFrameSlotIdx;
+        private final int tempFrameSlotIdx;
 
-        public FunctionDispatch(RCallNode originalCall, AlteredArguments alteredArguments, boolean explicitArgs, FrameIndex tempFrameSlotIdx) {
+        public FunctionDispatch(RCallNode originalCall, AlteredArguments alteredArguments, boolean explicitArgs, int tempFrameSlotIdx) {
             this.originalCall = originalCall;
             this.explicitArgs = explicitArgs;
             this.tempFrameSlotIdx = tempFrameSlotIdx;
             this.alteredArguments = alteredArguments;
         }
 
-        public FunctionDispatch(RCallNode originalCall, boolean explicitArgs, FrameIndex tempFrameSlotIdx) {
+        public FunctionDispatch(RCallNode originalCall, boolean explicitArgs, int tempFrameSlotIdx) {
             this(originalCall, null, explicitArgs, tempFrameSlotIdx);
         }
 

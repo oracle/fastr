@@ -424,7 +424,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return returnTopLevelProfile.profile(condition);
     }
 
-    private static RPairList getCurrentOnExitList(VirtualFrame frame, FrameIndex frameIndex) {
+    private static RPairList getCurrentOnExitList(VirtualFrame frame, int frameIndex) {
         try {
             return (RPairList) FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
         } catch (FrameSlotTypeException e) {

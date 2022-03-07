@@ -142,7 +142,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
             throw RInternalError.unimplemented();
         }
         FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptorNew("<as.function.default>");
-        FrameSlotChangeMonitor.initializeEnclosingFrameNew(descriptor, envir.getFrame());
+        FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, envir.getFrame());
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(getRLanguage(), RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction",
                         null);
         RootCallTarget callTarget = rootNode.getCallTarget();

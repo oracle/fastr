@@ -347,11 +347,11 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     private final class Mismatch extends FrameLevel {
 
         private final FrameLevel next;
-        private final FrameIndex frameIndex;
+        private final int frameIndex;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
-        private Mismatch(FrameLevel next, FrameIndex frameIndex) {
+        private Mismatch(FrameLevel next, int frameIndex) {
             this.next = next;
             this.frameIndex = frameIndex;
         }
@@ -397,12 +397,12 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
     private final class Match extends FrameLevel {
 
-        private final FrameIndex frameIndex;
+        private final int frameIndex;
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
         private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
-        private Match(FrameIndex frameIndex) {
+        private Match(int frameIndex) {
             this.frameIndex = frameIndex;
         }
 
@@ -523,7 +523,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     private final class Polymorphic extends FrameLevel {
 
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
-        @CompilationFinal private FrameIndex frameIndex;
+        @CompilationFinal private int frameIndex;
 
         private Polymorphic(Frame variableFrame) {
             frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrame.getFrameDescriptor(), identifier);
@@ -531,7 +531,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            if (frameIndex != null) {
+            if (FrameIndex.isInitializedIndex(frameIndex)) {
                 Object value = FrameSlotChangeMonitor.getObjectNew(variableFrame, frameIndex);
                 if (checkType(frame, value, isNullProfile)) {
                     return value;
@@ -555,8 +555,12 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
         @TruffleBoundary
         private Object getValue(MaterializedFrame current) {
-            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
-            return frameIndex == null ? null : FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
+                return null;
+            } else {
+                return FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
+            }
         }
 
         @Override
@@ -634,9 +638,9 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
          * Check whether we can fulfill the lookup by only looking at the current frame, and thus
          * without additional dependencies on frame descriptor layouts.
          */
-        FrameIndex localFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrame.getFrameDescriptor(), identifier);
+        int localFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrame.getFrameDescriptor(), identifier);
         // non-local reads can only be handled in a simple way if they are successful
-        if (localFrameIndex != null) {
+        if (FrameIndex.isInitializedIndex(localFrameIndex)) {
             Object val = getValue(variableFrame, localFrameIndex);
             if (checkTypeSlowPath(frame, val)) {
                 if (val instanceof MultiSlotData) {
@@ -708,8 +712,8 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         }
         // see if the current frame has a value of the given name
         FrameDescriptor variableFrameDescriptor = variableFrame.getFrameDescriptor();
-        FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrameDescriptor, identifier);
-        if (frameIndex != null) {
+        int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrameDescriptor, identifier);
+        if (FrameIndex.isInitializedIndex(frameIndex)) {
             Object value = getValue(variableFrame, frameIndex);
             if (checkTypeSlowPath(frame, value)) {
                 StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(variableFrame, frameIndex, value);
@@ -754,7 +758,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             lastLevel = new NextFrameLevel(lastLevel, next == null ? null : next.getFrameDescriptor());
         }
 
-        if (frameIndex == null) {
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             // TODO: getNotInFrameAssumption
             //assumptions.add(variableFrameDescriptor.getNotInFrameAssumption(identifier));
         } else {
@@ -777,8 +781,8 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
-            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
-            if (frameIndex != null) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            if (FrameIndex.isInitializedIndex(frameIndex)) {
                 Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
 
                 if (value != null) {
@@ -817,8 +821,8 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
-            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
-            if (frameIndex != null) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            if (FrameIndex.isInitializedIndex(frameIndex)) {
                 Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
 
                 if (value != null) {
@@ -844,8 +848,8 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
-            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
-            if (frameIndex != null) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
+            if (FrameIndex.isInitializedIndex(frameIndex)) {
                 Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
 
                 if (value != null) {

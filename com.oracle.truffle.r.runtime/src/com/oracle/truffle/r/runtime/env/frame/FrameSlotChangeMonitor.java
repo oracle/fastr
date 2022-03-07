@@ -71,7 +71,6 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.env.frame.FrameIndex.IndexType;
 
 /**
  * This class maintains information about the current hierarchy of environments in the system. This
@@ -162,9 +161,9 @@ public final class FrameSlotChangeMonitor {
 
     public static final class FrameAndSlotLookupResult extends LookupResult {
         private final MaterializedFrame frame;
-        private final FrameIndex frameIndex;
+        private final int frameIndex;
 
-        private FrameAndSlotLookupResult(String identifier, MaterializedFrame frame, FrameIndex frameIndex) {
+        private FrameAndSlotLookupResult(String identifier, MaterializedFrame frame, int frameIndex) {
             super(identifier);
             this.frame = frame;
             this.frameIndex = frameIndex;
@@ -182,7 +181,7 @@ public final class FrameSlotChangeMonitor {
             return frame;
         }
 
-        public FrameIndex getFrameIndex() throws InvalidAssumptionException {
+        public int getFrameIndex() throws InvalidAssumptionException {
             assumption.check();
             return frameIndex;
         }
@@ -214,7 +213,12 @@ public final class FrameSlotChangeMonitor {
         /**
          * Mapping of identifiers to indexes.
          */
-        private final Map<Object, FrameIndex> indexes = new ConcurrentHashMap<>();
+        private final Map<Object, Integer> indexes = new ConcurrentHashMap<>();
+        /**
+         * List of frame slot infos for auxiliary slots. The indexes into this list correspond to indexes into
+         * auxiliary slots in a frame.
+         */
+        private final List<FrameSlotInfo> auxSlotInfos = new ArrayList<>();
 
         private WeakReference<FrameDescriptor> enclosingFrameDescriptor = new WeakReference<>(null);
         private Assumption enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption("enclosing frame descriptor");
@@ -233,20 +237,28 @@ public final class FrameSlotChangeMonitor {
             this.singletonFrame = new WeakReference<>(singletonFrame);
         }
 
-        public void addIndex(Object identifier, FrameIndex index) {
+        public void addIndex(Object identifier, int index) {
             CompilerAsserts.neverPartOfCompilation();
             indexes.put(identifier, index);
         }
 
-        public FrameIndex getIndex(Object identifier) {
+        public Integer getIndex(Object identifier) {
             return indexes.get(identifier);
+        }
+        
+        public FrameSlotInfo getAuxiliarySlotInfo(int auxSlotIdx) {
+            return auxSlotInfos.get(auxSlotIdx);
+        }
+
+        public void addAuxSlotInfo(FrameSlotInfo slotInfo) {
+            auxSlotInfos.add(slotInfo);
         }
 
         // TODO: Make more performant
-        public Object getIdentifier(FrameIndex frameIndex) {
+        public Object getIdentifier(int frameIndex) {
             CompilerAsserts.neverPartOfCompilation();
-            for (Map.Entry<Object, FrameIndex> entry : indexes.entrySet()) {
-                if (entry.getValue().equals(frameIndex)) {
+            for (Map.Entry<Object, Integer> entry : indexes.entrySet()) {
+                if (entry.getValue() == frameIndex) {
                     return entry.getKey();
                 }
             }
@@ -309,8 +321,8 @@ public final class FrameSlotChangeMonitor {
         }
         Frame current = frame;
         while (true) {
-            FrameIndex frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
-            if (frameIndex != null) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            if (!FrameIndex.isUninitializedIndex(frameIndex)) {
                 LookupResult lookupResult;
                 StableValue<Object> stableValue = getFrameSlotInfoNew(current, frameIndex).stableValue;
                 // if stableValue.getValue() == null, then this is a frame slot that doesn't have a
@@ -428,22 +440,19 @@ public final class FrameSlotChangeMonitor {
         return getDescriptorMetadata(handleBaseNamespaceEnv(frame));
     }
 
-    public static FrameSlotKind getFrameSlotKindNew(FrameDescriptor frameDescriptor, FrameIndex index) {
-        switch (index.indexType) {
-            case NormalIndex:
-                return frameDescriptor.getSlotKind(index.index);
-            case AuxiliaryIndex:
-                return FrameSlotKind.Object;
-            default:
-                throw RInternalError.shouldNotReachHere();
+    public static FrameSlotKind getFrameSlotKindNew(FrameDescriptor frameDescriptor, int index) {
+        if (FrameIndex.representsAuxiliaryIndex(index)) {
+            return FrameSlotKind.Object;
+        } else {
+            return frameDescriptor.getSlotKind(index);
         }
     }
 
-    public static void setFrameSlotKindNew(FrameDescriptor frameDescriptor, FrameIndex index, FrameSlotKind kind) {
+    public static void setFrameSlotKindNew(FrameDescriptor frameDescriptor, int frameIndex, FrameSlotKind kind) {
         // It does not make sense to set any FrameSlotKind for an auxiliary value - they are always
         // objects, so we take care only of normal values.
-        if (index.indexType == IndexType.NormalIndex) {
-            frameDescriptor.setSlotKind(index.index, kind);
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            frameDescriptor.setSlotKind(FrameIndex.toNormalIndex(frameIndex), kind);
         }
     }
 
@@ -615,7 +624,11 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    private static final class FrameSlotInfoImpl {
+    /**
+     * This class represents metadata about one particular frame slot and is saved inside {@link FrameDescriptor}.
+     * It should not be associated with a value of any frame slot.
+     */
+    private static final class FrameSlotInfo {
         /**
          * This is meant to monitor updates performed on {@code FrameSlot}. Each {@code FrameSlot}
          * holds an {@link Assumption} in it's "info" field; it is valid as long as no non-local
@@ -629,14 +642,25 @@ public final class FrameSlotChangeMonitor {
         private final Assumption nonLocalModifiedAssumption;
         private final Assumption noMultiSlot;
 
+        /**
+         * An instance of {@link FrameSlotInfo} represents metadata of one frame slot inside
+         * a particular {@link FrameDescriptor}.
+         * This stable value is therefore stored under {@link FrameDescriptor}, which means that
+         * the stable value is the same for any {@link Frame} with such a {@link FrameDescriptor}.
+         *
+         * An example of the stable value is {@code abs} builtin, which is stored in a frame slot
+         * identified by {@code abs} in a {@link FrameDescriptor} representing base namespace.
+         */
         @CompilationFinal private volatile StableValue<Object> stableValue;
         private int invalidationCount;
         private final boolean possibleMultiSlot;
+        private final Object identifier;
 
-        FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier, boolean isNewEnv) {
+        FrameSlotInfo(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier, boolean isNewEnv) {
             nonLocalModifiedAssumption = Truffle.getRuntime().createAssumption(identifier + ":NonLocalModified");
             noMultiSlot = Truffle.getRuntime().createAssumption(identifier + ":NoMultiSlot");
             this.possibleMultiSlot = isSingletonFrame && !isNewEnv;
+            this.identifier = identifier;
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
                 invalidationCount = isGlobalEnv ? MAX_GLOBAL_ENV_INVALIDATION_COUNT : MAX_INVALIDATION_COUNT;
@@ -645,7 +669,7 @@ public final class FrameSlotChangeMonitor {
             }
         }
 
-        FrameSlotInfoImpl(FrameDescriptorMetaData metaData, Object identifier) {
+        FrameSlotInfo(FrameDescriptorMetaData metaData, Object identifier) {
             this(metaData.singletonFrame != null, "global".equals(metaData.name), identifier, metaData.name.startsWith("<new-env-"));
         }
 
@@ -741,7 +765,7 @@ public final class FrameSlotChangeMonitor {
             frame.setObject(slot, data);
         }
 
-        private static boolean evalAndSetPromise(Frame frame, FrameSlot slot, FrameSlotInfoImpl info) {
+        private static boolean evalAndSetPromise(Frame frame, FrameSlot slot, FrameSlotInfo info) {
             Object prevValue = info.stableValue.getValue();
             if (prevValue instanceof RPromise) {
                 prevValue = RContext.getRRuntimeASTAccess().forcePromise("searchPathPromiseForce", prevValue);
@@ -770,7 +794,7 @@ public final class FrameSlotChangeMonitor {
         public static void handleSearchPathMultiSlot(Frame frame, FrameSlot slot, int[] indices, boolean replicate) {
             CompilerAsserts.neverPartOfCompilation();
             while (true) {
-                FrameSlotInfoImpl info = (FrameSlotInfoImpl) slot.getInfo();
+                FrameSlotInfo info = (FrameSlotInfo) slot.getInfo();
                 Object prevValue = frame.getValue(slot);
                 MultiSlotData prevMultiSlotVal = null;
                 // TODO: this takes assumption that the initial context has slot ID == 0, but this
@@ -886,20 +910,20 @@ public final class FrameSlotChangeMonitor {
         return getFrameSlotInfo(slot).nonLocalModifiedAssumption;
     }
 
-    public static Assumption getNotChangedNonLocallyAssumptionNew(Frame frame, FrameIndex frameIndex) {
+    public static Assumption getNotChangedNonLocallyAssumptionNew(Frame frame, int frameIndex) {
         Assumption notChangedLocallyAssumption = getFrameSlotInfoNew(frame, frameIndex).nonLocalModifiedAssumption;
         assertFrameStructureNew(frame);
         return notChangedLocallyAssumption;
     }
 
     @Deprecated
-    private static FrameSlotInfoImpl getFrameSlotInfo(FrameSlot slot) {
+    private static FrameSlotInfo getFrameSlotInfo(FrameSlot slot) {
         Object info = slot.getInfo();
-        if (!(info instanceof FrameSlotInfoImpl)) {
+        if (!(info instanceof FrameSlotInfo)) {
             CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere("Each FrameSlot should hold a FrameSlotInfo in its info field! " + slot.getIdentifier().getClass() + " " + slot.getIdentifier());
         }
-        return (FrameSlotInfoImpl) info;
+        return (FrameSlotInfo) info;
     }
 
     /**
@@ -907,16 +931,17 @@ public final class FrameSlotChangeMonitor {
      * TODO: Mark as dataclass
      */
     private static final class AuxiliarySlotValue {
-        public final FrameSlotInfoImpl frameSlotInfo;
+        // TODO: Tohle ma byt klic
+        public final FrameSlotInfo frameSlotInfo;
         public final Object identifier;
         // TODO: @CompilationFinal?
         public Object value;
 
-        public AuxiliarySlotValue(FrameSlotInfoImpl frameSlotInfo, Object identifier) {
+        public AuxiliarySlotValue(FrameSlotInfo frameSlotInfo, Object identifier) {
             this(frameSlotInfo, identifier, null);
         }
 
-        private AuxiliarySlotValue(FrameSlotInfoImpl frameSlotInfo, Object identifier, Object value) {
+        private AuxiliarySlotValue(FrameSlotInfo frameSlotInfo, Object identifier, Object value) {
             assert frameSlotInfo != null;
             assert identifier != null;
             this.frameSlotInfo = frameSlotInfo;
@@ -930,33 +955,25 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         assert 0 <= auxFrameIdx && auxFrameIdx < frameDescriptor.getNumberOfAuxiliarySlots();
         FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
-        var frameSlotInfo = new FrameSlotInfoImpl(metadata, identifier);
+        var frameSlotInfo = new FrameSlotInfo(metadata, identifier);
         var auxSlotInfo = new AuxiliarySlotValue(frameSlotInfo, identifier);
         frame.setAuxiliarySlot(auxFrameIdx, auxSlotInfo);
     }
 
-    private static FrameSlotInfoImpl getFrameSlotInfoNew(Frame frame, FrameIndex frameIndex) {
+    private static FrameSlotInfo getFrameSlotInfoNew(Frame frame, int frameIndex) {
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        Object frameSlotInfo = null;
-        switch (frameIndex.indexType) {
-            case NormalIndex:
-                frameSlotInfo = frameDescriptor.getSlotInfo(frameIndex.index);
-                break;
-            case AuxiliaryIndex:
-                int auxFrameIdx = frameIndex.index;
-                if (frame.getAuxiliarySlot(auxFrameIdx) == null) {
-                    Object identifier = getIdentifierNew(frame, frameIndex);
-                    initializeAuxFrameSlotInfoNew(frame, auxFrameIdx, identifier);
-                }
-                AuxiliarySlotValue auxiliarySlotValue = (AuxiliarySlotValue) frame.getAuxiliarySlot(auxFrameIdx);
-                assert auxiliarySlotValue != null;
-                frameSlotInfo = auxiliarySlotValue.frameSlotInfo;
-                break;
+        Object frameSlotInfo;
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
+            int auxFrameIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
+            FrameDescriptorMetaData metaData = getDescriptorMetadata(frameDescriptor);
+            frameSlotInfo = metaData.getAuxiliarySlotInfo(auxFrameIdx);
+        } else {
+            frameSlotInfo = frameDescriptor.getSlotInfo(FrameIndex.toNormalIndex(frameIndex));
         }
-        if (!(frameSlotInfo instanceof FrameSlotInfoImpl)) {
+        if (!(frameSlotInfo instanceof FrameSlotInfo)) {
             throw RInternalError.shouldNotReachHere();
         }
-        return (FrameSlotInfoImpl) frameSlotInfo;
+        return (FrameSlotInfo) frameSlotInfo;
     }
 
     // methods for creating new frame slots
@@ -966,24 +983,27 @@ public final class FrameSlotChangeMonitor {
         return findOrAddFrameSlot(fd, (Object) identifier, initialKind);
     }
 
-    public static FrameIndex findOrAddAuxiliaryFrameSlotNew(FrameDescriptor frameDescriptor, Object identifier) {
+    public synchronized static int findOrAddAuxiliaryFrameSlotNew(FrameDescriptor frameDescriptor, Object identifier) {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
         int auxSlotIdx = frameDescriptor.findOrAddAuxiliarySlot(identifier);
+        int transformedAuxSlotIdx = FrameIndex.toAuxiliaryIndex(auxSlotIdx);
         if (descriptorMetadata.getIndex(identifier) == null) {
-            var frameIndex = new FrameIndex(IndexType.AuxiliaryIndex, auxSlotIdx);
-            descriptorMetadata.addIndex(identifier, frameIndex);
+            descriptorMetadata.addIndex(identifier, transformedAuxSlotIdx);
+            var slotInfo = new FrameSlotInfo(descriptorMetadata, identifier);
+            descriptorMetadata.addAuxSlotInfo(slotInfo);
         }
-        return descriptorMetadata.getIndex(identifier);
+        return transformedAuxSlotIdx;
     }
 
     /**
      * Returns index of the identifier.
      * @return null if the given identifier is not in the frame descriptor
      */
-    public static FrameIndex getIndexOfIdentifier(FrameDescriptor frameDescriptor, Object identifier) {
+    public static int getIndexOfIdentifier(FrameDescriptor frameDescriptor, Object identifier) {
         FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
-        return descriptorMetadata.getIndex(identifier);
+        Integer index = descriptorMetadata.getIndex(identifier);
+        return index == null ? FrameIndex.UNITIALIZED_INDEX : index;
     }
 
     @Deprecated
@@ -1001,7 +1021,7 @@ public final class FrameSlotChangeMonitor {
         } else {
             FrameDescriptorMetaData metaData = getMetaData(fd);
             invalidateNames(metaData, Arrays.asList(identifier));
-            return fd.addFrameSlot(identifier, new FrameSlotInfoImpl(metaData.singletonFrame != null, "global".equals(metaData.name), identifier, metaData.name.startsWith("<new-env-")),
+            return fd.addFrameSlot(identifier, new FrameSlotInfo(metaData.singletonFrame != null, "global".equals(metaData.name), identifier, metaData.name.startsWith("<new-env-")),
                             initialKind);
         }
     }
@@ -1040,7 +1060,7 @@ public final class FrameSlotChangeMonitor {
      *            {@link RInternalError} otherwise
      * @param invalidateProfile Used to guard the invalidation code.
      */
-    private static void checkAndInvalidateNew(Frame curFrame, FrameIndex frameIndex, boolean isNonLocal, BranchProfile invalidateProfile) {
+    private static void checkAndInvalidateNew(Frame curFrame, int frameIndex, boolean isNonLocal, BranchProfile invalidateProfile) {
         // TODO: Assert that curFrame contains frameIndex
         //  assert curFrame.getFrameDescriptor().getSlots().contains(slot) : slot.getIdentifier();
         if (getNotChangedNonLocallyAssumptionNew(curFrame, frameIndex).isValid()) {
@@ -1057,7 +1077,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setBooleanAndInvalidate(Frame frame, FrameSlot frameSlot, boolean newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
         if (FastROptions.sharedContextsOptionValue && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
@@ -1071,7 +1091,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setBoolean(Frame frame, FrameSlot frameSlot, boolean newValue) {
         if (FastROptions.sharedContextsOptionValue && !RContext.isSingle()) {
-            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            FrameSlotInfo info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
@@ -1082,7 +1102,7 @@ public final class FrameSlotChangeMonitor {
 
     @Deprecated
     public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
         if (FastROptions.sharedContextsOptionValue && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
@@ -1094,10 +1114,10 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static void setByteAndInvalidateNew(Frame frame, FrameIndex index, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    public static void setByteAndInvalidateNew(Frame frame, int index, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         assertFrameStructureNew(frame);
         checkSharedContextAfterFrameMigration();
-        FrameSlotInfoImpl slotInfo = getFrameSlotInfoNew(frame, index);
+        FrameSlotInfo slotInfo = getFrameSlotInfoNew(frame, index);
         Object identifier = getIdentifierNew(frame, index);
         setByteNew(frame, index, newValue);
         if (slotInfo.needsInvalidation()) {
@@ -1106,41 +1126,29 @@ public final class FrameSlotChangeMonitor {
         checkAndInvalidateNew(frame, index, isNonLocal, invalidateProfile);
     }
 
-    private static void setByteNew(Frame frame, FrameIndex index, byte newValue) {
+    private static void setByteNew(Frame frame, int frameIndex, byte newValue) {
         checkSharedContextAfterFrameMigration();
-        switch (index.indexType) {
-            case NormalIndex:
-                frame.setByte(index.index, newValue);
-            case AuxiliaryIndex:
-                setAuxiliaryValueNew(frame, index.index, getIdentifierNew(frame, index), newValue);
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            frame.setByte(FrameIndex.toNormalIndex(frameIndex), newValue);
+        } else {
+            setAuxiliaryValueNew(frame, FrameIndex.toAuxiliaryIndex(frameIndex), newValue);
         }
     }
 
     /**
      * Sets the given value into an auxiliary frame slot on {@code auxFrameIdx} index.
      * All the auxiliary slots have {@code FrameSlotKind.Object} slot kind. Therefore,
-     * if we want to set a value there, we always have to box it.
+     * if we want to set a primitive value there, we always have to box it.
      */
-    private static void setAuxiliaryValueNew(Frame frame, int auxFrameIdx, Object identifier, Object value) {
-        assert identifier != null;
+    private static void setAuxiliaryValueNew(Frame frame, int auxFrameIdx, Object value) {
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         assert 0 <= auxFrameIdx && auxFrameIdx < frameDescriptor.getNumberOfAuxiliarySlots();
-        Object auxiliarySlotValue = frame.getAuxiliarySlot(auxFrameIdx);
-        if (auxiliarySlotValue == null) {
-            // Auxiliary slot was not initialized yet.
-            initializeAuxFrameSlotInfoNew(frame, auxFrameIdx, identifier);
-            setObjectNew(frame, identifier, value);
-        } else {
-            assert auxiliarySlotValue instanceof AuxiliarySlotValue;
-            assert ((AuxiliarySlotValue) auxiliarySlotValue).identifier == identifier;
-            ((AuxiliarySlotValue) auxiliarySlotValue).value = value;
-            // TODO: Do we need here another call to frame.setAuxiliarySlot?
-        }
+        frame.setAuxiliarySlot(auxFrameIdx, value);
     }
 
     public static void setByte(Frame frame, FrameSlot frameSlot, byte newValue) {
         if (FastROptions.sharedContextsOptionValue && !RContext.isSingle()) {
-            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            FrameSlotInfo info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
@@ -1150,7 +1158,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
         if (FastROptions.sharedContextsOptionValue && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
@@ -1164,7 +1172,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setInt(Frame frame, FrameSlot frameSlot, int newValue) {
         if (FastROptions.sharedContextsOptionValue && !RContext.isSingle()) {
-            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            FrameSlotInfo info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
@@ -1174,7 +1182,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
         if (FastROptions.sharedContextsOptionValue && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
@@ -1188,7 +1196,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setDouble(Frame frame, FrameSlot frameSlot, double newValue) {
         if (FastROptions.sharedContextsOptionValue && !RContext.isSingle()) {
-            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            FrameSlotInfo info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
@@ -1203,7 +1211,7 @@ public final class FrameSlotChangeMonitor {
         setAndInvalidate(frame, frameSlot, newValue, isNonLocal, invalidateProfile);
     }
 
-    public static void setObjectAndInvalidateNew(Frame frame, FrameIndex frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    public static void setObjectAndInvalidateNew(Frame frame, int frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         assertFrameStructureNew(frame);
         assert !ActiveBinding.isActiveBinding(newValue);
         setAndInvalidateNew(frame, frameIndex, newValue, isNonLocal, invalidateProfile);
@@ -1211,7 +1219,7 @@ public final class FrameSlotChangeMonitor {
 
     @Deprecated
     private static void setAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
         if (FastROptions.sharedContextsOptionValue && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
@@ -1223,10 +1231,10 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    private static void setAndInvalidateNew(Frame frame, FrameIndex frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    private static void setAndInvalidateNew(Frame frame, int frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         assertFrameStructureNew(frame);
         checkSharedContextAfterFrameMigration();
-        FrameSlotInfoImpl slotInfo = getFrameSlotInfoNew(frame, frameIndex);
+        FrameSlotInfo slotInfo = getFrameSlotInfoNew(frame, frameIndex);
         Object identifier = getIdentifierNew(frame, frameIndex);
         setObjectNew(frame, frameIndex, newValue);
         if (slotInfo.needsInvalidation()) {
@@ -1238,7 +1246,7 @@ public final class FrameSlotChangeMonitor {
     @Deprecated
     public static void setObject(Frame frame, FrameSlot frameSlot, Object newValue) {
         if (FastROptions.sharedContextsOptionValue && !RContext.isSingle()) {
-            FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+            FrameSlotInfo info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
@@ -1249,46 +1257,34 @@ public final class FrameSlotChangeMonitor {
 
     public static Object getObjectNew(Frame frame, Object identifier) {
         checkSharedContextAfterFrameMigration();
-        FrameIndex index = getIndexOfIdentifier(frame.getFrameDescriptor(), identifier);
-        if (index == null) {
+        int frameIndex = getIndexOfIdentifier(frame.getFrameDescriptor(), identifier);
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             // The object is most probably not in the frame at all.
             // TODO: Throw an exception?
             return null;
         }
-        return getObjectNew(frame, index);
+        return getObjectNew(frame, frameIndex);
     }
 
-    public static Object getObjectNew(Frame frame, FrameIndex index) {
+    public static Object getObjectNew(Frame frame, int frameIndex) {
+        assert FrameIndex.isInitializedIndex(frameIndex);
         checkSharedContextAfterFrameMigration();
-        Object object = null;
-        switch (index.indexType) {
-            case NormalIndex:
-                object = frame.getObject(index.index);
-                break;
-            case AuxiliaryIndex:
-                Object auxiliarySlotValue = frame.getAuxiliarySlot(index.index);
-                if (auxiliarySlotValue == null) {
-                    Object identifier = getIdentifierNew(frame, index);
-                    initializeAuxFrameSlotInfoNew(frame, index.index, identifier);
-                } else {
-                    assert auxiliarySlotValue instanceof AuxiliarySlotValue;
-                    object = ((AuxiliarySlotValue) auxiliarySlotValue).value;
-                }
-                break;
-            default:
-                throw RInternalError.shouldNotReachHere();
+        Object object;
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
+            object = frame.getAuxiliarySlot(FrameIndex.toAuxiliaryIndex(frameIndex));
+        } else {
+            object = frame.getObject(FrameIndex.toNormalIndex(frameIndex));
         }
         assertFrameStructureNew(frame);
         return object;
     }
 
-    // TODO: Do this also for other primitive types.
-    public static boolean getBooleanNew(Frame frame, FrameIndex frameIndex) {
+    public static boolean getBooleanNew(Frame frame, int frameIndex) {
         checkSharedContextAfterFrameMigration();
         assertFrameIndexInBoundsNew(frame, frameIndex);
         boolean ret;
-        if (frameIndex.indexType == IndexType.NormalIndex) {
-            ret = frame.getBoolean(frameIndex.index);
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            ret = frame.getBoolean(FrameIndex.toNormalIndex(frameIndex));
         } else {
             Object object = getObjectNew(frame, frameIndex);
             assert object instanceof Boolean;
@@ -1298,27 +1294,27 @@ public final class FrameSlotChangeMonitor {
         return ret;
     }
 
-    public static byte getByteNew(Frame frame, FrameIndex frameIndex) {
+    public static byte getByteNew(Frame frame, int frameIndex) {
         checkSharedContextAfterFrameMigration();
         assertFrameIndexInBoundsNew(frame, frameIndex);
         byte ret;
-        if (frameIndex.indexType == IndexType.NormalIndex) {
-            ret = frame.getByte(frameIndex.index);
-        } else {
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
             Object object = getObjectNew(frame, frameIndex);
             assert object instanceof Byte;
             ret = (byte) object;
+        } else {
+            ret = frame.getByte(frameIndex);
         }
         assertFrameStructureNew(frame);
         return ret;
     }
 
-    public static int getIntNew(Frame frame, FrameIndex frameIndex) {
+    public static int getIntNew(Frame frame, int frameIndex) {
         checkSharedContextAfterFrameMigration();
         assertFrameIndexInBoundsNew(frame, frameIndex);
         int ret;
-        if (frameIndex.indexType == IndexType.NormalIndex) {
-            ret = frame.getInt(frameIndex.index);
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            ret = frame.getInt(FrameIndex.toNormalIndex(frameIndex));
         } else {
             Object object = getObjectNew(frame, frameIndex);
             assert object instanceof Integer;
@@ -1328,12 +1324,12 @@ public final class FrameSlotChangeMonitor {
         return ret;
     }
 
-    public static double getDoubleNew(Frame frame, FrameIndex frameIndex) {
+    public static double getDoubleNew(Frame frame, int frameIndex) {
         checkSharedContextAfterFrameMigration();
         assertFrameIndexInBoundsNew(frame, frameIndex);
         double ret;
-        if (frameIndex.indexType == IndexType.NormalIndex) {
-            ret = frame.getDouble(frameIndex.index);
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            ret = frame.getDouble(FrameIndex.toNormalIndex(frameIndex));
         } else {
             Object object = getObjectNew(frame, frameIndex);
             assert object instanceof Double;
@@ -1343,15 +1339,16 @@ public final class FrameSlotChangeMonitor {
         return ret;
     }
 
-    public static void setBooleanNew(Frame frame, FrameIndex frameIndex, boolean newValue) {
+    public static void setBooleanNew(Frame frame, int frameIndex, boolean newValue) {
         assertFrameIndexInBoundsNew(frame, frameIndex);
         checkSharedContextAfterFrameMigration();
-        if (frameIndex.indexType == IndexType.NormalIndex) {
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
             // TODO: Some invalidation?
-            frame.setBoolean(frameIndex.index, newValue);
+            frame.setBoolean(FrameIndex.toNormalIndex(frameIndex), newValue);
         } else {
             // Every auxiliary slot is an object slot
-            setObjectNew(frame, frameIndex, newValue);
+            Object identifier = getIdentifierNew(frame, frameIndex);
+            setObjectNew(frame, frameIndex, identifier, newValue);
         }
         assertFrameStructureNew(frame);
     }
@@ -1359,41 +1356,37 @@ public final class FrameSlotChangeMonitor {
     public static void setObjectNew(Frame frame, Object identifier, Object newValue) {
         checkSharedContextAfterFrameMigration();
         FrameDescriptorMetaData descriptorMetaData = getDescriptorMetadata(frame);
-        FrameIndex index = descriptorMetaData.getIndex(identifier);
+        Integer index = descriptorMetaData.getIndex(identifier);
         if (index == null) {
             throw RInternalError.shouldNotReachHere("A frame slot should first be added with findOrAddAuxiliaryFrameSlot");
         }
         setObjectNew(frame, index, identifier, newValue);
     }
 
-    public static void setObjectNew(Frame frame, FrameIndex frameIndex, Object newValue) {
+    public static void setObjectNew(Frame frame, int frameIndex, Object newValue) {
         checkSharedContextAfterFrameMigration();
         Object identifier = getIdentifierNew(frame, frameIndex);
         setObjectNew(frame, frameIndex, identifier, newValue);
     }
 
-    public static boolean containsIndexNew(Frame frame, FrameIndex frameIndex) {
+    public static boolean containsIndexNew(Frame frame, int frameIndex) {
         assertFrameStructureNew(frame);
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        switch (frameIndex.indexType) {
-            case NormalIndex:
-                return 0 <= frameIndex.index && frameIndex.index < frameDescriptor.getNumberOfSlots();
-            case AuxiliaryIndex:
-                return 0 <= frameIndex.index && frameIndex.index < frameDescriptor.getNumberOfAuxiliarySlots();
-            default:
-                throw RInternalError.shouldNotReachHere();
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
+            return 0 <= frameIndex && frameIndex < frameDescriptor.getNumberOfAuxiliarySlots();
+        } else {
+            return 0 <= frameIndex && frameIndex < frameDescriptor.getNumberOfSlots();
         }
     }
 
-    private static void assertFrameIndexInBoundsNew(Frame frame, FrameIndex frameIndex) {
+    private static void assertFrameIndexInBoundsNew(Frame frame, int frameIndex) {
+        assert !FrameIndex.isUninitializedIndex(frameIndex);
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        switch (frameIndex.indexType) {
-            case NormalIndex:
-                assert 0 <= frameIndex.index && frameIndex.index < frameDescriptor.getNumberOfSlots();
-                break;
-            case AuxiliaryIndex:
-                assert 0 <= frameIndex.index && frameIndex.index < frameDescriptor.getNumberOfAuxiliarySlots();
-                break;
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
+            int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
+            assert 0 <= auxSlotIdx && auxSlotIdx < frameDescriptor.getNumberOfAuxiliarySlots();
+        } else {
+            assert 0 <= frameIndex && frameIndex < frameDescriptor.getNumberOfSlots();
         }
     }
 
@@ -1408,75 +1401,67 @@ public final class FrameSlotChangeMonitor {
         int auxSlotsCount = frameDescriptor.getNumberOfAuxiliarySlots();
         int totalSlotsCount = normalSlotsCount + auxSlotsCount;
         assert metadata.indexes.size() == totalSlotsCount;
-        for (Map.Entry<Object, FrameIndex> entry : metadata.indexes.entrySet()) {
+        for (Map.Entry<Object, Integer> entry : metadata.indexes.entrySet()) {
             Object identifier = entry.getKey();
-            FrameIndex frameIndex = entry.getValue();
+            int frameIndex = entry.getValue();
             assertFrameIndexInBoundsNew(frame, frameIndex);
-            switch (frameIndex.indexType) {
-                case NormalIndex:
-                    Object slotInfo = frameDescriptor.getSlotInfo(frameIndex.index);
-                    assert slotInfo instanceof FrameSlotInfoImpl;
-                    Object slotName = frameDescriptor.getSlotName(frameIndex.index);
-                    assert slotName instanceof String || slotName instanceof RFrameSlot;
-                    assert slotName == identifier;
-                    // TODO: Also check slot value.
-                    break;
-                case AuxiliaryIndex:
-                    Object auxSlot = frame.getAuxiliarySlot(frameIndex.index);
-                    assert auxSlot != null;
-                    assert auxSlot instanceof AuxiliarySlotValue;
-                    AuxiliarySlotValue auxSlotValue = (AuxiliarySlotValue) auxSlot;
-                    assert auxSlotValue.identifier == identifier;
-                    break;
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
+                int normalSlotIdx = FrameIndex.toNormalIndex(frameIndex);
+                Object slotInfo = frameDescriptor.getSlotInfo(normalSlotIdx);
+                assert slotInfo instanceof FrameSlotInfo;
+                assert ((FrameSlotInfo) slotInfo).identifier == identifier;
+                Object slotName = frameDescriptor.getSlotName(normalSlotIdx);
+                assert slotName instanceof String || slotName instanceof RFrameSlot;
+                assert slotName == identifier;
+                // TODO: Also check slot value?
+            } else {
+                assert FrameIndex.representsAuxiliaryIndex(frameIndex);
+                int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
+                FrameSlotInfo slotInfo = metadata.getAuxiliarySlotInfo(auxSlotIdx);
+                assert slotInfo.identifier == identifier;
+                // TODO: Also check slot value?
             }
+        }
+
+        // Check auxSlotInfos
+        assert metadata.auxSlotInfos.size() == frameDescriptor.getNumberOfAuxiliarySlots();
+        for (FrameSlotInfo slotInfo : metadata.auxSlotInfos) {
+            assert slotInfo.identifier != null;
         }
     }
 
-    private static void setObjectNew(Frame frame, FrameIndex index, Object identifier, Object newValue) {
-        assert index != null;
+    private static void setObjectNew(Frame frame, int frameIndex, Object identifier, Object newValue) {
+        assert !FrameIndex.isUninitializedIndex(frameIndex);
         checkSharedContextAfterFrameMigration();
+        assertFrameIndexInBoundsNew(frame, frameIndex);
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        switch (index.indexType) {
-            case NormalIndex:
-                assert 0 <= index.index && index.index < frameDescriptor.getNumberOfSlots();
-                assert frameDescriptor.getSlotName(index.index) == identifier;
-                frame.setObject(index.index, newValue);
-                break;
-            case AuxiliaryIndex:
-                setAuxiliaryValueNew(frame, index.index, identifier, newValue);
-                break;
-            default:
-                throw RInternalError.shouldNotReachHere();
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            int normalSlotIdx = FrameIndex.toNormalIndex(frameIndex);
+            assert frameDescriptor.getSlotName(normalSlotIdx) == identifier;
+            frame.setObject(normalSlotIdx, newValue);
+        } else {
+            setAuxiliaryValueNew(frame, frameIndex, newValue);
         }
         assertFrameStructureNew(frame);
     }
 
-    private static Object getIdentifierNew(Frame frame, FrameIndex frameIndex) {
-        assert frameIndex != null;
+    private static Object getIdentifierNew(Frame frame, int frameIndex) {
+        assert !FrameIndex.isUninitializedIndex(frameIndex);
         assertFrameIndexInBoundsNew(frame, frameIndex);
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        Object identifier = null;
-        switch (frameIndex.indexType) {
-            case NormalIndex:
-                identifier = frameDescriptor.getSlotName(frameIndex.index);
-                break;
-            case AuxiliaryIndex:
-                AuxiliarySlotValue auxiliarySlotValue = (AuxiliarySlotValue) frame.getAuxiliarySlot(frameIndex.index);
-                if (auxiliarySlotValue == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    identifier = getDescriptorMetadata(frameDescriptor).getIdentifier(frameIndex);
-                    assert identifier != null;
-                } else {
-                    identifier = auxiliarySlotValue.identifier;
-                }
-                break;
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
+            FrameDescriptorMetaData metaData = getDescriptorMetadata(frameDescriptor);
+            int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
+            FrameSlotInfo slotInfo = metaData.getAuxiliarySlotInfo(auxSlotIdx);
+            return slotInfo.identifier;
+        } else {
+            return frameDescriptor.getSlotName(FrameIndex.toNormalIndex(frameIndex));
         }
-        return identifier;
     }
 
     public static boolean containsIdentifierNew(FrameDescriptor frameDescriptor, Object identifier) {
         FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
-        FrameIndex frameIndex = metadata.getIndex(identifier);
+        Integer frameIndex = metadata.getIndex(identifier);
         return frameIndex != null;
     }
 
@@ -1621,7 +1606,7 @@ public final class FrameSlotChangeMonitor {
         sb.append("{");
         sb.append("identifier = '").append(frameSlot.getIdentifier().toString()).append("', ");
         sb.append("kind = ").append(frameSlot.getKind().name()).append(", ");
-        FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
+        FrameSlotInfo info = getFrameSlotInfo(frameSlot);
         sb.append("info = {");
         sb.append("invalidationCount = ").append(info.invalidationCount).append(", ");
         sb.append("stableValue = ").append(info.stableValue != null ? info.stableValue.toString() : "null").append(", ");
@@ -1692,7 +1677,7 @@ public final class FrameSlotChangeMonitor {
         return getDescriptorMetadata(descriptor).getContainsNoActiveBindingAssumption();
     }
 
-    public static StableValue<Object> getStableValueAssumption(Frame frame, FrameIndex frameIndex, Object value) {
+    public static StableValue<Object> getStableValueAssumption(Frame frame, int frameIndex, Object value) {
         CompilerAsserts.neverPartOfCompilation();
         StableValue<Object> stableValue = getFrameSlotInfoNew(frame, frameIndex).getStableValue();
         if (stableValue != null) {
@@ -1724,14 +1709,14 @@ public final class FrameSlotChangeMonitor {
         FrameSlot[] slots = new FrameSlot[frame.getFrameDescriptor().getSlots().size()];
         slots = frame.getFrameDescriptor().getSlots().toArray(slots);
         for (int i = 0; i < slots.length; i++) {
-            FrameSlotInfoImpl.handleSearchPathMultiSlot(frame, slots[i], indices, replicate);
+            FrameSlotInfo.handleSearchPathMultiSlot(frame, slots[i], indices, replicate);
         }
     }
 
     @Deprecated
     public static Object getObject(FrameSlot slot, Frame frame) throws FrameSlotTypeException {
         if (FastROptions.sharedContextsOptionValue && !RContext.isSingle()) {
-            FrameSlotInfoImpl info = getFrameSlotInfo(slot);
+            FrameSlotInfo info = getFrameSlotInfo(slot);
             if (info.noMultiSlot.isValid()) {
                 return frame.getObject(slot);
             }
@@ -1758,7 +1743,7 @@ public final class FrameSlotChangeMonitor {
 
     public static Object getValue(FrameSlot slot, Frame frame) {
         if (FastROptions.sharedContextsOptionValue && !RContext.isSingle()) {
-            FrameSlotInfoImpl info = getFrameSlotInfo(slot);
+            FrameSlotInfo info = getFrameSlotInfo(slot);
             if (info.noMultiSlot.isValid()) {
                 return frame.getValue(slot);
             }
@@ -1782,7 +1767,7 @@ public final class FrameSlotChangeMonitor {
         return frame.getFrameDescriptor().findFrameSlot(slot.getIdentifier()) != null;
     }
 
-    private static boolean isMultislot(FrameSlotInfoImpl info) {
+    private static boolean isMultislot(FrameSlotInfo info) {
         return info.possibleMultiSlot() || !info.noMultiSlot.isValid();
     }
 

@@ -81,6 +81,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -468,7 +469,7 @@ public class FrameFunctions {
             } else {
                 callNode = (RCallNode) call.getSyntaxElement();
             }
-            CallArgumentsNode callArgs = callNode.createArguments(null, false, true);
+            CallArgumentsNode callArgs = callNode.createArguments(FrameIndex.UNITIALIZED_INDEX, false, true);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
             RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true, null).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();

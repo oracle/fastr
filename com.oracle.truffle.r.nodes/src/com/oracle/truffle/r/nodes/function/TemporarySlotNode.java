@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 public final class TemporarySlotNode extends Node {
-    @CompilationFinal private FrameIndex tempSlotIdx;
+    @CompilationFinal private int tempSlotIdx = FrameIndex.UNITIALIZED_INDEX;
     private int tempIdentifier;
 
     /**
@@ -42,9 +42,9 @@ public final class TemporarySlotNode extends Node {
      * @param value Value to put in a temporary frame slot.
      * @return Index into auxiliary frame slot.
      */
-    public FrameIndex initialize(VirtualFrame frame, Object value) {
+    public int initialize(VirtualFrame frame, Object value) {
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        if (tempSlotIdx == null) {
+        if (FrameIndex.isUninitializedIndex(tempSlotIdx)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             tempSlotIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RFrameSlot.getTemp(tempIdentifier));
         }
@@ -67,7 +67,7 @@ public final class TemporarySlotNode extends Node {
         return tempSlotIdx;
     }
 
-    public static void cleanup(VirtualFrame frame, Object object, FrameIndex tempSlotIdx) {
+    public static void cleanup(VirtualFrame frame, Object object, int tempSlotIdx) {
         try {
             assert FrameSlotChangeMonitor.getObjectNew(frame, tempSlotIdx) == object;
         } catch (FrameSlotTypeException e) {

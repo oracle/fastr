@@ -44,7 +44,7 @@ public class ReadVariableNodeBase extends RBaseNode {
         return (set & (1 << kind.ordinal())) != 0;
     }
 
-    protected final Object getValue(Frame variableFrame, FrameIndex frameIndex) {
+    protected final Object getValue(Frame variableFrame, int frameIndex) {
         assert FrameSlotChangeMonitor.containsIndexNew(variableFrame, frameIndex);
         Object value = FrameSlotChangeMonitor.getObjectNew(variableFrame, frameIndex);
         FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKindNew(variableFrame.getFrameDescriptor(), frameIndex);
@@ -52,7 +52,7 @@ public class ReadVariableNodeBase extends RBaseNode {
         return value;
     }
 
-    final Object profiledGetValue(Frame variableFrame, FrameIndex frameIndex) {
+    final Object profiledGetValue(Frame variableFrame, int frameIndex) {
         assert FrameSlotChangeMonitor.containsIndexNew(variableFrame, frameIndex);
         FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKindNew(variableFrame.getFrameDescriptor(), frameIndex);
         try {

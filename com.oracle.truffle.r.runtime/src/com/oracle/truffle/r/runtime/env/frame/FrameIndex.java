@@ -24,29 +24,53 @@
 package com.oracle.truffle.r.runtime.env.frame;
 
 /**
- * A wrapper for an index into frame. Index can be either normal (indexed slot) or
- * auxiliary (auxiliary slot).
- * TODO: Mark as dataclass
+ * A helper class for frame slot indexing. Auxiliary and normal frame slots are both indexed from 0,
+ * therefore, we have to differentiate between these two. In our case, auxiliary indexes are represented
+ * by negative integers, i.e., everything that is returned as an integer index from {@link FrameSlotChangeMonitor}
+ * is either negative for aux slot or positive for normal slot.
+ *
+ * Note that it is not possible to refactor this class to a normal class that would wrap the index itself
+ * and the type of the index because of the performance - any instance of that class could potentially escape from
+ * any compilation unit, assuming that they would be cached as a field in a node in some AST. That means that for
+ * every read of such an instance, we would have to generate a {@code LoadField} instruction.
  */
 public class FrameIndex {
-    public enum IndexType {
-        NormalIndex,
-        AuxiliaryIndex
+    public static final int UNITIALIZED_INDEX = Integer.MIN_VALUE;
+
+    public static boolean isUninitializedIndex(int index) {
+        return index == UNITIALIZED_INDEX;
     }
 
-    public final IndexType indexType;
-    public final int index;
-
-    public FrameIndex(IndexType indexType, int index) {
-        this.indexType = indexType;
-        this.index = index;
+    public static boolean isInitializedIndex(int index) {
+        return !isUninitializedIndex(index);
     }
 
-    @Override
-    public String toString() {
-        return "FrameIndex{" +
-                            "indexType=" + indexType +
-                            ", index=" + index +
-                            '}';
+    public static boolean representsAuxiliaryIndex(int index) {
+        return index < 0;
+    }
+
+    public static boolean representsNormalIndex(int index) {
+        return index >= 0;
+    }
+
+    /**
+     * Returns an integer that can be used to index an auxiliary slot in a real frame.
+     */
+    public static int toAuxiliaryIndex(int index) {
+        if (representsAuxiliaryIndex(index)) {
+            return index;
+        } else {
+            assert representsNormalIndex(index);
+            return (-index) - 1;
+        }
+    }
+
+    public static int toNormalIndex(int index) {
+        if (representsNormalIndex(index)) {
+            return index;
+        } else {
+            assert representsAuxiliaryIndex(index);
+            return (-index) - 1;
+        }
     }
 }

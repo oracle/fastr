@@ -388,8 +388,7 @@ public final class RASTUtils {
         }
 
         String name = root != null ? root.getName() : "<unknown-from-SET_BODY>";
-        FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<SET_BODY/SET_FORMALS/SET_CLOENV>", descriptor);
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptorNew("<SET_BODY/SET_FORMALS/SET_CLOENV>");
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, newEnv);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, bodyNode, formals,
                         name, null);

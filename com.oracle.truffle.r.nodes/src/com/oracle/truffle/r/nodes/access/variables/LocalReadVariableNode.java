@@ -57,7 +57,7 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
     @CompilationFinal private ConditionProfile isMissingProfile;
     @CompilationFinal private ConditionProfile isPromiseProfile;
 
-    @CompilationFinal private FrameIndex frameIndex;
+    @CompilationFinal private int frameIndex;
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal private Assumption containsNoActiveBindingAssumption;
 
@@ -83,7 +83,7 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
 
     public Object execute(VirtualFrame frame, Frame variableFrame) {
         Frame profiledVariableFrame = frameProfile.profile(variableFrame);
-        if (frameIndex == null || frameDescriptor != profiledVariableFrame.getFrameDescriptor()) {
+        if (FrameIndex.isUninitializedIndex(frameIndex) || frameDescriptor != profiledVariableFrame.getFrameDescriptor()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (identifier.toString().isEmpty()) {
                 throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
@@ -91,7 +91,7 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
             frameDescriptor = profiledVariableFrame.getFrameDescriptor();
             frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
         }
-        if (frameIndex == null) {
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             return null;
         }
 
