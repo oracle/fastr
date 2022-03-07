@@ -88,14 +88,15 @@ suite = {
       "resource" : "true"
     },
 
-    "XZ-1.8" : {
-      "sha1" : "c4f7d054303948eb6a4066194253886c8af07128",
+    "XZ-1.9" : {
+      "sha1" : "1ea4bec1a921180164852c65006d928617bd2caf",
       "maven" : {
         "groupId" : "org.tukaani",
         "artifactId" : "xz",
-        "version" : "1.8",
+        "version" : "1.9",
       },
     },
+
     "BATIK-ALL-1.14" : {
       "sha1" : "a8d228e4ae2c21efb833fdfcdfe5446fa672974a",
       "maven" : {
@@ -261,7 +262,7 @@ suite = {
         "com.oracle.truffle.r.launcher",
         "truffle:TRUFFLE_API",
         "sulong:SULONG_API",
-        "XZ-1.8",
+        "XZ-1.9",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "checkstyleVersion": "8.8",
@@ -463,7 +464,7 @@ suite = {
         "sdk:JLINE3",
         "truffle:ANTLR4",
         "GNUR",
-        "XZ-1.8",
+        "XZ-1.9",
       ],
       "distDependencies" : [
         "truffle:TRUFFLE_API",
