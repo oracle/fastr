@@ -8,6 +8,7 @@
   * Display lists are fully implemented.
   * Supported devices: SVG, PNG, JPEG, BMP, AWT.
   * See [graphics docs](./documentation/dev/graphics.md).
+* Updated XZ library for compression to the version XZ-1.9.
 
 # 22.0.0
 * Adopted [NodeLibrary](https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/interop/NodeLibrary.html).
