@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
@@ -56,9 +57,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *     foo(a) # must give 42
  * </pre>
  *
- * The problem is solved by getting {@link FrameSlotChangeMonitor#getNotChangedNonLocallyAssumption}
- * for the given frame slot and putting that into the promise object. The promise object, when asked
- * for its value checks this assumption first, which happens in
+ * The problem is solved by getting
+ * {@link FrameSlotChangeMonitor#getNotChangedNonLocallyAssumption(Frame, int)} for the given frame
+ * slot and putting that into the promise object. The promise object, when asked for its value
+ * checks this assumption first, which happens in
  * {@link com.oracle.truffle.r.nodes.function.PromiseHelperNode}.
  *
  * The implementors override functions that handle the fallback case when the assumption is

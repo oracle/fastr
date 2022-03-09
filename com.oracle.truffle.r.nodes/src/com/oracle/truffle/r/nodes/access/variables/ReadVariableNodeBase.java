@@ -45,7 +45,7 @@ public class ReadVariableNodeBase extends RBaseNode {
 
     protected final Object getValue(Frame variableFrame, int frameIndex) {
         assert FrameSlotChangeMonitor.containsIndex(variableFrame, frameIndex);
-        Object value = FrameSlotChangeMonitor.getObject(variableFrame, frameIndex);
+        Object value = FrameSlotChangeMonitor.getValue(variableFrame, frameIndex);
         FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKind(variableFrame.getFrameDescriptor(), frameIndex);
         this.seenValueKinds = setKind(this.seenValueKinds, valueKind);
         return value;

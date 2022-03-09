@@ -477,7 +477,7 @@ public class FrameFunctions {
             ArrayList<String> names = new ArrayList<>();
 
             int varArgFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(cframe.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
-            RArgsValuesAndNames varArgParameter = FrameIndex.isUninitializedIndex(varArgFrameIndex) ? null : (RArgsValuesAndNames) FrameSlotChangeMonitor.getObject(cframe, varArgFrameIndex);
+            RArgsValuesAndNames varArgParameter = FrameIndex.isUninitializedIndex(varArgFrameIndex) ? null : (RArgsValuesAndNames) FrameSlotChangeMonitor.getValue(cframe, varArgFrameIndex);
 
             for (int i = 0; i < sig.getLength(); i++) {
                 RNode arg = matchedArgNodes[i];

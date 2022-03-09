@@ -472,7 +472,7 @@ public class MethodsListDispatch {
         private static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(desc, name);
             if (FrameIndex.isInitializedIndex(frameIndex)) {
-                Object res = FrameSlotChangeMonitor.getObject(currentFrame, frameIndex);
+                Object res = FrameSlotChangeMonitor.getValue(currentFrame, frameIndex);
                 if (res != null) {
                     if (res instanceof RPromise) {
                         res = PromiseHelperNode.evaluateSlowPath((RPromise) res);

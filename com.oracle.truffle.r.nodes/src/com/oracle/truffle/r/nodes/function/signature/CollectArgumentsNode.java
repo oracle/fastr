@@ -97,7 +97,7 @@ public abstract class CollectArgumentsNode extends RBaseNode {
             if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 result[i] = RMissing.instance;
             } else {
-                Object value = FrameSlotChangeMonitor.getObject(frame, frameIndex);
+                Object value = FrameSlotChangeMonitor.getValue(frame, frameIndex);
                 if (value instanceof RPromise && ((RPromise) value).isDefaultArgument()) {
                     result[i] = RMissing.instance;
                 } else {

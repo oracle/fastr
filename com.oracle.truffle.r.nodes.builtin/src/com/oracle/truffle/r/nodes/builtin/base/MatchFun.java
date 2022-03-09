@@ -197,7 +197,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
             if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return null;
             } else {
-                return FrameSlotChangeMonitor.getObject(frame, frameIndex);
+                return FrameSlotChangeMonitor.getValue(frame, frameIndex);
             }
         }
 

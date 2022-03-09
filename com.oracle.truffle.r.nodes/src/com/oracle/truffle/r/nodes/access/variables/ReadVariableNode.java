@@ -78,7 +78,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlotLookupResult;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndIndexLookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -558,7 +558,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return null;
             } else {
-                return FrameSlotChangeMonitor.getObject(current, frameIndex);
+                return FrameSlotChangeMonitor.getValue(current, frameIndex);
             }
         }
 
@@ -575,7 +575,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
         private LookupLevel(LookupResult lookup) {
             this.lookup = lookup;
-            assert !(lookup instanceof FrameAndSlotLookupResult);
+            assert !(lookup instanceof FrameAndIndexLookupResult);
         }
 
         @Override
@@ -595,11 +595,11 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
     private final class FrameAndSlotLookupLevel extends DescriptorLevel {
 
-        private final FrameAndSlotLookupResult lookup;
+        private final FrameAndIndexLookupResult lookup;
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
 
-        private FrameAndSlotLookupLevel(FrameAndSlotLookupResult lookup) {
+        private FrameAndSlotLookupLevel(FrameAndIndexLookupResult lookup) {
             this.lookup = lookup;
         }
 
@@ -664,9 +664,9 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
                 if (value instanceof RPromise) {
                     evalPromiseSlowPathWithName(identifierAsString, frame, (RPromise) value);
                 }
-                if (lookup instanceof FrameAndSlotLookupResult) {
+                if (lookup instanceof FrameAndIndexLookupResult) {
                     if (checkTypeSlowPath(frame, value)) {
-                        return new FrameAndSlotLookupLevel((FrameAndSlotLookupResult) lookup);
+                        return new FrameAndSlotLookupLevel((FrameAndIndexLookupResult) lookup);
                     }
                 } else {
                     if (value == null || checkTypeSlowPath(frame, value)) {
@@ -782,7 +782,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             // see if the current frame has a value of the given name
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
             if (FrameIndex.isInitializedIndex(frameIndex)) {
-                Object value = FrameSlotChangeMonitor.getObject(current, frameIndex);
+                Object value = FrameSlotChangeMonitor.getValue(current, frameIndex);
 
                 if (value != null) {
                     if (value == RMissing.instance) {
@@ -822,7 +822,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             // see if the current frame has a value of the given name
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
             if (FrameIndex.isInitializedIndex(frameIndex)) {
-                Object value = FrameSlotChangeMonitor.getObject(current, frameIndex);
+                Object value = FrameSlotChangeMonitor.getValue(current, frameIndex);
 
                 if (value != null) {
                     if (value == RMissing.instance) {
@@ -849,7 +849,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             // see if the current frame has a value of the given name
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
             if (FrameIndex.isInitializedIndex(frameIndex)) {
-                Object value = FrameSlotChangeMonitor.getObject(current, frameIndex);
+                Object value = FrameSlotChangeMonitor.getValue(current, frameIndex);
 
                 if (value != null) {
                     if (value == RNull.instance) {

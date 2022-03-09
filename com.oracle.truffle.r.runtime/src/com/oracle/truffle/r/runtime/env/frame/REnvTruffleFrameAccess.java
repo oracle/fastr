@@ -76,27 +76,32 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     @Override
     public Object get(String key) {
         CompilerAsserts.neverPartOfCompilation();
-
-        Object value = FrameSlotChangeMonitor.getObject(frame, key);
-        if (value == null) {
+        int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), key);
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             return null;
+        } else {
+            Object value = FrameSlotChangeMonitor.getValue(frame, frameIndex);
+            // special treatment for active binding: call bound function
+            if (ActiveBinding.isActiveBinding(value)) {
+                Object readValue = ((ActiveBinding) value).readValue();
+                // special case: if the active binding returns RMissing, then this should behave
+                // like the variable does not exist.
+                return readValue != RMissing.instance ? readValue : null;
+            }
+            return value;
         }
-
-        // special treatment for active binding: call bound function
-        if (ActiveBinding.isActiveBinding(value)) {
-            Object readValue = ((ActiveBinding) value).readValue();
-            // special case: if the active binding returns RMissing, then this should behave
-            // like the variable does not exist.
-            return readValue != RMissing.instance ? readValue : null;
-        }
-        return value;
     }
 
     @Override
     public boolean isActiveBinding(String key) {
         CompilerAsserts.neverPartOfCompilation();
-        Object value = FrameSlotChangeMonitor.getObject(frame, key);
-        return ActiveBinding.isActiveBinding(value);
+        int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), key);
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
+            return false;
+        } else {
+            Object value = FrameSlotChangeMonitor.getValue(frame, frameIndex);
+            return ActiveBinding.isActiveBinding(value);
+        }
     }
 
     @Override
@@ -244,15 +249,14 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     public static void getStringIdentifiersAndValues(Frame frame, List<String> names, List<Object> values) {
         assert names != null;
         FrameDescriptor fd = frame.getFrameDescriptor();
-        assert fd.getNumberOfSlots() == 0 : "Environment frames should have only auxiliary slots";
-        for (Map.Entry<Object, Integer> entry : fd.getAuxiliarySlots().entrySet()) {
-            if (entry.getKey() instanceof String) {
-                int auxIndex = entry.getValue();
-                Object value = frame.getAuxiliarySlot(auxIndex);
+        for (Object identifier : FrameSlotChangeMonitor.getIdentifiers(fd)) {
+            if (identifier instanceof String) {
+                int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, identifier);
+                Object value = FrameSlotChangeMonitor.getValue(frame, frameIndex);
                 if (value == null || !ActiveBinding.isListed(value)) {
                     continue;
                 }
-                names.add((String) entry.getKey());
+                names.add((String) identifier);
                 if (values != null) {
                     values.add(value);
                 }

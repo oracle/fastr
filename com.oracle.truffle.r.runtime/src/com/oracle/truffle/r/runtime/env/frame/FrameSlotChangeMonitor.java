@@ -47,8 +47,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameDescriptor.Builder;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -158,11 +158,11 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static final class FrameAndSlotLookupResult extends LookupResult {
+    public static final class FrameAndIndexLookupResult extends LookupResult {
         private final MaterializedFrame frame;
         private final int frameIndex;
 
-        private FrameAndSlotLookupResult(String identifier, MaterializedFrame frame, int frameIndex) {
+        private FrameAndIndexLookupResult(String identifier, MaterializedFrame frame, int frameIndex) {
             super(identifier);
             this.frame = frame;
             this.frameIndex = frameIndex;
@@ -171,7 +171,7 @@ public final class FrameSlotChangeMonitor {
         @Override
         public Object getValue() {
             // fast path execution should use getFrame / getSlot
-            CompilerAsserts.neverPartOfCompilation("FrameAndSlotLookupResult.getValue() should not be used in fast path execution");
+            CompilerAsserts.neverPartOfCompilation("FrameAndIndexLookupResult.getValue() should not be used in fast path execution");
             return FrameSlotChangeMonitor.getObject(frame, frameIndex);
         }
 
@@ -335,7 +335,7 @@ public final class FrameSlotChangeMonitor {
                             return null;
                         } else {
                             assert currentMetaData.singletonFrame.get() != null;
-                            lookupResult = new FrameAndSlotLookupResult(identifier.toString(), currentMetaData.singletonFrame.get(), frameIndex);
+                            lookupResult = new FrameAndIndexLookupResult(identifier.toString(), currentMetaData.singletonFrame.get(), frameIndex);
                         }
                     }
                     addPreviousLookups(frame, current, identifier);
@@ -635,9 +635,9 @@ public final class FrameSlotChangeMonitor {
      */
     private static final class FrameSlotInfo {
         /**
-         * This is meant to monitor updates performed on {@code FrameSlot}. Each {@code FrameSlot}
-         * holds an {@link Assumption} in it's "info" field; it is valid as long as no non-local
-         * update has ever taken place.<br/>
+         * This is meant to monitor updates performed on a frame slot. Each frame slot holds an
+         * {@link Assumption} in it's "info" field; it is valid as long as no non-local update has
+         * ever taken place.<br/>
          * The background to this rather strange assumption is that non-local reads are very hard to
          * keep track of thanks to R powerful language features. To keep the maintenance for the
          * assumption as cheap as possible, it checks only local reads - which is fast - and does a
@@ -888,51 +888,12 @@ public final class FrameSlotChangeMonitor {
     /**
      * Retrieves the not-changed-locally {@link Assumption} for the given frame slot.
      *
-     * @return The "not changed locally" assumption of the given {@code FrameSlot}
+     * @return The "not changed locally" assumption of the given slot at {@code frameIndex}.
      */
-    @Deprecated
-    public static Assumption getNotChangedNonLocallyAssumption(FrameSlot slot) {
-        return getFrameSlotInfo(slot).nonLocalModifiedAssumption;
-    }
-
     public static Assumption getNotChangedNonLocallyAssumption(Frame frame, int frameIndex) {
         Assumption notChangedLocallyAssumption = getFrameSlotInfo(frame, frameIndex).nonLocalModifiedAssumption;
         assertFrameStructure(frame);
         return notChangedLocallyAssumption;
-    }
-
-    @Deprecated
-    private static FrameSlotInfo getFrameSlotInfo(FrameSlot slot) {
-        Object info = slot.getInfo();
-        if (!(info instanceof FrameSlotInfo)) {
-            CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("Each FrameSlot should hold a FrameSlotInfo in its info field! " + slot.getIdentifier().getClass() + " " + slot.getIdentifier());
-        }
-        return (FrameSlotInfo) info;
-    }
-
-    /**
-     * A wrapper class for a value of each auxiliary slot.
-     * TODO: Mark as dataclass
-     */
-    private static final class AuxiliarySlotValue {
-        // TODO: Tohle ma byt klic
-        public final FrameSlotInfo frameSlotInfo;
-        public final Object identifier;
-        // TODO: @CompilationFinal?
-        public Object value;
-
-        public AuxiliarySlotValue(FrameSlotInfo frameSlotInfo, Object identifier) {
-            this(frameSlotInfo, identifier, null);
-        }
-
-        private AuxiliarySlotValue(FrameSlotInfo frameSlotInfo, Object identifier, Object value) {
-            assert frameSlotInfo != null;
-            assert identifier != null;
-            this.frameSlotInfo = frameSlotInfo;
-            this.identifier = identifier;
-            this.value = value;
-        }
     }
 
     private static FrameSlotInfo getFrameSlotInfo(Frame frame, int frameIndex) {
@@ -1001,61 +962,90 @@ public final class FrameSlotChangeMonitor {
 
     public static void setByteAndInvalidate(Frame frame, int index, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         assertFrameStructure(frame);
-        checkSharedContextAfterFrameMigration();
         FrameSlotInfo slotInfo = getFrameSlotInfo(frame, index);
-        setByte(frame, index, newValue);
-        if (slotInfo.needsInvalidation()) {
-            slotInfo.setValue(newValue);
-        }
-        checkAndInvalidate(frame, index, isNonLocal, invalidateProfile);
-    }
-
-    private static void setByte(Frame frame, int frameIndex, byte newValue) {
-        checkSharedContextAfterFrameMigration();
-        if (FrameIndex.representsNormalIndex(frameIndex)) {
-            frame.setByte(FrameIndex.toNormalIndex(frameIndex), newValue);
+        if (hasSharedContext()) {
+            slotInfo.setMultiSlot(frame, index, newValue);
         } else {
-            setAuxiliaryValue(frame, FrameIndex.toAuxiliaryIndex(frameIndex), newValue);
+            setByte(frame, index, newValue);
+            if (slotInfo.needsInvalidation()) {
+                slotInfo.setValue(newValue);
+            }
+            checkAndInvalidate(frame, index, isNonLocal, invalidateProfile);
         }
     }
 
-    public static void setIntAndInvalidate(Frame frame, int index, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    public static void setByte(Frame frame, int frameIndex, byte newValue) {
         assertFrameStructure(frame);
-        checkSharedContextAfterFrameMigration();
-        FrameSlotInfo slotInfo = getFrameSlotInfo(frame, index);
-        setInt(frame, index, newValue);
-        if (slotInfo.needsInvalidation()) {
-            slotInfo.setValue(newValue);
+        if (hasSharedContext()) {
+            FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
+            if (isMultislot(slotInfo)) {
+                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+            }
+        } else {
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
+                frame.setByte(FrameIndex.toNormalIndex(frameIndex), newValue);
+            } else {
+                setAuxiliaryValue(frame, FrameIndex.toAuxiliaryIndex(frameIndex), newValue);
+            }
         }
-        checkAndInvalidate(frame, index, isNonLocal, invalidateProfile);
+    }
+
+    public static void setIntAndInvalidate(Frame frame, int frameIndex, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+        assertFrameStructure(frame);
+        FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
+        if (hasSharedContext()) {
+            slotInfo.setMultiSlot(frame, frameIndex, newValue);
+        } else {
+            setInt(frame, frameIndex, newValue);
+            if (slotInfo.needsInvalidation()) {
+                slotInfo.setValue(newValue);
+            }
+            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile);
+        }
     }
 
     public static void setInt(Frame frame, int frameIndex, int newValue) {
-        checkSharedContextAfterFrameMigration();
-        if (FrameIndex.representsNormalIndex(frameIndex)) {
-            frame.setInt(FrameIndex.toNormalIndex(frameIndex), newValue);
+        if (hasSharedContext()) {
+            FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
+            if (isMultislot(slotInfo)) {
+                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+            }
         } else {
-            setAuxiliaryValue(frame, FrameIndex.toAuxiliaryIndex(frameIndex), newValue);
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
+                frame.setInt(FrameIndex.toNormalIndex(frameIndex), newValue);
+            } else {
+                setAuxiliaryValue(frame, FrameIndex.toAuxiliaryIndex(frameIndex), newValue);
+            }
         }
     }
 
-    public static void setDoubleAndInvalidate(Frame frame, int index, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    public static void setDoubleAndInvalidate(Frame frame, int frameIndex, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         assertFrameStructure(frame);
-        checkSharedContextAfterFrameMigration();
-        FrameSlotInfo slotInfo = getFrameSlotInfo(frame, index);
-        setDouble(frame, index, newValue);
-        if (slotInfo.needsInvalidation()) {
-            slotInfo.setValue(newValue);
+        FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
+        if (hasSharedContext()) {
+            slotInfo.setMultiSlot(frame, frameIndex, newValue);
+        } else {
+            setDouble(frame, frameIndex, newValue);
+            if (slotInfo.needsInvalidation()) {
+                slotInfo.setValue(newValue);
+            }
+            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile);
         }
-        checkAndInvalidate(frame, index, isNonLocal, invalidateProfile);
     }
 
-    private static void setDouble(Frame frame, int frameIndex, double newValue) {
-        checkSharedContextAfterFrameMigration();
-        if (FrameIndex.representsNormalIndex(frameIndex)) {
-            frame.setDouble(FrameIndex.toNormalIndex(frameIndex), newValue);
+    public static void setDouble(Frame frame, int frameIndex, double newValue) {
+        assertFrameStructure(frame);
+        if (hasSharedContext()) {
+            FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
+            if (isMultislot(slotInfo)) {
+                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+            }
         } else {
-            setAuxiliaryValue(frame, FrameIndex.toAuxiliaryIndex(frameIndex), newValue);
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
+                frame.setDouble(FrameIndex.toNormalIndex(frameIndex), newValue);
+            } else {
+                setAuxiliaryValue(frame, FrameIndex.toAuxiliaryIndex(frameIndex), newValue);
+            }
         }
     }
 
@@ -1078,129 +1068,183 @@ public final class FrameSlotChangeMonitor {
 
     private static void setAndInvalidate(Frame frame, int frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         assertFrameStructure(frame);
-        checkSharedContextAfterFrameMigration();
         FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
-        setObject(frame, frameIndex, newValue);
-        if (slotInfo.needsInvalidation()) {
-            slotInfo.setValue(newValue);
+        if (hasSharedContext() && isMultislot(slotInfo)) {
+            slotInfo.setMultiSlot(frame, frameIndex, newValue);
+        } else {
+            setObject(frame, frameIndex, newValue);
+            if (slotInfo.needsInvalidation()) {
+                slotInfo.setValue(newValue);
+            }
+            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile);
         }
-        checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile);
     }
 
     public static Object getObject(Frame frame, Object identifier) {
-        checkSharedContextAfterFrameMigration();
         int frameIndex = getIndexOfIdentifier(frame.getFrameDescriptor(), identifier);
         if (FrameIndex.isUninitializedIndex(frameIndex)) {
-            // The object is most probably not in the frame at all.
-            // TODO: Throw an exception?
             return null;
+        } else {
+            return getObject(frame, frameIndex);
         }
-        return getObject(frame, frameIndex);
     }
 
     public static Object getObject(Frame frame, int frameIndex) {
         assert FrameIndex.isInitializedIndex(frameIndex);
-        checkSharedContextAfterFrameMigration();
         assertFrameStructure(frame);
-        Object object;
-        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
-            object = frame.getAuxiliarySlot(FrameIndex.toAuxiliaryIndex(frameIndex));
+        if (hasSharedContext()) {
+            FrameSlotInfo info = getFrameSlotInfo(frame, frameIndex);
+            if (info.noMultiSlot.isValid()) {
+                return getObjectByIndex(frame, frameIndex);
+            }
+            Object o;
+            try {
+                o = getObjectByIndex(frame, frameIndex);
+            } catch (FrameSlotTypeException e) {
+                CompilerDirectives.transferToInterpreter();
+                o = null;
+            }
+            if (!(o instanceof MultiSlotData)) {
+                CompilerDirectives.transferToInterpreter();
+                synchronized (info) {
+                    assert containsIndex(frame, frameIndex);
+                    o = getObjectByIndex(frame, frameIndex);
+                    assert o != null;
+                }
+            }
+            return ((MultiSlotData) o).get(RContext.getInstance().getMultiSlotInd());
         } else {
-            object = frame.getObject(FrameIndex.toNormalIndex(frameIndex));
+            return getObjectByIndex(frame, frameIndex);
         }
-        return object;
+    }
+
+    private static boolean hasSharedContext() {
+        return FastROptions.sharedContextsOptionValue && !RContext.isSingle();
+    }
+
+    private static Object getObjectByIndex(Frame frame, int frameIndex) {
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
+            return frame.getAuxiliarySlot(FrameIndex.toAuxiliaryIndex(frameIndex));
+        } else {
+            return frame.getObject(FrameIndex.toNormalIndex(frameIndex));
+        }
+    }
+
+    public static Object getValue(Frame frame, int frameIndex) {
+        if (hasSharedContext()) {
+            FrameSlotInfo info = getFrameSlotInfo(frame, frameIndex);
+            if (info.noMultiSlot.isValid()) {
+                return getObject(frame, frameIndex);
+            }
+            Object o = getObject(frame, frameIndex);
+            if (!(o instanceof MultiSlotData)) {
+                CompilerDirectives.transferToInterpreter();
+                synchronized (info) {
+                    assert containsIndex(frame, frameIndex);
+                    o = getObject(frame, frameIndex);
+                    assert o != null;
+                }
+            }
+            return ((MultiSlotData) o).get(RContext.getInstance().getMultiSlotInd());
+        } else {
+            return getObject(frame, frameIndex);
+        }
     }
 
     public static boolean getBoolean(Frame frame, int frameIndex) {
-        checkSharedContextAfterFrameMigration();
         assertFrameIndexInBounds(frame, frameIndex);
         assertFrameStructure(frame);
-        boolean ret;
         if (FrameIndex.representsNormalIndex(frameIndex)) {
-            ret = frame.getBoolean(FrameIndex.toNormalIndex(frameIndex));
+            return frame.getBoolean(FrameIndex.toNormalIndex(frameIndex));
         } else {
             Object object = getObject(frame, frameIndex);
             assert object instanceof Boolean;
-            ret = (boolean) object;
+            return (boolean) object;
         }
-        return ret;
     }
 
     public static byte getByte(Frame frame, int frameIndex) {
-        checkSharedContextAfterFrameMigration();
         assertFrameIndexInBounds(frame, frameIndex);
         assertFrameStructure(frame);
-        byte ret;
         if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
             Object object = getObject(frame, frameIndex);
             assert object instanceof Byte;
-            ret = (byte) object;
+            return (byte) object;
         } else {
-            ret = frame.getByte(frameIndex);
+            return frame.getByte(frameIndex);
         }
-        return ret;
     }
 
     public static int getInt(Frame frame, int frameIndex) {
-        checkSharedContextAfterFrameMigration();
         assertFrameIndexInBounds(frame, frameIndex);
         assertFrameStructure(frame);
-        int ret;
         if (FrameIndex.representsNormalIndex(frameIndex)) {
-            ret = frame.getInt(FrameIndex.toNormalIndex(frameIndex));
+            return frame.getInt(FrameIndex.toNormalIndex(frameIndex));
         } else {
             Object object = getObject(frame, frameIndex);
             assert object instanceof Integer;
-            ret = (int) object;
+            return (int) object;
         }
-        return ret;
     }
 
     public static double getDouble(Frame frame, int frameIndex) {
-        checkSharedContextAfterFrameMigration();
         assertFrameIndexInBounds(frame, frameIndex);
         assertFrameStructure(frame);
-        double ret;
         if (FrameIndex.representsNormalIndex(frameIndex)) {
-            ret = frame.getDouble(FrameIndex.toNormalIndex(frameIndex));
+            return frame.getDouble(FrameIndex.toNormalIndex(frameIndex));
         } else {
             Object object = getObject(frame, frameIndex);
             assert object instanceof Double;
-            ret = (double) object;
+            return (double) object;
         }
-        return ret;
     }
 
     public static void setBoolean(Frame frame, int frameIndex, boolean newValue) {
         assertFrameIndexInBounds(frame, frameIndex);
-        checkSharedContextAfterFrameMigration();
         assertFrameStructure(frame);
-        if (FrameIndex.representsNormalIndex(frameIndex)) {
-            // TODO: Some invalidation?
-            frame.setBoolean(FrameIndex.toNormalIndex(frameIndex), newValue);
+        if (hasSharedContext()) {
+            FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
+            if (isMultislot(slotInfo)) {
+                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+            }
         } else {
-            // Every auxiliary slot is an object slot
-            Object identifier = getIdentifier(frame, frameIndex);
-            setObject(frame, frameIndex, identifier, newValue);
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
+                frame.setBoolean(FrameIndex.toNormalIndex(frameIndex), newValue);
+            } else {
+                // Every auxiliary slot is an object slot
+                setObject(frame, frameIndex, (Object) newValue);
+            }
         }
     }
 
     public static void setObject(Frame frame, Object identifier, Object newValue) {
         assertFrameStructure(frame);
-        checkSharedContextAfterFrameMigration();
         FrameDescriptorMetaData descriptorMetaData = getDescriptorMetadata(frame);
-        Integer index = descriptorMetaData.getIndex(identifier);
-        if (index == null) {
+        Integer frameIndex = descriptorMetaData.getIndex(identifier);
+        if (frameIndex == null) {
             throw RInternalError.shouldNotReachHere("A frame slot should first be added with findOrAddAuxiliaryFrameSlot");
         }
-        setObject(frame, index, identifier, newValue);
+        setObject(frame, (int) frameIndex, newValue);
     }
 
     public static void setObject(Frame frame, int frameIndex, Object newValue) {
+        assert FrameIndex.isInitializedIndex(frameIndex);
+        assertFrameIndexInBounds(frame, frameIndex);
         assertFrameStructure(frame);
-        checkSharedContextAfterFrameMigration();
-        Object identifier = getIdentifier(frame, frameIndex);
-        setObject(frame, frameIndex, identifier, newValue);
+        if (hasSharedContext()) {
+            FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
+            if (isMultislot(slotInfo)) {
+                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+            }
+        } else {
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
+                int normalSlotIdx = FrameIndex.toNormalIndex(frameIndex);
+                frame.setObject(normalSlotIdx, newValue);
+            } else {
+                int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
+                setAuxiliaryValue(frame, auxSlotIdx, newValue);
+            }
+        }
     }
 
     public static boolean containsIndex(Frame frame, int frameIndex) {
@@ -1227,6 +1271,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     // TODO: Refactor to take only FrameDescriptor
+    // TODO: Refactor to return boolean and use as `assert hasCorrectFrameStructure(frame)`
     @TruffleBoundary
     private static void assertFrameStructure(Frame frame) {
         if (!NEW_FRAME_STRUCTURE_ASSERTS) {
@@ -1267,37 +1312,6 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    private static void setObject(Frame frame, int frameIndex, Object identifier, Object newValue) {
-        assert !FrameIndex.isUninitializedIndex(frameIndex);
-        checkSharedContextAfterFrameMigration();
-        assertFrameIndexInBounds(frame, frameIndex);
-        assertFrameStructure(frame);
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        if (FrameIndex.representsNormalIndex(frameIndex)) {
-            int normalSlotIdx = FrameIndex.toNormalIndex(frameIndex);
-            assert frameDescriptor.getSlotName(normalSlotIdx) == identifier;
-            frame.setObject(normalSlotIdx, newValue);
-        } else {
-            int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
-            setAuxiliaryValue(frame, auxSlotIdx, newValue);
-        }
-    }
-
-    private static Object getIdentifier(Frame frame, int frameIndex) {
-        assert FrameIndex.isInitializedIndex(frameIndex);
-        assertFrameIndexInBounds(frame, frameIndex);
-        assertFrameStructure(frame);
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
-            FrameDescriptorMetaData metaData = getDescriptorMetadata(frameDescriptor);
-            int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
-            FrameSlotInfo slotInfo = metaData.getAuxiliarySlotInfo(auxSlotIdx);
-            return slotInfo.identifier;
-        } else {
-            return frameDescriptor.getSlotName(FrameIndex.toNormalIndex(frameIndex));
-        }
-    }
-
     public static Collection<Object> getIdentifiers(FrameDescriptor frameDescriptor) {
         return getDescriptorMetadata(frameDescriptor).getIdentifiers();
     }
@@ -1306,12 +1320,6 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
         Integer frameIndex = metadata.getIndex(identifier);
         return frameIndex != null;
-    }
-
-    private static void checkSharedContextAfterFrameMigration() {
-        if (FastROptions.sharedContextsOptionValue && !RContext.isSingle()) {
-            throw RInternalError.unimplemented();
-        }
     }
 
     public static void setActiveBinding(Frame frame, int frameIndex, ActiveBinding newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
@@ -1391,17 +1399,9 @@ public final class FrameSlotChangeMonitor {
      * This method should be called for frames of all environments on the search path.
      */
     public static synchronized void handleAllMultiSlots(Frame frame, int[] indices, boolean replicate) {
-        // make a copy avoid potential updates to the array iterated over
-        FrameSlot[] slots = new FrameSlot[frame.getFrameDescriptor().getSlots().size()];
-        slots = frame.getFrameDescriptor().getSlots().toArray(slots);
-        for (int i = 0; i < slots.length; i++) {
-            FrameSlotInfo.handleSearchPathMultiSlot(frame, slots[i], indices, replicate);
+        for (Object identifier : getIdentifiers(frame.getFrameDescriptor())) {
+            FrameSlotInfo.handleSearchPathMultiSlot(frame, identifier, indices, replicate);
         }
-    }
-
-    @TruffleBoundary
-    private static boolean slotExists(FrameSlot slot, Frame frame) {
-        return frame.getFrameDescriptor().findFrameSlot(slot.getIdentifier()) != null;
     }
 
     private static boolean isMultislot(FrameSlotInfo info) {
@@ -1414,11 +1414,10 @@ public final class FrameSlotChangeMonitor {
      */
     public static synchronized void cleanMultiSlots(Frame frame, int[] indices) {
         CompilerAsserts.neverPartOfCompilation();
-        // make a copy avoid potential updates to the array iterated over
-        FrameSlot[] slots = frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0]);
-
-        for (int i = 0; i < slots.length; i++) {
-            Object value = frame.getValue(slots[i]);
+        Object[] identifiers = getIdentifiers(frame.getFrameDescriptor()).toArray();
+        for (int i = 0; i < identifiers.length; i++) {
+            int frameIndex = getIndexOfIdentifier(frame.getFrameDescriptor(), identifiers[i]);
+            Object value = getValue(frame, frameIndex);
             if (value instanceof MultiSlotData) {
                 MultiSlotData msd = (MultiSlotData) value;
                 if (indices != null) {

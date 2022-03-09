@@ -1107,7 +1107,8 @@ public abstract class REnvironment extends RAttributable {
         fun.apply(namespacesFrame, true);
         // make a copy avoid potential updates to the array iterated over
         for (Object identifier : FrameSlotChangeMonitor.getIdentifiers(namespacesFrame.getFrameDescriptor())) {
-            REnvironment namespaceEnv = (REnvironment) FrameSlotChangeMonitor.getObject(namespacesFrame, identifier);
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(namespacesFrame.getFrameDescriptor(), identifier);
+            REnvironment namespaceEnv = (REnvironment) FrameSlotChangeMonitor.getValue(namespacesFrame, frameIndex);
             // Could be 'null' due to multi slot data and an error during package loading
             if (namespaceEnv != Base.baseNamespaceEnv() && namespaceEnv != null) {
                 // base namespace frame redirects all accesses to base frame and this would
