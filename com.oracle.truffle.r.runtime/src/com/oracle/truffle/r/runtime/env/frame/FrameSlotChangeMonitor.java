@@ -42,7 +42,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -60,7 +59,6 @@ import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.FastROptions;
@@ -77,7 +75,6 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
  */
 public final class FrameSlotChangeMonitor {
 
-    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_FRAMES);
     // TODO: Remove once GR-37071 is merged?
     private static final boolean NEW_FRAME_STRUCTURE_ASSERTS = true;
 
@@ -1338,29 +1335,32 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static FrameDescriptor createUninitializedFrameDescriptor(String name) {
-        FrameDescriptor descriptor = FrameDescriptor.newBuilder().info(new FrameDescriptorMetaData(name)).build();
-        logger.info(() -> String.format("createUnitializedFrameDescriptorNew: name = '%s', descriptor = %s",
-                            name, descriptor));
-        return descriptor;
+        return FrameDescriptor.newBuilder().info(new FrameDescriptorMetaData(name)).build();
     }
 
     /**
-     *
-     * @param name For debug purposes.
+     * Creates a {@link FrameDescriptor} for either environment or a function.
+     * 
+     * @param name Name for debug purposes.
      * @param singletonFrame Null for function descriptors, not null for environment descriptors.
      * @return
      */
     public static FrameDescriptor createFrameDescriptor(String name, MaterializedFrame singletonFrame) {
-        FrameDescriptor descriptor = FrameDescriptor.newBuilder().info(new FrameDescriptorMetaData(name, singletonFrame)).build();
-        logger.info(() -> String.format("createFrameDescriptorNew: name = '%s', descriptor = %s, (singletonFrame != null) == %b",
-                            name, descriptor, singletonFrame != null));
-        return descriptor;
+        return FrameDescriptor.newBuilder().info(new FrameDescriptorMetaData(name, singletonFrame)).build();
     }
 
     public static FrameDescriptor createFunctionFrameDescriptor(String name) {
         return createFrameDescriptor(name, null);
     }
 
+    /**
+     * Creates a {@link FrameDescriptor} with normal indexed slots.
+     * 
+     * @param name Name for debug purposes.
+     * @param singletonFrame
+     * @param kinds Kind of normal slots to be initialized in the frame descriptor.
+     * @param identifiers Identifiers of normal slots
+     */
     public static FrameDescriptor createFrameDescriptor(String name, MaterializedFrame singletonFrame, FrameSlotKind[] kinds, Object[] identifiers) {
         assert kinds.length == identifiers.length;
         Builder builder = FrameDescriptor.newBuilder();
