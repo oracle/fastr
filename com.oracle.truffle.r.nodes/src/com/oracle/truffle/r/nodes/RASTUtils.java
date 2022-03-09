@@ -57,9 +57,9 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -388,7 +388,7 @@ public final class RASTUtils {
         }
 
         String name = root != null ? root.getName() : "<unknown-from-SET_BODY>";
-        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptorNew("<SET_BODY/SET_FORMALS/SET_CLOENV>");
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor("<SET_BODY/SET_FORMALS/SET_CLOENV>");
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, newEnv);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, bodyNode, formals,
                         name, null);

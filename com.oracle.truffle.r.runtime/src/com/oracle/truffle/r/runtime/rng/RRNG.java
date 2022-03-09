@@ -229,7 +229,7 @@ public class RRNG {
             RFunction fun = context.lookupBuiltin(".fastr.set.seed");
             ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun, true);
             Frame frame = REnvironment.globalEnv().getFrame();
-            int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RRNG.RANDOM_SEED);
+            int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RRNG.RANDOM_SEED);
             FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, dotRandomSeed, false, null);
             dotRandomSeedBinding = new WeakReference<>(dotRandomSeed);
         }

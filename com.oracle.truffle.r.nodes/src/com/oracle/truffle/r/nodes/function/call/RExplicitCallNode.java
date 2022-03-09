@@ -62,15 +62,15 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
                     @Cached("createExplicitCall()") RCallBaseNode call) {
         if (FrameIndex.isUninitializedIndex(argsFrameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            argsFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs);
+            argsFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs);
         }
-        assert FrameSlotChangeMonitor.containsIdentifierNew(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs);
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs);
         try {
-            FrameSlotChangeMonitor.setObjectNew(frame, argsFrameIndex, new ExplicitArgs(args, caller, callerFrame));
+            FrameSlotChangeMonitor.setObject(frame, argsFrameIndex, new ExplicitArgs(args, caller, callerFrame));
             return call.execute(frame, function);
         } finally {
             // TODO: Better way to dispose a frame slot?
-            FrameSlotChangeMonitor.setObjectNew(frame, argsFrameIndex, null);
+            FrameSlotChangeMonitor.setObject(frame, argsFrameIndex, null);
         }
     }
 

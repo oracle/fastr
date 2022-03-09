@@ -27,9 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -108,7 +106,7 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
 
         if (containsNoActiveBindingAssumption == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumptionNew(profiledVariableFrame.getFrameDescriptor());
+            containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(profiledVariableFrame.getFrameDescriptor());
         }
         // special treatment for active binding: call bound function
         if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result)) {

@@ -28,7 +28,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -45,25 +44,25 @@ public class ReadVariableNodeBase extends RBaseNode {
     }
 
     protected final Object getValue(Frame variableFrame, int frameIndex) {
-        assert FrameSlotChangeMonitor.containsIndexNew(variableFrame, frameIndex);
-        Object value = FrameSlotChangeMonitor.getObjectNew(variableFrame, frameIndex);
-        FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKindNew(variableFrame.getFrameDescriptor(), frameIndex);
+        assert FrameSlotChangeMonitor.containsIndex(variableFrame, frameIndex);
+        Object value = FrameSlotChangeMonitor.getObject(variableFrame, frameIndex);
+        FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKind(variableFrame.getFrameDescriptor(), frameIndex);
         this.seenValueKinds = setKind(this.seenValueKinds, valueKind);
         return value;
     }
 
     final Object profiledGetValue(Frame variableFrame, int frameIndex) {
-        assert FrameSlotChangeMonitor.containsIndexNew(variableFrame, frameIndex);
-        FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKindNew(variableFrame.getFrameDescriptor(), frameIndex);
+        assert FrameSlotChangeMonitor.containsIndex(variableFrame, frameIndex);
+        FrameSlotKind valueKind = FrameSlotChangeMonitor.getFrameSlotKind(variableFrame.getFrameDescriptor(), frameIndex);
         try {
             if (hasKind(this.seenValueKinds, FrameSlotKind.Object) && valueKind == FrameSlotKind.Object) {
-                return FrameSlotChangeMonitor.getObjectNew(variableFrame, frameIndex);
+                return FrameSlotChangeMonitor.getObject(variableFrame, frameIndex);
             } else if (hasKind(this.seenValueKinds, FrameSlotKind.Byte) && valueKind == FrameSlotKind.Byte) {
-                return FrameSlotChangeMonitor.getByteNew(variableFrame, frameIndex);
+                return FrameSlotChangeMonitor.getByte(variableFrame, frameIndex);
             } else if (hasKind(this.seenValueKinds, FrameSlotKind.Int) && valueKind == FrameSlotKind.Int) {
-                return FrameSlotChangeMonitor.getIntNew(variableFrame, frameIndex);
+                return FrameSlotChangeMonitor.getInt(variableFrame, frameIndex);
             } else if (hasKind(this.seenValueKinds, FrameSlotKind.Double) && valueKind == FrameSlotKind.Double) {
-                return FrameSlotChangeMonitor.getDoubleNew(variableFrame, frameIndex);
+                return FrameSlotChangeMonitor.getDouble(variableFrame, frameIndex);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 // re-profile to widen the set of expected types

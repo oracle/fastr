@@ -31,8 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -75,28 +73,28 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
 
         if (FrameIndex.isUninitializedIndex(onExitFrameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            onExitFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.OnExit);
+            onExitFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.OnExit);
         }
-        assert FrameSlotChangeMonitor.containsIdentifierNew(frame.getFrameDescriptor(), RFrameSlot.OnExit);
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.OnExit);
 
         // the empty (RNull.instance) expression is used to clear on.exit
         if (emptyPromiseProfile.profile(expr.isDefaultArgument())) {
             assert expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
-            FrameSlotChangeMonitor.setObjectNew(frame, onExitFrameIndex, RDataFactory.createPairList());
+            FrameSlotChangeMonitor.setObject(frame, onExitFrameIndex, RDataFactory.createPairList());
         } else {
             // if optimized then evaluated is already true,
             // otherwise the expression has to be evaluated exactly at this point
             assert expr.isOptimized() || !expr.isEvaluated() : "promise cannot be evaluated anymore";
             Object value;
             try {
-                value = FrameSlotChangeMonitor.getObjectNew(frame, onExitFrameIndex);
+                value = FrameSlotChangeMonitor.getObject(frame, onExitFrameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
             RPairList list;
             if (newProfile.profile(value == null)) {
                 // initialize the list of exit handlers
-                FrameSlotChangeMonitor.setObjectNew(frame, onExitFrameIndex, list = RDataFactory.createPairList());
+                FrameSlotChangeMonitor.setObject(frame, onExitFrameIndex, list = RDataFactory.createPairList());
             } else {
                 list = (RPairList) value;
                 if (addProfile.profile(!add)) {

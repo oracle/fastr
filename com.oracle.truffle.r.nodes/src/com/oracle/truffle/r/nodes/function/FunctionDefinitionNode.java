@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -358,9 +357,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
                 if (!noHandlerStackSlot.isValid()) {
                     int handlerFrameIndex = getHandlerFrameIndex(frame);
-                    if (FrameSlotChangeMonitor.isObjectNew(frame, handlerFrameIndex)) {
+                    if (FrameSlotChangeMonitor.isObject(frame, handlerFrameIndex)) {
                         try {
-                            RErrorHandling.restoreHandlerStack(FrameSlotChangeMonitor.getObjectNew(frame, handlerFrameIndex), RContext.getInstance(this));
+                            RErrorHandling.restoreHandlerStack(FrameSlotChangeMonitor.getObject(frame, handlerFrameIndex), RContext.getInstance(this));
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }
@@ -368,9 +367,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                 }
                 if (!noRestartStackSlot.isValid()) {
                     int restartFrameIndex = getRestartFrameIndex(frame);
-                    if (FrameSlotChangeMonitor.isObjectNew(frame, restartFrameIndex)) {
+                    if (FrameSlotChangeMonitor.isObject(frame, restartFrameIndex)) {
                         try {
-                            RErrorHandling.restoreRestartStack(FrameSlotChangeMonitor.getObjectNew(frame, restartFrameIndex), RContext.getInstance(this));
+                            RErrorHandling.restoreRestartStack(FrameSlotChangeMonitor.getObject(frame, restartFrameIndex), RContext.getInstance(this));
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }
@@ -425,7 +424,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private static RPairList getCurrentOnExitList(VirtualFrame frame, int frameIndex) {
         try {
-            return (RPairList) FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
+            return (RPairList) FrameSlotChangeMonitor.getObject(frame, frameIndex);
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -489,7 +488,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
         if (FrameIndex.isUninitializedIndex(restartStackFrameIdx)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            restartStackFrameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.RestartStack);
+            restartStackFrameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.RestartStack);
         }
         return restartStackFrameIdx;
     }
@@ -501,7 +500,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
         if (FrameIndex.isUninitializedIndex(handlerStackFrameIdx)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            handlerStackFrameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.HandlerStack);
+            handlerStackFrameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.HandlerStack);
         }
         return handlerStackFrameIdx;
     }

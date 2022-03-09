@@ -34,8 +34,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -81,6 +79,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
@@ -274,10 +273,10 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
 
         @TruffleBoundary
         private static boolean getVisibilitySlowPath(MaterializedFrame envFrame) {
-            FrameSlot envVisibilitySlot = FrameSlotChangeMonitor.findOrAddFrameSlot(envFrame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
-            if (envVisibilitySlot != null) {
+            int envVisibilityFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(envFrame.getFrameDescriptor(), RFrameSlot.Visibility);
+            if (FrameIndex.isInitializedIndex(envVisibilityFrameIndex)) {
                 try {
-                    return envFrame.getBoolean(envVisibilitySlot);
+                    return FrameSlotChangeMonitor.getBoolean(envFrame, envVisibilityFrameIndex);
                 } catch (FrameSlotTypeException e) {
                     throw RInternalError.shouldNotReachHere();
                 }

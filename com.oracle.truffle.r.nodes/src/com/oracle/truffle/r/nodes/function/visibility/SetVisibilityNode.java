@@ -58,14 +58,14 @@ public final class SetVisibilityNode extends Node {
     private void ensureFrameIndex(FrameDescriptor frameDescriptor) {
         if (FrameIndex.isUninitializedIndex(frameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RFrameSlot.Visibility);
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RFrameSlot.Visibility);
         }
-        assert FrameSlotChangeMonitor.containsIdentifierNew(frameDescriptor, RFrameSlot.Visibility);
+        assert FrameSlotChangeMonitor.containsIdentifier(frameDescriptor, RFrameSlot.Visibility);
     }
 
     public void execute(Frame frame, boolean value) {
         ensureFrameIndex(frame.getFrameDescriptor());
-        FrameSlotChangeMonitor.setBooleanNew(frame, frameIndex, value);
+        FrameSlotChangeMonitor.setBoolean(frame, frameIndex, value);
     }
 
     public void execute(VirtualFrame frame, RVisibility visibility) {
@@ -82,7 +82,7 @@ public final class SetVisibilityNode extends Node {
      */
     public void executeAfterCall(VirtualFrame frame, RCaller caller) {
         ensureFrameIndex(frame.getFrameDescriptor());
-        FrameSlotChangeMonitor.setBooleanNew(frame, frameIndex, caller.getVisibility());
+        FrameSlotChangeMonitor.setBoolean(frame, frameIndex, caller.getVisibility());
     }
 
     /**
@@ -92,7 +92,7 @@ public final class SetVisibilityNode extends Node {
     public void executeEndOfFunction(VirtualFrame frame) {
         ensureFrameIndex(frame.getFrameDescriptor());
         try {
-            RArguments.getCall(frame).setVisibility(FrameSlotChangeMonitor.getBooleanNew(frame, frameIndex));
+            RArguments.getCall(frame).setVisibility(FrameSlotChangeMonitor.getBoolean(frame, frameIndex));
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -103,8 +103,8 @@ public final class SetVisibilityNode extends Node {
      */
     public static void executeAfterCallSlowPath(Frame frame, RCaller caller) {
         CompilerAsserts.neverPartOfCompilation();
-        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.Visibility);
-        FrameSlotChangeMonitor.setBooleanNew(frame, frameIndex, caller.getVisibility());
+        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        FrameSlotChangeMonitor.setBoolean(frame, frameIndex, caller.getVisibility());
     }
 
     /**
@@ -112,7 +112,7 @@ public final class SetVisibilityNode extends Node {
      */
     public static void executeSlowPath(Frame frame, boolean visibility) {
         CompilerAsserts.neverPartOfCompilation();
-        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.Visibility);
-        FrameSlotChangeMonitor.setBooleanNew(frame, frameIndex, visibility);
+        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        FrameSlotChangeMonitor.setBoolean(frame, frameIndex, visibility);
     }
 }

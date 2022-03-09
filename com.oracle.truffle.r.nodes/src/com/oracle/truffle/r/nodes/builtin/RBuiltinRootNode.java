@@ -76,7 +76,7 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Override
     public RootCallTarget duplicateWithNewFrameDescriptor() {
-        FrameDescriptor frameDescriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptorNew("builtin");
+        FrameDescriptor frameDescriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor("builtin");
         // getLanguage deprecation: we cannot remove this now, because the new API does not work
         // with our unit tests
         return new RBuiltinRootNode(getLanguage(RContext.getTruffleRLanguage()), factory, frameDescriptor, getFastPath()).getCallTarget();

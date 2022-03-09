@@ -141,7 +141,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
         if (!RBaseNode.isRSyntaxNode(body)) {
             throw RInternalError.unimplemented();
         }
-        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptorNew("<as.function.default>");
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor("<as.function.default>");
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, envir.getFrame());
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(getRLanguage(), RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction",
                         null);

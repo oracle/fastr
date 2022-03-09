@@ -131,14 +131,14 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
         final BranchProfile invalidateFrameSlotProfile = BranchProfile.create();
 
         SetupDispatchNode(FrameDescriptor frameDescriptor) {
-            dotGenericFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_GENERIC);
-            dotMethodFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_METHOD);
+            dotGenericFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC);
+            dotMethodFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_METHOD);
             assertAllIndexesInitialized(Set.of(dotGenericFrameIndex, dotMethodFrameIndex));
         }
 
         void executeDispatchArgs(VirtualFrame frame, DispatchArgs args) {
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotGenericFrameIndex, args.generic, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotMethodFrameIndex, args.method, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericFrameIndex, args.generic, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodFrameIndex, args.method, false, invalidateFrameSlotProfile);
         }
 
         protected void assertAllIndexesInitialized(Collection<Integer> indexes) {
@@ -156,19 +156,19 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
 
         SetupS3ArgsNode(FrameDescriptor frameDescriptor) {
             super(frameDescriptor);
-            dotClassFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_CLASS);
-            dotGenericCallEnvFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_GENERIC_CALL_ENV);
-            dotGenericCallDefFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_GENERIC_DEF_ENV);
-            dotGroupFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_GROUP);
+            dotClassFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_CLASS);
+            dotGenericCallEnvFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC_CALL_ENV);
+            dotGenericCallDefFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC_DEF_ENV);
+            dotGroupFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_GROUP);
             assertAllIndexesInitialized(Set.of(dotClassFrameIndex, dotGenericCallEnvFrameIndex, dotGenericCallDefFrameIndex, dotGroupFrameIndex));
         }
 
         void execute(VirtualFrame frame, S3Args args) {
             super.executeDispatchArgs(frame, args);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotClassFrameIndex, args.clazz, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotGenericCallEnvFrameIndex, args.callEnv, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotGenericCallDefFrameIndex, args.defEnv, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotGroupFrameIndex, args.group, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotClassFrameIndex, args.clazz, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallEnvFrameIndex, args.callEnv, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGenericCallDefFrameIndex, args.defEnv, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotGroupFrameIndex, args.group, false, invalidateFrameSlotProfile);
         }
     }
 
@@ -180,17 +180,17 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
 
         SetupS4ArgsNode(FrameDescriptor frameDescriptor) {
             super(frameDescriptor);
-            dotDefinedFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_DEFINED);
-            dotTargetFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_TARGET);
-            dotMethodsFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RRuntime.R_DOT_METHODS);
+            dotDefinedFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_DEFINED);
+            dotTargetFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_TARGET);
+            dotMethodsFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_METHODS);
             assertAllIndexesInitialized(Set.of(dotDefinedFrameIndex, dotTargetFrameIndex, dotMethodsFrameIndex));
         }
 
         void execute(VirtualFrame frame, S4Args args) {
             super.executeDispatchArgs(frame, args);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotDefinedFrameIndex, args.defined, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotTargetFrameIndex, args.target, false, invalidateFrameSlotProfile);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, dotMethodsFrameIndex, args.methods, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotDefinedFrameIndex, args.defined, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotTargetFrameIndex, args.target, false, invalidateFrameSlotProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodsFrameIndex, args.methods, false, invalidateFrameSlotProfile);
         }
     }
 }

@@ -97,7 +97,7 @@ public final class EnvironmentNodes {
 
                 result = RDataFactory.createNewEnv(cachedFd, envName);
                 if (hasEnclosingFD) {
-                    FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(result.getName(), result.getFrame());
+                    FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(result.getFrame().getFrameDescriptor(), result.getFrame());
                 }
                 RArguments.initializeEnclosingFrame(result.getFrame(), parentEnv.getFrame());
                 RArguments.setEnclosingFrame(result.getFrame(), parentEnv.getFrame(), false);

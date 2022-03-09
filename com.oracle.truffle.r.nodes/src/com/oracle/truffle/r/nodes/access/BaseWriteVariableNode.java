@@ -27,7 +27,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -125,8 +124,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
     private boolean isCurrentValue(Frame frame, int frameIndex, Object value) {
         try {
-            return isObjectProfile.profile(FrameSlotChangeMonitor.isObjectNew(frame, frameIndex))
-                                && isCurrentProfile.profile(FrameSlotChangeMonitor.getObjectNew(frame, frameIndex) == value);
+            return isObjectProfile.profile(FrameSlotChangeMonitor.isObject(frame, frameIndex))
+                            && isCurrentProfile.profile(FrameSlotChangeMonitor.getObject(frame, frameIndex) == value);
         } catch (FrameSlotTypeException ex) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -149,7 +148,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     }
 
     protected boolean isKind(FrameDescriptor fd, int frameIndex, FrameSlotKind kind) {
-        if (FrameSlotChangeMonitor.getFrameSlotKindNew(fd, frameIndex) == kind) {
+        if (FrameSlotChangeMonitor.getFrameSlotKind(fd, frameIndex) == kind) {
             return true;
         } else {
             initialSetKindProfile.enter();
@@ -158,8 +157,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     }
 
     private static boolean initialSetKind(FrameDescriptor fd, int frameIndex, FrameSlotKind kind) {
-        if (FrameSlotChangeMonitor.getFrameSlotKindNew(fd, frameIndex) == FrameSlotKind.Illegal) {
-            FrameSlotChangeMonitor.setFrameSlotKindNew(fd, frameIndex, kind);
+        if (FrameSlotChangeMonitor.getFrameSlotKind(fd, frameIndex) == FrameSlotKind.Illegal) {
+            FrameSlotChangeMonitor.setFrameSlotKind(fd, frameIndex, kind);
             return true;
         } else {
             return false;
@@ -181,7 +180,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                     ConditionProfile isActiveBindingProfile, ValueProfile storedObjectProfile, Mode mode) {
         Object object;
         try {
-            object = FrameSlotChangeMonitor.getObjectNew(lookupFrame, frameIndex);
+            object = FrameSlotChangeMonitor.getObject(lookupFrame, frameIndex);
         } catch (FrameSlotTypeException e) {
             object = null;
         }
@@ -199,7 +198,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
             }
         } else {
             Object newValue = shareObjectValue(lookupFrame, frameIndex, storedObjectProfile.profile(value), mode, false);
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(lookupFrame, frameIndex, newValue, false, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(lookupFrame, frameIndex, newValue, false, invalidateProfile);
         }
         return value;
     }

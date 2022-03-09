@@ -31,8 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -84,10 +82,10 @@ public class ConditionFunctions {
                 throw error(RError.Message.BAD_HANDLER_DATA);
             }
             try {
-                if (!FrameSlotChangeMonitor.isObjectNew(frame, handlerFrameIndex) || FrameSlotChangeMonitor.getObjectNew(frame, handlerFrameIndex) == null) {
+                if (!FrameSlotChangeMonitor.isObject(frame, handlerFrameIndex) || FrameSlotChangeMonitor.getObject(frame, handlerFrameIndex) == null) {
                     // We save the original condition handlers to a frame slot, so that
                     // FunctionDefinitionNode can restore them on function exit
-                    FrameSlotChangeMonitor.setObjectNew(frame, handlerFrameIndex, RErrorHandling.getHandlerStack(getRContext()));
+                    FrameSlotChangeMonitor.setObject(frame, handlerFrameIndex, RErrorHandling.getHandlerStack(getRContext()));
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
@@ -136,9 +134,9 @@ public class ConditionFunctions {
                 throw error(RError.Message.BAD_RESTART);
             }
             try {
-                if (!FrameSlotChangeMonitor.isObjectNew(frame, restartFrameIndex) ||
-                                    FrameSlotChangeMonitor.getObjectNew(frame, restartFrameIndex) == null) {
-                    FrameSlotChangeMonitor.setObjectNew(frame, restartFrameIndex, RErrorHandling.getRestartStack());
+                if (!FrameSlotChangeMonitor.isObject(frame, restartFrameIndex) ||
+                                FrameSlotChangeMonitor.getObject(frame, restartFrameIndex) == null) {
+                    FrameSlotChangeMonitor.setObject(frame, restartFrameIndex, RErrorHandling.getRestartStack());
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();

@@ -1055,7 +1055,7 @@ public class RSerialize {
             String name = ((RSymbol) pl.getTag()).getName();
             Object car = pl.car();
             if (ActiveBinding.isActiveBinding(car)) {
-                int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(env.getFrame().getFrameDescriptor(), name);
+                int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(env.getFrame().getFrameDescriptor(), name);
                 FrameSlotChangeMonitor.setActiveBinding(env.getFrame(), frameIndex, (ActiveBinding) car, false, null);
             } else {
                 env.safePut(name, car);
@@ -1960,7 +1960,7 @@ public class RSerialize {
             if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return null;
             } else {
-                return FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
+                return FrameSlotChangeMonitor.getObject(frame, frameIndex);
             }
         }
 

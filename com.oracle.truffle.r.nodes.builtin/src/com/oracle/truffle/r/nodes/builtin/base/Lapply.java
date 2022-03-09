@@ -121,8 +121,8 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                Object[] positions = {FrameSlotChangeMonitor.getIntNew(frame, indexFrameIndex)};
-                return extractElementNode.apply(FrameSlotChangeMonitor.getObjectNew(frame, vectorFrameIndex), positions, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
+                Object[] positions = {FrameSlotChangeMonitor.getInt(frame, indexFrameIndex)};
+                return extractElementNode.apply(FrameSlotChangeMonitor.getObject(frame, vectorFrameIndex), positions, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
             } catch (FrameSlotTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("frame type mismatch in lapply");
@@ -158,11 +158,11 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function);
 
         protected static int createIndexFrameIndex(Frame frame) {
-            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), INDEX_NAME);
+            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), INDEX_NAME);
         }
 
         protected static int createVectorFrameIndex(Frame frame) {
-            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), VECTOR_NAME);
+            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), VECTOR_NAME);
         }
 
         @Specialization
@@ -174,16 +174,16 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
                         @Cached("createCallNode(vectorFrameIndex, indexFrameIndex)") RCallBaseNode firstCallNode,
                         @Cached("createCallNode(vectorFrameIndex, indexFrameIndex)") RCallBaseNode callNode) {
             // TODO: R switches to double if x.getLength() is greater than 2^31-1
-            FrameSlotChangeMonitor.setObjectNew(frame, vectorFrameIndex, vector);
+            FrameSlotChangeMonitor.setObject(frame, vectorFrameIndex, vector);
             int length = lengthNode.executeInteger(vector);
             Object[] result = new Object[length];
             if (length > 0) {
                 reportWork(this, length);
                 loop.profileCounted(length);
-                FrameSlotChangeMonitor.setIntNew(frame, indexFrameIndex, 1);
+                FrameSlotChangeMonitor.setInt(frame, indexFrameIndex, 1);
                 result[0] = firstCallNode.execute(frame, function);
                 for (int i = 2; loop.inject(i <= length); i++) {
-                    FrameSlotChangeMonitor.setIntNew(frame, indexFrameIndex, i);
+                    FrameSlotChangeMonitor.setInt(frame, indexFrameIndex, i);
                     result[i - 1] = callNode.execute(frame, function);
                 }
             }

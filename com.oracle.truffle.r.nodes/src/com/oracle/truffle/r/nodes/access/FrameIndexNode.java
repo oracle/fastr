@@ -35,7 +35,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class FrameIndexNode extends RBaseNode {
@@ -59,7 +58,7 @@ public abstract class FrameIndexNode extends RBaseNode {
     private static FrameIndexNode createInitializedInternal(FrameDescriptor frameDescriptor, Object identifier, boolean createIfAbsent) {
         int frameIndex;
         if (createIfAbsent) {
-            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, identifier);
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, identifier);
         } else {
             frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
         }
@@ -120,13 +119,13 @@ public abstract class FrameIndexNode extends RBaseNode {
         @Override
         public boolean hasValue(Frame frame) {
             Frame typedFrame = frameTypeProfile.profile(frame);
-            FrameSlotKind slotKind = FrameSlotChangeMonitor.getFrameSlotKindNew(typedFrame.getFrameDescriptor(), frameIndex);
+            FrameSlotKind slotKind = FrameSlotChangeMonitor.getFrameSlotKind(typedFrame.getFrameDescriptor(), frameIndex);
             if (!(isObjectProfile.profile(slotKind == FrameSlotKind.Object))) {
                 return false;
             } else {
                 Object value;
                 try {
-                    value = FrameSlotChangeMonitor.getObjectNew(typedFrame, frameIndex);
+                    value = FrameSlotChangeMonitor.getObject(typedFrame, frameIndex);
                 } catch (FrameSlotTypeException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }

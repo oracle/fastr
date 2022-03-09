@@ -34,7 +34,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -51,9 +50,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -193,11 +193,11 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
 
         @TruffleBoundary
         private static Object lookupLocal(MaterializedFrame frame, String lookupName) {
-            FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(lookupName);
-            if (slot == null) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), lookupName);
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return null;
             } else {
-                return FrameSlotChangeMonitor.getValue(slot, frame);
+                return FrameSlotChangeMonitor.getObject(frame, frameIndex);
             }
         }
 

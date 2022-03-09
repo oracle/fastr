@@ -77,12 +77,12 @@ public final class PostProcessArgumentsNode extends RNode {
                     if (FrameIndex.isUninitializedIndex(frameIndexes[i])) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         synchronized (FrameSlotChangeMonitor.class) {
-                            frameIndexes[i] = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), mask);
+                            frameIndexes[i] = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), mask);
                         }
                     }
                     RSharingAttributeStorage s;
                     try {
-                        Object sObj = FrameSlotChangeMonitor.getObjectNew(frame, frameIndexes[i]);
+                        Object sObj = FrameSlotChangeMonitor.getObject(frame, frameIndexes[i]);
                         s = (RSharingAttributeStorage) sObj;
                     } catch (FrameSlotTypeException e) {
                         throw RInternalError.shouldNotReachHere();

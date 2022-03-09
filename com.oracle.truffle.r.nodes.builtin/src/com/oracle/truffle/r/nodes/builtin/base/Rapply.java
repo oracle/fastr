@@ -31,8 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
@@ -40,7 +38,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.RapplyNodeGen.RapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -61,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -104,20 +102,21 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
     private static final class ExtractElementInternal extends RSourceSectionNode implements RSyntaxCall {
 
         @Child private ExtractVectorNode extractElementNode = ExtractVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false);
-        private final FrameSlot vectorSlot;
-        private final FrameSlot indexSlot;
+        private final int vectorFrameIndex;
+        private final int indexFrameIndex;
 
-        protected ExtractElementInternal(FrameSlot vectorSlot, FrameSlot indexSlot) {
+        protected ExtractElementInternal(int vectorFrameIndex, int indexFrameIndex) {
             super(RSyntaxNode.LAZY_DEPARSE);
-            this.vectorSlot = vectorSlot;
-            this.indexSlot = indexSlot;
+            this.vectorFrameIndex = vectorFrameIndex;
+            this.indexFrameIndex = indexFrameIndex;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             RArguments.getCall(frame);
             try {
-                return extractElementNode.apply(FrameSlotChangeMonitor.getObject(vectorSlot, frame), new Object[]{frame.getInt(indexSlot)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
+                Object[] positions = {FrameSlotChangeMonitor.getInt(frame, indexFrameIndex)};
+                return extractElementNode.apply(FrameSlotChangeMonitor.getObject(frame, vectorFrameIndex), positions, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
             } catch (FrameSlotTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("frame type mismatch in rapply");
@@ -155,36 +154,36 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
 
         public abstract Object execute(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how);
 
-        protected static FrameSlot createIndexSlot(Frame frame) {
-            return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), INDEX_NAME, FrameSlotKind.Int);
+        protected static int createIndexFrameIndex(Frame frame) {
+            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), INDEX_NAME);
         }
 
-        protected static FrameSlot createVectorSlot(Frame frame) {
-            return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), VECTOR_NAME, FrameSlotKind.Object);
+        protected static int createVectorFrameIndex(Frame frame) {
+            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), VECTOR_NAME);
         }
 
         @Specialization(guards = "isReplace(how)")
         protected RAbstractListBaseVector cachedLapplyReplace(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how,
-                        @Cached("createIndexSlot(frame)") FrameSlot indexSlot,
-                        @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
+                        @Cached("createIndexFrameIndex(frame)") int indexFrameIndex,
+                        @Cached("createVectorFrameIndex(frame)") int vectorFrameIndex,
                         @Cached("create()") RLengthNode lengthNode,
                         @Cached("createCountingProfile()") LoopConditionProfile loop,
-                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode callNode) {
+                        @Cached("createCallNode(vectorFrameIndex, indexFrameIndex)") RCallBaseNode callNode) {
 
             int length = lengthNode.executeInteger(object);
             RAbstractListBaseVector result = (RAbstractListBaseVector) object.copy();
-            FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
+            FrameSlotChangeMonitor.setObject(frame, vectorFrameIndex, object);
 
             if (length > 0) {
                 reportWork(this, length);
                 loop.profileCounted(length);
                 Object resultStore = result.getInternalStore();
                 for (int i = 0; loop.inject(i < length); i++) {
-                    frame.setInt(indexSlot, i + 1);
+                    FrameSlotChangeMonitor.setInt(frame, indexFrameIndex, i + 1);
                     Object element = object.getDataAt(i);
                     if (element instanceof RAbstractListVector) {
                         result.setDataAt(resultStore, i, getRapply().execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
-                        FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
+                        FrameSlotChangeMonitor.setObject(frame, vectorFrameIndex, object);
                     } else if (isRNull(element)) {
                         result.setDataAt(resultStore, i, element);
                     } else if (classes.equals("ANY") || Byte.valueOf(RRuntime.LOGICAL_TRUE).equals(inheritsNode.execute(element, RDataFactory.createStringVector(classes), false))) {
@@ -207,28 +206,28 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
 
         @Specialization(guards = "!isReplace(how)")
         protected Object[] cachedLapply(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how,
-                        @Cached("createIndexSlot(frame)") FrameSlot indexSlot,
-                        @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
+                        @Cached("createIndexFrameIndex(frame)") int indexFrameIndex,
+                        @Cached("createVectorFrameIndex(frame)") int vectorFrameIndex,
                         @Cached("create()") RLengthNode lengthNode,
                         @Cached("create()") UnaryCopyAttributesNode attri,
                         @Cached("createCountingProfile()") LoopConditionProfile loop,
-                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode callNode) {
+                        @Cached("createCallNode(vectorFrameIndex, indexFrameIndex)") RCallBaseNode callNode) {
 
             int length = lengthNode.executeInteger(object);
             Object[] result = new Object[length];
-            FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
+            FrameSlotChangeMonitor.setObject(frame, vectorFrameIndex, object);
 
             if (length > 0) {
                 reportWork(this, length);
                 loop.profileCounted(length);
                 for (int i = 0; loop.inject(i < length); i++) {
-                    frame.setInt(indexSlot, i + 1);
+                    FrameSlotChangeMonitor.setInt(frame, indexFrameIndex, i + 1);
                     Object element = object.getDataAt(i);
                     if (element instanceof RAbstractListVector) {
                         RList newlist = RDataFactory.createList((Object[]) getRapply().execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
                         attri.execute(newlist, (RAbstractListVector) element);
                         result[i] = newlist;
-                        FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
+                        FrameSlotChangeMonitor.setObject(frame, vectorFrameIndex, object);
                     } else if (isRNull(element)) {
                         result[i] = RDataFactory.createList();
                     } else if (classes.equals("ANY") || Byte.valueOf(RRuntime.LOGICAL_TRUE).equals(inheritsNode.execute(element, RDataFactory.createStringVector(classes), false))) {
@@ -241,10 +240,10 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
             return result;
         }
 
-        protected RCallBaseNode createCallNode(FrameSlot vectorSlot, FrameSlot indexSlot) {
+        protected RCallBaseNode createCallNode(int vectorFrameIndex, int indexFrameIndex) {
             CompilerAsserts.neverPartOfCompilation();
 
-            ExtractElementInternal element = new ExtractElementInternal(vectorSlot, indexSlot);
+            ExtractElementInternal element = new ExtractElementInternal(vectorFrameIndex, indexFrameIndex);
             RSyntaxNode readArgs = ReadVariableNode.wrap(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any));
             RNode function = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, "f", false).asRNode();
 

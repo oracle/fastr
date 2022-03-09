@@ -615,7 +615,7 @@ public class EnvFunctions {
             Object binding = ReadVariableNode.lookupAny(name, frame, true);
             if (binding == null) {
                 if (!env.isLocked()) {
-                    int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), name);
+                    int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), name);
                     FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotInvalidateProfile);
                     binding = ReadVariableNode.lookupAny(name, frame, true);
                     assert binding != null;
@@ -629,7 +629,7 @@ public class EnvFunctions {
                 throw error(RError.Message.CANNOT_CHANGE_LOCKED_ACTIVE_BINDING);
             } else {
                 // update active binding
-                assert FrameSlotChangeMonitor.containsIdentifierNew(frame.getFrameDescriptor(), name);
+                assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), name);
                 int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), name);
                 FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotInvalidateProfile);
             }

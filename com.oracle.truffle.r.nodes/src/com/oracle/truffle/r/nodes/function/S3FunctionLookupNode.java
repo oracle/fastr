@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -55,6 +54,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -454,12 +454,12 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             };
 
             GetMethodsTable getTable = () -> {
-                FrameSlot slot = genericDefFrame == null ? null : genericDefFrame.getFrameDescriptor().findFrameSlot(RRuntime.RS3MethodsTable);
-                if (slot == null) {
+                int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(genericDefFrame.getFrameDescriptor(), RRuntime.RS3MethodsTable);
+                if (FrameIndex.isUninitializedIndex(frameIndex)) {
                     return null;
                 }
                 try {
-                    return FrameSlotChangeMonitor.getObject(slot, genericDefFrame);
+                    return FrameSlotChangeMonitor.getObject(genericDefFrame, frameIndex);
                 } catch (FrameSlotTypeException e) {
                     throw RInternalError.shouldNotReachHere();
                 }

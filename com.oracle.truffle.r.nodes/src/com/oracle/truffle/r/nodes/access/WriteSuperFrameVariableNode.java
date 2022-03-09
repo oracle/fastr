@@ -22,15 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.access;
 
-import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -87,17 +83,17 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
 
         @Specialization(guards = "isLogicalKind(enclosingFrame, frameIndex)")
         protected void doLogical(byte value, MaterializedFrame enclosingFrame, int frameIndex) {
-            FrameSlotChangeMonitor.setByteAndInvalidateNew(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
+            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
         }
 
         @Specialization(guards = "isIntegerKind(enclosingFrame, frameIndex)")
         protected void doInteger(int value, MaterializedFrame enclosingFrame, int frameIndex) {
-            FrameSlotChangeMonitor.setIntAndInvalidateNew(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
+            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
         }
 
         @Specialization(guards = "isDoubleKind(enclosingFrame, frameIndex)")
         protected void doDouble(double value, MaterializedFrame enclosingFrame, int frameIndex) {
-            FrameSlotChangeMonitor.setDoubleAndInvalidateNew(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
+            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
         }
 
         @Specialization
@@ -105,11 +101,11 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
             MaterializedFrame profiledFrame = enclosingFrameProfile.profile(enclosingFrame);
             if (containsNoActiveBinding == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumptionNew(profiledFrame.getFrameDescriptor());
+                containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(profiledFrame.getFrameDescriptor());
             }
             if (containsNoActiveBinding != null && containsNoActiveBinding.isValid()) {
                 Object newValue = shareObjectValue(profiledFrame, frameIndex, storedObjectProfile.profile(value), mode, true);
-                FrameSlotChangeMonitor.setObjectAndInvalidateNew(profiledFrame, frameIndex, newValue, true, invalidateProfile);
+                FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameIndex, newValue, true, invalidateProfile);
             } else {
                 handleActiveBinding(frame, profiledFrame, value, frameIndex, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
             }

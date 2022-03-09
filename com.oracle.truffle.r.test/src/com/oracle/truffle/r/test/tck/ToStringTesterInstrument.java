@@ -24,7 +24,6 @@ package com.oracle.truffle.r.test.tck;
 
 import java.io.IOException;
 
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.ExecutionEventNode;
@@ -34,6 +33,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.ToStringTestData;
 
 @TruffleInstrument.Registration(id = ToStringTesterInstrument.ID, name = ToStringTesterInstrument.ID, version = "1.0", services = ToStringTestData.class)
@@ -66,10 +66,10 @@ public class ToStringTesterInstrument extends TruffleInstrument {
                     testData.falseAsString = toDisplayString(env, rLanguage, false);
                     testData.objAsString = toDisplayString(env, rLanguage, rObj);
 
-                    FrameSlot lazySlot = frame.getFrameDescriptor().findFrameSlot("lazy");
+                    int lazyFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), "lazy");
                     Object lazyValue;
                     try {
-                        lazyValue = frame.getObject(lazySlot);
+                        lazyValue = FrameSlotChangeMonitor.getObject(frame, lazyFrameIndex);
                     } catch (FrameSlotTypeException e) {
                         throw new RuntimeException(e);
                     }

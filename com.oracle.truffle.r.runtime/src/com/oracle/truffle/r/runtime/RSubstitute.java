@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -39,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -92,10 +92,10 @@ public class RSubstitute {
                     ((EagerPromise) promise).materialize();
                 }
                 MaterializedFrame promiseFrame = promise.getFrame();
-                FrameSlot dotsSlot = promiseFrame.getFrameDescriptor().findFrameSlot("...");
+                int dotsFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(promiseFrame.getFrameDescriptor(), "...");
                 RArgsValuesAndNames dots = null;
                 try {
-                    dots = (RArgsValuesAndNames) promiseFrame.getObject(dotsSlot);
+                    dots = (RArgsValuesAndNames) FrameSlotChangeMonitor.getObject(promiseFrame, dotsFrameIndex);
                 } catch (FrameSlotTypeException e) {
                     e.printStackTrace();
                 }

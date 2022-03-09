@@ -77,7 +77,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     public Object get(String key) {
         CompilerAsserts.neverPartOfCompilation();
 
-        Object value = FrameSlotChangeMonitor.getObjectNew(frame, key);
+        Object value = FrameSlotChangeMonitor.getObject(frame, key);
         if (value == null) {
             return null;
         }
@@ -95,7 +95,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     @Override
     public boolean isActiveBinding(String key) {
         CompilerAsserts.neverPartOfCompilation();
-        Object value = FrameSlotChangeMonitor.getObjectNew(frame, key);
+        Object value = FrameSlotChangeMonitor.getObject(frame, key);
         return ActiveBinding.isActiveBinding(value);
     }
 
@@ -110,28 +110,28 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
         FrameDescriptor fd = frame.getFrameDescriptor();
 
-        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(fd, key);
-        if (valueSlotKind != FrameSlotChangeMonitor.getFrameSlotKindNew(fd, frameIndex)) {
+        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(fd, key);
+        if (valueSlotKind != FrameSlotChangeMonitor.getFrameSlotKind(fd, frameIndex)) {
             // we must not toggle between slot kinds, so go to Object
             valueSlotKind = FrameSlotKind.Object;
         }
 
         switch (valueSlotKind) {
             case Byte:
-                FrameSlotChangeMonitor.setByteAndInvalidateNew(frame, frameIndex, (byte) value, false, null);
+                FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, (byte) value, false, null);
                 break;
             case Int:
                 // TODO: setIntAndInvalidateNew
-                FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, frameIndex, (int) value, false, null);
+                FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, (int) value, false, null);
                 break;
             case Double:
                 // TODO: setDoubleAndInvalidateNew
-                FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, frameIndex, (double) value, false, null);
+                FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, (double) value, false, null);
                 break;
             case Object:
                 Object object;
                 try {
-                    object = FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
+                    object = FrameSlotChangeMonitor.getObject(frame, frameIndex);
                 } catch (FrameSlotTypeException e) {
                     object = null;
                 }
@@ -139,7 +139,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 if (object != null && ActiveBinding.isActiveBinding(object)) {
                     ((ActiveBinding) object).writeValue(value);
                 } else {
-                    FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, frameIndex, value, false, null);
+                    FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, value, false, null);
                 }
                 break;
             case Illegal:
@@ -157,19 +157,19 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
             lockedBindings.remove(key);
         }
         FrameDescriptor fd = frame.getFrameDescriptor();
-        if (!FrameSlotChangeMonitor.containsIdentifierNew(fd, key)) {
+        if (!FrameSlotChangeMonitor.containsIdentifier(fd, key)) {
             throw new PutException(RError.Message.UNKNOWN_OBJECT, key);
         } else {
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, key);
-            if (FrameSlotChangeMonitor.getFrameSlotKindNew(fd, frameIndex) != FrameSlotKind.Object) {
-                FrameSlotChangeMonitor.setFrameSlotKindNew(fd, frameIndex, FrameSlotKind.Object);
+            if (FrameSlotChangeMonitor.getFrameSlotKind(fd, frameIndex) != FrameSlotKind.Object) {
+                FrameSlotChangeMonitor.setFrameSlotKind(fd, frameIndex, FrameSlotKind.Object);
             }
 
-            Assumption containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumptionNew(fd);
+            Assumption containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(fd);
             Object result = null;
             // special treatment for active binding: call bound function
             try {
-                if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result = FrameSlotChangeMonitor.getObjectNew(frame, frameIndex))) {
+                if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result = FrameSlotChangeMonitor.getObject(frame, frameIndex))) {
                     ActiveBinding binding = (ActiveBinding) result;
                     if (binding.isHidden()) {
                         binding.setInitialized(false);
@@ -180,7 +180,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 // ignore
             }
 
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, frameIndex, null, false, null);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false, null);
         }
     }
 

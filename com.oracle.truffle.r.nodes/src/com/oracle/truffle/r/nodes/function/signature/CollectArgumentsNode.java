@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -40,6 +39,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -93,11 +93,11 @@ public abstract class CollectArgumentsNode extends RBaseNode {
         Object[] result = new Object[signature.getLength()];
         FrameDescriptor desc = frame.getFrameDescriptor();
         for (int i = 0; i < signature.getLength(); i++) {
-            FrameSlot slot = desc.findFrameSlot(signature.getName(i));
-            if (slot == null) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(desc, signature.getName(i));
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 result[i] = RMissing.instance;
             } else {
-                Object value = FrameSlotChangeMonitor.getValue(slot, frame);
+                Object value = FrameSlotChangeMonitor.getObject(frame, frameIndex);
                 if (value instanceof RPromise && ((RPromise) value).isDefaultArgument()) {
                     result[i] = RMissing.instance;
                 } else {

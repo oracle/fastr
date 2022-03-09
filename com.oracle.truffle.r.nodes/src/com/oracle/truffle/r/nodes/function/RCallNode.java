@@ -38,7 +38,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -847,7 +846,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                return FrameSlotChangeMonitor.getObjectNew(frame, slotIdx);
+                return FrameSlotChangeMonitor.getObject(frame, slotIdx);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }

@@ -28,8 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -107,10 +105,10 @@ public abstract class ArgumentStatePush extends Node {
                 if (FrameIndex.isUninitializedIndex(frameIndex)) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     synchronized (FrameSlotChangeMonitor.class) {
-                        frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), writeArgMask);
+                        frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), writeArgMask);
                     }
                 }
-                FrameSlotChangeMonitor.setObjectNew(frame, frameIndex, shareable);
+                FrameSlotChangeMonitor.setObject(frame, frameIndex, shareable);
             }
         }
     }

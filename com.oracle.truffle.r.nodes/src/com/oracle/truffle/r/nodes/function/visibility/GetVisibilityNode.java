@@ -53,11 +53,11 @@ public final class GetVisibilityNode extends Node {
     public boolean execute(Frame frame) {
         if (FrameIndex.isUninitializedIndex(frameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
         }
-        assert FrameSlotChangeMonitor.containsIdentifierNew(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.Visibility);
         try {
-            return FrameSlotChangeMonitor.getBooleanNew(frame, frameIndex);
+            return FrameSlotChangeMonitor.getBoolean(frame, frameIndex);
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -66,8 +66,8 @@ public final class GetVisibilityNode extends Node {
     public static boolean executeSlowPath(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         try {
-            int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.Visibility);
-            return FrameSlotChangeMonitor.getBooleanNew(frame, frameIndex);
+            int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+            return FrameSlotChangeMonitor.getBoolean(frame, frameIndex);
         } catch (FrameSlotTypeException ex) {
             return false;
         }

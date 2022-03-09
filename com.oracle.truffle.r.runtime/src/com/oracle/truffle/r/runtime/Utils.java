@@ -40,7 +40,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CallTarget;
@@ -78,6 +77,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
@@ -864,7 +864,7 @@ public final class Utils {
                     FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
                     for (Object identifier : FrameSlotChangeMonitor.getIdentifiers(frameDescriptor)) {
                         str.append("\n      ").append(identifier.toString()).append(" = ");
-                        Object value = FrameSlotChangeMonitor.getObjectNew(unwrapped, identifier);
+                        Object value = FrameSlotChangeMonitor.getObject(unwrapped, identifier);
                         if (value instanceof MultiSlotData) {
                             value = ((MultiSlotData) value).get(RContext.getInstance().getMultiSlotInd());
                         }

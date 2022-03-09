@@ -46,33 +46,33 @@ public final class TemporarySlotNode extends Node {
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         if (FrameIndex.isUninitializedIndex(tempSlotIdx)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            tempSlotIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RFrameSlot.getTemp(tempIdentifier));
+            tempSlotIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RFrameSlot.getTemp(tempIdentifier));
         }
 
         try {
             // If the frame slot is not empty, we have to find another empty temporary frame slot.
-            if (FrameSlotChangeMonitor.getObjectNew(frame, tempSlotIdx) != null) {
+            if (FrameSlotChangeMonitor.getObject(frame, tempSlotIdx) != null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 do {
                     tempIdentifier++;
                     RFrameSlot identifier = RFrameSlot.getTemp(tempIdentifier);
-                    tempSlotIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, identifier);
-                } while (FrameSlotChangeMonitor.getObjectNew(frame, tempSlotIdx) != null);
+                    tempSlotIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, identifier);
+                } while (FrameSlotChangeMonitor.getObject(frame, tempSlotIdx) != null);
             }
         } catch (FrameSlotTypeException e) {
             CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere();
         }
-        FrameSlotChangeMonitor.setObjectNew(frame, tempSlotIdx, value);
+        FrameSlotChangeMonitor.setObject(frame, tempSlotIdx, value);
         return tempSlotIdx;
     }
 
     public static void cleanup(VirtualFrame frame, Object object, int tempSlotIdx) {
         try {
-            assert FrameSlotChangeMonitor.getObjectNew(frame, tempSlotIdx) == object;
+            assert FrameSlotChangeMonitor.getObject(frame, tempSlotIdx) == object;
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere();
         }
-        FrameSlotChangeMonitor.setObjectNew(frame, tempSlotIdx, null);
+        FrameSlotChangeMonitor.setObject(frame, tempSlotIdx, null);
     }
 }

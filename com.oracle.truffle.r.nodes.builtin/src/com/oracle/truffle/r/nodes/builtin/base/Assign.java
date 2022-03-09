@@ -26,18 +26,15 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElemen
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.FrameIndexNode;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.WriteSuperFrameVariableNode.ResolvedWriteSuperFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteSuperFrameVariableNodeFactory.ResolvedWriteSuperFrameVariableNodeGen;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
@@ -153,7 +150,7 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
         public abstract void execute(VirtualFrame frame, REnvironment env, String name, Object value);
 
         protected static ResolvedWriteSuperFrameVariableNode createWrite(String name, FrameDescriptor envDesc) {
-            int frameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(envDesc, name);
+            int frameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(envDesc, name);
             return ResolvedWriteSuperFrameVariableNodeGen.create(name, Mode.REGULAR, null, null, FrameIndexNode.createInitialized(envDesc, name, true));
         }
 

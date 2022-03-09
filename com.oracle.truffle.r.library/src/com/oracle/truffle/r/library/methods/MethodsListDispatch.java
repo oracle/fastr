@@ -34,7 +34,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
@@ -74,6 +73,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -470,9 +470,9 @@ public class MethodsListDispatch {
 
         @TruffleBoundary
         private static Object slotRead(MaterializedFrame currentFrame, FrameDescriptor desc, String name) {
-            FrameSlot slot = desc.findFrameSlot(name);
-            if (slot != null) {
-                Object res = FrameSlotChangeMonitor.getValue(slot, currentFrame);
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(desc, name);
+            if (FrameIndex.isInitializedIndex(frameIndex)) {
+                Object res = FrameSlotChangeMonitor.getObject(currentFrame, frameIndex);
                 if (res != null) {
                     if (res instanceof RPromise) {
                         res = PromiseHelperNode.evaluateSlowPath((RPromise) res);

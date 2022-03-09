@@ -42,25 +42,25 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -235,26 +235,16 @@ public class RRuntime {
      * Create an {@link VirtualFrame} for a non-function environment, e.g., a package frame or the
      * global environment.
      */
-    @Deprecated
-    public static MaterializedFrame createNonFunctionFrame(String name) {
-        FrameDescriptor frameDescriptor = new FrameDescriptor();
-        MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(RArguments.createUnitialized(), frameDescriptor);
-        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(name, frame);
-        return frame;
-    }
-
     public static MaterializedFrame createNonFunctionFrameNew(String name) {
-        FrameDescriptor frameDescriptor = FrameSlotChangeMonitor.createUninitializedFrameDescriptorNew(name);
+        FrameDescriptor frameDescriptor = FrameSlotChangeMonitor.createUninitializedFrameDescriptor(name);
         MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(RArguments.createUnitialized(), frameDescriptor);
-        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptorNew(frameDescriptor, frame);
+        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(frameDescriptor, frame);
         assert frame.getFrameDescriptor() == frameDescriptor;
         return frame;
     }
 
     public static FrameDescriptor createFrameDescriptorWithMetaData(String name) {
-        FrameDescriptor fd = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name, fd);
-        return fd;
+        return FrameSlotChangeMonitor.createFunctionFrameDescriptor(name);
     }
 
     /**

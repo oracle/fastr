@@ -85,26 +85,26 @@ public abstract class RemoveAndAnswerNode extends RNode {
         }
 
         protected boolean isObject(VirtualFrame frame) {
-            return FrameSlotChangeMonitor.isObjectNew(frame, frameIndex);
+            return FrameSlotChangeMonitor.isObject(frame, frameIndex);
         }
 
         protected boolean isInt(VirtualFrame frame) {
-            return FrameSlotChangeMonitor.isIntNew(frame, frameIndex);
+            return FrameSlotChangeMonitor.isInt(frame, frameIndex);
         }
 
         protected boolean isDouble(VirtualFrame frame) {
-            return FrameSlotChangeMonitor.isDoubleNew(frame, frameIndex);
+            return FrameSlotChangeMonitor.isDouble(frame, frameIndex);
         }
 
         protected boolean isByte(VirtualFrame frame) {
-            return FrameSlotChangeMonitor.isByteNew(frame, frameIndex);
+            return FrameSlotChangeMonitor.isByte(frame, frameIndex);
         }
 
         @Specialization(guards = "isObject(frame)")
         protected Object doObject(VirtualFrame frame) {
             Object result;
             try {
-                result = FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
+                result = FrameSlotChangeMonitor.getObject(frame, frameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -116,7 +116,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         protected int doInt(VirtualFrame frame) {
             int result;
             try {
-                result = FrameSlotChangeMonitor.getIntNew(frame, frameIndex);
+                result = FrameSlotChangeMonitor.getInt(frame, frameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -128,7 +128,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         protected double doDouble(VirtualFrame frame) {
             double result;
             try {
-                result = FrameSlotChangeMonitor.getDoubleNew(frame, frameIndex);
+                result = FrameSlotChangeMonitor.getDouble(frame, frameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -140,7 +140,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
         protected byte doByte(VirtualFrame frame) {
             byte result;
             try {
-                result = FrameSlotChangeMonitor.getByteNew(frame, frameIndex);
+                result = FrameSlotChangeMonitor.getByte(frame, frameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -150,7 +150,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         private void resetAndInvalidateFrameIndex(VirtualFrame frame) {
             // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, frameIndex, null, false, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false, invalidateProfile);
         }
     }
 }

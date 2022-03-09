@@ -39,7 +39,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -532,7 +531,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
             if (FrameIndex.isInitializedIndex(frameIndex)) {
-                Object value = FrameSlotChangeMonitor.getObjectNew(variableFrame, frameIndex);
+                Object value = FrameSlotChangeMonitor.getObject(variableFrame, frameIndex);
                 if (checkType(frame, value, isNullProfile)) {
                     return value;
                 }
@@ -559,7 +558,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return null;
             } else {
-                return FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
+                return FrameSlotChangeMonitor.getObject(current, frameIndex);
             }
         }
 
@@ -751,7 +750,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             }
         }
 
-        Assumption enclosingDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumptionNew(variableFrameDescriptor);
+        Assumption enclosingDescriptorAssumption = FrameSlotChangeMonitor.getEnclosingFrameDescriptorAssumption(variableFrameDescriptor);
         if (lastLevel instanceof DescriptorLevel && enclosingDescriptorAssumption != null) {
             assumptions.add(enclosingDescriptorAssumption);
         } else {
@@ -783,7 +782,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             // see if the current frame has a value of the given name
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
             if (FrameIndex.isInitializedIndex(frameIndex)) {
-                Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
+                Object value = FrameSlotChangeMonitor.getObject(current, frameIndex);
 
                 if (value != null) {
                     if (value == RMissing.instance) {
@@ -823,7 +822,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             // see if the current frame has a value of the given name
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
             if (FrameIndex.isInitializedIndex(frameIndex)) {
-                Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
+                Object value = FrameSlotChangeMonitor.getObject(current, frameIndex);
 
                 if (value != null) {
                     if (value == RMissing.instance) {
@@ -850,7 +849,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             // see if the current frame has a value of the given name
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
             if (FrameIndex.isInitializedIndex(frameIndex)) {
-                Object value = FrameSlotChangeMonitor.getObjectNew(current, frameIndex);
+                Object value = FrameSlotChangeMonitor.getObject(current, frameIndex);
 
                 if (value != null) {
                     if (value == RNull.instance) {

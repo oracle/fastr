@@ -40,18 +40,14 @@ public final class GetBaseEnvFrameNode extends Node {
     private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
     private final ValueProfile frameProfile = ValueProfile.createClassProfile();
     private final ValueProfile baseEnvProfile = ValueProfile.createIdentityProfile();
-    @CompilationFinal private TruffleLanguage.ContextReference<RContext> ctxRef;
+    private final RContext ctx = RContext.getInstance(this);
 
     public static GetBaseEnvFrameNode create() {
         return new GetBaseEnvFrameNode();
     }
 
     public MaterializedFrame execute() {
-        if (ctxRef == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            ctxRef = lookupContextReference(TruffleRLanguage.class);
-        }
-        REnvironment baseEnv = baseEnvProfile.profile(REnvironment.baseEnv(ctxRef.get()));
+        REnvironment baseEnv = baseEnvProfile.profile(REnvironment.baseEnv(ctx));
         return frameProfile.profile(baseEnv.getFrame(frameAccessProfile));
     }
 }
