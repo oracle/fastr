@@ -50,8 +50,6 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
@@ -97,6 +95,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -222,9 +221,8 @@ public class RSerialize {
         }
 
         public static int packFlags(SEXPTYPE type, int gpbits, boolean isObj, boolean hasAttr, boolean hasTag) {
-            int val = type.code;
             int levs = gpbits & (~(CACHED_MASK | HASHASH_MASK));
-            val = type.code | (levs << 12);
+            int val = type.code | (levs << 12);
 
             if (isObj) {
                 val |= IS_OBJECT_BIT_MASK;
@@ -601,19 +599,28 @@ public class RSerialize {
 
                     RSymbol sym = (RSymbol) info.getDataAtAsObject(0);
                     String altrepClass = sym.getName();
-                    if (altrepClass.equals("compact_intseq")) {
-                        result = readCompactIntSeq(state);
-                    } else if (altrepClass.equals("compact_realseq")) {
-                        result = readCompactRealSeq(state);
-                    } else if (altrepClass.equals("deferred_string")) {
-                        RPairList l = (RPairList) state;
-                        RAbstractVector vec = (RAbstractVector) l.car();
-                        result = vec.castSafe(RType.Character, ConditionProfile.getUncached());
-                    } else if (altrepClass.equals("wrap_real") || altrepClass.equals("wrap_integer") || altrepClass.equals("wrap_string")) {
-                        RPairList l = (RPairList) state;
-                        result = l.car();
-                    } else {
-                        throw RInternalError.unimplemented(sym.getName());
+                    switch (altrepClass) {
+                        case "compact_intseq":
+                            result = readCompactIntSeq(state);
+                            break;
+                        case "compact_realseq":
+                            result = readCompactRealSeq(state);
+                            break;
+                        case "deferred_string": {
+                            RPairList l = (RPairList) state;
+                            RAbstractVector vec = (RAbstractVector) l.car();
+                            result = vec.castSafe(RType.Character, ConditionProfile.getUncached());
+                            break;
+                        }
+                        case "wrap_real":
+                        case "wrap_integer":
+                        case "wrap_string": {
+                            RPairList l = (RPairList) state;
+                            result = l.car();
+                            break;
+                        }
+                        default:
+                            throw RInternalError.unimplemented(sym.getName());
                     }
 
                     if (attr != RNull.instance) {
@@ -1000,6 +1007,7 @@ public class RSerialize {
                     Object attr = readItem();
                     result = setAttributes(result, attr);
                 }
+                assert result instanceof RBaseObject;
                 ((RBaseObject) result).setGPBits(levs);
             }
 
@@ -1047,8 +1055,8 @@ public class RSerialize {
             String name = ((RSymbol) pl.getTag()).getName();
             Object car = pl.car();
             if (ActiveBinding.isActiveBinding(car)) {
-                FrameSlot frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(env.getFrame().getFrameDescriptor(), name, FrameSlotKind.Object);
-                FrameSlotChangeMonitor.setActiveBinding(env.getFrame(), frameSlot, (ActiveBinding) car, false, null);
+                int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(env.getFrame().getFrameDescriptor(), name);
+                FrameSlotChangeMonitor.setActiveBinding(env.getFrame(), frameIndex, (ActiveBinding) car, false, null);
             } else {
                 env.safePut(name, car);
             }
@@ -1207,8 +1215,7 @@ public class RSerialize {
                     return ans;
                 }
                 default: {
-                    Object ans = readItem();
-                    return ans;
+                    return readItem();
                 }
             }
         }
@@ -1949,11 +1956,11 @@ public class RSerialize {
 
         private static Object getValueIgnoreActiveBinding(Frame frame, String key) {
             FrameDescriptor fd = frame.getFrameDescriptor();
-            FrameSlot slot = fd.findFrameSlot(key);
-            if (slot == null) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, key);
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return null;
             } else {
-                return frame.getValue(slot);
+                return FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
             }
         }
 
@@ -2517,9 +2524,7 @@ public class RSerialize {
 
         private static void print(String format, Object... objects) {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < indent * 2; i++) {
-                sb.append(' ');
-            }
+            sb.append(" ".repeat(indent * 2));
             sb.append(String.format(format, objects));
             LOGGER.info(sb.toString());
         }

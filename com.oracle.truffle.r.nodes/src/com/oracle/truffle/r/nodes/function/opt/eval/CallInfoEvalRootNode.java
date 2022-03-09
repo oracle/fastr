@@ -25,8 +25,7 @@ package com.oracle.truffle.r.nodes.function.opt.eval;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
@@ -42,6 +41,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -80,35 +80,36 @@ public final class CallInfoEvalRootNode extends RootNode {
      */
     public static final class FastPathDirectCallerNode extends Node {
 
-        @CompilationFinal private FrameSlot argsFrameSlot;
-        @CompilationFinal private FrameSlot funFrameSlot;
+        @CompilationFinal private int argsFrameIndex = RFrameSlot.FunctionEvalNodeArgsIdentifier.getFrameIdx();
+        @CompilationFinal private int funFrameIndex = RFrameSlot.FunctionEvalNodeFunIdentifier.getFrameIdx();
 
         private final CallInfoEvalRootNode evalRootNode = new CallInfoEvalRootNode(RFrameSlot.FunctionEvalNodeArgsIdentifier, RFrameSlot.FunctionEvalNodeFunIdentifier);
         @Child private DirectCallNode directCallNode = DirectCallNode.create(evalRootNode.getCallTarget());
 
         public Object execute(VirtualFrame evalFrame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame) {
-            if (argsFrameSlot == null) {
+            FrameDescriptor evalFrameDescriptor = evalFrame.getFrameDescriptor();
+            if (FrameIndex.isUninitializedIndex(argsFrameIndex)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), RFrameSlot.FunctionEvalNodeArgsIdentifier, FrameSlotKind.Object);
+                argsFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(evalFrameDescriptor, RFrameSlot.FunctionEvalNodeArgsIdentifier);
             }
-            if (funFrameSlot == null) {
+            if (FrameIndex.isUninitializedIndex(funFrameIndex)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                funFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), RFrameSlot.FunctionEvalNodeFunIdentifier, FrameSlotKind.Object);
+                funFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(evalFrameDescriptor, RFrameSlot.FunctionEvalNodeFunIdentifier);
             }
             // This assertion should verify that the descriptor of the current frame is the same as
             // the first descriptor for which this node created. See the guard at
             // RfEvalNode.FunctionEvalNode (FunctionInfo.isCompatible()).
-            assert evalFrame.getFrameDescriptor().findFrameSlot(RFrameSlot.FunctionEvalNodeArgsIdentifier) != null &&
-                            evalFrame.getFrameDescriptor().findFrameSlot(RFrameSlot.FunctionEvalNodeFunIdentifier) != null;
+            assert FrameSlotChangeMonitor.containsIdentifierNew(evalFrameDescriptor, RFrameSlot.FunctionEvalNodeArgsIdentifier);
+            assert FrameSlotChangeMonitor.containsIdentifierNew(evalFrameDescriptor, RFrameSlot.FunctionEvalNodeFunIdentifier);
             try {
                 // the two slots are used to pass the explicit args and the called function to the
                 // FunctionEvalRootNode
-                FrameSlotChangeMonitor.setObject(evalFrame, argsFrameSlot, new ExplicitArgs(args, explicitCaller, callerFrame));
-                FrameSlotChangeMonitor.setObject(evalFrame, funFrameSlot, function);
+                FrameSlotChangeMonitor.setObjectNew(evalFrame, argsFrameIndex, new ExplicitArgs(args, explicitCaller, callerFrame));
+                FrameSlotChangeMonitor.setObjectNew(evalFrame, funFrameIndex, function);
                 return directCallNode.call(evalFrame);
             } finally {
-                FrameSlotChangeMonitor.setObject(evalFrame, argsFrameSlot, null);
-                FrameSlotChangeMonitor.setObject(evalFrame, funFrameSlot, null);
+                FrameSlotChangeMonitor.setObjectNew(evalFrame, argsFrameIndex, null);
+                FrameSlotChangeMonitor.setObjectNew(evalFrame, funFrameIndex, null);
             }
         }
 

@@ -43,8 +43,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -185,7 +183,7 @@ public class EnvFunctions {
                         @Cached("createGetXDataAttrNode()") GetFixedAttributeNode getXDataAttrNode) {
             // generic dispatch tried already
             Object xData = getXDataAttrNode.execute(obj);
-            if (xData == null || !(xData instanceof REnvironment)) {
+            if (!(xData instanceof REnvironment)) {
                 throw error(RError.Message.S4OBJECT_NX_ENVIRONMENT);
             } else {
                 return xData;
@@ -607,23 +605,18 @@ public class EnvFunctions {
             casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
-        @CompilationFinal private BranchProfile frameSlotBranchProfile;
+        @CompilationFinal private BranchProfile frameSlotInvalidateProfile = BranchProfile.create();
 
         @TruffleBoundary
         @Specialization
         protected Object makeActiveBinding(RSymbol sym, RFunction fun, REnvironment env) {
-            if (frameSlotBranchProfile == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                frameSlotBranchProfile = BranchProfile.create();
-            }
-
             String name = sym.getName();
             MaterializedFrame frame = env.getFrame();
             Object binding = ReadVariableNode.lookupAny(name, frame, true);
             if (binding == null) {
                 if (!env.isLocked()) {
-                    FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), name, FrameSlotKind.Object);
-                    FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile);
+                    int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), name);
+                    FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotInvalidateProfile);
                     binding = ReadVariableNode.lookupAny(name, frame, true);
                     assert binding != null;
                     assert binding instanceof ActiveBinding;
@@ -636,8 +629,9 @@ public class EnvFunctions {
                 throw error(RError.Message.CANNOT_CHANGE_LOCKED_ACTIVE_BINDING);
             } else {
                 // update active binding
-                FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
-                FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile);
+                assert FrameSlotChangeMonitor.containsIdentifierNew(frame.getFrameDescriptor(), name);
+                int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), name);
+                FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotInvalidateProfile);
             }
             return RNull.instance;
         }

@@ -22,10 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -34,6 +34,7 @@ import com.oracle.truffle.api.utilities.AssumedValue;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public final class PostProcessArgumentsNode extends RNode {
 
-    @CompilationFinal(dimensions = 1) private final FrameSlot[] frameSlots;
+    @CompilationFinal(dimensions = 1) private final int[] frameIndexes;
 
     // stays the same during cloning
     private final AssumedValue<Integer> transArgsBitSet;
@@ -52,7 +53,8 @@ public final class PostProcessArgumentsNode extends RNode {
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
     private PostProcessArgumentsNode(int length) {
-        this.frameSlots = new FrameSlot[Math.min(length, ArgumentStatePush.MAX_COUNTED_ARGS)];
+        this.frameIndexes = new int[Math.min(length, ArgumentStatePush.MAX_COUNTED_ARGS)];
+        Arrays.fill(frameIndexes, FrameIndex.UNITIALIZED_INDEX);
         this.transArgsBitSet = new AssumedValue<>("PostProcessArgumentsNode.transArgsBitSet", 0);
     }
 
@@ -61,7 +63,7 @@ public final class PostProcessArgumentsNode extends RNode {
     }
 
     public int getLength() {
-        return frameSlots.length;
+        return frameIndexes.length;
     }
 
     @Override
@@ -69,18 +71,18 @@ public final class PostProcessArgumentsNode extends RNode {
     public Object execute(VirtualFrame frame) {
         int bits = transArgsBitSet.get();
         if (bits != 0) {
-            for (int i = 0; i < frameSlots.length; i++) {
+            for (int i = 0; i < frameIndexes.length; i++) {
                 int mask = 1 << i;
                 if ((bits & mask) != 0) {
-                    if (frameSlots[i] == null) {
+                    if (FrameIndex.isUninitializedIndex(frameIndexes[i])) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         synchronized (FrameSlotChangeMonitor.class) {
-                            frameSlots[i] = frame.getFrameDescriptor().findOrAddFrameSlot(mask, FrameSlotKind.Object);
+                            frameIndexes[i] = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), mask);
                         }
                     }
                     RSharingAttributeStorage s;
                     try {
-                        Object sObj = frame.getObject(frameSlots[i]);
+                        Object sObj = FrameSlotChangeMonitor.getObjectNew(frame, frameIndexes[i]);
                         s = (RSharingAttributeStorage) sObj;
                     } catch (FrameSlotTypeException e) {
                         throw RInternalError.shouldNotReachHere();
@@ -97,7 +99,7 @@ public final class PostProcessArgumentsNode extends RNode {
     }
 
     public boolean updateBits(int index) {
-        if (index < frameSlots.length) {
+        if (index < frameIndexes.length) {
             int bits = transArgsBitSet.get();
             int newBits = bits | (1 << index);
             if (newBits != bits) {

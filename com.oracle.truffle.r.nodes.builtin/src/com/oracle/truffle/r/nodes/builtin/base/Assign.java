@@ -36,6 +36,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.FrameIndexNode;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.WriteSuperFrameVariableNode.ResolvedWriteSuperFrameVariableNode;
 import com.oracle.truffle.r.nodes.access.WriteSuperFrameVariableNodeFactory.ResolvedWriteSuperFrameVariableNodeGen;
@@ -50,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -151,7 +153,8 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
         public abstract void execute(VirtualFrame frame, REnvironment env, String name, Object value);
 
         protected static ResolvedWriteSuperFrameVariableNode createWrite(String name, FrameDescriptor envDesc) {
-            return ResolvedWriteSuperFrameVariableNodeGen.create(name, Mode.REGULAR, null, null, FrameSlotNode.create(findOrAddFrameSlot(envDesc, name, FrameSlotKind.Illegal)));
+            int frameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(envDesc, name);
+            return ResolvedWriteSuperFrameVariableNodeGen.create(name, Mode.REGULAR, null, null, FrameIndexNode.createInitialized(envDesc, name, true));
         }
 
         protected FrameDescriptor getFrameDescriptor(REnvironment env) {

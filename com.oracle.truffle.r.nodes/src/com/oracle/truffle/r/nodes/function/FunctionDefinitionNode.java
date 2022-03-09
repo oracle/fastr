@@ -32,7 +32,6 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -115,7 +114,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private final RNodeClosureCache closureCache = new RNodeClosureCache();
 
-    @Child private FrameIndexNode onExitSlot;
+    @Child private FrameIndexNode onExitSlotIndexNode;
     @Child private InlineCacheNode onExitExpressionCache;
     @Child private InteropLibrary exceptionInterop;
     @Child private RPairListLibrary exitSlotsPlLib;
@@ -135,8 +134,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     private final Assumption noHandlerStackSlot = Truffle.getRuntime().createAssumption("noHandlerStackSlot");
     private final Assumption noRestartStackSlot = Truffle.getRuntime().createAssumption("noRestartStackSlot");
-    @CompilationFinal private FrameSlot handlerStackSlot;
-    @CompilationFinal private FrameSlot restartStackSlot;
+    @CompilationFinal private int handlerStackFrameIdx = FrameIndex.UNITIALIZED_INDEX;
+    @CompilationFinal private int restartStackFrameIdx = FrameIndex.UNITIALIZED_INDEX;
 
     // Profiling for catching ReturnException thrown from an exit handler
     @CompilationFinal private ConditionProfile returnTopLevelProfile;
@@ -153,12 +152,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         super(language, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
         this.formalArguments = formals;
         this.argSourceSections = argSourceSections;
-        assert FrameSlotChangeMonitor.isValidFrameDescriptorNew(frameDesc);
+        assert FrameSlotChangeMonitor.isValidFrameDescriptor(frameDesc);
         assert src != null;
         this.sourceSectionR = src;
         this.body = new FunctionBodyNode(saveArguments, body.asRNode());
         this.name = name;
-        this.onExitSlot = FrameIndexNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
+        this.onExitSlotIndexNode = FrameIndexNode.createInitialized(frameDesc, RFrameSlot.OnExit, false);
         this.needsSplitting = needsAnyBuiltinSplitting();
         this.containsDispatch = containsAnyDispatch(body);
         this.argPostProcess = argPostProcess;
@@ -309,7 +308,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         } catch (RError e) {
             CompilerDirectives.transferToInterpreter();
             SetVisibilityNode.executeSlowPath(frame, false);
-            if (onExitProfile.profile(onExitSlot.hasValue(frame))) {
+            if (onExitProfile.profile(onExitSlotIndexNode.hasValue(frame))) {
                 Utils.writeStderr(e.getMessage(), true);
                 e.setPrinted(true);
             }
@@ -358,32 +357,32 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                 boolean actualVisibility = RArguments.getCall(frame).getVisibility();
 
                 if (!noHandlerStackSlot.isValid()) {
-                    FrameSlot slot = getHandlerFrameSlot(frame);
-                    if (frame.isObject(slot)) {
+                    int handlerFrameIndex = getHandlerFrameIndex(frame);
+                    if (FrameSlotChangeMonitor.isObjectNew(frame, handlerFrameIndex)) {
                         try {
-                            RErrorHandling.restoreHandlerStack(frame.getObject(slot), RContext.getInstance(this));
+                            RErrorHandling.restoreHandlerStack(FrameSlotChangeMonitor.getObjectNew(frame, handlerFrameIndex), RContext.getInstance(this));
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }
                     }
                 }
                 if (!noRestartStackSlot.isValid()) {
-                    FrameSlot slot = getRestartFrameSlot(frame);
-                    if (frame.isObject(slot)) {
+                    int restartFrameIndex = getRestartFrameIndex(frame);
+                    if (FrameSlotChangeMonitor.isObjectNew(frame, restartFrameIndex)) {
                         try {
-                            RErrorHandling.restoreRestartStack(frame.getObject(slot), RContext.getInstance(this));
+                            RErrorHandling.restoreRestartStack(FrameSlotChangeMonitor.getObjectNew(frame, restartFrameIndex), RContext.getInstance(this));
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }
                     }
                 }
 
-                if (onExitProfile.profile(onExitSlot.hasValue(frame))) {
+                if (onExitProfile.profile(onExitSlotIndexNode.hasValue(frame))) {
                     if (onExitExpressionCache == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         onExitExpressionCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(3)));
                     }
-                    RPairList current = getCurrentOnExitList(frame, onExitSlot.executeFrameIndex(frame));
+                    RPairList current = getCurrentOnExitList(frame, onExitSlotIndexNode.executeFrameIndex(frame));
                     /*
                      * We do not need to preserve visibility, since visibility.executeEndOfFunction
                      * was already called.
@@ -483,28 +482,28 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return name;
     }
 
-    public FrameSlot getRestartFrameSlot(VirtualFrame frame) {
+    public int getRestartFrameIndex(VirtualFrame frame) {
         if (noRestartStackSlot.isValid()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             noRestartStackSlot.invalidate();
         }
-        if (restartStackSlot == null) {
+        if (FrameIndex.isUninitializedIndex(restartStackFrameIdx)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            restartStackSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.RestartStack, FrameSlotKind.Object);
+            restartStackFrameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.RestartStack);
         }
-        return restartStackSlot;
+        return restartStackFrameIdx;
     }
 
-    public FrameSlot getHandlerFrameSlot(VirtualFrame frame) {
+    public int getHandlerFrameIndex(VirtualFrame frame) {
         if (noHandlerStackSlot.isValid()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             noHandlerStackSlot.invalidate();
         }
-        if (handlerStackSlot == null) {
+        if (FrameIndex.isUninitializedIndex(handlerStackFrameIdx)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            handlerStackSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.HandlerStack, FrameSlotKind.Object);
+            handlerStackFrameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.HandlerStack);
         }
-        return handlerStackSlot;
+        return handlerStackFrameIdx;
     }
 
     public InteropLibrary getExceptionInterop() {

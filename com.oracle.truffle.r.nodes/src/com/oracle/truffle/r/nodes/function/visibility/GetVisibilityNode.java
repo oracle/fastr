@@ -26,13 +26,12 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
@@ -42,7 +41,7 @@ import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 @NodeInfo(cost = NodeCost.NONE)
 public final class GetVisibilityNode extends Node {
 
-    @CompilationFinal private FrameSlot frameSlot;
+    @CompilationFinal private int frameIndex = RFrameSlot.Visibility.getFrameIdx();
 
     private GetVisibilityNode() {
     }
@@ -52,12 +51,13 @@ public final class GetVisibilityNode extends Node {
     }
 
     public boolean execute(Frame frame) {
-        if (frameSlot == null) {
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.Visibility);
         }
+        assert FrameSlotChangeMonitor.containsIdentifierNew(frame.getFrameDescriptor(), RFrameSlot.Visibility);
         try {
-            return frame.getBoolean(frameSlot);
+            return FrameSlotChangeMonitor.getBooleanNew(frame, frameIndex);
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -66,7 +66,8 @@ public final class GetVisibilityNode extends Node {
     public static boolean executeSlowPath(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         try {
-            return frame.getBoolean(FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean));
+            int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+            return FrameSlotChangeMonitor.getBooleanNew(frame, frameIndex);
         } catch (FrameSlotTypeException ex) {
             return false;
         }

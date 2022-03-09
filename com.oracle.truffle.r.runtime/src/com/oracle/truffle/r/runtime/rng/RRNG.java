@@ -19,6 +19,9 @@
  */
 package com.oracle.truffle.r.runtime.rng;
 
+import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.REJECTION;
+import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.ROUNDING;
+
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -26,8 +29,6 @@ import java.util.function.Supplier;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -42,8 +43,6 @@ import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
-import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.REJECTION;
-import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.ROUNDING;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
@@ -230,8 +229,8 @@ public class RRNG {
             RFunction fun = context.lookupBuiltin(".fastr.set.seed");
             ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun, true);
             Frame frame = REnvironment.globalEnv().getFrame();
-            FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RRNG.RANDOM_SEED, FrameSlotKind.Object);
-            FrameSlotChangeMonitor.setActiveBinding(frame, slot, dotRandomSeed, false, null);
+            int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), RRNG.RANDOM_SEED);
+            FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, dotRandomSeed, false, null);
             dotRandomSeedBinding = new WeakReference<>(dotRandomSeed);
         }
 

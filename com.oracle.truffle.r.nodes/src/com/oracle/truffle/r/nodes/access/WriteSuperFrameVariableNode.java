@@ -67,7 +67,7 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
     }
 
     @NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class)
-    @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)
+    @NodeChild(value = "frameIndexNode", type = FrameIndexNode.class)
     public abstract static class ResolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNode {
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
@@ -83,35 +83,35 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
             this.mode = mode;
         }
 
-        protected abstract FrameSlotNode getFrameSlotNode();
+        protected abstract FrameIndexNode getFrameIndexNode();
 
-        @Specialization(guards = "isLogicalKind(enclosingFrame, frameSlot)")
-        protected void doLogical(byte value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
+        @Specialization(guards = "isLogicalKind(enclosingFrame, frameIndex)")
+        protected void doLogical(byte value, MaterializedFrame enclosingFrame, int frameIndex) {
+            FrameSlotChangeMonitor.setByteAndInvalidateNew(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
         }
 
-        @Specialization(guards = "isIntegerKind(enclosingFrame, frameSlot)")
-        protected void doInteger(int value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
+        @Specialization(guards = "isIntegerKind(enclosingFrame, frameIndex)")
+        protected void doInteger(int value, MaterializedFrame enclosingFrame, int frameIndex) {
+            FrameSlotChangeMonitor.setIntAndInvalidateNew(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
         }
 
-        @Specialization(guards = "isDoubleKind(enclosingFrame, frameSlot)")
-        protected void doDouble(double value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
-            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameSlot, value, true, invalidateProfile);
+        @Specialization(guards = "isDoubleKind(enclosingFrame, frameIndex)")
+        protected void doDouble(double value, MaterializedFrame enclosingFrame, int frameIndex) {
+            FrameSlotChangeMonitor.setDoubleAndInvalidateNew(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
         }
 
         @Specialization
-        protected void doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, FrameSlot frameSlot) {
+        protected void doObject(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame, int frameIndex) {
             MaterializedFrame profiledFrame = enclosingFrameProfile.profile(enclosingFrame);
             if (containsNoActiveBinding == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(profiledFrame.getFrameDescriptor());
+                containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumptionNew(profiledFrame.getFrameDescriptor());
             }
             if (containsNoActiveBinding != null && containsNoActiveBinding.isValid()) {
-                Object newValue = shareObjectValue(profiledFrame, frameSlot, storedObjectProfile.profile(value), mode, true);
-                FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameSlot, newValue, true, invalidateProfile);
+                Object newValue = shareObjectValue(profiledFrame, frameIndex, storedObjectProfile.profile(value), mode, true);
+                FrameSlotChangeMonitor.setObjectAndInvalidateNew(profiledFrame, frameIndex, newValue, true, invalidateProfile);
             } else {
-                handleActiveBinding(frame, profiledFrame, value, frameSlot, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
+                handleActiveBinding(frame, profiledFrame, value, frameIndex, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
             }
         }
     }
@@ -144,9 +144,9 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
                  */
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? new AccessEnclosingFrameNode() : null;
                 writeNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, rhs, enclosingFrameNode,
-                                FrameSlotNode.create(findOrAddFrameSlot(enclosingFrame.getFrameDescriptor(), getName(), FrameSlotKind.Illegal)));
+                                FrameIndexNode.create(getName(), true));
             } else {
-                ResolvedWriteSuperFrameVariableNode actualWriteNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, null, null, FrameSlotNode.create(getName(), false));
+                ResolvedWriteSuperFrameVariableNode actualWriteNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, null, null, FrameIndexNode.create(getName(), false));
                 writeNode = new WriteSuperFrameVariableConditionalNode(getName(), actualWriteNode, new UnresolvedWriteSuperFrameVariableNode(getName(), mode, null), rhs);
             }
             replace(writeNode).execute(frame, value, enclosingFrame);
@@ -190,7 +190,7 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
         @Override
         public void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame) {
             MaterializedFrame profiledEnclosingFrame = enclosingFrameProfile.profile(enclosingFrame);
-            if (hasValueProfile.profile(writeNode.getFrameSlotNode().hasValue(profiledEnclosingFrame))) {
+            if (hasValueProfile.profile(writeNode.getFrameIndexNode().hasValue(profiledEnclosingFrame))) {
                 writeNode.execute(frame, value, profiledEnclosingFrame);
             } else {
                 MaterializedFrame superFrame = RArguments.getEnclosingFrame(profiledEnclosingFrame);

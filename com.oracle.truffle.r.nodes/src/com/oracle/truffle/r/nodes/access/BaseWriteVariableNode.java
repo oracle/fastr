@@ -85,7 +85,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * truffle .api.frame.Frame, com.oracle.truffle.api.frame.FrameSlot, java.lang.Object,
      * com.oracle.truffle.r.nodes.access.AbstractWriteVariableNode.Mode, boolean)
      */
-    protected final Object shareObjectValue(Frame frame, FrameSlot frameSlot, Object value, Mode mode, boolean isSuper) {
+    protected final Object shareObjectValue(Frame frame, int frameIndex, Object value, Mode mode, boolean isSuper) {
         CompilerAsserts.compilationConstant(mode);
         CompilerAsserts.compilationConstant(isSuper);
         // for the meaning of INVISIBLE mode see the comment preceding the current method;
@@ -100,7 +100,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
 
                 // this comparison does not work consistently for boxing objects, so it's important
                 // to do the RShareable check first.
-                if (isCurrentValue(frame, frameSlot, value)) {
+                if (isCurrentValue(frame, frameIndex, value)) {
                     return value;
                 }
                 RSharingAttributeStorage rShareable = (RSharingAttributeStorage) shareableProfile.profile(value);
@@ -123,9 +123,10 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         return value;
     }
 
-    private boolean isCurrentValue(Frame frame, FrameSlot frameSlot, Object value) {
+    private boolean isCurrentValue(Frame frame, int frameIndex, Object value) {
         try {
-            return isObjectProfile.profile(frame.isObject(frameSlot)) && isCurrentProfile.profile(FrameSlotChangeMonitor.getObject(frameSlot, frame) == value);
+            return isObjectProfile.profile(FrameSlotChangeMonitor.isObjectNew(frame, frameIndex))
+                                && isCurrentProfile.profile(FrameSlotChangeMonitor.getObjectNew(frame, frameIndex) == value);
         } catch (FrameSlotTypeException ex) {
             throw RInternalError.shouldNotReachHere();
         }
@@ -135,33 +136,34 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * The frame parameters are needed to keep the guards from being considered static.
      */
 
-    protected boolean isLogicalKind(Frame frame, FrameSlot frameSlot) {
-        return isKind(frame.getFrameDescriptor(), frameSlot, FrameSlotKind.Boolean);
+    protected boolean isLogicalKind(Frame frame, int frameIndex) {
+        return isKind(frame.getFrameDescriptor(), frameIndex, FrameSlotKind.Boolean);
     }
 
-    protected boolean isIntegerKind(Frame frame, FrameSlot frameSlot) {
-        return isKind(frame.getFrameDescriptor(), frameSlot, FrameSlotKind.Int);
+    protected boolean isIntegerKind(Frame frame, int frameIndex) {
+        return isKind(frame.getFrameDescriptor(), frameIndex, FrameSlotKind.Int);
     }
 
-    protected boolean isDoubleKind(Frame frame, FrameSlot frameSlot) {
-        return isKind(frame.getFrameDescriptor(), frameSlot, FrameSlotKind.Double);
+    protected boolean isDoubleKind(Frame frame, int frameIndex) {
+        return isKind(frame.getFrameDescriptor(), frameIndex, FrameSlotKind.Double);
     }
 
-    protected boolean isKind(FrameDescriptor fd, FrameSlot frameSlot, FrameSlotKind kind) {
-        if (fd.getFrameSlotKind(frameSlot) == kind) {
+    protected boolean isKind(FrameDescriptor fd, int frameIndex, FrameSlotKind kind) {
+        if (FrameSlotChangeMonitor.getFrameSlotKindNew(fd, frameIndex) == kind) {
             return true;
         } else {
             initialSetKindProfile.enter();
-            return initialSetKind(fd, frameSlot, kind);
+            return initialSetKind(fd, frameIndex, kind);
         }
     }
 
-    private static boolean initialSetKind(FrameDescriptor fd, FrameSlot frameSlot, FrameSlotKind kind) {
-        if (fd.getFrameSlotKind(frameSlot) == FrameSlotKind.Illegal) {
-            fd.setFrameSlotKind(frameSlot, kind);
+    private static boolean initialSetKind(FrameDescriptor fd, int frameIndex, FrameSlotKind kind) {
+        if (FrameSlotChangeMonitor.getFrameSlotKindNew(fd, frameIndex) == FrameSlotKind.Illegal) {
+            FrameSlotChangeMonitor.setFrameSlotKindNew(fd, frameIndex, kind);
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     /**
@@ -170,16 +172,16 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * @param execFrame The frame to be used for executing the function associated with the symbol.
      * @param lookupFrame The frame to lookup the symbol (must not be {@code null}).
      * @param value The value to set.
-     * @param frameSlot The frame slot of the value.
+     * @param frameIndex The frame index of the value.
      * @param invalidateProfile The invalidation profile.
      * @param mode
      * @param storedObjectProfile
      */
-    protected Object handleActiveBinding(VirtualFrame execFrame, Frame lookupFrame, Object value, FrameSlot frameSlot, BranchProfile invalidateProfile,
+    protected Object handleActiveBinding(VirtualFrame execFrame, Frame lookupFrame, Object value, int frameIndex, BranchProfile invalidateProfile,
                     ConditionProfile isActiveBindingProfile, ValueProfile storedObjectProfile, Mode mode) {
         Object object;
         try {
-            object = FrameSlotChangeMonitor.getObject(frameSlot, lookupFrame);
+            object = FrameSlotChangeMonitor.getObjectNew(lookupFrame, frameIndex);
         } catch (FrameSlotTypeException e) {
             object = null;
         }
@@ -196,8 +198,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
                 binding.setInitialized(true);
             }
         } else {
-            Object newValue = shareObjectValue(lookupFrame, frameSlot, storedObjectProfile.profile(value), mode, false);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(lookupFrame, frameSlot, newValue, false, invalidateProfile);
+            Object newValue = shareObjectValue(lookupFrame, frameIndex, storedObjectProfile.profile(value), mode, false);
+            FrameSlotChangeMonitor.setObjectAndInvalidateNew(lookupFrame, frameIndex, newValue, false, invalidateProfile);
         }
         return value;
     }

@@ -60,6 +60,7 @@ public final class SetVisibilityNode extends Node {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frameDescriptor, RFrameSlot.Visibility);
         }
+        assert FrameSlotChangeMonitor.containsIdentifierNew(frameDescriptor, RFrameSlot.Visibility);
     }
 
     public void execute(Frame frame, boolean value) {

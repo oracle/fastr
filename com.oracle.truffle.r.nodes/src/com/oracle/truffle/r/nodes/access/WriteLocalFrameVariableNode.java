@@ -61,44 +61,44 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
         this.mode = mode;
     }
 
-    protected FrameSlot findOrAddFrameSlot(VirtualFrame frame, FrameSlotKind initialKind) {
-        return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
+    protected int findOrAddFrameIndex(VirtualFrame frame, FrameSlotKind initialKind) {
+        return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlotNew(frame.getFrameDescriptor(), getName());
     }
 
-    @Specialization(guards = "isLogicalKind(frame, frameSlot)")
+    @Specialization(guards = "isLogicalKind(frame, frameIndex)")
     protected byte doLogical(VirtualFrame frame, byte value,
-                    @Cached("findOrAddFrameSlot(frame, Byte)") FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+                    @Cached("findOrAddFrameIndex(frame, Byte)") int frameIndex) {
+        FrameSlotChangeMonitor.setByteAndInvalidateNew(frame, frameIndex, value, false, invalidateProfile);
         return value;
     }
 
-    @Specialization(guards = "isIntegerKind(frame, frameSlot)")
+    @Specialization(guards = "isIntegerKind(frame, frameIndex)")
     protected int doInteger(VirtualFrame frame, int value,
-                    @Cached("findOrAddFrameSlot(frame, Int)") FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+                    @Cached("findOrAddFrameIndex(frame, Int)") int frameIndex) {
+        FrameSlotChangeMonitor.setIntAndInvalidateNew(frame, frameIndex, value, false, invalidateProfile);
         return value;
     }
 
-    @Specialization(guards = "isDoubleKind(frame, frameSlot)")
+    @Specialization(guards = "isDoubleKind(frame, frameIndex)")
     protected double doDouble(VirtualFrame frame, double value,
-                    @Cached("findOrAddFrameSlot(frame, Double)") FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+                    @Cached("findOrAddFrameIndex(frame, Double)") int frameIndex) {
+        FrameSlotChangeMonitor.setDoubleAndInvalidateNew(frame, frameIndex, value, false, invalidateProfile);
         return value;
     }
 
     @Specialization
     protected Object doObject(VirtualFrame frame, Object value,
-                    @Cached("findOrAddFrameSlot(frame, Object)") FrameSlot frameSlot) {
+                    @Cached("findOrAddFrameIndex(frame, Object)") int frameIndex) {
         if (containsNoActiveBinding == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(frame.getFrameDescriptor());
+            containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumptionNew(frame.getFrameDescriptor());
         }
         if (containsNoActiveBinding.isValid()) {
-            Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), mode, false);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
+            Object newValue = shareObjectValue(frame, frameIndex, storedObjectProfile.profile(value), mode, false);
+            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, frameIndex, newValue, false, invalidateProfile);
         } else {
             // it's a local variable lookup; so use 'frame' for both, executing and looking up
-            return handleActiveBinding(frame, frame, value, frameSlot, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
+            return handleActiveBinding(frame, frame, value, frameIndex, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
         }
         return value;
     }

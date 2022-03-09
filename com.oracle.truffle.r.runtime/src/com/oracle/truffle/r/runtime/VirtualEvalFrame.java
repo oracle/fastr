@@ -178,6 +178,146 @@ public abstract class VirtualEvalFrame implements MaterializedFrame {
         return getOriginalFrame().isDouble(slot);
     }
 
+    @Override
+    public Object getObject(int slot) throws FrameSlotTypeException {
+        return getOriginalFrame().getObject(slot);
+    }
+
+    @Override
+    public void setObject(int slot, Object value) {
+        getOriginalFrame().setObject(slot, value);
+    }
+
+    @Override
+    public byte getByte(int slot) throws FrameSlotTypeException {
+        return getOriginalFrame().getByte(slot);
+    }
+
+    @Override
+    public void setByte(int slot, byte value) {
+        getOriginalFrame().setByte(slot, value);
+    }
+
+    @Override
+    public boolean getBoolean(int slot) throws FrameSlotTypeException {
+        return getOriginalFrame().getBoolean(slot);
+    }
+
+    @Override
+    public void setBoolean(int slot, boolean value) {
+        getOriginalFrame().setBoolean(slot, value);
+    }
+
+    @Override
+    public int getInt(int slot) throws FrameSlotTypeException {
+        return getOriginalFrame().getInt(slot);
+    }
+
+    @Override
+    public void setInt(int slot, int value) {
+        getOriginalFrame().setInt(slot, value);
+    }
+
+    @Override
+    public long getLong(int slot) throws FrameSlotTypeException {
+        return getOriginalFrame().getLong(slot);
+    }
+
+    @Override
+    public void setLong(int slot, long value) {
+        getOriginalFrame().setLong(slot, value);
+    }
+
+    @Override
+    public float getFloat(int slot) throws FrameSlotTypeException {
+        return getOriginalFrame().getFloat(slot);
+    }
+
+    @Override
+    public void setFloat(int slot, float value) {
+        getOriginalFrame().setFloat(slot, value);
+    }
+
+    @Override
+    public double getDouble(int slot) throws FrameSlotTypeException {
+        return getOriginalFrame().getDouble(slot);
+    }
+
+    @Override
+    public void setDouble(int slot, double value) {
+        getOriginalFrame().setDouble(slot, value);
+    }
+
+    @Override
+    public Object getValue(int slot) {
+        return getOriginalFrame().getValue(slot);
+    }
+
+    @Override
+    public void copy(int srcSlot, int destSlot) {
+        getOriginalFrame().copy(srcSlot, destSlot);
+    }
+
+    @Override
+    public void swap(int first, int second) {
+        getOriginalFrame().swap(first, second);
+    }
+
+    @Override
+    public byte getTag(int slot) {
+        return getOriginalFrame().getTag(slot);
+    }
+
+    @Override
+    public boolean isObject(int slot) {
+        return getOriginalFrame().isObject(slot);
+    }
+
+    @Override
+    public boolean isByte(int slot) {
+        return getOriginalFrame().isByte(slot);
+    }
+
+    @Override
+    public boolean isBoolean(int slot) {
+        return getOriginalFrame().isBoolean(slot);
+    }
+
+    @Override
+    public boolean isInt(int slot) {
+        return getOriginalFrame().isInt(slot);
+    }
+
+    @Override
+    public boolean isLong(int slot) {
+        return getOriginalFrame().isLong(slot);
+    }
+
+    @Override
+    public boolean isFloat(int slot) {
+        return getOriginalFrame().isFloat(slot);
+    }
+
+    @Override
+    public boolean isDouble(int slot) {
+        return getOriginalFrame().isDouble(slot);
+    }
+
+    @Override
+    public void clear(int slot) {
+        getOriginalFrame().clear(slot);
+    }
+
+    @Override
+    public Object getAuxiliarySlot(int slot) {
+        return getOriginalFrame().getAuxiliarySlot(slot);
+    }
+
+    @Override
+    public void setAuxiliarySlot(int slot, Object value) {
+        getOriginalFrame().setAuxiliarySlot(slot, value);
+    }
+
     private static final class Substitute1 extends VirtualEvalFrame {
 
         @CompilationFinal private static Class<MaterializedFrame> frameClass;

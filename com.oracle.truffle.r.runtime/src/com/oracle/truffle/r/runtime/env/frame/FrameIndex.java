@@ -33,6 +33,9 @@ package com.oracle.truffle.r.runtime.env.frame;
  * and the type of the index because of the performance - any instance of that class could potentially escape from
  * any compilation unit, assuming that they would be cached as a field in a node in some AST. That means that for
  * every read of such an instance, we would have to generate a {@code LoadField} instruction.
+ *
+ * TODO: Refactor indexes to longs and convert them to real indexes with bit arithmetics, so that
+ * there is a clear distinction between auxiliary slot index and normal slot index.
  */
 public class FrameIndex {
     public static final int UNITIALIZED_INDEX = Integer.MIN_VALUE;
@@ -53,15 +56,19 @@ public class FrameIndex {
         return index >= 0;
     }
 
+    public static int transformIndex(int index) {
+        return (-index) - 1;
+    }
+
     /**
      * Returns an integer that can be used to index an auxiliary slot in a real frame.
      */
     public static int toAuxiliaryIndex(int index) {
         if (representsAuxiliaryIndex(index)) {
-            return index;
+            return (-index) - 1;
         } else {
             assert representsNormalIndex(index);
-            return (-index) - 1;
+            return index;
         }
     }
 

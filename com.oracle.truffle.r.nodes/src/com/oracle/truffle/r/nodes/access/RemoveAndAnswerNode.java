@@ -24,13 +24,13 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNodeFactory.RemoveAndAnswerResolvedNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -59,58 +59,56 @@ public abstract class RemoveAndAnswerNode extends RNode {
         @Override
         public Object execute(VirtualFrame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(name);
-            return specialize(fs).execute(frame);
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), name);
+            return specialize(frameIndex).execute(frame);
         }
 
-        private RemoveAndAnswerNode specialize(FrameSlot fs) {
-            if (fs == null) {
+        private RemoveAndAnswerNode specialize(int frameIndex) {
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 warning(RError.Message.UNKNOWN_OBJECT, name);
             }
-            return replace(RemoveAndAnswerResolvedNodeGen.create(fs));
+            return replace(RemoveAndAnswerResolvedNodeGen.create(frameIndex));
         }
     }
 
     protected abstract static class RemoveAndAnswerResolvedNode extends RemoveAndAnswerNode {
 
         /**
-         * The frame slot representing the variable that is to be removed and whose value is to be
+         * The frame index representing the variable that is to be removed and whose value is to be
          * returned.
          */
-        private final FrameSlot slot;
+        private final int frameIndex;
         private final BranchProfile invalidateProfile = BranchProfile.create();
 
-        protected RemoveAndAnswerResolvedNode(FrameSlot slot) {
-            this.slot = slot;
+        protected RemoveAndAnswerResolvedNode(int frameIndex) {
+            this.frameIndex = frameIndex;
         }
 
         protected boolean isObject(VirtualFrame frame) {
-            return frame.isObject(slot);
+            return FrameSlotChangeMonitor.isObjectNew(frame, frameIndex);
         }
 
         protected boolean isInt(VirtualFrame frame) {
-            return frame.isInt(slot);
+            return FrameSlotChangeMonitor.isIntNew(frame, frameIndex);
         }
 
         protected boolean isDouble(VirtualFrame frame) {
-            return frame.isDouble(slot);
+            return FrameSlotChangeMonitor.isDoubleNew(frame, frameIndex);
         }
 
         protected boolean isByte(VirtualFrame frame) {
-            return frame.isByte(slot);
+            return FrameSlotChangeMonitor.isByteNew(frame, frameIndex);
         }
 
         @Specialization(guards = "isObject(frame)")
         protected Object doObject(VirtualFrame frame) {
             Object result;
             try {
-                result = FrameSlotChangeMonitor.getObject(slot, frame);
+                result = FrameSlotChangeMonitor.getObjectNew(frame, frameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
-
-            // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, invalidateProfile);
+            resetAndInvalidateFrameIndex(frame);
             return result;
         }
 
@@ -118,13 +116,11 @@ public abstract class RemoveAndAnswerNode extends RNode {
         protected int doInt(VirtualFrame frame) {
             int result;
             try {
-                result = frame.getInt(slot);
+                result = FrameSlotChangeMonitor.getIntNew(frame, frameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
-
-            // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, invalidateProfile);
+            resetAndInvalidateFrameIndex(frame);
             return result;
         }
 
@@ -132,13 +128,11 @@ public abstract class RemoveAndAnswerNode extends RNode {
         protected double doDouble(VirtualFrame frame) {
             double result;
             try {
-                result = frame.getDouble(slot);
+                result = FrameSlotChangeMonitor.getDoubleNew(frame, frameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
-
-            // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, invalidateProfile);
+            resetAndInvalidateFrameIndex(frame);
             return result;
         }
 
@@ -146,14 +140,17 @@ public abstract class RemoveAndAnswerNode extends RNode {
         protected byte doByte(VirtualFrame frame) {
             byte result;
             try {
-                result = frame.getByte(slot);
+                result = FrameSlotChangeMonitor.getByteNew(frame, frameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
-
-            // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, invalidateProfile);
+            resetAndInvalidateFrameIndex(frame);
             return result;
+        }
+
+        private void resetAndInvalidateFrameIndex(VirtualFrame frame) {
+            // use null (not an R value) to represent "undefined"
+            FrameSlotChangeMonitor.setObjectAndInvalidateNew(frame, frameIndex, null, false, invalidateProfile);
         }
     }
 }

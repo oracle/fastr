@@ -52,7 +52,7 @@ public abstract class FrameIndexNode extends RBaseNode {
         return new UnresolvedFrameIndexNode(identifier, createIfAbsent);
     }
 
-    public static FrameIndexNode createInitialized(FrameDescriptor frameDescriptor, RFrameSlot identifier, boolean createIfAbsent) {
+    public static FrameIndexNode createInitialized(FrameDescriptor frameDescriptor, Object identifier, boolean createIfAbsent) {
         return createInitializedInternal(frameDescriptor, identifier, createIfAbsent);
     }
 
