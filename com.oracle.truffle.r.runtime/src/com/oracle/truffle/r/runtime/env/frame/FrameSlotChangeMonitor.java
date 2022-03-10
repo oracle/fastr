@@ -450,6 +450,10 @@ public final class FrameSlotChangeMonitor {
         return getFrameSlotKind(frame.getFrameDescriptor(), frameIndex) == FrameSlotKind.Byte;
     }
 
+    public static boolean isBoolean(Frame frame, int frameIndex) {
+        return getFrameSlotKind(frame.getFrameDescriptor(), frameIndex) == FrameSlotKind.Boolean;
+    }
+
     public static void setFrameSlotKind(FrameDescriptor frameDescriptor, int frameIndex, FrameSlotKind kind) {
         // It does not make sense to set any FrameSlotKind for an auxiliary value - they are always
         // objects, so we take care only of normal values.
@@ -1077,6 +1081,32 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
+    /**
+     * Returns an object from an auxiliary slot and checks whether it is instance of given
+     * {@code klass}, throws {@link FrameSlotTypeException} if the object in the auxiliary slot is
+     * not an instance of klass.
+     * 
+     * @param frame
+     * @param frameIndex Auxiliary frame index.
+     * @param klass
+     */
+    private static <T> T getAuxiliaryCheckedObject(Frame frame, int frameIndex, Class<T> klass) {
+        assert FrameIndex.representsAuxiliaryIndex(frameIndex);
+        CompilerAsserts.partialEvaluationConstant(klass);
+        Object object = getObject(frame, frameIndex);
+        // if (object instanceof klass) ...
+        if (klass.isInstance(object)) {
+            return klass.cast(object);
+        } else {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            throw new FrameSlotTypeException();
+        }
+    }
+
+    private static boolean hasSharedContext() {
+        return FastROptions.sharedContextsOptionValue && !RContext.isSingle();
+    }
+
     public static Object getObject(Frame frame, Object identifier) {
         int frameIndex = getIndexOfIdentifier(frame.getFrameDescriptor(), identifier);
         if (FrameIndex.isUninitializedIndex(frameIndex)) {
@@ -1115,15 +1145,11 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    private static boolean hasSharedContext() {
-        return FastROptions.sharedContextsOptionValue && !RContext.isSingle();
-    }
-
     private static Object getObjectByIndex(Frame frame, int frameIndex) {
-        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
-            return frame.getAuxiliarySlot(FrameIndex.toAuxiliaryIndex(frameIndex));
-        } else {
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
             return frame.getObject(FrameIndex.toNormalIndex(frameIndex));
+        } else {
+            return frame.getAuxiliarySlot(FrameIndex.toAuxiliaryIndex(frameIndex));
         }
     }
 
@@ -1154,21 +1180,17 @@ public final class FrameSlotChangeMonitor {
         if (FrameIndex.representsNormalIndex(frameIndex)) {
             return frame.getBoolean(FrameIndex.toNormalIndex(frameIndex));
         } else {
-            Object object = getObject(frame, frameIndex);
-            assert object instanceof Boolean;
-            return (boolean) object;
+            return getAuxiliaryCheckedObject(frame, frameIndex, Boolean.class);
         }
     }
 
     public static byte getByte(Frame frame, int frameIndex) {
         assertFrameIndexInBounds(frame, frameIndex);
         assertFrameStructure(frame);
-        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
-            Object object = getObject(frame, frameIndex);
-            assert object instanceof Byte;
-            return (byte) object;
-        } else {
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
             return frame.getByte(frameIndex);
+        } else {
+            return getAuxiliaryCheckedObject(frame, frameIndex, Byte.class);
         }
     }
 
@@ -1178,9 +1200,7 @@ public final class FrameSlotChangeMonitor {
         if (FrameIndex.representsNormalIndex(frameIndex)) {
             return frame.getInt(FrameIndex.toNormalIndex(frameIndex));
         } else {
-            Object object = getObject(frame, frameIndex);
-            assert object instanceof Integer;
-            return (int) object;
+            return getAuxiliaryCheckedObject(frame, frameIndex, Integer.class);
         }
     }
 
@@ -1190,9 +1210,7 @@ public final class FrameSlotChangeMonitor {
         if (FrameIndex.representsNormalIndex(frameIndex)) {
             return frame.getDouble(FrameIndex.toNormalIndex(frameIndex));
         } else {
-            Object object = getObject(frame, frameIndex);
-            assert object instanceof Double;
-            return (double) object;
+            return getAuxiliaryCheckedObject(frame, frameIndex, Double.class);
         }
     }
 
@@ -1246,7 +1264,10 @@ public final class FrameSlotChangeMonitor {
 
     public static boolean containsIndex(Frame frame, int frameIndex) {
         assertFrameStructure(frame);
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        return containsIndex(frame.getFrameDescriptor(), frameIndex);
+    }
+
+    public static boolean containsIndex(FrameDescriptor frameDescriptor, int frameIndex) {
         if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
             int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
             return 0 <= auxSlotIdx && auxSlotIdx < frameDescriptor.getNumberOfAuxiliarySlots();

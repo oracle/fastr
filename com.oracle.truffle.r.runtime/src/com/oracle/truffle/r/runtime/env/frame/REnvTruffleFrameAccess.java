@@ -126,12 +126,10 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, (byte) value, false, null);
                 break;
             case Int:
-                // TODO: setIntAndInvalidateNew
-                FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, (int) value, false, null);
+                FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameIndex, (int) value, false, null);
                 break;
             case Double:
-                // TODO: setDoubleAndInvalidateNew
-                FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, (double) value, false, null);
+                FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameIndex, (double) value, false, null);
                 break;
             case Object:
                 Object object;

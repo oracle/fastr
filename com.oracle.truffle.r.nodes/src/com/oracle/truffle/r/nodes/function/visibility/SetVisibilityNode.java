@@ -92,7 +92,10 @@ public final class SetVisibilityNode extends Node {
     public void executeEndOfFunction(VirtualFrame frame) {
         ensureFrameIndex(frame.getFrameDescriptor());
         try {
-            RArguments.getCall(frame).setVisibility(FrameSlotChangeMonitor.getBoolean(frame, frameIndex));
+            Object visibility = FrameSlotChangeMonitor.getObject(frame, frameIndex);
+            if (visibility instanceof Boolean) {
+                RArguments.getCall(frame).setVisibility((boolean) visibility);
+            }
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);
         }

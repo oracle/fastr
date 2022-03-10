@@ -55,6 +55,12 @@ public abstract class FrameIndexNode extends RBaseNode {
         return createInitializedInternal(frameDescriptor, identifier, createIfAbsent);
     }
 
+    public static FrameIndexNode createInitializedWithIndex(FrameDescriptor frameDescriptor, int frameIndex) {
+        assert FrameIndex.isInitializedIndex(frameIndex);
+        assert FrameSlotChangeMonitor.containsIndex(frameDescriptor, frameIndex);
+        return new PresentFrameIndexNode(frameIndex);
+    }
+
     private static FrameIndexNode createInitializedInternal(FrameDescriptor frameDescriptor, Object identifier, boolean createIfAbsent) {
         int frameIndex;
         if (createIfAbsent) {

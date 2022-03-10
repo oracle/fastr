@@ -454,7 +454,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             };
 
             GetMethodsTable getTable = () -> {
-                int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(genericDefFrame.getFrameDescriptor(), RRuntime.RS3MethodsTable);
+                int frameIndex = genericDefFrame == null ? FrameIndex.UNITIALIZED_INDEX : FrameSlotChangeMonitor.getIndexOfIdentifier(genericDefFrame.getFrameDescriptor(), RRuntime.RS3MethodsTable);
                 if (FrameIndex.isUninitializedIndex(frameIndex)) {
                     return null;
                 }
