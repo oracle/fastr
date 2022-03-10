@@ -139,8 +139,9 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
                  * in the chain, needs the rhs and enclosingFrame nodes
                  */
                 AccessEnclosingFrameNode enclosingFrameNode = RArguments.getEnclosingFrame(frame) == enclosingFrame ? new AccessEnclosingFrameNode() : null;
-                writeNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, rhs, enclosingFrameNode,
-                                FrameIndexNode.create(getName(), true));
+                int superVarFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(enclosingFrame.getFrameDescriptor(), getName());
+                FrameIndexNode frameIndexNode = FrameIndexNode.createInitializedWithIndex(enclosingFrame.getFrameDescriptor(), superVarFrameIndex);
+                writeNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, rhs, enclosingFrameNode, frameIndexNode);
             } else {
                 ResolvedWriteSuperFrameVariableNode actualWriteNode = ResolvedWriteSuperFrameVariableNodeGen.create(getName(), mode, null, null, FrameIndexNode.create(getName(), false));
                 writeNode = new WriteSuperFrameVariableConditionalNode(getName(), actualWriteNode, new UnresolvedWriteSuperFrameVariableNode(getName(), mode, null), rhs);
