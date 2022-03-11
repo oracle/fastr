@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -405,6 +404,14 @@ public final class FrameSlotChangeMonitor {
                 }
             }
         }
+        for (Map.Entry<Object, Integer> entry : frameDescriptor.getAuxiliarySlots().entrySet()) {
+            Object identifier = entry.getKey();
+            int auxSlotIdx = entry.getValue();
+            int auxSlotIdxFromMetata = FrameIndex.toAuxiliaryIndex(metadata.getIndex(identifier));
+            if (auxSlotIdx != auxSlotIdxFromMetata) {
+                return false;
+            }
+        }
         // Check auxSlotInfos
         if (metadata.auxSlotInfos.size() != frameDescriptor.getNumberOfAuxiliarySlots()) {
             return false;
@@ -418,10 +425,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static FrameDescriptor createUninitializedFrameDescriptor(String name) {
-        FrameDescriptor descriptor = FrameDescriptor.newBuilder().info(new FrameDescriptorMetaData(name)).build();
-        putFrameDescriptorDebug(descriptor);
-        checkAllFrameDescriptors();
-        return descriptor;
+        return FrameDescriptor.newBuilder().info(new FrameDescriptorMetaData(name)).build();
     }
 
     /**
@@ -429,13 +433,9 @@ public final class FrameSlotChangeMonitor {
      *
      * @param name Name for debug purposes.
      * @param singletonFrame Null for function descriptors, not null for environment descriptors.
-     * @return
      */
     public static FrameDescriptor createFrameDescriptor(String name, MaterializedFrame singletonFrame) {
-        FrameDescriptor descriptor = FrameDescriptor.newBuilder().info(new FrameDescriptorMetaData(name, singletonFrame)).build();
-        putFrameDescriptorDebug(descriptor);
-        checkAllFrameDescriptors();
-        return descriptor;
+        return FrameDescriptor.newBuilder().info(new FrameDescriptorMetaData(name, singletonFrame)).build();
     }
 
     public static FrameDescriptor createFunctionFrameDescriptor(String name) {
@@ -453,6 +453,25 @@ public final class FrameSlotChangeMonitor {
     public static FrameDescriptor createFrameDescriptor(String name, MaterializedFrame singletonFrame, FrameSlotKind[] kinds, Object[] identifiers) {
         assert kinds.length == identifiers.length;
         throw new UnsupportedOperationException("unimplemented");
+    }
+
+    public static FrameDescriptor copyFrameDescriptorWithMetadata(FrameDescriptor frameDescriptor) {
+        FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
+        MaterializedFrame singletonFrame = metadata.singletonFrame != null ? metadata.singletonFrame.get() : null;
+        FrameDescriptorMetaData newMetadata = new FrameDescriptorMetaData(metadata.name, singletonFrame);
+        FrameDescriptor.Builder newDescriptorBuilder = FrameDescriptor.newBuilder();
+        newDescriptorBuilder.info(newMetadata);
+        // Copy indexed (normal) slots
+        for (int i = 0; i < frameDescriptor.getNumberOfSlots(); i++) {
+            newDescriptorBuilder.addSlot(frameDescriptor.getSlotKind(i), frameDescriptor.getSlotName(i), frameDescriptor.getSlotInfo(i));
+        }
+        FrameDescriptor newDescriptor = newDescriptorBuilder.build();
+        // Copy auxiliary slots
+        for (Map.Entry<Object, Integer> entry : frameDescriptor.getAuxiliarySlots().entrySet()) {
+            // entry values may be different, but that would not matter.
+            findOrAddAuxiliaryFrameSlot(newDescriptor, entry.getKey());
+        }
+        return newDescriptor;
     }
 
     public static Collection<Object> getIdentifiers(FrameDescriptor frameDescriptor) {
@@ -1054,19 +1073,13 @@ public final class FrameSlotChangeMonitor {
         assert isValidFrameDescriptor(frame.getFrameDescriptor());
         return notChangedLocallyAssumption;
     }
+
     public synchronized static int findOrAddAuxiliaryFrameSlot(FrameDescriptor frameDescriptor, Object identifier) {
         CompilerAsserts.neverPartOfCompilation();
         assert isValidFrameDescriptor(frameDescriptor);
         FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
         int auxSlotIdx = frameDescriptor.findOrAddAuxiliarySlot(identifier);
         int transformedAuxSlotIdx = FrameIndex.transformIndex(auxSlotIdx);
-        if (descriptorMetadata.indexes.containsKey("pop75") && descriptorMetadata.indexes.containsKey("pop15") && descriptorMetadata.indexes.containsKey("ddpi") &&
-                        descriptorMetadata.indexes.containsKey("dpi") && descriptorMetadata.indexes.containsKey("sr")) {
-            checkAllFrameDescriptors();
-            if (!(identifier instanceof String)) {
-                System.out.println("ERROR!!!!");
-            }
-        }
         if (descriptorMetadata.getIndex(identifier) == null) {
             descriptorMetadata.addIndex(identifier, transformedAuxSlotIdx);
             var slotInfo = new FrameSlotInfo(descriptorMetadata, identifier);
@@ -1416,25 +1429,6 @@ public final class FrameSlotChangeMonitor {
         assert isValidFrameDescriptor(frameDescriptor);
         FrameDescriptorMetaData metaData = getDescriptorMetadata(frameDescriptor);
         metaData.setSingletonFrame(singletonFrame);
-    }
-
-    private static final Map<String, FrameDescriptorMetaData> frameDescriptorsMetadata = new HashMap<>();
-    private static final List<FrameDescriptor> frameDescriptors = new ArrayList<>();
-
-    @Deprecated
-    private static void checkAllFrameDescriptors() {
-        Set<FrameDescriptorMetaData> visited = new HashSet<>();
-        for (FrameDescriptor descriptor : frameDescriptors) {
-            FrameDescriptorMetaData metadata = getDescriptorMetadata(descriptor);
-            assert !visited.contains(metadata);
-            visited.add(metadata);
-        }
-    }
-
-    private static void putFrameDescriptorDebug(FrameDescriptor frameDescriptor) {
-        FrameDescriptorMetaData metaData = getDescriptorMetadata(frameDescriptor);
-        frameDescriptors.add(frameDescriptor);
-        frameDescriptorsMetadata.put(metaData.name, metaData);
     }
 
     public static Assumption getEnclosingFrameDescriptorAssumption(FrameDescriptor frameDescriptor) {

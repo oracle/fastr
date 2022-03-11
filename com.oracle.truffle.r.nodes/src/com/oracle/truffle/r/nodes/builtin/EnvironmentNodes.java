@@ -89,10 +89,9 @@ public final class EnvironmentNodes {
                 assert parentEnv != null;
 
                 FrameDescriptor cachedFd = ContextStateImpl.getFrameDescriptorFromList(list);
-                boolean hasEnclosingFD = !FrameSlotChangeMonitor.isEnclosingFrameDescriptor(cachedFd,
-                                parentEnv.getFrame());
+                boolean hasEnclosingFD = !FrameSlotChangeMonitor.isEnclosingFrameDescriptor(cachedFd, parentEnv.getFrame());
                 if (hasEnclosingFD) {
-                    cachedFd = cachedFd.copy();
+                    cachedFd = FrameSlotChangeMonitor.copyFrameDescriptorWithMetadata(cachedFd);
                 }
 
                 result = RDataFactory.createNewEnv(cachedFd, envName);
