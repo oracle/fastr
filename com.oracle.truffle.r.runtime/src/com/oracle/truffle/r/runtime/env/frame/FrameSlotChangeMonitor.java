@@ -371,30 +371,48 @@ public final class FrameSlotChangeMonitor {
         int normalSlotsCount = frameDescriptor.getNumberOfSlots();
         int auxSlotsCount = frameDescriptor.getNumberOfAuxiliarySlots();
         int totalSlotsCount = normalSlotsCount + auxSlotsCount;
-        assert metadata.indexes.size() == totalSlotsCount;
+        if (metadata.indexes.size() != totalSlotsCount) {
+            return false;
+        }
         for (Map.Entry<Object, Integer> entry : metadata.indexes.entrySet()) {
             Object identifier = entry.getKey();
             int frameIndex = entry.getValue();
-            assert isFrameIndexInBounds(frameDescriptor, frameIndex);
+            if (!isFrameIndexInBounds(frameDescriptor, frameIndex)) {
+                return false;
+            }
             if (FrameIndex.representsNormalIndex(frameIndex)) {
                 int normalSlotIdx = FrameIndex.toNormalIndex(frameIndex);
                 Object slotInfo = frameDescriptor.getSlotInfo(normalSlotIdx);
-                assert slotInfo instanceof FrameSlotInfo;
-                assert ((FrameSlotInfo) slotInfo).identifier == identifier;
+                if (!(slotInfo instanceof FrameSlotInfo)) {
+                    return false;
+                }
+                if (((FrameSlotInfo) slotInfo).identifier != identifier) {
+                    return false;
+                }
                 Object slotName = frameDescriptor.getSlotName(normalSlotIdx);
-                assert slotName instanceof String || slotName instanceof RFrameSlot;
-                assert slotName == identifier;
+                if (!(slotName instanceof String) && !(slotName instanceof RFrameSlot)) {
+                    return false;
+                }
+                if (slotName != identifier) {
+                    return false;
+                }
             } else {
                 assert FrameIndex.representsAuxiliaryIndex(frameIndex);
                 int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
                 FrameSlotInfo slotInfo = metadata.getAuxiliarySlotInfo(auxSlotIdx);
-                assert slotInfo.identifier == identifier;
+                if (slotInfo.identifier != identifier) {
+                    return false;
+                }
             }
         }
         // Check auxSlotInfos
-        assert metadata.auxSlotInfos.size() == frameDescriptor.getNumberOfAuxiliarySlots();
+        if (metadata.auxSlotInfos.size() != frameDescriptor.getNumberOfAuxiliarySlots()) {
+            return false;
+        }
         for (FrameSlotInfo slotInfo : metadata.auxSlotInfos) {
-            assert slotInfo.identifier != null;
+            if (slotInfo.identifier == null) {
+                return false;
+            }
         }
         return true;
     }
@@ -1054,6 +1072,7 @@ public final class FrameSlotChangeMonitor {
             var slotInfo = new FrameSlotInfo(descriptorMetadata, identifier);
             descriptorMetadata.addAuxSlotInfo(slotInfo);
         }
+        assert isValidFrameDescriptor(frameDescriptor);
         return transformedAuxSlotIdx;
     }
 
@@ -1402,6 +1421,7 @@ public final class FrameSlotChangeMonitor {
     private static final Map<String, FrameDescriptorMetaData> frameDescriptorsMetadata = new HashMap<>();
     private static final List<FrameDescriptor> frameDescriptors = new ArrayList<>();
 
+    @Deprecated
     private static void checkAllFrameDescriptors() {
         Set<FrameDescriptorMetaData> visited = new HashSet<>();
         for (FrameDescriptor descriptor : frameDescriptors) {
