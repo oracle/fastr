@@ -537,7 +537,7 @@ public final class FrameSlotChangeMonitor {
         return metaData.getEnclosingFrameDescriptor() == nextDesc;
     }
 
-    private static synchronized void invalidateNames(FrameDescriptorMetaData metaData, Collection<Object> identifiers) {
+    private static synchronized void invalidatePreviousLookups(FrameDescriptorMetaData metaData, Collection<Object> identifiers) {
         if (metaData.previousLookups.removeAll(identifiers)) {
             for (Object identifier : identifiers) {
                 WeakReference<LookupResult> result = metaData.lookupResults.remove(identifier);
@@ -550,7 +550,7 @@ public final class FrameSlotChangeMonitor {
             }
             for (FrameDescriptor descriptor : metaData.subDescriptors) {
                 FrameDescriptorMetaData sub = getDescriptorMetadata(descriptor);
-                invalidateNames(sub, identifiers);
+                invalidatePreviousLookups(sub, identifiers);
             }
         }
     }
@@ -678,7 +678,7 @@ public final class FrameSlotChangeMonitor {
         assert target != null : "frame descriptor wasn't registered properly for " + descriptor;
 
         // invalidate existing lookups
-        invalidateAllNames(target);
+        invalidateAllLookups(target);
 
         FrameDescriptor oldEnclosingDescriptor = target.getEnclosingFrameDescriptor();
         FrameDescriptor newEnclosingDescriptor = handleBaseNamespaceEnv(newEnclosingFrame);
@@ -703,7 +703,7 @@ public final class FrameSlotChangeMonitor {
         setEnclosingFrame(handleBaseNamespaceEnv(frame), newEnclosingFrame, oldEnclosingFrame);
     }
 
-    private static void invalidateAllNames(FrameDescriptorMetaData target) {
+    private static void invalidateAllLookups(FrameDescriptorMetaData target) {
         for (Map.Entry<Object, WeakReference<LookupResult>> entry : target.lookupResults.entrySet()) {
             LookupResult lookup = entry.getValue().get();
             if (lookup != null) {
@@ -714,7 +714,7 @@ public final class FrameSlotChangeMonitor {
         if (!target.previousLookups.isEmpty()) {
             target.previousLookups.clear();
             for (FrameDescriptor sub : target.subDescriptors) {
-                invalidateAllNames(getDescriptorMetadata(sub));
+                invalidateAllLookups(getDescriptorMetadata(sub));
             }
         }
     }
@@ -727,7 +727,7 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptor newEnclosingDescriptor = oldEnclosing.getEnclosingFrameDescriptor();
         FrameDescriptorMetaData newEnclosing = getDescriptorMetadata(newEnclosingDescriptor);
 
-        invalidateNames(oldEnclosing, oldEnclosing.getIdentifiers());
+        invalidatePreviousLookups(oldEnclosing, oldEnclosing.getIdentifiers());
 
         position.updateEnclosingFrameDescriptor(newEnclosingDescriptor);
         oldEnclosing.updateEnclosingFrameDescriptor(null);
@@ -743,8 +743,8 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptor oldEnclosingDescriptor = position.getEnclosingFrameDescriptor();
         FrameDescriptorMetaData oldEnclosing = getDescriptorMetadata(oldEnclosingDescriptor);
 
-        invalidateAllNames(newEnclosing);
-        invalidateNames(position, newEnclosing.getIdentifiers());
+        invalidateAllLookups(newEnclosing);
+        invalidatePreviousLookups(position, newEnclosing.getIdentifiers());
 
         newEnclosing.previousLookups.clear();
         newEnclosing.previousLookups.addAll(oldEnclosing.previousLookups);
@@ -1085,6 +1085,7 @@ public final class FrameSlotChangeMonitor {
             descriptorMetadata.addIndex(identifier, transformedAuxSlotIdx);
             var slotInfo = new FrameSlotInfo(descriptorMetadata, identifier);
             descriptorMetadata.addAuxSlotInfo(slotInfo);
+            invalidatePreviousLookups(descriptorMetadata, Collections.singletonList(identifier));
         }
         assert isValidFrameDescriptor(frameDescriptor);
         return transformedAuxSlotIdx;
