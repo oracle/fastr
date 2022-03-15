@@ -41,6 +41,7 @@ public class TestSimpleAssignment extends TestBase {
     public void testAssignShadowBuiltin1() {
         assertEval("f <- function(b) { c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
         assertEval("f <- function(b) { if (b) c <- function(x,y) 42; c(1,1); }; f(0); f(1)");
+        assertEval("c <- NULL; f <- function(b) { if (b) c <- function(x,y) 42; c(1,1); }; f(FALSE); f(TRUE)");
     }
 
     @Test
