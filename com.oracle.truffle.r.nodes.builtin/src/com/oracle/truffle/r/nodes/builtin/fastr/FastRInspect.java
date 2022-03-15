@@ -22,19 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import java.io.IOException;
 
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -43,8 +41,6 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-
-import java.io.IOException;
 
 /**
  * Just a convenient way to inspect values in the Java debugger from the R shell.
@@ -79,24 +75,5 @@ public abstract class FastRInspect extends RBuiltinNode.Arg2 {
         } catch (IOException ex) {
             throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, ex.getMessage() == null ? ex : ex.getMessage());
         }
-    }
-
-    private static void testMethod(Frame frame) {
-        FrameDescriptor.Builder frameDescriptorBuilder = FrameDescriptor.newBuilder();
-        int firstSlotIdx = frameDescriptorBuilder.addSlot(FrameSlotKind.Int, "first", new FrameSlotInfo("first"));
-        int secondSlotIdx = frameDescriptorBuilder.addSlot(FrameSlotKind.Object, "second", new FrameSlotInfo("second"));
-        FrameDescriptor frameDescriptor = frameDescriptorBuilder.build();
-        int firstAuxIdx = frameDescriptor.findOrAddAuxiliarySlot("aux_first");
-        int secondAuxIdx = frameDescriptor.findOrAddAuxiliarySlot("aux_second");
-        System.out.printf("[mylog] numberOfSlots=%d, numberOfAuxiliarySlots=%d",
-                            frameDescriptor.getNumberOfSlots(), frameDescriptor.getNumberOfAuxiliarySlots());
-    }
-}
-
-final class FrameSlotInfo {
-    private final String identifier;
-
-    public FrameSlotInfo(String identifier) {
-        this.identifier = identifier;
     }
 }

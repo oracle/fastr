@@ -99,6 +99,13 @@ public final class FrameSlotChangeMonitor {
         private void invalidate() {
             assumption.invalidate();
         }
+
+        @Override
+        public String toString() {
+            return "LookupResult{" +
+                            "assumption=" + assumption +
+                            '}';
+        }
     }
 
     private static final class StableValueLookupResult extends LookupResult {
@@ -134,6 +141,14 @@ public final class FrameSlotChangeMonitor {
                 }
             }
             return unwrappedValue;
+        }
+
+        @Override
+        public String toString() {
+            return "StableValueLookupResult{" +
+                            "value=" + value +
+                            ", unwrappedValue=" + unwrappedValue +
+                            '}';
         }
     }
 
@@ -186,8 +201,17 @@ public final class FrameSlotChangeMonitor {
      */
     private static final class FrameDescriptorMetaData {
         private final String name; // name for debug purposes
+        /**
+         * If not null, the corresponding {@link FrameDescriptor} associated with this metadata is a
+         * frame descriptor for an environment.
+         */
         // TODO: @CompilationFinal?
         private WeakReference<MaterializedFrame> singletonFrame;
+        /**
+         * Being a subdescriptor is an inverse relation to being an enclosing descriptor. E.g. if
+         * env1 has env2 as an enclosing environment, then descriptor of env1 is a subdescriptor of
+         * env2.
+         */
         private final Set<FrameDescriptor> subDescriptors = Collections.newSetFromMap(new WeakHashMap<>(2));
 
         /**
@@ -202,7 +226,7 @@ public final class FrameSlotChangeMonitor {
         private final WeakHashMap<Object, WeakReference<LookupResult>> lookupResults = new WeakHashMap<>(2);
 
         /**
-         * Mapping of identifiers to indexes.
+         * Mapping of identifiers to indexes into the frame.
          */
         private final Map<Object, Integer> indexes = new ConcurrentHashMap<>();
         /**
@@ -212,12 +236,14 @@ public final class FrameSlotChangeMonitor {
         private final List<FrameSlotInfo> auxSlotInfos = new ArrayList<>();
 
         private WeakReference<FrameDescriptor> enclosingFrameDescriptor = new WeakReference<>(null);
-        private Assumption enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption("enclosing frame descriptor");
-        private final Assumption containsNoActiveBindingAssumption = Truffle.getRuntime().createAssumption("contains no active binding");
+        private Assumption enclosingFrameDescriptorAssumption;
+        private final Assumption containsNoActiveBindingAssumption;
 
         private FrameDescriptorMetaData(String name, MaterializedFrame singletonFrame) {
             this.name = name;
             this.singletonFrame = singletonFrame == null ? null : new WeakReference<>(singletonFrame);
+            this.enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption(getAssumptionNamePrefix() + "enclosing frame descriptor");
+            this.containsNoActiveBindingAssumption = Truffle.getRuntime().createAssumption(getAssumptionNamePrefix() + "contains no active binding");
         }
 
         private FrameDescriptorMetaData(String name) {
@@ -267,7 +293,11 @@ public final class FrameSlotChangeMonitor {
                 enclosingFrameDescriptorAssumption.invalidate();
             }
             enclosingFrameDescriptor = new WeakReference<>(newEnclosingDescriptor);
-            enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption("enclosing frame descriptor");
+            enclosingFrameDescriptorAssumption = Truffle.getRuntime().createAssumption(getAssumptionNamePrefix() + "enclosing frame descriptor");
+        }
+
+        private String getAssumptionNamePrefix() {
+            return name == null ? "" : "(" + name + ")";
         }
 
         public FrameDescriptor getEnclosingFrameDescriptor() {
@@ -287,11 +317,29 @@ public final class FrameSlotChangeMonitor {
         @TruffleBoundary
         @Override
         public String toString() {
-            return "FrameDescriptorMetaData{" +
-                            "@" + hashCode() +
-                            ", name='" + name + '\'' +
-                            ", previousLookups=" + previousLookups +
-                            '}';
+            StringBuilder sb = new StringBuilder();
+            sb.append("FrameDescriptorMetaData{\n");
+            sb.append("  name = '").append(name).append("',\n");
+            sb.append("  previousLookups = [").append(previousLookups).append("],\n");
+            sb.append("  lookupResults = {\n");
+            lookupResults.forEach(
+                            (key, weakResult) -> {
+                                sb.append("    ").append("'").append(key).append("': ");
+                                if (weakResult == null || weakResult.get() == null) {
+                                    sb.append("null");
+                                } else {
+                                    LookupResult lookupResult = weakResult.get();
+                                    assert lookupResult != null;
+                                    sb.append(lookupResult);
+                                }
+                                sb.append(",\n");
+                            });
+            sb.append("  },\n"); // lookupResults
+            sb.append("  subDescriptors = [\n");
+            subDescriptors.forEach((descriptor) -> sb.append("    ").append(descriptor).append(",\n"));
+            sb.append("  ]\n"); // subDescriptors
+            sb.append("}"); // FrameDescriptorMetadata
+            return sb.toString();
         }
     }
 
@@ -1065,6 +1113,18 @@ public final class FrameSlotChangeMonitor {
                 stableValue = null;
             }
         }
+
+        @Override
+        public String toString() {
+            return "FrameSlotInfo{" +
+                            "identifier='" + identifier + "'" +
+                            ", stableValue=" + stableValue +
+                            ", invalidationCount=" + invalidationCount +
+                            ", nonLocalModifiedAssumption=" + nonLocalModifiedAssumption +
+                            ", noMultiSlot=" + noMultiSlot +
+                            ", possibleMultiSlot=" + possibleMultiSlot +
+                            '}';
+        }
     }
 
     /**
@@ -1479,5 +1539,18 @@ public final class FrameSlotChangeMonitor {
                 }
             }
         }
+    }
+
+    public static String frameDescriptorMetadataToString(FrameDescriptor frameDescriptor) {
+        FrameDescriptorMetaData frameDescriptorMetaData = getDescriptorMetadata(frameDescriptor);
+        return frameDescriptorMetaData.toString();
+    }
+
+    public static String frameSlotInfoToString(Frame frame, Object identifier) {
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        assert containsIdentifier(frameDescriptor, identifier);
+        int frameIndex = getIndexOfIdentifier(frameDescriptor, identifier);
+        FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
+        return slotInfo.toString();
     }
 }
