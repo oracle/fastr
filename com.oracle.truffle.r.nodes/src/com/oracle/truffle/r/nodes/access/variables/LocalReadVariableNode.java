@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -56,6 +57,9 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
     @CompilationFinal private ConditionProfile isPromiseProfile;
 
     @CompilationFinal private int frameIndex;
+    // null iff frameIndex is initialized. I.e. it is created only if the identifier is
+    // not already in the frame.
+    @CompilationFinal private Assumption notInFrameAssumption;
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal private Assumption containsNoActiveBindingAssumption;
 
@@ -79,16 +83,32 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
         return execute(frame, frame);
     }
 
+    private void initializeFrameIndexAndAssumption() {
+        frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
+        notInFrameAssumption = FrameIndex.isUninitializedIndex(frameIndex) ? FrameSlotChangeMonitor.getNotInFrameAssumption(frameDescriptor, identifier) : null;
+    }
+
     public Object execute(VirtualFrame frame, Frame variableFrame) {
         Frame profiledVariableFrame = frameProfile.profile(variableFrame);
-        if (FrameIndex.isUninitializedIndex(frameIndex) || frameDescriptor != profiledVariableFrame.getFrameDescriptor()) {
+        if (FrameIndex.isUninitializedIndex(frameIndex) && notInFrameAssumption == null || frameDescriptor != profiledVariableFrame.getFrameDescriptor()) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (identifier.toString().isEmpty()) {
                 throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             }
             frameDescriptor = profiledVariableFrame.getFrameDescriptor();
-            frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
+            initializeFrameIndexAndAssumption();
         }
+
+        // check if the slot is missing / wrong type in current frame
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
+            assert notInFrameAssumption != null : "If frameIndex is unitialized, notInFrameAssumptions must not be null";
+            try {
+                notInFrameAssumption.check();
+            } catch (InvalidAssumptionException e) {
+                initializeFrameIndexAndAssumption();
+            }
+        }
+
         if (FrameIndex.isUninitializedIndex(frameIndex)) {
             return null;
         }

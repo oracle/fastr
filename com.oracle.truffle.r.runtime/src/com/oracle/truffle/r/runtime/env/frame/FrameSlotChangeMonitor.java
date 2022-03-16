@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -235,6 +236,8 @@ public final class FrameSlotChangeMonitor {
          */
         private final List<FrameSlotInfo> auxSlotInfos = new ArrayList<>();
 
+        private final Map<Object, Assumption> notInFrameAssumptions = new HashMap<>();
+
         private WeakReference<FrameDescriptor> enclosingFrameDescriptor = new WeakReference<>(null);
         private Assumption enclosingFrameDescriptorAssumption;
         private final Assumption containsNoActiveBindingAssumption;
@@ -285,6 +288,25 @@ public final class FrameSlotChangeMonitor {
         public Collection<Object> getIdentifiers() {
             CompilerAsserts.neverPartOfCompilation();
             return indexes.keySet();
+        }
+
+        public Assumption getNotInFrameAssumption(Object identifier) {
+            if (!notInFrameAssumptions.containsKey(identifier)) {
+                String assumptionName = String.format("identifier '%s' not in frame assumption", identifier);
+                Assumption assumption = Truffle.getRuntime().createAssumption(assumptionName);
+                notInFrameAssumptions.put(identifier, assumption);
+                return assumption;
+            } else {
+                return notInFrameAssumptions.get(identifier);
+            }
+        }
+
+        void tryInvalidateNotInFrameAssumption(Object identifier) {
+            var assumption = notInFrameAssumptions.get(identifier);
+            if (assumption != null) {
+                assumption.invalidate();
+                notInFrameAssumptions.remove(identifier);
+            }
         }
 
         public void updateEnclosingFrameDescriptor(FrameDescriptor newEnclosingDescriptor) {
@@ -1142,10 +1164,14 @@ public final class FrameSlotChangeMonitor {
         int auxSlotIdx = frameDescriptor.findOrAddAuxiliarySlot(identifier);
         int transformedAuxSlotIdx = FrameIndex.transformIndex(auxSlotIdx);
         if (descriptorMetadata.getIndex(identifier) == null) {
+            // The identifier was not in the frameDescriptor before, we have to put it there and
+            // invalidate
+            // all the related assumptions.
             descriptorMetadata.addIndex(identifier, transformedAuxSlotIdx);
             var slotInfo = new FrameSlotInfo(descriptorMetadata, identifier);
             descriptorMetadata.addAuxSlotInfo(slotInfo);
             invalidatePreviousLookups(descriptorMetadata, Collections.singletonList(identifier));
+            descriptorMetadata.tryInvalidateNotInFrameAssumption(identifier);
         }
         assert isValidFrameDescriptor(frameDescriptor);
         return transformedAuxSlotIdx;
@@ -1494,6 +1520,12 @@ public final class FrameSlotChangeMonitor {
                             " vs. " + value;
         }
         return stableValue;
+    }
+
+    public static Assumption getNotInFrameAssumption(FrameDescriptor frameDescriptor, Object identifier) {
+        assert !containsIdentifier(frameDescriptor, identifier) : "Cannot get notInFrameAssumption for an existing identifier";
+        FrameDescriptorMetaData metaData = getDescriptorMetadata(frameDescriptor);
+        return metaData.getNotInFrameAssumption(identifier);
     }
 
     public static MaterializedFrame getSingletonFrame(FrameDescriptor descriptor) {

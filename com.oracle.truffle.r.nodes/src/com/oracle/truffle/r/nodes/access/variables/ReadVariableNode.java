@@ -523,13 +523,23 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
         private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         @CompilationFinal private int frameIndex;
+        @CompilationFinal private Assumption notInFrameAssumption;
 
         private Polymorphic(Frame variableFrame) {
-            frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrame.getFrameDescriptor(), identifier);
+            initializeFrameIndexAndAssumption(variableFrame.getFrameDescriptor());
         }
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
+            // check if the slot is missing / wrong type in current frame
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
+                try {
+                    notInFrameAssumption.check();
+                } catch (InvalidAssumptionException e) {
+                    initializeFrameIndexAndAssumption(variableFrame.getFrameDescriptor());
+                }
+            }
+
             if (FrameIndex.isInitializedIndex(frameIndex)) {
                 Object value = FrameSlotChangeMonitor.getObject(variableFrame, frameIndex);
                 if (checkType(frame, value, isNullProfile)) {
@@ -550,6 +560,11 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             } else {
                 throw RError.error(RError.SHOW_CALLER, mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
+        }
+
+        private void initializeFrameIndexAndAssumption(FrameDescriptor variableFrameDescriptor) {
+            frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(variableFrameDescriptor, identifier);
+            notInFrameAssumption = FrameIndex.isUninitializedIndex(frameIndex) ? FrameSlotChangeMonitor.getNotInFrameAssumption(variableFrameDescriptor, identifier) : null;
         }
 
         @TruffleBoundary
@@ -758,8 +773,8 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         }
 
         if (FrameIndex.isUninitializedIndex(frameIndex)) {
-            // TODO: getNotInFrameAssumption
-            //assumptions.add(variableFrameDescriptor.getNotInFrameAssumption(identifier));
+            var notInFrameAssumption = FrameSlotChangeMonitor.getNotInFrameAssumption(variableFrameDescriptor, identifier);
+            assumptions.add(notInFrameAssumption);
         } else {
             StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(variableFrame, frameIndex, getValue(variableFrame, frameIndex));
             if (valueAssumption != null && lastLevel instanceof DescriptorLevel) {

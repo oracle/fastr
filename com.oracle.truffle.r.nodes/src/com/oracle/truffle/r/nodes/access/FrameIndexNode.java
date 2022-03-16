@@ -23,7 +23,9 @@
 
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -69,7 +71,8 @@ public abstract class FrameIndexNode extends RBaseNode {
             frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
         }
         if (FrameIndex.isUninitializedIndex(frameIndex)) {
-            return new AbsentFrameIndexNode(frameDescriptor, identifier);
+            var notInFrameAssumption = FrameSlotChangeMonitor.getNotInFrameAssumption(frameDescriptor, identifier);
+            return new AbsentFrameIndexNode(frameDescriptor, identifier, notInFrameAssumption);
         } else {
             return new PresentFrameIndexNode(frameIndex);
         }
@@ -144,10 +147,12 @@ public abstract class FrameIndexNode extends RBaseNode {
     private static final class AbsentFrameIndexNode extends FrameIndexNode {
         private final FrameDescriptor frameDescriptor;
         private final Object identifier;
+        @CompilationFinal private Assumption notInFrameAssumption;
 
-        AbsentFrameIndexNode(FrameDescriptor frameDescriptor, Object identifier) {
+        AbsentFrameIndexNode(FrameDescriptor frameDescriptor, Object identifier, Assumption notInFrameAssumption) {
             this.frameDescriptor = frameDescriptor;
             this.identifier = identifier;
+            this.notInFrameAssumption = notInFrameAssumption;
         }
 
         @Override
@@ -155,14 +160,18 @@ public abstract class FrameIndexNode extends RBaseNode {
             throw CompilerDirectives.shouldNotReachHere();
         }
 
-        // TODO: Implement via an assumption?
         @Override
         public boolean hasValue(Frame frame) {
-            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
-            if (FrameIndex.isUninitializedIndex(frameIndex)) {
+            if (notInFrameAssumption.isValid()) {
                 return false;
             } else {
-                return replace(new PresentFrameIndexNode(frameIndex)).hasValue(frame);
+                int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
+                if (FrameIndex.isUninitializedIndex(frameIndex)) {
+                    notInFrameAssumption = FrameSlotChangeMonitor.getNotInFrameAssumption(frameDescriptor, identifier);
+                    return false;
+                } else {
+                    return replace(new PresentFrameIndexNode(frameIndex)).hasValue(frame);
+                }
             }
         }
     }
