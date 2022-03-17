@@ -133,9 +133,8 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
 
         # report a mismatch or success
         if result == 1:
-            logging.info(gnur_filename + ':%d' % (gnur_cur_statement_start + 1) + ' vs. ' + fastr_filename + ':%d' % (
-                    fastr_cur_statement_start + 1))
-            logging.info("%s\nvs.\n%s" % (gnur_line.strip(), fastr_line.strip()))
+            logging.info(f"{gnur_filename}:{gnur_i} vs. {fastr_filename}:{fastr_i}")
+            logging.info(f"{gnur_line.strip()}\nvs.\n{fastr_line.strip()}")
 
             # we need to synchronize the indices such that we can continue
             gnur_i = gnur_i + 1
