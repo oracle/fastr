@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,7 @@
 # questions.
 #
 import glob
+import logging
 import platform, subprocess, sys, shlex
 from os.path import join, sep
 from argparse import ArgumentParser
@@ -841,6 +842,43 @@ def pkgtest(args, **kwargs):
     return pkgtest_load().pkgtest(full_args)
 
 
+def pkgtest_cmp(args, **kwargs):
+    """ Compares gnur with fastr output generated from pkgtests.
+    Arguments: <gnur-filename> <fastr-filename> [filter-file] [dump-preprocessed]
+    """
+    mx.logv(["pkgtest_cmp"] + args)
+    if len(args) < 2:
+        mx.abort("Provide at least <gnur-fname> <fastr-fname> arguments")
+    if len(args) == 2:
+        output_filter = os.path.join(_fastr_suite.dir, "com.oracle.truffle.r.test.packages/test.output.filter")
+        mx.log(f"Using default output filter: {output_filter}")
+    else:
+        assert len(args) > 2
+        output_filter = args[3]
+    if not (os.path.exists(output_filter) and os.path.isfile(output_filter)):
+        mx.abort(f"Output filter {output_filter} is not a file")
+
+    gnur_out_file = args[0]
+    fastr_out_file = args[1]
+    for f in (gnur_out_file, fastr_out_file, output_filter):
+        if not os.path.exists(f) or not os.path.isfile(f):
+            mx.abort(f"{f} is not a file")
+
+    pkgtest_cmp_args = [gnur_out_file, fastr_out_file, output_filter]
+    if len(args) > 3:
+        pkgtest_cmp_args += args[3:]
+
+    # Initialize logging, since pkgtest initializes it explicitly.
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format="%(message)s")
+
+    status, statement_passed, statement_failed = pkgtest_load().pkgtest_cmp(pkgtest_cmp_args)
+    print(f"Status = {status}, statement_passed = {statement_passed}, statement_failed = {statement_failed}")
+    if status != 0:
+        mx.abort("Comparison failed")
+    else:
+        mx.log("Comparison successful")
+
+
 def installpkgs(args, **kwargs):
     full_args = _pkgtest_args(args)
     mx.logv(["installpkgs"] + full_args)
@@ -998,6 +1036,7 @@ _commands = {
     'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
     'pkgtest' : [pkgtest, ['options']],
+    'pkgtest-cmp' : [pkgtest_cmp, '<gnur-output> <fastr-output> ...'],
     'r-pkgtest-analyze' : [r_pkgtest_analyze, ['options']],
     'r-findtop100' : [find_top100, ['options']],
     'r-findtop' : [find_top, ['options']],
