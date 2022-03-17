@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,9 @@ public final class TemporarySlotNode extends Node {
     private int tempIdentifier;
 
     /**
-     * Searches for an empty temporary slot in the given frame, and puts the given {@code value} there.
+     * Searches for an empty temporary slot in the given frame, and puts the given {@code value}
+     * there.
+     * 
      * @param value Value to put in a temporary frame slot.
      * @return Index into auxiliary frame slot.
      */

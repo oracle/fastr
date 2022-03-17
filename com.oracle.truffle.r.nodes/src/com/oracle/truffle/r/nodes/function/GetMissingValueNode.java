@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,8 @@ public abstract class GetMissingValueNode extends RBaseNode {
         public Object execute(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), name);
-            return varArgIndex < 0 ? replace(new ResolvedGetMissingValueNode(frameIndex)).execute(frame) : replace(new ResolvedGetMissingVarArgIndexedValueNode(frameIndex, varArgIndex)).execute(frame);
+            return varArgIndex < 0 ? replace(new ResolvedGetMissingValueNode(frameIndex)).execute(frame)
+                            : replace(new ResolvedGetMissingVarArgIndexedValueNode(frameIndex, varArgIndex)).execute(frame);
         }
     }
 

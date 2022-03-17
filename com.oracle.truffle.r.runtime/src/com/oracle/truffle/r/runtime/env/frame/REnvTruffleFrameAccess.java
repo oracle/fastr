@@ -52,8 +52,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 /**
- * Variant of {@link REnvFrameAccess} that provides access to an actual Truffle execution frame.
- * All the slots used within the frame that corresponds to the environment are auxiliary slots.
+ * Variant of {@link REnvFrameAccess} that provides access to an actual Truffle execution frame. All
+ * the slots used within the frame that corresponds to the environment are auxiliary slots.
  */
 public final class REnvTruffleFrameAccess extends REnvFrameAccess {
 

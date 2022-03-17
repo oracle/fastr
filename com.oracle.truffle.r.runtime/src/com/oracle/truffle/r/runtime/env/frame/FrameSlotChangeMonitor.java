@@ -231,8 +231,8 @@ public final class FrameSlotChangeMonitor {
          */
         private final Map<Object, Integer> indexes = new ConcurrentHashMap<>();
         /**
-         * List of frame slot infos for auxiliary slots. The indexes into this list correspond to indexes into
-         * auxiliary slots in a frame.
+         * List of frame slot infos for auxiliary slots. The indexes into this list correspond to
+         * indexes into auxiliary slots in a frame.
          */
         private final List<FrameSlotInfo> auxSlotInfos = new ArrayList<>();
 
@@ -265,7 +265,7 @@ public final class FrameSlotChangeMonitor {
         public Integer getIndex(Object identifier) {
             return indexes.get(identifier);
         }
-        
+
         public FrameSlotInfo getAuxiliarySlotInfo(int auxSlotIdx) {
             return auxSlotInfos.get(auxSlotIdx);
         }
@@ -882,8 +882,8 @@ public final class FrameSlotChangeMonitor {
     }
 
     /**
-     * This class represents metadata about one particular frame slot and is saved inside {@link FrameDescriptor}.
-     * It should not be associated with a value of any frame slot.
+     * This class represents metadata about one particular frame slot and is saved inside
+     * {@link FrameDescriptor}. It should not be associated with a value of any frame slot.
      */
     private static final class FrameSlotInfo {
         /**
@@ -900,10 +900,10 @@ public final class FrameSlotChangeMonitor {
         private final Assumption noMultiSlot;
 
         /**
-         * An instance of {@link FrameSlotInfo} represents metadata of one frame slot inside
-         * a particular {@link FrameDescriptor}.
-         * This stable value is therefore stored under {@link FrameDescriptor}, which means that
-         * the stable value is the same for any {@link Frame} with such a {@link FrameDescriptor}.
+         * An instance of {@link FrameSlotInfo} represents metadata of one frame slot inside a
+         * particular {@link FrameDescriptor}. This stable value is therefore stored under
+         * {@link FrameDescriptor}, which means that the stable value is the same for any
+         * {@link Frame} with such a {@link FrameDescriptor}.
          *
          * An example of the stable value is {@code abs} builtin, which is stored in a frame slot
          * identified by {@code abs} in a {@link FrameDescriptor} representing base namespace.
@@ -1158,7 +1158,7 @@ public final class FrameSlotChangeMonitor {
         return getFrameSlotInfo(frame, frameIndex).nonLocalModifiedAssumption;
     }
 
-    public synchronized static int findOrAddAuxiliaryFrameSlot(FrameDescriptor frameDescriptor, Object identifier) {
+    public static synchronized int findOrAddAuxiliaryFrameSlot(FrameDescriptor frameDescriptor, Object identifier) {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
         int auxSlotIdx = frameDescriptor.findOrAddAuxiliarySlot(identifier);
@@ -1183,8 +1183,8 @@ public final class FrameSlotChangeMonitor {
      * Checks if the assumption of the given {@code frameIndex} has to be invalidated.
      *
      * @param curFrame Current frame.
-     * @param frameIndex Index of the slot into the frame; its "info" is assumed to be an Assumption, throws an
-     *            {@link RInternalError} otherwise
+     * @param frameIndex Index of the slot into the frame; its "info" is assumed to be an
+     *            Assumption, throws an {@link RInternalError} otherwise
      * @param invalidateProfile Used to guard the invalidation code.
      */
     private static void checkAndInvalidate(Frame curFrame, int frameIndex, boolean isNonLocal, BranchProfile invalidateProfile) {

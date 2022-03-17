@@ -25,14 +25,15 @@ package com.oracle.truffle.r.runtime.env.frame;
 
 /**
  * A helper class for frame slot indexing. Auxiliary and normal frame slots are both indexed from 0,
- * therefore, we have to differentiate between these two. In our case, auxiliary indexes are represented
- * by negative integers, i.e., everything that is returned as an integer index from {@link FrameSlotChangeMonitor}
- * is either negative for aux slot or positive for normal slot.
+ * therefore, we have to differentiate between these two. In our case, auxiliary indexes are
+ * represented by negative integers, i.e., everything that is returned as an integer index from
+ * {@link FrameSlotChangeMonitor} is either negative for aux slot or positive for normal slot.
  *
- * Note that it is not possible to refactor this class to a normal class that would wrap the index itself
- * and the type of the index because of the performance - any instance of that class could potentially escape from
- * any compilation unit, assuming that they would be cached as a field in a node in some AST. That means that for
- * every read of such an instance, we would have to generate a {@code LoadField} instruction.
+ * Note that it is not possible to refactor this class to a normal class that would wrap the index
+ * itself and the type of the index because of the performance - any instance of that class could
+ * potentially escape from any compilation unit, assuming that they would be cached as a field in a
+ * node in some AST. That means that for every read of such an instance, we would have to generate a
+ * {@code LoadField} instruction.
  *
  * TODO: Refactor indexes to longs and convert them to real indexes with bit arithmetics, so that
  * there is a clear distinction between auxiliary slot index and normal slot index.

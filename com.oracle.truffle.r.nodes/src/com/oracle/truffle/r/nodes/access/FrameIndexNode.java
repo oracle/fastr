@@ -78,7 +78,6 @@ public abstract class FrameIndexNode extends RBaseNode {
         }
     }
 
-
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
     private static final class UnresolvedFrameIndexNode extends FrameIndexNode {
 
@@ -116,7 +115,7 @@ public abstract class FrameIndexNode extends RBaseNode {
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
         private final int frameIndex;
 
-        public PresentFrameIndexNode(int frameIndex) {
+        PresentFrameIndexNode(int frameIndex) {
             this.frameIndex = frameIndex;
         }
 
