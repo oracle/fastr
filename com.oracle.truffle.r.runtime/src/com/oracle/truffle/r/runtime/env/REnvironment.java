@@ -416,7 +416,14 @@ public abstract class REnvironment extends RAttributable {
      * Check whether the given frame is indeed the frame stored in the global environment.
      */
     public static boolean isGlobalEnvFrame(Frame frame) {
-        return isFrameForEnv(frame, RContext.getInstance().stateREnvironment.getGlobalEnv());
+        return isGlobalEnvFrame(frame, RContext.getInstance());
+    }
+
+    /**
+     * Fast-path version of {@link #isGlobalEnvFrame(Frame)}.
+     */
+    public static boolean isGlobalEnvFrame(Frame frame, RContext context) {
+        return isFrameForEnv(frame, context.stateREnvironment.getGlobalEnv());
     }
 
     /**
@@ -688,9 +695,12 @@ public abstract class REnvironment extends RAttributable {
     }
 
     public static REnvironment getNamespaceRegistry() {
-        return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
+        return getNamespaceRegistry(RContext.getInstance());
     }
 
+    /**
+     * Fast-path version of {@link #getNamespaceRegistry()}.
+     */
     public static REnvironment getNamespaceRegistry(RContext ctx) {
         return ctx.stateREnvironment.getNamespaceRegistry();
     }
@@ -703,7 +713,14 @@ public abstract class REnvironment extends RAttributable {
      * @return {@code null} if name is already registered else {@code env}
      */
     public static Object registerNamespace(String name, REnvironment env) {
-        REnvironment nsreg = RContext.getInstance().stateREnvironment.getNamespaceRegistry();
+        return registerNamespace(name, env, RContext.getInstance());
+    }
+
+    /**
+     * Fast-path version of {@link #registerNamespace(String, REnvironment)}.
+     */
+    public static Object registerNamespace(String name, REnvironment env, RContext context) {
+        REnvironment nsreg = context.stateREnvironment.getNamespaceRegistry();
         try {
             nsreg.put(name, env);
             return env;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ package com.oracle.truffle.r.runtime;
 
 import static com.oracle.truffle.r.runtime.context.FastROptions.AdditionalOptions;
 
+import java.awt.GraphicsEnvironment;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -209,6 +210,11 @@ public class ROptions {
         putOption(map, "browserNLdisabled", RDataFactory.createSharedLogicalVectorFromScalar(false));
         boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK", envVars);
         putOption(map, "CBoundsCheck", RDataFactory.createSharedLogicalVectorFromScalar(cBoundsCheck));
+        if (!GraphicsEnvironment.isHeadless() && context.isInteractive()) {
+            putOption(map, "device", RDataFactory.createSharedStringVectorFromScalar("JavaGD"));
+        } else {
+            putOption(map, "device", RDataFactory.createSharedStringVectorFromScalar("svg"));
+        }
 
         String cranMirror = REnvVars.getCRANMirror(context);
         if (cranMirror != null) {

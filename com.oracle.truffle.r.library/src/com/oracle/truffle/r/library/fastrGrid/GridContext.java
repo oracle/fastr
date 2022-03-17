@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,6 +131,7 @@ public final class GridContext {
         setCurrentDevice(name, currentDevice, null);
     }
 
+    @TruffleBoundary
     public void setCurrentDevice(String name, GridDevice currentDevice, String filenamePattern) {
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount() : devices.size() + " vs " + RGridGraphicsAdapter.getDevicesCount();
         RContext rCtx = RContext.getInstance();
@@ -141,6 +142,7 @@ public final class GridContext {
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount() : devices.size() + " vs " + RGridGraphicsAdapter.getDevicesCount();
     }
 
+    @TruffleBoundary
     public void setCurrentDevice(int deviceIdx) {
         assert deviceIdx > 0 && deviceIdx < this.devices.size();
         RContext rCtx = RContext.getInstance();
@@ -197,6 +199,7 @@ public final class GridContext {
     /**
      * Runs arbitrary function from 'fastrGrid.R' file and returns its result.
      */
+    @TruffleBoundary
     public Object evalInternalRFunction(String functionName, Object... args) {
         if (internalCode == null) {
             RContext context = RContext.getInstance();

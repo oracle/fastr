@@ -50,7 +50,7 @@ public abstract class PosToEnv extends RBuiltinNode.Arg1 {
     @Specialization(guards = "isMinusOne(x)")
     protected Object doPosToEnvMinusOne(VirtualFrame frame, @SuppressWarnings("unused") int x,
                     @Cached("create()") GetCallerFrameNode callerFrameNode) {
-        if (REnvironment.isGlobalEnvFrame(frame)) {
+        if (REnvironment.isGlobalEnvFrame(frame, getRContext())) {
             throw error(Message.NO_ENCLOSING_ENVIRONMENT);
         }
         return REnvironment.frameToEnvironment(callerFrameNode.execute(frame));

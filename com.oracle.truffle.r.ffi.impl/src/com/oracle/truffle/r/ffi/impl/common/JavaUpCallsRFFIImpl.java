@@ -967,8 +967,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void restoreHandlerStacks(Object savedHandlerStack) {
-        RErrorHandling.restoreHandlerStack(savedHandlerStack);
+    public void restoreHandlerStacks(Object savedHandlerStack, RContext context) {
+        RErrorHandling.restoreHandlerStack(savedHandlerStack, context);
     }
 
     @Override
@@ -1413,6 +1413,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
      * @param method A reference to a native function
      * @param signature Signature of the {@code method}
      */
+    @TruffleBoundary
     private static AltrepMethodDescriptor createAltrepMethodDescriptor(Object method, String signature) {
         InteropLibrary interop = InteropLibrary.getUncached();
         if (!interop.isExecutable(method)) {

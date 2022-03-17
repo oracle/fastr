@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public abstract class DevSet extends RExternalBuiltinNode.Arg1 {
 
     @Specialization
     public int doInteger(int deviceIdx) {
-        RContext rCtx = RContext.getInstance();
+        RContext rCtx = getRContext();
         RGridGraphicsAdapter.fixupDevicesVariable(rCtx);
         GridContext gridCtx = GridContext.getContext(rCtx);
         if (deviceIdx <= 0 || deviceIdx > gridCtx.getDevicesSize()) {

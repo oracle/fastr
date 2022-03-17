@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,9 +84,10 @@ public abstract class DispatchGeneric extends RBaseNode {
             // and installed in the methods table so that the slow path does not have to be executed
             // again
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
+            RContext context = getRContext();
+            REnvironment methodsEnv = REnvironment.getRegisteredNamespace(context, "methods");
             RFunction currentFunction = ReadVariableNode.lookupFunction(".InheritForDispatch", methodsEnv.getFrame(), true, true);
-            method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, RASTUtils.getOriginalCall(this)), true, null, classes, fdef, mtable);
+            method = (RFunction) context.getThisEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, RASTUtils.getOriginalCall(this)), true, null, classes, fdef, mtable);
         }
         if (isDeferredProfile.profile(method.isBuiltin() || getInheritsInternalDispatchCheckNode().execute(method))) {
             return RRuntime.DEFERRED_DEFAULT_MARKER;

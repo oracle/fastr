@@ -25,7 +25,7 @@ This can be controlled by the following environment variables:
 and must be used when you are building a GraalVM distribution (from the `graal/vm` mx suite),
 but it can be further configured by using the following environment variables:
 * `FASTR_NO_RECOMMENDED` set to any value turns off the recommended packages build and bundling with FastR. Only applicable if `FASTR_RELEASE` is set.
-* `FASTR_CAPTURE_DEPENDENCIES` if exported overrides the set of 3rd party libraries that are bundled with FastR, the value is space separated list of "base" names of the libraries, for example, use `gfortran`, for `libgfortran.so.5`. Libraries that can be bundled are: `libz`, `libpcre2-8`, `libgfortran`, `libquadmath`, and `libgcc_s`. Only applicable if `FASTR_RELEASE` is set.
+* `FASTR_CAPTURE_DEPENDENCIES` if exported overrides the set of 3rd party libraries that are bundled with FastR, the value is space separated list of "base" names of the libraries, for example, use `gfortran`, for `libgfortran.so.5`. Libraries that can be bundled are: `libpcre2-8`, `libgfortran`, `libquadmath`, and `libgcc_s`. Only applicable if `FASTR_RELEASE` is set.
 
 Note for maintainers of packages for package managers like apt or yum: it is recommended to **not bundle** any 3rd party libraries with FastR, but instead use the dependency management mechanisms of your package manager. To achieve this, export `FASTR_BUNDLE_DEPENDENCIES` set to an empty value (and build FastR with `FASTR_RELEASE`).
 

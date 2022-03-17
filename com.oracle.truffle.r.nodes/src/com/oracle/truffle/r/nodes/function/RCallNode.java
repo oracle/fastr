@@ -534,7 +534,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         if (isS4Dispatch) {
-            RList list = (RList) promiseHelperNode.checkVisibleEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
+            RList list = (RList) promiseHelperNode.checkVisibleEvaluate(frame, REnvironment.getRegisteredNamespace(getRContext(), "methods").get(".BasicFunsList"));
             int index = list.getElementIndexByName(builtin.getName());
             if (index != -1) {
                 RFunction basicFun = (RFunction) list.getDataAt(index);

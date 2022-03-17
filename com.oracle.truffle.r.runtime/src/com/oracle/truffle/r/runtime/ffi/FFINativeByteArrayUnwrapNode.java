@@ -119,7 +119,7 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
             interopLib.toNative(x);
             long addr = interopLib.asPointer(x);
             byte[] result = new byte[length];
-            NativeMemory.copyMemory(addr, result, ElementType.INT, length);
+            NativeMemory.copyMemory(addr, result, ElementType.BYTE, length);
             return result;
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);

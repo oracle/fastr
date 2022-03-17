@@ -136,7 +136,7 @@ public class ConditionFunctions {
             try {
                 if (!FrameSlotChangeMonitor.isObject(frame, restartFrameIndex) ||
                                 FrameSlotChangeMonitor.getObject(frame, restartFrameIndex) == null) {
-                    FrameSlotChangeMonitor.setObject(frame, restartFrameIndex, RErrorHandling.getRestartStack());
+                    FrameSlotChangeMonitor.setObject(frame, restartFrameIndex, RErrorHandling.getRestartStack(getRContext()));
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
@@ -156,7 +156,7 @@ public class ConditionFunctions {
 
         @Specialization
         protected Object getRestart(int index) {
-            return RErrorHandling.getRestart(index);
+            return RErrorHandling.getRestart(index, getRContext());
         }
     }
 

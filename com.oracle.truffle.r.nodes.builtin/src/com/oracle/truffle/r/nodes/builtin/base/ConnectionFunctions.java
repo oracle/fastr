@@ -367,7 +367,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         public RIntVector gzcon(int conIndex, @SuppressWarnings("unused") int level, @SuppressWarnings("unused") boolean allowNonCompressed, @SuppressWarnings("unused") boolean text,
                         @Cached("createBinaryProfile()") ConditionProfile gzConProfile) {
-            BaseRConnection base = RConnection.fromIndex(conIndex);
+            BaseRConnection base = RConnection.fromIndex(conIndex, getRContext());
             if (gzConProfile.profile(base.getConnectionClass() == ConnectionSupport.ConnectionClass.GZCon)) {
                 RError.warning(this, RError.Message.IS_GZCON);
                 return base.asVector();
@@ -741,7 +741,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         protected int pushBackLength(int connection) {
-            return RConnection.fromIndex(connection).pushBackLength();
+            return RConnection.fromIndex(connection, getRContext()).pushBackLength();
         }
     }
 
@@ -755,7 +755,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         protected RNull pushBackClear(int connection) {
-            RConnection.fromIndex(connection).pushBackClear();
+            RConnection.fromIndex(connection, getRContext()).pushBackClear();
             return RNull.instance;
         }
     }

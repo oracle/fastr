@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "f8d52b2eccdc79c738b950a03d8d72adc08bd6bd",
+               "version" : "37d08f1c7ca9439056fbda2dc18b5b627dbe24bc",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "f8d52b2eccdc79c738b950a03d8d72adc08bd6bd",
+               "version" : "37d08f1c7ca9439056fbda2dc18b5b627dbe24bc",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -88,14 +88,15 @@ suite = {
       "resource" : "true"
     },
 
-    "XZ-1.8" : {
-      "sha1" : "c4f7d054303948eb6a4066194253886c8af07128",
+    "XZ-1.9" : {
+      "sha1" : "1ea4bec1a921180164852c65006d928617bd2caf",
       "maven" : {
         "groupId" : "org.tukaani",
         "artifactId" : "xz",
-        "version" : "1.8",
+        "version" : "1.9",
       },
     },
+
     "BATIK-ALL-1.14" : {
       "sha1" : "a8d228e4ae2c21efb833fdfcdfe5446fa672974a",
       "maven" : {
@@ -261,7 +262,7 @@ suite = {
         "com.oracle.truffle.r.launcher",
         "truffle:TRUFFLE_API",
         "sulong:SULONG_API",
-        "XZ-1.8",
+        "XZ-1.9",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "checkstyleVersion": "8.8",
@@ -274,6 +275,7 @@ suite = {
       "spotbugsIgnoresGenerated" : True,
       "requires" : [
         "java.management",
+        "java.desktop",
         "java.logging",
         "jdk.unsupported" # sun.misc.Unsafe
       ],
@@ -462,7 +464,7 @@ suite = {
         "sdk:JLINE3",
         "truffle:ANTLR4",
         "GNUR",
-        "XZ-1.8",
+        "XZ-1.9",
       ],
       "distDependencies" : [
         "truffle:TRUFFLE_API",

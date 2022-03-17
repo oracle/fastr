@@ -70,7 +70,7 @@ public class NamespaceFunctions {
 
         @Specialization
         protected Object doGetRegisteredNamespace(RSymbol name) {
-            Object result = REnvironment.getRegisteredNamespace(name.getName());
+            Object result = REnvironment.getRegisteredNamespace(getRContext(), name.getName());
             if (result == null) {
                 return RNull.instance;
             } else {
@@ -89,7 +89,7 @@ public class NamespaceFunctions {
 
         @Specialization
         protected byte doIsRegisteredNamespace(RStringVector name) {
-            Object result = REnvironment.getRegisteredNamespace(name.getDataAt(0));
+            Object result = REnvironment.getRegisteredNamespace(getRContext(), name.getDataAt(0));
             if (result == null) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
@@ -99,7 +99,7 @@ public class NamespaceFunctions {
 
         @Specialization
         protected Object doIsRegisteredNamespace(RSymbol name) {
-            Object result = REnvironment.getRegisteredNamespace(name.getName());
+            Object result = REnvironment.getRegisteredNamespace(getRContext(), name.getName());
             if (result == null) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
@@ -146,7 +146,7 @@ public class NamespaceFunctions {
 
         @Specialization
         protected RNull registerNamespace(RStringVector name, REnvironment env) {
-            if (REnvironment.registerNamespace(name.getDataAt(0), env) == null) {
+            if (REnvironment.registerNamespace(name.getDataAt(0), env, getRContext()) == null) {
                 throw error(RError.Message.NS_ALREADY_REG);
             }
             return RNull.instance;
@@ -154,7 +154,7 @@ public class NamespaceFunctions {
 
         @Specialization
         protected RNull registerNamespace(RSymbol nameSym, REnvironment env) {
-            if (REnvironment.registerNamespace(nameSym.getName(), env) == null) {
+            if (REnvironment.registerNamespace(nameSym.getName(), env, getRContext()) == null) {
                 throw error(RError.Message.NS_ALREADY_REG);
             }
             return RNull.instance;
