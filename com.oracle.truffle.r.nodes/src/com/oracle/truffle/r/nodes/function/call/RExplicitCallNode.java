@@ -69,7 +69,6 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
             FrameSlotChangeMonitor.setObject(frame, argsFrameIndex, new ExplicitArgs(args, caller, callerFrame));
             return call.execute(frame, function);
         } finally {
-            // TODO: Better way to dispose a frame slot?
             FrameSlotChangeMonitor.setObject(frame, argsFrameIndex, null);
         }
     }

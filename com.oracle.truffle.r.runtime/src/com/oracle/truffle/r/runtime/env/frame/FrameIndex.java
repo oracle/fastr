@@ -34,9 +34,6 @@ package com.oracle.truffle.r.runtime.env.frame;
  * potentially escape from any compilation unit, assuming that they would be cached as a field in a
  * node in some AST. That means that for every read of such an instance, we would have to generate a
  * {@code LoadField} instruction.
- *
- * TODO: Refactor indexes to longs and convert them to real indexes with bit arithmetics, so that
- * there is a clear distinction between auxiliary slot index and normal slot index.
  */
 public class FrameIndex {
     public static final int UNITIALIZED_INDEX = Integer.MIN_VALUE;
@@ -57,7 +54,7 @@ public class FrameIndex {
         return index >= 0;
     }
 
-    public static int transformIndex(int index) {
+    public static int transformAuxiliaryIndex(int index) {
         return (-index) - 1;
     }
 
@@ -66,7 +63,7 @@ public class FrameIndex {
      */
     public static int toAuxiliaryIndex(int index) {
         if (representsAuxiliaryIndex(index)) {
-            return (-index) - 1;
+            return transformAuxiliaryIndex(index);
         } else {
             assert representsNormalIndex(index);
             return index;
@@ -78,7 +75,7 @@ public class FrameIndex {
             return index;
         } else {
             assert representsAuxiliaryIndex(index);
-            return (-index) - 1;
+            return transformAuxiliaryIndex(index);
         }
     }
 }

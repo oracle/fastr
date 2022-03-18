@@ -133,7 +133,7 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
         SetupDispatchNode(FrameDescriptor frameDescriptor) {
             dotGenericFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC);
             dotMethodFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_METHOD);
-            assertAllIndexesInitialized(Set.of(dotGenericFrameIndex, dotMethodFrameIndex));
+            assert allIndexesInitialized(dotGenericFrameIndex, dotMethodFrameIndex);
         }
 
         void executeDispatchArgs(VirtualFrame frame, DispatchArgs args) {
@@ -141,9 +141,14 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, dotMethodFrameIndex, args.method, false, invalidateFrameSlotProfile);
         }
 
-        protected void assertAllIndexesInitialized(Collection<Integer> indexes) {
+        protected boolean allIndexesInitialized(int... indexes) {
             CompilerAsserts.neverPartOfCompilation();
-            assert indexes.stream().allMatch(FrameIndex::isInitializedIndex);
+            for (int index : indexes) {
+                if (FrameIndex.isUninitializedIndex(index)) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 
@@ -160,7 +165,7 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
             dotGenericCallEnvFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC_CALL_ENV);
             dotGenericCallDefFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_GENERIC_DEF_ENV);
             dotGroupFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_GROUP);
-            assertAllIndexesInitialized(Set.of(dotClassFrameIndex, dotGenericCallEnvFrameIndex, dotGenericCallDefFrameIndex, dotGroupFrameIndex));
+            assert allIndexesInitialized(dotClassFrameIndex, dotGenericCallEnvFrameIndex, dotGenericCallDefFrameIndex, dotGroupFrameIndex);
         }
 
         void execute(VirtualFrame frame, S3Args args) {
@@ -183,7 +188,7 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
             dotDefinedFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_DEFINED);
             dotTargetFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_TARGET);
             dotMethodsFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RRuntime.R_DOT_METHODS);
-            assertAllIndexesInitialized(Set.of(dotDefinedFrameIndex, dotTargetFrameIndex, dotMethodsFrameIndex));
+            assert allIndexesInitialized(dotDefinedFrameIndex, dotTargetFrameIndex, dotMethodsFrameIndex);
         }
 
         void execute(VirtualFrame frame, S4Args args) {

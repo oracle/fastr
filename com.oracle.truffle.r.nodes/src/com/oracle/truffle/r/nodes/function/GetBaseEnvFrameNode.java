@@ -36,14 +36,13 @@ public final class GetBaseEnvFrameNode extends Node {
     private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
     private final ValueProfile frameProfile = ValueProfile.createClassProfile();
     private final ValueProfile baseEnvProfile = ValueProfile.createIdentityProfile();
-    private final RContext ctx = RContext.getInstance(this);
 
     public static GetBaseEnvFrameNode create() {
         return new GetBaseEnvFrameNode();
     }
 
     public MaterializedFrame execute() {
-        REnvironment baseEnv = baseEnvProfile.profile(REnvironment.baseEnv(ctx));
+        REnvironment baseEnv = baseEnvProfile.profile(REnvironment.baseEnv(RContext.getInstance(this)));
         return frameProfile.profile(baseEnv.getFrame(frameAccessProfile));
     }
 }

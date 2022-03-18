@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -110,7 +109,7 @@ public abstract class FrameIndexNode extends RBaseNode {
     }
 
     private static final class PresentFrameIndexNode extends FrameIndexNode {
-        private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isNotNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
         private final int frameIndex;
@@ -129,7 +128,8 @@ public abstract class FrameIndexNode extends RBaseNode {
             Frame typedFrame = frameTypeProfile.profile(frame);
             FrameSlotKind slotKind = FrameSlotChangeMonitor.getFrameSlotKind(typedFrame.getFrameDescriptor(), frameIndex);
             if (!(isObjectProfile.profile(slotKind == FrameSlotKind.Object))) {
-                return false;
+                // A primitive frame slot kind always has some value.
+                return true;
             } else {
                 Object value;
                 try {
@@ -137,7 +137,7 @@ public abstract class FrameIndexNode extends RBaseNode {
                 } catch (FrameSlotTypeException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
-                return isNullProfile.profile(value != null);
+                return isNotNullProfile.profile(value != null);
             }
         }
     }
@@ -146,7 +146,7 @@ public abstract class FrameIndexNode extends RBaseNode {
     private static final class AbsentFrameIndexNode extends FrameIndexNode {
         private final FrameDescriptor frameDescriptor;
         private final Object identifier;
-        @CompilationFinal private Assumption notInFrameAssumption;
+        private final Assumption notInFrameAssumption;
 
         AbsentFrameIndexNode(FrameDescriptor frameDescriptor, Object identifier, Assumption notInFrameAssumption) {
             this.frameDescriptor = frameDescriptor;
@@ -166,8 +166,7 @@ public abstract class FrameIndexNode extends RBaseNode {
             } else {
                 int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
                 if (FrameIndex.isUninitializedIndex(frameIndex)) {
-                    notInFrameAssumption = FrameSlotChangeMonitor.getNotInFrameAssumption(frameDescriptor, identifier);
-                    return false;
+                    throw RInternalError.shouldNotReachHere("notInFrameAssumption is invalid, which means that the identifier must be in the frame");
                 } else {
                     return replace(new PresentFrameIndexNode(frameIndex)).hasValue(frame);
                 }

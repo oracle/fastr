@@ -206,7 +206,6 @@ public final class FrameSlotChangeMonitor {
          * If not null, the corresponding {@link FrameDescriptor} associated with this metadata is a
          * frame descriptor for an environment.
          */
-        // TODO: @CompilationFinal?
         private WeakReference<MaterializedFrame> singletonFrame;
         /**
          * Being a subdescriptor is an inverse relation to being an enclosing descriptor. E.g. if
@@ -227,7 +226,7 @@ public final class FrameSlotChangeMonitor {
         private final WeakHashMap<Object, WeakReference<LookupResult>> lookupResults = new WeakHashMap<>(2);
 
         /**
-         * Mapping of identifiers to indexes into the frame.
+         * Mapping of identifiers to indexes (transformed with {@link FrameIndex}) into the frame.
          */
         private final Map<Object, Integer> indexes = new ConcurrentHashMap<>();
         /**
@@ -291,6 +290,7 @@ public final class FrameSlotChangeMonitor {
         }
 
         public Assumption getNotInFrameAssumption(Object identifier) {
+            CompilerAsserts.neverPartOfCompilation();
             if (!notInFrameAssumptions.containsKey(identifier)) {
                 String assumptionName = String.format("identifier '%s' not in frame assumption", identifier);
                 Assumption assumption = Truffle.getRuntime().createAssumption(assumptionName);
@@ -1162,7 +1162,7 @@ public final class FrameSlotChangeMonitor {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
         int auxSlotIdx = frameDescriptor.findOrAddAuxiliarySlot(identifier);
-        int transformedAuxSlotIdx = FrameIndex.transformIndex(auxSlotIdx);
+        int transformedAuxSlotIdx = FrameIndex.transformAuxiliaryIndex(auxSlotIdx);
         if (descriptorMetadata.getIndex(identifier) == null) {
             // The identifier was not in the frameDescriptor before, we have to put it there and
             // invalidate
@@ -1524,6 +1524,7 @@ public final class FrameSlotChangeMonitor {
 
     public static Assumption getNotInFrameAssumption(FrameDescriptor frameDescriptor, Object identifier) {
         assert !containsIdentifier(frameDescriptor, identifier) : "Cannot get notInFrameAssumption for an existing identifier";
+        CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData metaData = getDescriptorMetadata(frameDescriptor);
         return metaData.getNotInFrameAssumption(identifier);
     }
