@@ -233,7 +233,8 @@ public final class FrameSlotChangeMonitor {
          * List of frame slot infos for auxiliary slots. The indexes into this list correspond to
          * indexes into auxiliary slots in a frame.
          */
-        private final List<FrameSlotInfo> auxSlotInfos = new ArrayList<>();
+        @CompilationFinal(dimensions = 1) private FrameSlotInfo[] auxSlotInfos = new FrameSlotInfo[10];
+        @CompilationFinal private int auxSlotInfosElements;
 
         private final Map<Object, Assumption> notInFrameAssumptions = new HashMap<>();
 
@@ -262,15 +263,22 @@ public final class FrameSlotChangeMonitor {
         }
 
         public Integer getIndex(Object identifier) {
+            CompilerAsserts.neverPartOfCompilation();
             return indexes.get(identifier);
         }
 
         public FrameSlotInfo getAuxiliarySlotInfo(int auxSlotIdx) {
-            return auxSlotInfos.get(auxSlotIdx);
+            return auxSlotInfos[auxSlotIdx];
         }
 
         public void addAuxSlotInfo(FrameSlotInfo slotInfo) {
-            auxSlotInfos.add(slotInfo);
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            if (auxSlotInfosElements >= auxSlotInfos.length) {
+                int newLength = auxSlotInfos.length * 2;
+                auxSlotInfos = Arrays.copyOf(auxSlotInfos, newLength);
+            }
+            auxSlotInfos[auxSlotInfosElements] = slotInfo;
+            auxSlotInfosElements++;
         }
 
         // TODO: Make more performant
@@ -489,10 +497,11 @@ public final class FrameSlotChangeMonitor {
             }
         }
         // Check auxSlotInfos
-        if (metadata.auxSlotInfos.size() != frameDescriptor.getNumberOfAuxiliarySlots()) {
+        if (metadata.auxSlotInfosElements != frameDescriptor.getNumberOfAuxiliarySlots()) {
             return false;
         }
-        for (FrameSlotInfo slotInfo : metadata.auxSlotInfos) {
+        for (int i = 0; i < metadata.auxSlotInfosElements; i++) {
+            FrameSlotInfo slotInfo = metadata.auxSlotInfos[i];
             if (slotInfo.identifier == null) {
                 return false;
             }
@@ -654,9 +663,7 @@ public final class FrameSlotChangeMonitor {
         } else {
             frameSlotInfo = frameDescriptor.getSlotInfo(FrameIndex.toNormalIndex(frameIndex));
         }
-        if (!(frameSlotInfo instanceof FrameSlotInfo)) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        assert frameSlotInfo instanceof FrameSlotInfo;
         return (FrameSlotInfo) frameSlotInfo;
     }
 
