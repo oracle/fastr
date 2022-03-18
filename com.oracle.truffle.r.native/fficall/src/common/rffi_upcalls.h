@@ -26,7 +26,7 @@
 #include "rffi_upcallsindex.h"
 #include <Rdynload.h>
 
-extern __thread void* *callbacks;
+extern void* *callbacks;
 
 // This is the complete set , including those not yet implemented
 

@@ -26,7 +26,7 @@
 #include <Rinternals_common.h>
 #include "../common/rffi_upcalls.h"
 
-__thread void **callbacks = NULL;
+void **callbacks = NULL;
 
 void Rinternals_addCallback(TruffleEnv* env, void** theCallbacks, int index, void *closure) {
         (*env)->newClosureRef(env, closure);
