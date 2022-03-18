@@ -26,11 +26,7 @@
 #include <Rinternals_common.h>
 #include "../common/rffi_upcalls.h"
 
-<<<<<<< HEAD
-void **callbacks = NULL;
-=======
 CALLBACKS_T callbacks = NULL;
->>>>>>> RFFI: do not declare the callbacks array as a thread local in LLVM
 
 void Rinternals_addCallback(TruffleEnv* env, void** theCallbacks, int index, void *closure) {
         (*env)->newClosureRef(env, closure);
