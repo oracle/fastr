@@ -26,7 +26,19 @@
 #include "rffi_upcallsindex.h"
 #include <Rdynload.h>
 
+<<<<<<< HEAD
 extern void* *callbacks;
+=======
+#ifdef FASTR_NFI
+#define CALLBACKS_T __thread void**
+#elif FASTR_LLVM
+#define CALLBACKS_T void**
+#else
+#error unknown RFFI backend type
+#endif
+
+extern CALLBACKS_T callbacks;
+>>>>>>> RFFI: do not declare the callbacks array as a thread local in LLVM
 
 // This is the complete set , including those not yet implemented
 

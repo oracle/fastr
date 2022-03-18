@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -39,12 +39,19 @@ OBJ = ../../lib/llvm
 C_HDRS := $(wildcard *.h)
 
 LOCAL_C_SOURCES := $(wildcard *.c) 
+
 TRUFFLE_COMMON_C_SOURCES := $(wildcard ../truffle_common/*.c)
 TRUFFLE_COMMON_H_SOURCES := $(wildcard ../truffle_common/*.h)
-C_SOURCES := $(LOCAL_C_SOURCES) $(TRUFFLE_COMMON_C_SOURCES)
+
+JAVA_GD_C_SOURCES := $(wildcard ../JavaGD/*.c)
+JAVA_GD_H_SOURCES := $(wildcard ../JavaGD/*.h)
+
+C_SOURCES := $(LOCAL_C_SOURCES) $(TRUFFLE_COMMON_C_SOURCES) $(JAVA_GD_C_SOURCES)
+
 LOCAL_C_OBJECTS := $(addprefix $(OBJ)/, $(LOCAL_C_SOURCES:.c=.o))
 TRUFFLE_COMMON_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(TRUFFLE_COMMON_C_SOURCES:.c=.o)))
-C_OBJECTS := $(LOCAL_C_OBJECTS) $(TRUFFLE_COMMON_C_OBJECTS)
+JAVA_GD_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(JAVA_GD_C_SOURCES:.c=.o)))
+C_OBJECTS := $(LOCAL_C_OBJECTS) $(TRUFFLE_COMMON_C_OBJECTS) $(JAVA_GD_C_OBJECTS)
 
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 LOCAL_INCLUDES = -I . -I $(abspath ../include) -I $(abspath ../common) 
@@ -58,6 +65,8 @@ FFLAGS :=
 # uncomment to see exactly where headers are being read from
 #CFLAGS := $(CFLAGS) -H
 
+CFLAGS := $(CFLAGS) -DFASTR_LLVM
+
 all: Makefile $(C_OBJECTS)
 
 $(C_OBJECTS): | $(OBJ)
@@ -70,6 +79,9 @@ $(OBJ)/%.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h rffiutils.h $(TRUFFLE_C
 
 $(OBJ)/%.o: ../truffle_common/%.c 
 	$(CC) $(CFLAGS) $(INCLUDES) $(SUPPRESS_WARNINGS) -c $< -o $@
+
+$(OBJ)/%.o: ../JavaGD/%.c $(TOPDIR)/include/Rinternals.h $(TRUFFLE_COMMON_H_SOURCES) $(JAVA_GD_H_SOURCES) ../common/rffi_upcallsindex.h $(C_HDRS)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ)

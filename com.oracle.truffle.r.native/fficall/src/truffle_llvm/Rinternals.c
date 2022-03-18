@@ -38,7 +38,7 @@ typedef char* (*call_bytesToNativeCharArray)(SEXP e);
 typedef char* (*call_charSXPToNativeCharArray)(SEXP e);
 typedef char* (*call_R_Home)();
 
-void **callbacks = NULL;
+CALLBACKS_T callbacks = NULL;
 
 void Rinternals_setCallbacksAddress(void** theCallbacks) {
 	callbacks = theCallbacks;
