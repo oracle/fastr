@@ -29,6 +29,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -161,9 +162,9 @@ public abstract class FrameIndexNode extends RBaseNode {
 
         @Override
         public boolean hasValue(Frame frame) {
-            if (notInFrameAssumption.isValid()) {
-                return false;
-            } else {
+            try {
+                notInFrameAssumption.check();
+            } catch (InvalidAssumptionException e) {
                 int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
                 if (FrameIndex.isUninitializedIndex(frameIndex)) {
                     throw RInternalError.shouldNotReachHere("notInFrameAssumption is invalid, which means that the identifier must be in the frame");
@@ -171,6 +172,7 @@ public abstract class FrameIndexNode extends RBaseNode {
                     return replace(new PresentFrameIndexNode(frameIndex)).hasValue(frame);
                 }
             }
+            return false;
         }
     }
 

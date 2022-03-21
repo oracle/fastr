@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -91,7 +92,7 @@ public abstract class FastRInspectFrame extends RBuiltinNode.Arg4 {
 
     @Specialization
     public Object inspectFrameOfEnclosingEnvironment(VirtualFrame currentFrame, int enclosingFrameNum, RStringVector identifiersVector, @SuppressWarnings("unused") RMissing env, byte verbose) {
-        CompilerAsserts.neverPartOfCompilation();
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         MaterializedFrame enclosingFrame = currentFrame.materialize();
         for (int i = 1; i < enclosingFrameNum; i++) {
             enclosingFrame = RArguments.getEnclosingFrame(enclosingFrame);
@@ -106,6 +107,7 @@ public abstract class FastRInspectFrame extends RBuiltinNode.Arg4 {
     }
 
     @Specialization
+    @TruffleBoundary
     public Object inspectFrameOfEnvironment(@SuppressWarnings("unused") int enclosingFrameNum, RStringVector identifiersVector, REnvironment env, byte verbose) {
         CompilerAsserts.neverPartOfCompilation();
         MaterializedFrame envFrame = env.getFrame();
