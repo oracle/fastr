@@ -22,9 +22,7 @@
 # questions.
 #
 
-# This script is deployed as
-# jre/languages/R/bin/Rscript in JDK8
-# languages/R/bin/Rscript in JDK11
+# This script is deployed under {GRAALVM_HOME}/languages/R/bin/Rscript
 # It forwards to the RMain launcher, which is a regular Graal SDK launcher
 
 source="${BASH_SOURCE[0]}"

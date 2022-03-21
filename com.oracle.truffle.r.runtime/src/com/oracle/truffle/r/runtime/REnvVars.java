@@ -272,16 +272,14 @@ public final class REnvVars implements RContext.ContextState {
                     // initialized yet
                     throw new RError("Cannot determine the R home. " +
                                     "Please export environment variable R_HOME with path to the FastR home directory. " +
-                                    "FastR home is usually located in {GraalVM}/jre/languages/R in JDK8 based builds and " +
-                                    "in {GraalVM}/languages/R in JDK11 based builds.", RError.NO_CALLER);
+                                    "FastR home is usually located in {GRAALVM_HOME}/languages/R.", RError.NO_CALLER);
                 }
                 home = rHomePath.toString();
             } else {
                 logFinest("R_HOME environment variable found: '%s'.", home);
                 if (!validateRHome(ctx.getEnv().getInternalTruffleFile(home), markerFile())) {
                     throw new RError("The FastR home directory given in an environment variable R_HOME appears to be not valid FastR home directory. " +
-                                    "FastR home is usually located in {GraalVM}/jre/languages/R in JDK8 based builds and " +
-                                    "in {GraalVM}/languages/R in JDK11 based builds.", RError.NO_CALLER);
+                                    "FastR home is usually located in {GRAALVM_HOME}/languages/R.", RError.NO_CALLER);
                 }
             }
             rHome.set(home);
