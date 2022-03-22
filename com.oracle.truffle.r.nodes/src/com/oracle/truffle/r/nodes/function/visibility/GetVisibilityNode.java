@@ -65,8 +65,13 @@ public final class GetVisibilityNode extends Node {
 
     public static boolean executeSlowPath(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
+        int frameIndex;
+        if (!FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.Visibility)) {
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        } else {
+            frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        }
         try {
-            int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
             return FrameSlotChangeMonitor.getBoolean(frame, frameIndex);
         } catch (FrameSlotTypeException ex) {
             return false;

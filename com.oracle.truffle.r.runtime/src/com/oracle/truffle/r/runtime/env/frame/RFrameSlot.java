@@ -103,7 +103,7 @@ public final class RFrameSlot {
      * callee frame. The callee can "return" the visibility to the caller via setting it in the
      * given {@link RCaller} instance.
      */
-    public static final RFrameSlot Visibility = new RFrameSlot("Visibility", false);
+    public static final RFrameSlot Visibility = new RFrameSlot("Visibility", false, FrameIndex.toNormalIndex(0));
     /**
      * Used to save the handler stack in frames that modify it.
      */

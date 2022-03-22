@@ -28,11 +28,13 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -61,7 +63,18 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
     }
 
     protected int findOrAddFrameIndex(VirtualFrame frame, FrameSlotKind initialKind) {
-        return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), getName());
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        if (FrameSlotChangeMonitor.containsIdentifier(frameDescriptor, getName())) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, getName());
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
+                // Auxiliary slots are always considered Object types, so we check kinds only for
+                // nomral slots.
+                assert FrameSlotChangeMonitor.getFrameSlotKind(frameDescriptor, frameIndex) == initialKind;
+            }
+            return frameIndex;
+        } else {
+            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, getName());
+        }
     }
 
     @Specialization(guards = "isLogicalKind(frame, frameIndex)")

@@ -92,9 +92,9 @@ public final class SetVisibilityNode extends Node {
     public void executeEndOfFunction(VirtualFrame frame) {
         ensureFrameIndex(frame.getFrameDescriptor());
         try {
-            Object visibility = FrameSlotChangeMonitor.getObject(frame, frameIndex);
-            if (visibility instanceof Boolean) {
-                RArguments.getCall(frame).setVisibility((boolean) visibility);
+            if (frame.isBoolean(frameIndex)) {
+                boolean visibility = FrameSlotChangeMonitor.getBoolean(frame, frameIndex);
+                RArguments.getCall(frame).setVisibility(visibility);
             }
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);
@@ -106,7 +106,7 @@ public final class SetVisibilityNode extends Node {
      */
     public static void executeAfterCallSlowPath(Frame frame, RCaller caller) {
         CompilerAsserts.neverPartOfCompilation();
-        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        int frameIndex = getOrAddVisibilityFrameIndex(frame);
         FrameSlotChangeMonitor.setBoolean(frame, frameIndex, caller.getVisibility());
     }
 
@@ -115,7 +115,17 @@ public final class SetVisibilityNode extends Node {
      */
     public static void executeSlowPath(Frame frame, boolean visibility) {
         CompilerAsserts.neverPartOfCompilation();
-        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        int frameIndex = getOrAddVisibilityFrameIndex(frame);
         FrameSlotChangeMonitor.setBoolean(frame, frameIndex, visibility);
+    }
+
+    private static int getOrAddVisibilityFrameIndex(Frame frame) {
+        int frameIndex = RFrameSlot.Visibility.getFrameIdx();
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        }
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        assert FrameIndex.isInitializedIndex(frameIndex);
+        return frameIndex;
     }
 }
