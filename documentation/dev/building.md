@@ -101,7 +101,7 @@ On top of the requirements of GNU-R, FastR also needs:
     A JVMCI-enabled Java JDK
     Python version 3.x
 
-A JVMCI enabled Java builds are available in the [openjdk8-jvmci-builder GitHub repository](https://github.com/graalvm/openjdk8-jvmci-builder/releases).
+A JVMCI enabled Java builds are available in the [`labs-openjdk-11` GitHub repository](https://github.com/graalvm/labs-openjdk-11/releases).
 The environment variable `JAVA_HOME` must be set to the location of the jvmci-enabled Java JDK.
 For convenience use `mx fetch-jdk` command to download JVMCI enabled Java SDK.
 For example, `mx fetch-jdk --jdk-id labsjdk-ce-17 --alias labsjdk-ce-17` downloads JVMCI enabled JDK 17 into `~/.mx/jdks`.
