@@ -56,7 +56,7 @@ public final class LocalReadVariableNode extends ReadVariableNodeBase {
     @CompilationFinal private ConditionProfile isMissingProfile;
     @CompilationFinal private ConditionProfile isPromiseProfile;
 
-    @CompilationFinal private int frameIndex;
+    @CompilationFinal private int frameIndex = FrameIndex.UNITIALIZED_INDEX;
     // null iff frameIndex is initialized. I.e. it is created only if the identifier is
     // not already in the frame.
     @CompilationFinal private Assumption notInFrameAssumption;

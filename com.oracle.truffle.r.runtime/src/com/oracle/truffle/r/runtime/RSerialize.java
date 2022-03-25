@@ -2835,8 +2835,9 @@ public class RSerialize {
 
             MaterializedFrame enclosingFrame = environment.getFrame();
 
+            // TODO: Search for localVariables
             RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false), processBody(cdr),
-                            functionName == null ? "<deserialized function>" : functionName);
+                            functionName == null ? "<deserialized function>" : functionName, null);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
             RFunction func = RDataFactory.createFunction(functionName, packageName, callTarget, null, enclosingFrame);
 
@@ -2912,8 +2913,9 @@ public class RSerialize {
 
         private static RSyntaxNode processFunctionExpression(Object car, Object cdr, @SuppressWarnings("unused") Object tag, String name) {
             // car == arguments, cdr == body
+            // TODO: Search for localVariables
             return RContext.getASTBuilder().function(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false), processBody(cdr),
-                            name == null ? "<deserialized function>" : name);
+                            name == null ? "<deserialized function>" : name, null);
         }
 
         private static List<RCodeBuilder.Argument<RSyntaxNode>> processArguments(Object args, boolean isAssignment) {

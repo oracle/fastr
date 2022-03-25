@@ -192,7 +192,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             SourceSection source = argSourceSections == null ? getLazySourceSection() : argSourceSections[i];
             args.add(RCodeBuilder.argument(source, getFormalArguments().getSignature().getName(i), value == null ? null : builder.process(value.asRSyntaxNode())));
         }
-        RootCallTarget callTarget = builder.rootFunction(getRLanguage(), getLazySourceSection(), args, builder.process(getBody()), name);
+        RootCallTarget callTarget = builder.rootFunction(getRLanguage(), getLazySourceSection(), args, builder.process(getBody()), name, null);
         return callTarget;
     }
 

@@ -209,7 +209,8 @@ public class RSubstitute {
             @Override
             protected T visit(RSyntaxFunction element) {
                 ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return builder.function(language, RSyntaxNode.LAZY_DEPARSE, params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
+                // TODO: Search for localVariables
+                return builder.function(language, RSyntaxNode.LAZY_DEPARSE, params, accept(element.getSyntaxBody()), element.getSyntaxDebugName(), null);
             }
         }.accept(original);
     }

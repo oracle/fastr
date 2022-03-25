@@ -30,7 +30,9 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
@@ -59,6 +61,7 @@ import com.oracle.truffle.r.nodes.function.signature.QuoteNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
@@ -70,6 +73,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -77,6 +81,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
+import com.oracle.truffle.r.runtime.parsermetadata.LocalVariable;
 
 /**
  * This class can be used to build fragments of Truffle AST that correspond to R language
@@ -84,6 +90,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
+    private static TruffleLogger logger = RLogger.getLogger(RASTBuilder.class.getSimpleName());
     private CodeBuilderContext context = CodeBuilderContext.DEFAULT;
     private ParseDataBuilder parseDataBuilder;
 
@@ -262,9 +269,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode function(TruffleRLanguage language, SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, Object assignedTo) {
-        String description = getFunctionDescription(source, assignedTo);
-        RootCallTarget callTarget = rootFunction(language, source, params, body, description);
+    public RSyntaxNode function(TruffleRLanguage language, SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, Object assignedTo, FunctionScope functionScope) {
+        String functionName = getFunctionDescription(source, assignedTo);
+        RootCallTarget callTarget = rootFunction(language, source, params, body, functionName, functionScope);
         return FunctionExpressionNode.create(source, callTarget);
     }
 
@@ -290,8 +297,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RootCallTarget rootFunction(TruffleRLanguage language, SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String name) {
+    public RootCallTarget rootFunction(TruffleRLanguage language, SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String name, FunctionScope functionScope) {
         // Parse argument list
+        logger.finer("rootFunction '" + name + "'");
         RNode[] defaultValues = new RNode[params.size()];
         SaveArgumentsNode saveArguments;
         AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[params.size()];
@@ -335,7 +343,30 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             access.setFormals(formals);
         }
 
-        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>");
+        // Local variables
+        logger.fine(() -> String.format("rootFunction('%s'): functionScope = %s", name, functionScope != null ? functionScope.toString() : "null"));
+        String[] identifiers;
+        FrameSlotKind[] slotKinds;
+        if (functionScope != null && functionScope.getLocalVariablesCount() > 0) {
+            // Sort local variables by frame index - we have to put them into a FrameDescriptor in a
+            // specific order.
+            List<LocalVariable> sortedLocalVariables = functionScope.getLocalVariablesSortedByFrameIdx();
+            identifiers = new String[sortedLocalVariables.size()];
+            slotKinds = new FrameSlotKind[sortedLocalVariables.size()];
+            int currentFrameIdx = FrameSlotChangeMonitor.INTERNAL_INDEXED_SLOT_COUNT;
+            for (int i = 0; i < sortedLocalVariables.size(); i++) {
+                LocalVariable localVariable = sortedLocalVariables.get(i);
+                assert currentFrameIdx == localVariable.getFrameIndex() : "frame indexes of local variables should be ascending";
+                identifiers[i] = localVariable.getName();
+                slotKinds[i] = localVariable.getSlotKind();
+                currentFrameIdx++;
+            }
+        } else {
+            identifiers = new String[]{};
+            slotKinds = new FrameSlotKind[]{};
+        }
+
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", slotKinds, identifiers);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(language, source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
 
         if (RContext.getInstance().getOption(ForceSources)) {
@@ -371,8 +402,19 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode specialLookup(SourceSection source, String symbol, boolean functionLookup) {
+    public RSyntaxNode specialLookup(SourceSection source, String symbol, boolean functionLookup, FunctionScope functionScope) {
+        logger.finer("specialLookup '" + symbol + "'");
         assert source != null;
+        if (functionScope != null) {
+            if (functionScope.containsLocalVariable(symbol)) {
+                LocalVariable localVar = functionScope.getLocalVariable(symbol);
+                logger.fine(() -> String.format("Creating ReadNode for local variable %s", localVar));
+                assert localVar != null;
+                assert FrameIndex.isInitializedIndex(localVar.getFrameIndex());
+                // return ReadVariableNode.wrap(source,
+                // ReadVariableNode.createLocalVariableLookup(symbol, localVar.getFrameIndex()));
+            }
+        }
         if (!functionLookup) {
             int index = RSyntaxLookup.getVariadicComponentIndex(symbol);
             if (index != -1) {
@@ -383,10 +425,10 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
+    public RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup, FunctionScope functionScope) {
         assert source != null;
         recordExpr(source);
-        return specialLookup(source, symbol, functionLookup);
+        return specialLookup(source, symbol, functionLookup, functionScope);
     }
 
     private void recordExpr(SourceSection source) {

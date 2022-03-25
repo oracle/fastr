@@ -75,6 +75,7 @@ public final class FunctionBuiltin extends RBuiltinNode.Arg2 {
 
     public static FunctionExpressionNode createFunctionExpressionNode(TruffleRLanguage language, Object args, Object body) {
         List<Argument<RSyntaxNode>> finalArgs = RContext.getASTBuilder().getFunctionExprArgs(args);
-        return (FunctionExpressionNode) RContext.getASTBuilder().function(language, RSyntaxNode.LAZY_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null);
+        // TODO: Search for local variables?
+        return (FunctionExpressionNode) RContext.getASTBuilder().function(language, RSyntaxNode.LAZY_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null, null);
     }
 }
