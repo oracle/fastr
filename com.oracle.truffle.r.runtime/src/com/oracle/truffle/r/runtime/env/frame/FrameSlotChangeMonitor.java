@@ -1448,7 +1448,11 @@ public final class FrameSlotChangeMonitor {
             }
             return ((MultiSlotData) o).get(RContext.getInstance().getMultiSlotInd());
         } else {
-            return getObject(frame, frameIndex);
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
+                return frame.getValue(FrameIndex.toNormalIndex(frameIndex));
+            } else {
+                return frame.getAuxiliarySlot(FrameIndex.toAuxiliaryIndex(frameIndex));
+            }
         }
     }
 
