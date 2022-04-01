@@ -447,77 +447,51 @@ public final class FrameSlotChangeMonitor {
      * including its metadata. Note that this method is very thorough and therefore slow, it should
      * be used only sparingly in some assert statements.
      */
-    public static boolean isValidFrameDescriptor(FrameDescriptor frameDescriptor) {
+    public static boolean assertValidFrameDescriptor(FrameDescriptor frameDescriptor) {
         CompilerAsserts.neverPartOfCompilation();
         FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
         int normalSlotsCount = frameDescriptor.getNumberOfSlots();
         int auxSlotsCount = frameDescriptor.getNumberOfAuxiliarySlots();
         int totalSlotsCount = normalSlotsCount + auxSlotsCount;
-        if (metadata.indexes.size() != totalSlotsCount) {
-            return false;
-        }
+        assert metadata.indexes.size() == totalSlotsCount;
         for (Map.Entry<Object, Integer> entry : metadata.indexes.entrySet()) {
             Object identifier = entry.getKey();
             int frameIndex = entry.getValue();
-            if (!isFrameIndexInBounds(frameDescriptor, frameIndex)) {
-                return false;
-            }
+            assert isFrameIndexInBounds(frameDescriptor, frameIndex);
             if (FrameIndex.representsNormalIndex(frameIndex)) {
                 int normalSlotIdx = FrameIndex.toNormalIndex(frameIndex);
                 Object slotInfo = frameDescriptor.getSlotInfo(normalSlotIdx);
-                if (!(slotInfo instanceof FrameSlotInfo)) {
-                    return false;
-                }
-                if (((FrameSlotInfo) slotInfo).identifier != identifier) {
-                    return false;
-                }
+                assert slotInfo instanceof FrameSlotInfo;
+                assert ((FrameSlotInfo) slotInfo).identifier == identifier;
                 Object slotName = frameDescriptor.getSlotName(normalSlotIdx);
-                if (!(slotName instanceof String) && !(slotName instanceof RFrameSlot)) {
-                    return false;
-                }
-                if (slotName != identifier) {
-                    return false;
-                }
+                assert slotName instanceof String || slotName instanceof RFrameSlot;
+                assert slotName == identifier;
             } else {
                 assert FrameIndex.representsAuxiliaryIndex(frameIndex);
                 int auxSlotIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
                 FrameSlotInfo slotInfo = metadata.getAuxiliarySlotInfo(auxSlotIdx);
-                if (slotInfo.identifier != identifier) {
-                    return false;
-                }
+                assert slotInfo.identifier == identifier;
             }
         }
         // Check internal indexed frames
-        if (frameDescriptor.getNumberOfSlots() != 1) {
-            // Only visibility now.
-            return false;
-        }
+        // Only visibility now
+        assert frameDescriptor.getNumberOfSlots() >= 1;
         int visibilityFrameIdx = FrameIndex.toNormalIndex(RFrameSlot.Visibility.getFrameIdx());
-        if (frameDescriptor.getSlotName(visibilityFrameIdx) != RFrameSlot.Visibility) {
-            return false;
-        }
-        if (frameDescriptor.getSlotKind(visibilityFrameIdx) != FrameSlotKind.Boolean) {
-            return false;
-        }
+        assert frameDescriptor.getSlotName(visibilityFrameIdx) == RFrameSlot.Visibility;
+        assert frameDescriptor.getSlotKind(visibilityFrameIdx) == FrameSlotKind.Boolean;
 
         // Check auxiliary slots.
         for (Map.Entry<Object, Integer> entry : frameDescriptor.getAuxiliarySlots().entrySet()) {
             Object identifier = entry.getKey();
             int auxSlotIdx = entry.getValue();
             int auxSlotIdxFromMetata = FrameIndex.toAuxiliaryIndex(metadata.getIndex(identifier));
-            if (auxSlotIdx != auxSlotIdxFromMetata) {
-                return false;
-            }
+            assert auxSlotIdx == auxSlotIdxFromMetata;
         }
         // Check auxSlotInfos
-        if (metadata.auxSlotInfosElements != frameDescriptor.getNumberOfAuxiliarySlots()) {
-            return false;
-        }
+        assert metadata.auxSlotInfosElements == frameDescriptor.getNumberOfAuxiliarySlots();
         for (int i = 0; i < metadata.auxSlotInfosElements; i++) {
             FrameSlotInfo slotInfo = metadata.auxSlotInfos[i];
-            if (slotInfo.identifier == null) {
-                return false;
-            }
+            assert slotInfo.identifier != null;
         }
         return true;
     }
@@ -557,7 +531,7 @@ public final class FrameSlotChangeMonitor {
         builder.info(metaData);
         addInternalIndexedSlots(builder, metaData);
         FrameDescriptor descriptor = builder.build();
-        assert isValidFrameDescriptor(descriptor);
+        assert assertValidFrameDescriptor(descriptor);
         return descriptor;
     }
 
@@ -573,7 +547,7 @@ public final class FrameSlotChangeMonitor {
         builder.info(descriptorMetaData);
         addInternalIndexedSlots(builder, descriptorMetaData);
         FrameDescriptor frameDescriptor = builder.build();
-        assert isValidFrameDescriptor(frameDescriptor);
+        assert assertValidFrameDescriptor(frameDescriptor);
         return frameDescriptor;
     }
 
@@ -618,7 +592,7 @@ public final class FrameSlotChangeMonitor {
             // entry values may be different, but that would not matter.
             findOrAddAuxiliaryFrameSlot(newDescriptor, entry.getKey());
         }
-        assert isValidFrameDescriptor(newDescriptor);
+        assert assertValidFrameDescriptor(newDescriptor);
         return newDescriptor;
     }
 
@@ -1266,7 +1240,7 @@ public final class FrameSlotChangeMonitor {
                 throw RInternalError.shouldNotReachHere("Frame index for '" + identifier + "' already present as normal frame index");
             }
         }
-        assert isValidFrameDescriptor(frameDescriptor);
+        assert assertValidFrameDescriptor(frameDescriptor);
         return transformedAuxSlotIdx;
     }
 
