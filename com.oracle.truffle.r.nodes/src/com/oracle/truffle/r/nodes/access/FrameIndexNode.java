@@ -127,7 +127,7 @@ public abstract class FrameIndexNode extends RBaseNode {
         @Override
         public boolean hasValue(Frame frame) {
             Frame typedFrame = frameTypeProfile.profile(frame);
-            FrameSlotKind slotKind = FrameSlotChangeMonitor.getFrameSlotKind(typedFrame.getFrameDescriptor(), frameIndex);
+            FrameSlotKind slotKind = FrameSlotChangeMonitor.getFrameSlotKindInFrame(typedFrame, frameIndex);
             if (!(isObjectProfile.profile(slotKind == FrameSlotKind.Object))) {
                 // A primitive frame slot kind always has some value.
                 return true;

@@ -147,7 +147,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     }
 
     protected boolean isKind(FrameDescriptor fd, int frameIndex, FrameSlotKind kind) {
-        if (FrameSlotChangeMonitor.getFrameSlotKind(fd, frameIndex) == kind) {
+        if (FrameSlotChangeMonitor.getFrameSlotKindInFrameDescriptor(fd, frameIndex) == kind) {
             return true;
         } else {
             initialSetKindProfile.enter();
@@ -156,7 +156,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     }
 
     private static boolean initialSetKind(FrameDescriptor fd, int frameIndex, FrameSlotKind kind) {
-        if (FrameSlotChangeMonitor.getFrameSlotKind(fd, frameIndex) == FrameSlotKind.Illegal) {
+        if (FrameSlotChangeMonitor.getFrameSlotKindInFrameDescriptor(fd, frameIndex) == FrameSlotKind.Illegal) {
             FrameSlotChangeMonitor.setFrameSlotKind(fd, frameIndex, kind);
             return true;
         } else {

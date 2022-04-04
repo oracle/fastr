@@ -776,11 +776,45 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static FrameSlotKind getFrameSlotKind(FrameDescriptor frameDescriptor, int index) {
-        if (FrameIndex.representsAuxiliaryIndex(index)) {
+    /**
+     * Get slot kind of the given frame index from the frame descriptor. Note that this may be
+     * different from the return value of {@link #getFrameSlotKindInFrame(Frame, int)}.
+     */
+    public static FrameSlotKind getFrameSlotKindInFrameDescriptor(FrameDescriptor frameDescriptor, int frameIndex) {
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
             return FrameSlotKind.Object;
         } else {
-            return frameDescriptor.getSlotKind(index);
+            return frameDescriptor.getSlotKind(frameIndex);
+        }
+    }
+
+    /**
+     * Get slot kind of the given frame index from the frame, i.e., the type of the actual value
+     * stored in the frame. Note that this may be different from the return value of
+     * {@link #getFrameSlotKindInFrameDescriptor(FrameDescriptor, int)}.
+     */
+    public static FrameSlotKind getFrameSlotKindInFrame(Frame frame, int frameIndex) {
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
+            return FrameSlotKind.Object;
+        } else {
+            int normalIdx = FrameIndex.toNormalIndex(frameIndex);
+            if (frame.isObject(normalIdx)) {
+                return FrameSlotKind.Object;
+            } else if (frame.isInt(normalIdx)) {
+                return FrameSlotKind.Int;
+            } else if (frame.isDouble(normalIdx)) {
+                return FrameSlotKind.Double;
+            } else if (frame.isByte(normalIdx)) {
+                return FrameSlotKind.Byte;
+            } else if (frame.isBoolean(normalIdx)) {
+                return FrameSlotKind.Boolean;
+            } else if (frame.isFloat(normalIdx)) {
+                return FrameSlotKind.Float;
+            } else if (frame.isLong(normalIdx)) {
+                return FrameSlotKind.Long;
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
     }
 

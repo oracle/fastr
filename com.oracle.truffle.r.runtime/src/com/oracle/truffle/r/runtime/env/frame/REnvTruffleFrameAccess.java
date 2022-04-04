@@ -116,7 +116,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         FrameDescriptor fd = frame.getFrameDescriptor();
 
         int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(fd, key);
-        if (valueSlotKind != FrameSlotChangeMonitor.getFrameSlotKind(fd, frameIndex)) {
+        if (valueSlotKind != FrameSlotChangeMonitor.getFrameSlotKindInFrameDescriptor(fd, frameIndex)) {
             // we must not toggle between slot kinds, so go to Object
             valueSlotKind = FrameSlotKind.Object;
         }
@@ -164,7 +164,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
             throw new PutException(RError.Message.UNKNOWN_OBJECT, key);
         } else {
             int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, key);
-            if (FrameSlotChangeMonitor.getFrameSlotKind(fd, frameIndex) != FrameSlotKind.Object) {
+            if (FrameSlotChangeMonitor.getFrameSlotKindInFrameDescriptor(fd, frameIndex) != FrameSlotKind.Object) {
                 FrameSlotChangeMonitor.setFrameSlotKind(fd, frameIndex, FrameSlotKind.Object);
             }
 
