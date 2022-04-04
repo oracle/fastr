@@ -405,6 +405,12 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     public RSyntaxNode specialLookup(SourceSection source, String symbol, boolean functionLookup, FunctionScope functionScope) {
         logger.finer("specialLookup '" + symbol + "'");
         assert source != null;
+        if (!functionLookup) {
+            int index = RSyntaxLookup.getVariadicComponentIndex(symbol);
+            if (index != -1) {
+                return new ReadVariadicComponentNode(source, index > 0 ? index - 1 : index);
+            }
+        }
         if (functionScope != null) {
             if (functionScope.containsLocalVariable(symbol)) {
                 LocalVariable localVar = functionScope.getLocalVariable(symbol);
@@ -412,12 +418,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 assert localVar != null;
                 assert FrameIndex.isInitializedIndex(localVar.getFrameIndex());
                 return ReadVariableNode.wrap(source, ReadVariableNode.createLocalVariableLookup(symbol, localVar.getFrameIndex()));
-            }
-        }
-        if (!functionLookup) {
-            int index = RSyntaxLookup.getVariadicComponentIndex(symbol);
-            if (index != -1) {
-                return new ReadVariadicComponentNode(source, index > 0 ? index - 1 : index);
             }
         }
         return ReadVariableNode.wrap(source, functionLookup ? ReadVariableNode.createForcedFunctionLookup(symbol) : ReadVariableNode.create(symbol));

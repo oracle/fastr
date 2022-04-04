@@ -640,7 +640,8 @@ public final class FrameSlotChangeMonitor {
     /**
      * Returns index of the identifier.
      * 
-     * @return null if the given identifier is not in the frame descriptor
+     * @return {@code FrameIndex.UNITIALIZED_INDEX} if the given identifier is not in the frame
+     *         descriptor
      */
     public static int getIndexOfIdentifier(FrameDescriptor frameDescriptor, Object identifier) {
         FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
