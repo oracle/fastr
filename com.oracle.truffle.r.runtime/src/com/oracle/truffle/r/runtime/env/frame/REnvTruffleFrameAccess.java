@@ -115,7 +115,13 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
         FrameDescriptor fd = frame.getFrameDescriptor();
 
-        int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(fd, key);
+        int frameIndex;
+        if (FrameSlotChangeMonitor.containsIdentifier(fd, key)) {
+            frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, key);
+        } else {
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(fd, key);
+        }
+        assert FrameIndex.isInitializedIndex(frameIndex);
         if (valueSlotKind != FrameSlotChangeMonitor.getFrameSlotKindInFrameDescriptor(fd, frameIndex)) {
             // we must not toggle between slot kinds, so go to Object
             valueSlotKind = FrameSlotKind.Object;
