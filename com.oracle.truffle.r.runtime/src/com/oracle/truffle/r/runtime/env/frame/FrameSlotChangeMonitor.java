@@ -73,6 +73,11 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
  * make sure that code is properly deoptimized.
  */
 public final class FrameSlotChangeMonitor {
+    /**
+     * Count of internal indexed (normal) frame slots. Currently only visibility.
+     */
+    public static final int INTERNAL_INDEXED_SLOT_COUNT = 1;
+
     /*
      * The following classes describe the result of a previous lookup that successfully delivered a
      * result based on the system's knowledge about the hierarchy of environments and the stable
@@ -560,7 +565,17 @@ public final class FrameSlotChangeMonitor {
      */
     public static FrameDescriptor createFunctionFrameDescriptor(String name, FrameSlotKind[] kinds, Object[] identifiers) {
         assert kinds.length == identifiers.length;
-        throw new UnsupportedOperationException("unimplemented");
+        Builder builder = FrameDescriptor.newBuilder();
+        var descriptorMetadata = new FrameDescriptorMetaData(name);
+        builder.info(descriptorMetadata);
+        addInternalIndexedSlots(builder, descriptorMetadata);
+        for (int i = 0; i < kinds.length; i++) {
+            int frameIndex = builder.addSlot(kinds[i], identifiers[i], new FrameSlotInfo(descriptorMetadata, identifiers[i]));
+            descriptorMetadata.addIndex(identifiers[i], FrameIndex.toNormalIndex(frameIndex));
+        }
+        FrameDescriptor frameDescriptor = builder.build();
+        assert assertValidFrameDescriptor(frameDescriptor);
+        return frameDescriptor;
     }
 
     /**
@@ -568,6 +583,8 @@ public final class FrameSlotChangeMonitor {
      * frame descriptors.
      */
     private static void addInternalIndexedSlots(FrameDescriptor.Builder builder, FrameDescriptorMetaData metaData) {
+        // Currently, only visibility.
+        assert INTERNAL_INDEXED_SLOT_COUNT == 1;
         int visibilityNormalIdx = FrameIndex.toNormalIndex(RFrameSlot.Visibility.getFrameIdx());
         assert visibilityNormalIdx == 0 : "Visibility should have 0 frame index";
         builder.addSlot(FrameSlotKind.Boolean, RFrameSlot.Visibility, new FrameSlotInfo(metaData, RFrameSlot.Visibility));

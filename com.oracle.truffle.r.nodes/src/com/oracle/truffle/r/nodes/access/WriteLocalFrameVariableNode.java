@@ -34,7 +34,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -62,16 +61,10 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
         this.mode = mode;
     }
 
-    protected int findOrAddFrameIndex(VirtualFrame frame, FrameSlotKind initialKind) {
+    protected int findOrAddFrameIndex(VirtualFrame frame) {
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         if (FrameSlotChangeMonitor.containsIdentifier(frameDescriptor, getName())) {
-            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, getName());
-            if (FrameIndex.representsNormalIndex(frameIndex)) {
-                // Auxiliary slots are always considered Object types, so we check kinds only for
-                // nomral slots.
-                assert FrameSlotChangeMonitor.getFrameSlotKind(frameDescriptor, frameIndex) == initialKind;
-            }
-            return frameIndex;
+            return FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, getName());
         } else {
             return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, getName());
         }
@@ -79,28 +72,28 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
 
     @Specialization(guards = "isLogicalKind(frame, frameIndex)")
     protected byte doLogical(VirtualFrame frame, byte value,
-                    @Cached("findOrAddFrameIndex(frame, Byte)") int frameIndex) {
+                    @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
         FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, value, false, invalidateProfile);
         return value;
     }
 
     @Specialization(guards = "isIntegerKind(frame, frameIndex)")
     protected int doInteger(VirtualFrame frame, int value,
-                    @Cached("findOrAddFrameIndex(frame, Int)") int frameIndex) {
+                    @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
         FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameIndex, value, false, invalidateProfile);
         return value;
     }
 
     @Specialization(guards = "isDoubleKind(frame, frameIndex)")
     protected double doDouble(VirtualFrame frame, double value,
-                    @Cached("findOrAddFrameIndex(frame, Double)") int frameIndex) {
+                    @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
         FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameIndex, value, false, invalidateProfile);
         return value;
     }
 
     @Specialization
     protected Object doObject(VirtualFrame frame, Object value,
-                    @Cached("findOrAddFrameIndex(frame, Object)") int frameIndex) {
+                    @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
         if (containsNoActiveBinding == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(frame.getFrameDescriptor());

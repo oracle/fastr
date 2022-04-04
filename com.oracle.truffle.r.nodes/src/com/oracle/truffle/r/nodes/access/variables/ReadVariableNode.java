@@ -161,6 +161,11 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         return new ReadVariableNode(name, RType.Any, shouldCopyValue ? ReadKind.Copying : ReadKind.Normal);
     }
 
+    public static ReadVariableNode createLocalVariableLookup(String name, int frameIndex) {
+        assert FrameIndex.isInitializedIndex(frameIndex);
+        return new ReadVariableNode(name, RType.Any, ReadKind.Normal, false, frameIndex);
+    }
+
     public static ReadVariableNode createSilent(String name, RType mode) {
         return new ReadVariableNode(name, mode, ReadKind.Silent);
     }
@@ -222,14 +227,14 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     private final boolean silentMissing;
 
     ReadVariableNode(ReadVariableNode node, boolean silentMissing) {
-        this(node.identifier, node.mode, node.kind, silentMissing);
+        this(node.identifier, node.mode, node.kind, silentMissing, FrameIndex.UNITIALIZED_INDEX);
     }
 
     private ReadVariableNode(Object identifier, RType mode, ReadKind kind) {
-        this(identifier, mode, kind, false);
+        this(identifier, mode, kind, false, FrameIndex.UNITIALIZED_INDEX);
     }
 
-    private ReadVariableNode(Object identifier, RType mode, ReadKind kind, boolean silentMissing) {
+    private ReadVariableNode(Object identifier, RType mode, ReadKind kind, boolean silentMissing, int frameIndex) {
         this.identifier = identifier;
         this.identifierAsString = Utils.intern(identifier.toString());
         this.mode = mode;
@@ -239,6 +244,15 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         superEnclosingFrameProfile = kind == ReadKind.Super ? ValueProfile.createClassProfile() : null;
 
         this.copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
+        // This happens when we are creating a ReadVariableNode for a local variable and we store
+        // the local variable in a pre-defined indexed slot in the frame.
+        if (FrameIndex.isInitializedIndex(frameIndex)) {
+            this.read = new Match(frameIndex);
+            this.needsCopying = false;
+            if (mode != RType.Any) {
+                this.checkTypeNode = insert(CheckTypeNodeGen.create(mode));
+            }
+        }
     }
 
     public String getIdentifier() {
