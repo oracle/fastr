@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,10 @@ class ContentFilter:
         return self._apply_to_lines(content, filter_action)
 
     def applies_to_pkg(self, pkg_name):
-        return self.pkg_prog.match(pkg_name)
+        if pkg_name is None:
+            return True
+        else:
+            return self.pkg_prog.match(pkg_name)
 
     def __repr__(self):
         fmt_str = "{!s} => {!s}"
