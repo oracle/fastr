@@ -269,6 +269,20 @@ public class RParser extends Parser {
 	    }
 
 	    /**
+	    * Adds an argument to a function call as a local variable to the given {@code functionScope}.
+	    * This is valid because in the function body the supplied arguments behave as if they were
+	    * local variables initialized with the value supplied and the name of the corresponding
+	    * formal argument [R-lang-specification].
+	    */
+	    private static void addArgumentAsLocalVariable(FunctionScope functionScope, String argIdentifier) {
+	        assert functionScope != null;
+	        assert argIdentifier != null;
+	        int nextFrameIndex = functionScope.getNextLocalVariableFrameIndex();
+	        var localVar = new LocalVariable(argIdentifier, FrameSlotKind.Illegal, nextFrameIndex);
+	        functionScope.addLocalVariable(localVar);
+	    }
+
+	    /**
 	     * Helper function that creates a localVariable from assignment if lhs is a lookup.
 	     * Returns null otherwise.
 	     */
@@ -570,7 +584,7 @@ public class RParser extends Parser {
 			if (((((_la - 6)) & ~0x3f) == 0 && ((1L << (_la - 6)) & ((1L << (VARIADIC - 6)) | (1L << (DD - 6)) | (1L << (ID - 6)))) != 0)) {
 				{
 				setState(100);
-				par_decl(params);
+				par_decl(params, functionScope);
 				setState(109);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,1,_ctx);
@@ -586,7 +600,7 @@ public class RParser extends Parser {
 						setState(104);
 						n_();
 						setState(105);
-						par_decl(params);
+						par_decl(params, functionScope);
 						}
 						} 
 					}
@@ -1805,7 +1819,7 @@ public class RParser extends Parser {
 			if (((((_la - 6)) & ~0x3f) == 0 && ((1L << (_la - 6)) & ((1L << (VARIADIC - 6)) | (1L << (DD - 6)) | (1L << (ID - 6)))) != 0)) {
 				{
 				setState(336);
-				par_decl(params);
+				par_decl(params, functionScope);
 				setState(345);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,22,_ctx);
@@ -1821,7 +1835,7 @@ public class RParser extends Parser {
 						setState(340);
 						n_();
 						setState(341);
-						par_decl(params);
+						par_decl(params, functionScope);
 						}
 						} 
 					}
@@ -1857,6 +1871,7 @@ public class RParser extends Parser {
 
 	public static class Par_declContext extends ParserRuleContext {
 		public List<Argument<RSyntaxNode>> l;
+		public FunctionScope functionScope;
 		public Token i;
 		public Token a;
 		public ExprContext e;
@@ -1875,15 +1890,16 @@ public class RParser extends Parser {
 		public TerminalNode VARIADIC() { return getToken(RParser.VARIADIC, 0); }
 		public TerminalNode DD() { return getToken(RParser.DD, 0); }
 		public Par_declContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
-		public Par_declContext(ParserRuleContext parent, int invokingState, List<Argument<RSyntaxNode>> l) {
+		public Par_declContext(ParserRuleContext parent, int invokingState, List<Argument<RSyntaxNode>> l, FunctionScope functionScope) {
 			super(parent, invokingState);
 			this.l = l;
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_par_decl; }
 	}
 
-	public final Par_declContext par_decl(List<Argument<RSyntaxNode>> l) throws RecognitionException {
-		Par_declContext _localctx = new Par_declContext(_ctx, getState(), l);
+	public final Par_declContext par_decl(List<Argument<RSyntaxNode>> l,FunctionScope functionScope) throws RecognitionException {
+		Par_declContext _localctx = new Par_declContext(_ctx, getState(), l, functionScope);
 		enterRule(_localctx, 30, RULE_par_decl);
 		try {
 			setState(394);
@@ -1895,7 +1911,7 @@ public class RParser extends Parser {
 				setState(358);
 				_localctx.i = match(ID);
 				tok();
-				 _localctx.l.add(argument(src(_localctx.i), _localctx.i.getText(), null)); 
+				 addArgumentAsLocalVariable(functionScope, _localctx.i.getText()); _localctx.l.add(argument(src(_localctx.i), _localctx.i.getText(), null)); 
 				}
 				break;
 			case 2:
@@ -1912,8 +1928,8 @@ public class RParser extends Parser {
 				setState(366);
 				n_();
 				setState(367);
-				_localctx.e = expr(null);
-				 _localctx.l.add(argument(src(_localctx.i, last()), _localctx.i.getText(), _localctx.e.v)); 
+				_localctx.e = expr(functionScope);
+				 addArgumentAsLocalVariable(functionScope, _localctx.i.getText()); _localctx.l.add(argument(src(_localctx.i, last()), _localctx.i.getText(), _localctx.e.v)); 
 				}
 				break;
 			case 3:

@@ -154,6 +154,20 @@ import com.oracle.truffle.r.runtime.parsermetadata.LocalVariable;
     }
 
     /**
+    * Adds an argument to a function call as a local variable to the given {@code functionScope}.
+    * This is valid because in the function body the supplied arguments behave as if they were
+    * local variables initialized with the value supplied and the name of the corresponding
+    * formal argument [R-lang-specification].
+    */
+    private static void addArgumentAsLocalVariable(FunctionScope functionScope, String argIdentifier) {
+        assert functionScope != null;
+        assert argIdentifier != null;
+        int nextFrameIndex = functionScope.getNextLocalVariableFrameIndex();
+        var localVar = new LocalVariable(argIdentifier, FrameSlotKind.Illegal, nextFrameIndex);
+        functionScope.addLocalVariable(localVar);
+    }
+
+    /**
      * Helper function that creates a localVariable from assignment if lhs is a lookup.
      * Returns null otherwise.
      */
@@ -514,7 +528,7 @@ root_function [String name] returns [RootCallTarget v]
         	throw RInternalError.shouldNotReachHere("not at EOF after parsing deserialized function");
         }
     }
-    : n_ op=FUNCTION{tok();} n_ LPAR{tok();}  n_ (par_decl[params] (n_ COMMA{tok();} n_ par_decl[params])* n_)? RPAR{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.rootFunction(language, src($op, last()), params, $body.v, name, functionScope); }
+    : n_ op=FUNCTION{tok();} n_ LPAR{tok();}  n_ (par_decl[params, functionScope] (n_ COMMA{tok();} n_ par_decl[params, functionScope])* n_)? RPAR{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.rootFunction(language, src($op, last()), params, $body.v, name, functionScope); }
     ;
 
 statement [FunctionScope functionScope] returns [RSyntaxNode v]
@@ -612,17 +626,24 @@ function [RSyntaxNode assignedTo] returns [RSyntaxNode v]
         List<Argument<RSyntaxNode>> params = new ArrayList<>();
         FunctionScope functionScope = new FunctionScope(getSimpleFunctionName(assignedTo));
     }
-    : op=FUNCTION{tok();} n_ LPAR{tok();} n_ (par_decl[params] (n_ COMMA{tok();} n_ par_decl[params])* n_)? RPAR{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.function(language, src($op, last()), params, $body.v, assignedTo, functionScope); }
+    : op=FUNCTION{tok();} n_ LPAR{tok();} n_ (par_decl[params, functionScope] (n_ COMMA{tok();} n_ par_decl[params, functionScope])* n_)? RPAR{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.function(language, src($op, last()), params, $body.v, assignedTo, functionScope); }
     ;
 
-par_decl [List<Argument<RSyntaxNode>> l]
-    : i=ID{tok();}                                                      { $l.add(argument(src($i), $i.getText(), null)); }
-    | i=ID{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr[null]   { $l.add(argument(src($i, last()), $i.getText(), $e.v)); }
+// functionScope is the scope of the function for which we are creating parameters in this rule.
+// We expect that functionScope != null for this rule.
+// The function scope is supplied so that we can also consider formal arguments as local variables,
+// i.e. we pass all the identifiers of the arguments as local variables to the function scope.
+par_decl [List<Argument<RSyntaxNode>> l, FunctionScope functionScope]
+    : i=ID{tok();}                                                      { addArgumentAsLocalVariable(functionScope, $i.getText()); $l.add(argument(src($i), $i.getText(), null)); }
+    | i=ID{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr[functionScope]   { addArgumentAsLocalVariable(functionScope, $i.getText()); $l.add(argument(src($i, last()), $i.getText(), $e.v)); }
     | v=VARIADIC{tok();}                                                { $l.add(argument(src($v), $v.getText(), null)); }
     // The 3 following cases (e.g. "...=42") are weirdness of the reference implementation,
     // the formal argument must be actually created, because they play their role in positional argument matching,
     // but the expression for the default value (if any) is never executed and the value of the paremter
     // cannot be accessed (at least it seems so).
+    // Moreover, we do not pass functionScope to these cases because we do not want to add variadic components
+    // into the function scope - we want to add variadic components as auxiliary slots to the corresponding
+    // frame descriptor.
     | v=VARIADIC{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr[null] { $l.add(argument(src($v), $v.getText(),  null)); }
     | v=DD{tok();}                                                          { $l.add(argument(src($v), $v.getText(), null)); }
     | v=DD{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ expr[null]         { $l.add(argument(src($v), $v.getText(), null)); }

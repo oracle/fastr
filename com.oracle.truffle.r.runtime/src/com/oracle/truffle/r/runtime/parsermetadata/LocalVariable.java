@@ -34,6 +34,7 @@ public final class LocalVariable {
     private final int frameIndex;
 
     public LocalVariable(String name, FrameSlotKind slotKind, int frameIndex) {
+        assert name != null;
         assert FrameIndex.isInitializedIndex(frameIndex);
         this.name = name;
         this.slotKind = slotKind;

@@ -2840,8 +2840,7 @@ public class RSerialize {
             MaterializedFrame enclosingFrame = environment.getFrame();
             var functionScope = new FunctionScope(functionName);
 
-            // TODO: Search for localVariables
-            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false, functionScope),
+            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false, functionScope, true),
                             processBody(cdr, functionScope),
                             functionName == null ? "<deserialized function>" : functionName, functionScope);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
@@ -2914,7 +2913,7 @@ public class RSerialize {
             }
             boolean isAssignment = car instanceof RSymbol && ((RSymbol) car).getName().equals("<-");
             RSyntaxNode lhs = process(car, true, null, functionScope);
-            List<Argument<RSyntaxNode>> arguments = processArguments(cdr, isAssignment, functionScope);
+            List<Argument<RSyntaxNode>> arguments = processArguments(cdr, isAssignment, functionScope, false);
             if (isAssignment) {
                 Argument<RSyntaxNode> assignmentTarget = arguments.get(0);
                 if (assignmentTarget.value instanceof RSyntaxLookup) {
@@ -2933,11 +2932,15 @@ public class RSerialize {
 
         private static RSyntaxNode processFunctionExpression(Object car, Object cdr, @SuppressWarnings("unused") Object tag, String name, FunctionScope functionScope) {
             // car == arguments, cdr == body
-            return RContext.getASTBuilder().function(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false, functionScope), processBody(cdr, functionScope),
+            return RContext.getASTBuilder().function(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false, functionScope, true), processBody(cdr, functionScope),
                             name == null ? "<deserialized function>" : name, functionScope);
         }
 
-        private static List<RCodeBuilder.Argument<RSyntaxNode>> processArguments(Object args, boolean isAssignment, FunctionScope functionScope) {
+        /**
+         * @param inFunctionDeclaration true iff we are processing formal arguments of some
+         *            function, as opposed to processing arguments to a function call.
+         */
+        private static List<RCodeBuilder.Argument<RSyntaxNode>> processArguments(Object args, boolean isAssignment, FunctionScope functionScope, boolean inFunctionDeclaration) {
             List<RCodeBuilder.Argument<RSyntaxNode>> list = new ArrayList<>();
 
             RPairList arglist = args instanceof RNull ? null : (RPairList) args;
@@ -2948,6 +2951,11 @@ public class RSerialize {
                 String name = arglist.getTag() == RNull.instance ? null : ((RSymbol) arglist.getTag()).getName();
                 if (isAssignment && index == 0 && arglist.car() instanceof RSymbol) {
                     assignedName = ((RSymbol) arglist.car()).getName();
+                }
+                if (inFunctionDeclaration) {
+                    assert name != null;
+                    var localVar = new LocalVariable(name, FrameSlotKind.Illegal, functionScope.getNextLocalVariableFrameIndex());
+                    functionScope.addLocalVariable(localVar);
                 }
                 RSyntaxNode value = arglist.car() == RMissing.instance ? null : process(arglist.car(), false, index == 1 ? assignedName : null, functionScope);
                 list.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, name, value));
