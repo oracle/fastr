@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
@@ -157,18 +158,27 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
 
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function);
 
-        protected static int createIndexFrameIndex(Frame frame) {
-            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), INDEX_NAME);
+        protected static int findOrCreateIndexFrameIndex(Frame frame) {
+            return findOrCreateFrameIndexForIdentifier(frame, INDEX_NAME);
         }
 
-        protected static int createVectorFrameIndex(Frame frame) {
-            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), VECTOR_NAME);
+        protected static int findOrCreateVectorFrameIndex(Frame frame) {
+            return findOrCreateFrameIndexForIdentifier(frame, VECTOR_NAME);
+        }
+
+        private static int findOrCreateFrameIndexForIdentifier(Frame frame, String identifier) {
+            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            if (FrameSlotChangeMonitor.containsIdentifier(frameDescriptor, identifier)) {
+                return FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
+            } else {
+                return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, identifier);
+            }
         }
 
         @Specialization
         protected Object[] cachedLApply(VirtualFrame frame, Object vector, RFunction function,
-                        @Cached("createIndexFrameIndex(frame)") int indexFrameIndex,
-                        @Cached("createVectorFrameIndex(frame)") int vectorFrameIndex,
+                        @Cached("findOrCreateIndexFrameIndex(frame)") int indexFrameIndex,
+                        @Cached("findOrCreateVectorFrameIndex(frame)") int vectorFrameIndex,
                         @Cached("create()") RLengthNode lengthNode,
                         @Cached("createCountingProfile()") LoopConditionProfile loop,
                         @Cached("createCallNode(vectorFrameIndex, indexFrameIndex)") RCallBaseNode firstCallNode,

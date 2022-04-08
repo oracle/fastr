@@ -58,8 +58,8 @@ public final class FunctionScope {
     }
 
     public void addLocalVariable(LocalVariable localVariable) {
-        RLogger.getLogger("RASTBuilder").fine(() -> String.format("Adding local variable %s to function scope '%s'", localVariable, functionName));
         if (!containsLocalVariable(localVariable.getName())) {
+            RLogger.getLogger("RASTBuilder").fine(() -> String.format("Adding local variable %s to function scope '%s'", localVariable, functionName));
             localVariables.put(localVariable.getName(), localVariable);
             localVarFrameIdx++;
         }

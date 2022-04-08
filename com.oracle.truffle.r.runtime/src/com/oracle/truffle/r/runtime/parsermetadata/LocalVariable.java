@@ -34,13 +34,10 @@ public final class LocalVariable {
     private final int frameIndex;
 
     public LocalVariable(String name, FrameSlotKind slotKind, int frameIndex) {
+        assert FrameIndex.isInitializedIndex(frameIndex);
         this.name = name;
         this.slotKind = slotKind;
         this.frameIndex = frameIndex;
-    }
-
-    public LocalVariable(String name) {
-        this(name, FrameSlotKind.Illegal, FrameIndex.UNITIALIZED_INDEX);
     }
 
     public String getName() {
