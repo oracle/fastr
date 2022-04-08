@@ -150,8 +150,14 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
         public abstract void execute(VirtualFrame frame, REnvironment env, String name, Object value);
 
         protected static ResolvedWriteSuperFrameVariableNode createWrite(String name, FrameDescriptor envDesc) {
-            int frameIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(envDesc, name);
-            return ResolvedWriteSuperFrameVariableNodeGen.create(name, Mode.REGULAR, null, null, FrameIndexNode.createInitialized(envDesc, name, true));
+            int frameIndex;
+            if (!FrameSlotChangeMonitor.containsIdentifier(envDesc, name)) {
+                frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(envDesc, name);
+            } else {
+                frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(envDesc, name);
+            }
+            FrameIndexNode frameIndexNode = FrameIndexNode.createInitializedWithIndex(envDesc, frameIndex);
+            return ResolvedWriteSuperFrameVariableNodeGen.create(name, Mode.REGULAR, null, null, frameIndexNode);
         }
 
         protected FrameDescriptor getFrameDescriptor(REnvironment env) {
