@@ -166,6 +166,11 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         return new ReadVariableNode(name, RType.Any, ReadKind.Normal, false, frameIndex);
     }
 
+    public static ReadVariableNode createLocalFunctionLookup(String name, int frameIndex) {
+        assert FrameIndex.isInitializedIndex(frameIndex);
+        return new ReadVariableNode(name, RType.Function, ReadKind.Normal, false, frameIndex);
+    }
+
     public static ReadVariableNode createSilent(String name, RType mode) {
         return new ReadVariableNode(name, mode, ReadKind.Silent);
     }

@@ -410,16 +410,16 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             if (index != -1) {
                 return new ReadVariadicComponentNode(source, index > 0 ? index - 1 : index);
             }
-            // Currently, fast lookup is not implemented for functions as local variables.
-            // i.e. if we are looking up a function, we bail out of caching the frame index.
-            if (functionScope != null) {
-                if (functionScope.containsLocalVariable(symbol)) {
-                    LocalVariable localVar = functionScope.getLocalVariable(symbol);
-                    logger.fine(() -> String.format("Creating ReadNode for local variable %s", localVar));
-                    assert localVar != null;
-                    assert FrameIndex.isInitializedIndex(localVar.getFrameIndex());
-                    return ReadVariableNode.wrap(source, ReadVariableNode.createLocalVariableLookup(symbol, localVar.getFrameIndex()));
-                }
+        }
+        if (functionScope != null) {
+            if (functionScope.containsLocalVariable(symbol)) {
+                LocalVariable localVar = functionScope.getLocalVariable(symbol);
+                logger.fine(() -> String.format("Creating ReadNode for local variable %s, functionLookup = %b", localVar, functionLookup));
+                assert localVar != null;
+                assert FrameIndex.isInitializedIndex(localVar.getFrameIndex());
+                var readVariableNode = functionLookup ? ReadVariableNode.createLocalFunctionLookup(symbol, localVar.getFrameIndex())
+                                : ReadVariableNode.createLocalVariableLookup(symbol, localVar.getFrameIndex());
+                return ReadVariableNode.wrap(source, readVariableNode);
             }
         }
         return ReadVariableNode.wrap(source, functionLookup ? ReadVariableNode.createForcedFunctionLookup(symbol) : ReadVariableNode.create(symbol));
