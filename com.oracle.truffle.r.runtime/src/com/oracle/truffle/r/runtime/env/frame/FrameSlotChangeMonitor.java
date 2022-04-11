@@ -68,9 +68,34 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 
 /**
- * This class maintains information about the current hierarchy of environments in the system. This
- * information is described as assumptions that will be invalidated if the layout changes, and thus
- * make sure that code is properly deoptimized.
+ * This class handles all the accesses and manipulations with {@link FrameDescriptor frame
+ * descriptors} and {@link Frame frames}, e.g., frame descriptor allocation and getting values from
+ * a frame. For every frame descriptor, we maintain {@link FrameDescriptorMetaData metadata}
+ * describing, among other thing, the mapping of identifiers to their indexes in the frame, as in
+ * FastR, we use both auxiliary and indexed frame slots.
+ * <p>
+ * <h3>Frame indexes</h3> In FastR, we use frame descriptors for both functions and environments.
+ * This makes the transformation between the function's evaluation frame and an environment easy.
+ * Auxiliary slots are needed for symbols in the environment, because we do not know them ahead of
+ * time, and for symbols in the function defined outside the function (e.g. adding a symbol to the
+ * caller via {@code parent.frame}).
+ * <p>
+ * The meaning of frame indexes returned by the methods in this class is described in
+ * {@link FrameIndex} - it is an integer that encodes an index to both auxiliary and indexed slots,
+ * and {@link FrameSlotChangeMonitor} handles that transparently. You should not try to use that
+ * integer to access a frame slot directly, as the result would be undefined.
+ *
+ * <h3>Frame descriptor metadata</h3> For every frame descriptor, we maintain
+ * {@link FrameDescriptorMetaData metadata} where we keep:
+ * <ul>
+ * <li>The mapping of identifiers to their indexes</li>
+ * <li>For a frame descriptor representing an environment, its parent environment</li>
+ * <li>Results of previous symbol lookups</li>
+ * <li>Assumptions about the layout of the environment hierarchy.</li>
+ * </ul>
+ * <p>
+ * See {@link #assertValidFrameDescriptor(FrameDescriptor)} for expected contents of a frame
+ * descriptor.
  */
 public final class FrameSlotChangeMonitor {
     /**
