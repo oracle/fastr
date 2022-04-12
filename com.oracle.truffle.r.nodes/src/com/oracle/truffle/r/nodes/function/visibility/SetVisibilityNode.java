@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -55,16 +54,16 @@ public final class SetVisibilityNode extends Node {
         return new SetVisibilityNode();
     }
 
-    private void ensureFrameIndex(FrameDescriptor frameDescriptor) {
+    private void ensureFrameIndex(Frame frame) {
         if (FrameIndex.isUninitializedIndex(frameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RFrameSlot.Visibility);
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
         }
-        assert FrameSlotChangeMonitor.containsIdentifier(frameDescriptor, RFrameSlot.Visibility);
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.Visibility);
     }
 
     public void execute(Frame frame, boolean value) {
-        ensureFrameIndex(frame.getFrameDescriptor());
+        ensureFrameIndex(frame);
         FrameSlotChangeMonitor.setBoolean(frame, frameIndex, value);
     }
 
@@ -81,7 +80,7 @@ public final class SetVisibilityNode extends Node {
      * {@link RCaller} to the current frame.
      */
     public void executeAfterCall(VirtualFrame frame, RCaller caller) {
-        ensureFrameIndex(frame.getFrameDescriptor());
+        ensureFrameIndex(frame);
         FrameSlotChangeMonitor.setBoolean(frame, frameIndex, caller.getVisibility());
     }
 
@@ -90,7 +89,7 @@ public final class SetVisibilityNode extends Node {
      * the current frame into the {@link RCaller}.
      */
     public void executeEndOfFunction(VirtualFrame frame) {
-        ensureFrameIndex(frame.getFrameDescriptor());
+        ensureFrameIndex(frame);
         try {
             if (frame.isBoolean(frameIndex)) {
                 boolean visibility = FrameSlotChangeMonitor.getBoolean(frame, frameIndex);

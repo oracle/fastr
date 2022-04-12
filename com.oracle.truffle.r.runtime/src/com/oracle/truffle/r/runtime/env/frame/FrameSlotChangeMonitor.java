@@ -731,6 +731,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     private static FrameSlotInfo getFrameSlotInfo(Frame frame, int frameIndex) {
+        CompilerAsserts.partialEvaluationConstant(frameIndex);
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         Object frameSlotInfo;
         if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
@@ -1356,8 +1357,7 @@ public final class FrameSlotChangeMonitor {
      * primitive value there, we always have to box it.
      */
     private static void setAuxiliaryValue(Frame frame, int auxFrameIdx, Object value) {
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        assert 0 <= auxFrameIdx && auxFrameIdx < frameDescriptor.getNumberOfAuxiliarySlots();
+        assert 0 <= auxFrameIdx && auxFrameIdx < frame.getFrameDescriptor().getNumberOfAuxiliarySlots();
         frame.setAuxiliarySlot(auxFrameIdx, value);
     }
 
