@@ -1,0 +1,69 @@
+#  Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+#  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+#  This code is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU General Public License version 3 only, as
+#  published by the Free Software Foundation.
+#
+#  This code is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#  version 3 for more details (a copy is included in the LICENSE file that
+#  accompanied this code).
+#
+#  You should have received a copy of the GNU General Public License version
+#  3 along with this work; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#  Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+#  or visit www.oracle.com if you need additional information or have any
+#  questions.
+import os
+import re
+import subprocess
+import unittest
+from typing import List
+from unittest import TestCase
+
+
+class PkgCacheOutput:
+    def __init__(self):
+        pass
+
+
+class TestPackageCache(TestCase):
+    FASTR_HOME = None
+    GNUR_HOME = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        if os.path.basename(os.getcwd()) == "fastr":
+            cls.FASTR_HOME = os.getcwd()
+        else:
+            cls.FASTR_HOME = os.path.abspath(os.path.join(os.getcwd(), "..", "..", ".."))
+        assert os.path.basename(cls.FASTR_HOME) == "fastr"
+
+    def test_print_api_checksum_fastr(self):
+        ret = subprocess.run(["mx", "r-pkgcache", "--print-api-checksum", "--vm", "fastr"], check=True,
+                             capture_output=True, text=True)
+        print(ret.stdout.splitlines())
+        self.assertIsNotNone(re.match(r"^fastr:\s+\d+", ret.stdout, flags=re.RegexFlag.MULTILINE))
+
+    def test_print_api_checksum_gnur(self):
+        pass
+
+    def test_install_simple_package(self):
+        pass
+
+    def test_install_pkg_with_one_dep(self):
+        pass
+
+    def test_repo(self):
+        pass
+
+    def _run_pkgcache(self, args: List[str]) -> PkgCacheOutput:
+        pass
+
+
+if __name__ == '__main__':
+    unittest.main()
