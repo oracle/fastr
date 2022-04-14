@@ -1054,7 +1054,7 @@ def pkgcache(args: List[str]) -> int:
     '''
     if '-h' in args or '--help' in args:
         print('==============================================')
-        print('Common arguments for both pkgtest and pkgcache:')
+        print('Common arguments for both r-pkgtest and r-pkgcache:')
         print('==============================================')
         common_arg_parser = get_common_arg_parser()
         common_arg_parser.prog = "mx pkgcache"

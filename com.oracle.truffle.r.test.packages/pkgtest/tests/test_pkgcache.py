@@ -20,7 +20,9 @@
 #  questions.
 import os
 import re
+import shutil
 import subprocess
+import tempfile
 import unittest
 from typing import List
 from unittest import TestCase
@@ -34,6 +36,7 @@ class PkgCacheOutput:
 class TestPackageCache(TestCase):
     FASTR_HOME = None
     GNUR_HOME = None
+    PKGCACHE_DIR = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -42,17 +45,26 @@ class TestPackageCache(TestCase):
         else:
             cls.FASTR_HOME = os.path.abspath(os.path.join(os.getcwd(), "..", "..", ".."))
         assert os.path.basename(cls.FASTR_HOME) == "fastr"
+        cls.PKGCACHE_DIR = tempfile.mkdtemp()
+        assert os.path.exists(cls.PKGCACHE_DIR)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        shutil.rmtree(cls.PKGCACHE_DIR, ignore_errors=True)
 
     def test_print_api_checksum_fastr(self):
-        ret = subprocess.run(["mx", "r-pkgcache", "--print-api-checksum", "--vm", "fastr"], check=True,
-                             capture_output=True, text=True)
-        print(ret.stdout.splitlines())
-        self.assertIsNotNone(re.match(r"^fastr:\s+\d+", ret.stdout, flags=re.RegexFlag.MULTILINE))
+        ret = subprocess.run(["mx", "r-pkgcache", "--print-api-checksum", "--vm", "fastr"], capture_output=True, text=True)
+        self.assertTrue("fastr: " in ret.stdout)
 
     def test_print_api_checksum_gnur(self):
-        pass
+        ret = subprocess.run(["mx", "r-pkgcache", "--print-api-checksum", "--vm", "gnur"], capture_output=True, text=True)
+        self.assertTrue("gnur: " in ret.stdout)
 
     def test_install_simple_package(self):
+        repos = "CRAN=https://graalvm.oraclecorp.com/fastr-mran-mirror/snapshot/2021-02-01/"
+        # abind has only two base dependencies (that should already be installed by default) - methods and utils.
+        subprocess.run(["mx", "r-pkgcache", "--fastr-home", TestPackageCache.FASTR_HOME, "--gnur-home", TestPackageCache.GNUR_HOME,
+                        "--pkg-pattern", "abind"])
         pass
 
     def test_install_pkg_with_one_dep(self):
