@@ -37,7 +37,7 @@ endif
 
 FASTR_R_HOME = $(abspath $(TOPDIR)/..)
 R_VERSION = 4.0.3
-# The package tar balls are copied from $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended
+# Most of the package tar balls are copied from $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended
 export GNUR_HOME_BINARY_UNPACKED = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
 
 ifndef GNUR_HOME_BINARY
@@ -68,10 +68,26 @@ GNUR_RECOMMENDED_PKGNAMES := codetools
 endif # FASTR_RELEASE
 GNUR_RECOMMENDED_PKGNAMES_TS = $(GNUR_RECOMMENDED_PKGNAMES:=.ts)
 
+# Recommended packages that are used by fastr in a specific version, i.e., taken from other sources than GNUR_RECOMMENDED_BINARY
+PKGS_WITH_CUSTOM_VERSION := cluster rpart
+RPART_TAR := $(FASTR_R_HOME)/libdownloads/rpart.tar.gz
+CLUSTER_TAR := $(FASTR_R_HOME)/libdownloads/cluster.tar.gz
+
 GNUR_RECOMMENDED_TAR_DIR = $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended/
-GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_RECOMMENDED_TAR_DIR)/$(pkg)*.tar.gz)
+# We do not copy all the recommended packages from gnur's directory. Instead, there are some
+# packages that we take from different sources.
+GNUR_RECOMMENDED_TARS := \
+$(foreach pkg, \
+	$(filter-out $(PKGS_WITH_CUSTOM_VERSION),$(GNUR_RECOMMENDED_PKGNAMES)), \
+	$(GNUR_RECOMMENDED_TAR_DIR)/$(pkg)*.tar.gz \
+)
+ALL_RECOMMENDED_TARS := $(GNUR_RECOMMENDED_TARS) $(RPART_TAR) $(CLUSTER_TAR)
+
 ## need to allow parallel installs
 INSTALL_OPTS = --pkglock --data-compress=xz --no-staged-install
+
+$(info GNUR_RECOMMENDED_PKGNAMES = $(GNUR_RECOMMENDED_PKGNAMES))
+$(info ALL_RECOMMENDED_TARS = $(ALL_RECOMMENDED_TARS))
 
 # in managed mode, we do nothing
 ifneq ($(FASTR_RFFI),managed)
@@ -84,7 +100,7 @@ ifdef FASTR_RECOMMENDED_BINARY
 
 $(info Using FastR recommended packages binary: $(FASTR_RECOMMENDED_BINARY))
 
-install.recommended: $(GNUR_RECOMMENDED_TARS)
+install.recommended: $(ALL_RECOMMENDED_TARS)
 #	@if ! (mx -p $(FASTR_R_HOME) r-pkgcache --print-api-checksum --vm fastr | tail -n 1 | diff -q $(FASTR_RECOMMENDED_BINARY)/api-checksum.txt -); then \
 #		echo "******************************"; \
 #		echo "ERROR:"; \
@@ -105,7 +121,23 @@ install.recommended: $(GNUR_RECOMMENDED_TARS)
 # If FASTR_RECOMMENDED_BINARY is not defined, we just build the packages
 else 
 
-$(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
+RPART_DIR_NAME := bethatkinson-rpart-4020bb4
+RPART_BUILT_TARBALL := rpart_4.1-16.tar.gz
+# rpart package is downloaded as a tarball directly from GitHub. Unfortunately, we have to make some
+# modifications to that tarball - remove `build` directory.
+rpart.ts: $(RPART_TAR)
+	@echo 'Installing recommended package rpart'
+	tar xf $<
+	rm -rf $(RPART_DIR_NAME)/build
+	# This command creates $RPART_BUILT_TARBALL via GNU-R for better compatibility
+	$(GNUR_HOME_BINARY)/bin/R CMD build --no-build-vignettes $(RPART_DIR_NAME)
+	_R_CHECK_INSTALL_DEPENDS_=no FASTR_USE_F2C=true $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $(RPART_BUILT_TARBALL) &> $@.out || (cat $@.out && exit 1)
+	@echo Finished installing recommended package `basename $<`
+
+cluster.ts: $(CLUSTER_TAR)
+	@echo Installing recommended package `basename $<`
+	@_R_CHECK_INSTALL_DEPENDS_=no FASTR_USE_F2C=true $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
+	@echo Finished installing recommended package `basename $<`
 
 %.ts: $(GNUR_RECOMMENDED_TAR_DIR)%.tgz
 	@echo Installing recommended package `basename $<`

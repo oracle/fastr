@@ -21,14 +21,13 @@ gu install r
 
 After this step, the `R` and `Rscript` launchers will become available in the `GRAALVM_HOME/bin` directory.
 
-The R language home directory, which will be further referenced as `$R_HOME`, is located in:
-* `jre/languages/R` in JDK8-based GraalVM distributions
-* `languages/R` in JDK11-based GraalVM distributions
+The R language home directory, which will be further referenced as `$R_HOME`, is located in `languages/R`.
 
 ## Prerequisites
 
-GraalVM's R runtime requires the [OpenMP runtime library](https://www.openmprtl.org/).
-The following commands should install this dependency:
+GraalVM's R runtime requires [zlib](https://zlib.net/) and the [OpenMP runtime library](https://www.openmprtl.org/).
+Zlib is default part of MacOS and most modern Linux distributions.
+The following commands should install the OpenMP runtime library:
 
 * Ubuntu 18.04 and 19.10: `apt-get install libgomp1`
 * Oracle Linux 7 and 8: `yum install libgomp`

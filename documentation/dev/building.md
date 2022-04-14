@@ -25,7 +25,7 @@ This can be controlled by the following environment variables:
 and must be used when you are building a GraalVM distribution (from the `graal/vm` mx suite),
 but it can be further configured by using the following environment variables:
 * `FASTR_NO_RECOMMENDED` set to any value turns off the recommended packages build and bundling with FastR. Only applicable if `FASTR_RELEASE` is set.
-* `FASTR_CAPTURE_DEPENDENCIES` if exported overrides the set of 3rd party libraries that are bundled with FastR, the value is space separated list of "base" names of the libraries, for example, use `gfortran`, for `libgfortran.so.5`. Libraries that can be bundled are: `libz`, `libpcre2-8`, `libgfortran`, `libquadmath`, and `libgcc_s`. Only applicable if `FASTR_RELEASE` is set.
+* `FASTR_CAPTURE_DEPENDENCIES` if exported overrides the set of 3rd party libraries that are bundled with FastR, the value is space separated list of "base" names of the libraries, for example, use `gfortran`, for `libgfortran.so.5`. Libraries that can be bundled are: `libpcre2-8`, `libgfortran`, `libquadmath`, and `libgcc_s`. Only applicable if `FASTR_RELEASE` is set.
 
 Note for maintainers of packages for package managers like apt or yum: it is recommended to **not bundle** any 3rd party libraries with FastR, but instead use the dependency management mechanisms of your package manager. To achieve this, export `FASTR_BUNDLE_DEPENDENCIES` set to an empty value (and build FastR with `FASTR_RELEASE`).
 
@@ -101,7 +101,7 @@ On top of the requirements of GNU-R, FastR also needs:
     A JVMCI-enabled Java JDK
     Python version 3.x
 
-A JVMCI enabled Java builds are available in the [openjdk8-jvmci-builder GitHub repository](https://github.com/graalvm/openjdk8-jvmci-builder/releases).
+A JVMCI enabled Java builds are available in the [`labs-openjdk-11` GitHub repository](https://github.com/graalvm/labs-openjdk-11/releases).
 The environment variable `JAVA_HOME` must be set to the location of the jvmci-enabled Java JDK.
 For convenience use `mx fetch-jdk` command to download JVMCI enabled Java SDK.
 For example, `mx fetch-jdk --jdk-id labsjdk-ce-17 --alias labsjdk-ce-17` downloads JVMCI enabled JDK 17 into `~/.mx/jdks`.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,15 @@
 #include "rffi_upcallsindex.h"
 #include <Rdynload.h>
 
-extern __thread void* *callbacks;
+#ifdef FASTR_NFI
+#define CALLBACKS_T __thread void**
+#elif FASTR_LLVM
+#define CALLBACKS_T void**
+#else
+#error unknown RFFI backend type
+#endif
+
+extern CALLBACKS_T callbacks;
 
 // This is the complete set , including those not yet implemented
 
@@ -558,7 +566,7 @@ typedef int (*call_R_isGlobal)(void* c);
 typedef int (*call_R_isEqual)(void* x, void* y);
 
 // JavaGD
-typedef void (*call_gdOpen)(int gdId, const char *name, double w, double h);
+typedef Rboolean (*call_gdOpen)(int gdId, const char *name, double w, double h);
 typedef void (*call_gdClose)(int gdId);
 typedef void (*call_gdActivate)(int gdId);
 typedef void (*call_gdDeactivate)(int gdId);

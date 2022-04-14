@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,22 +26,17 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.nio.file.StandardOpenOption;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-
-import java.nio.file.StandardOpenOption;
 
 public class ToolsText {
 
@@ -97,22 +92,21 @@ public class ToolsText {
 
         @Specialization
         @TruffleBoundary
-        protected Object codeFilesAppend(String file1, RStringVector file2,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        protected Object codeFilesAppend(String file1, RStringVector file2) {
             if (file2.getLength() < 1) {
                 return RDataFactory.createEmptyLogicalVector();
             }
             int n2 = file2.getLength();
             byte[] data = new byte[n2];
             if (!RRuntime.isNA(file1)) {
-                TruffleFile tFile1 = ctxRef.get().getSafeTruffleFile(file1);
+                TruffleFile tFile1 = getRContext().getSafeTruffleFile(file1);
                 try (BufferedOutputStream out = new BufferedOutputStream(tFile1.newOutputStream(StandardOpenOption.APPEND))) {
                     for (int i = 0; i < file2.getLength(); i++) {
                         String file2e = file2.getDataAt(i);
                         if (RRuntime.isNA(file2e)) {
                             continue;
                         }
-                        TruffleFile tFile2 = ctxRef.get().getSafeTruffleFile(file2e);
+                        TruffleFile tFile2 = getRContext().getSafeTruffleFile(file2e);
                         try {
                             byte[] path2Data = tFile2.readAllBytes();
                             byte[] header = ("#line 1 \"" + file2e + "\"\n").getBytes();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,8 +121,8 @@ public abstract class FFIMaterializeNode extends Node {
     // Wrappers for foreign objects are held in a weak hash map
 
     @Specialization(guards = "isForeignObject(value)")
-    protected static Object wrapForeignObject(TruffleObject value) {
-        return RContext.getInstance().getRFFI().getOrCreateForeignObjectWrapper(value);
+    protected Object wrapForeignObject(TruffleObject value) {
+        return RContext.getInstance(this).getRFFI().getOrCreateForeignObjectWrapper(value);
     }
 
     @Fallback

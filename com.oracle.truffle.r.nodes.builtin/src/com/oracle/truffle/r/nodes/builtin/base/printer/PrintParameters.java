@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,6 @@
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-
-//Transcribed from GnuR, src/include/Print.h
-
 import com.oracle.truffle.r.nodes.builtin.base.Format;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -48,8 +45,8 @@ public final class PrintParameters {
      */
     private boolean suppressIndexLabels;
 
-    public static int getDefaultDigits() {
-        return RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("digits"));
+    private static int getDefaultDigits(RContext ctx) {
+        return RRuntime.asInteger(ctx.stateROptions.getValue("digits"));
     }
 
     public PrintParameters() {
@@ -57,9 +54,9 @@ public final class PrintParameters {
     }
 
     @TruffleBoundary
-    PrintParameters(Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource) {
+    PrintParameters(Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, RContext context) {
 
-        setDefaults();
+        setDefaults(context);
 
         if (digits != RNull.instance) {
             this.digits = RRuntime.asInteger(digits);
@@ -128,31 +125,31 @@ public final class PrintParameters {
         return cloned;
     }
 
-    public static int getDefaultMaxPrint() {
-        int max = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
+    private static int getDefaultMaxPrint(RContext context) {
+        int max = RRuntime.asInteger(context.stateROptions.getValue("max.print"));
         if (RRuntime.isNA(max) || max < 0) {
             max = 99999;
         }
         return max;
     }
 
-    public void setDefaults() {
+    public void setDefaults(RContext context) {
         this.naString = "NA";
         this.naStringNoquote = "<NA>";
         this.naWidth = this.naString.length();
         this.naWidthNoquote = this.naStringNoquote.length();
         this.quote = true;
         this.right = false;
-        this.digits = getDefaultDigits();
-        this.scipen = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("scipen"));
+        this.digits = getDefaultDigits(context);
+        this.scipen = RRuntime.asInteger(context.stateROptions.getValue("scipen"));
         if (this.scipen == RRuntime.INT_NA) {
             this.scipen = 0;
         }
-        this.max = getDefaultMaxPrint();
+        this.max = getDefaultMaxPrint(context);
         this.gap = 1;
-        this.width = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
+        this.width = RRuntime.asInteger(context.stateROptions.getValue("width"));
         this.useSource = true;
-        this.cutoff = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("deparse.cutoff"));
+        this.cutoff = RRuntime.asInteger(context.stateROptions.getValue("deparse.cutoff"));
         this.suppressIndexLabels = false;
     }
 

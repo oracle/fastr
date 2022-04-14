@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.chain;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
@@ -82,7 +82,7 @@ public class TraceFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNode = insert(GetNodeGen.create());
             }
-            return getNode.execute(frame, funcName, RContext.getInstance().stateREnvironment.getGlobalEnv(), RType.Function.getName(), true);
+            return getNode.execute(frame, funcName, getRContext().stateREnvironment.getGlobalEnv(), RType.Function.getName(), true);
         }
     }
 
@@ -147,10 +147,10 @@ public class TraceFunctions {
         @TruffleBoundary
         protected byte traceOnOff(byte state) {
             /* TODO GnuR appears to accept ANY value as an argument */
-            boolean prevState = RContext.getInstance().stateInstrumentation.getTracingState();
+            boolean prevState = getRContext().stateInstrumentation.getTracingState();
             boolean newState = RRuntime.fromLogical(state);
             if (newState != prevState) {
-                RContext.getInstance().stateInstrumentation.setTracingState(newState);
+                getRContext().stateInstrumentation.setTracingState(newState);
                 MemoryCopyTracer.setTracingState(newState);
             }
             return RRuntime.asLogical(prevState);
@@ -159,7 +159,7 @@ public class TraceFunctions {
         @Specialization
         @TruffleBoundary
         protected byte traceOnOff(@SuppressWarnings("unused") RNull state) {
-            return RRuntime.asLogical(RContext.getInstance().stateInstrumentation.getTracingState());
+            return RRuntime.asLogical(getRContext().stateInstrumentation.getTracingState());
         }
     }
 

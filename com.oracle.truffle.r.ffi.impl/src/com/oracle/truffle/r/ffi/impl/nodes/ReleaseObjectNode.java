@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,14 +27,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
@@ -51,9 +48,8 @@ public abstract class ReleaseObjectNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     Object protect(RBaseObject x,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
-        RFFIContext ctx = ctxRef.get().getStateRFFI();
+        RFFIContext ctx = RContext.getInstance(this).getStateRFFI();
         EconomicMap<RBaseObject, AtomicInteger> preserveList = ctx.rffiContextState.preserveList;
         AtomicInteger atomicInteger = get(preserveList, x);
         if (profile.profile(atomicInteger != null)) {

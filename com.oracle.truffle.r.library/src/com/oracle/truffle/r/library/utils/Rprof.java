@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,6 @@ import java.util.HashMap;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -58,7 +56,6 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -105,8 +102,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg9 implements MemoryC
     @TruffleBoundary
     @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "RprofState.get never returns null")
     public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling, boolean gcProfiling, boolean lineProfiling, @SuppressWarnings("unused") boolean filterCallFrames,
-                    @SuppressWarnings("unused") int numFiles, @SuppressWarnings("unused") int bufSize,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+                    @SuppressWarnings("unused") int numFiles, @SuppressWarnings("unused") int bufSize) {
 
         RprofState profState = RprofState.get();
 
@@ -120,7 +116,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg9 implements MemoryC
             }
             try {
                 PrintStream out = new PrintStream(
-                                ctxRef.get().getSafeTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING));
+                                getRContext().getSafeTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING));
                 if (gcProfiling) {
                     warning(RError.Message.GENERIC, "Rprof: gc profiling not supported");
                 }

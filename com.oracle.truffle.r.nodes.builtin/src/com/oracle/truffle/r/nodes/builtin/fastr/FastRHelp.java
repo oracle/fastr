@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,31 +22,26 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-
-import com.oracle.truffle.api.dsl.Specialization;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRHelpFactory.FastRAddHelpPathNodeGen;
-import com.oracle.truffle.r.runtime.RError;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
-
-import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
-import com.oracle.truffle.r.runtime.data.RNull;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRHelpFactory.FastRAddHelpPathNodeGen;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 public class FastRHelp {
 
@@ -98,11 +93,10 @@ public class FastRHelp {
 
         @Specialization()
         @TruffleBoundary
-        public Object helpPath(String builtinName,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        public Object helpPath(String builtinName) {
             for (String path : getPaths()) {
                 String filename = path + '/' + builtinName + ".Rd";
-                try (InputStream in = ResourceHandlerFactory.getHandler().getResourceAsStream(ctxRef.get(), getClass(), filename)) {
+                try (InputStream in = ResourceHandlerFactory.getHandler().getResourceAsStream(getRContext(), getClass(), filename)) {
                     if (in != null) {
                         return filename;
                     }
@@ -123,9 +117,8 @@ public class FastRHelp {
 
         @Specialization()
         @TruffleBoundary
-        public Object getHelpRdPath(String path,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            try (InputStream in = ResourceHandlerFactory.getHandler().getResourceAsStream(ctxRef.get(), getClass(), path)) {
+        public Object getHelpRdPath(String path) {
+            try (InputStream in = ResourceHandlerFactory.getHandler().getResourceAsStream(getRContext(), getClass(), path)) {
                 if (in != null) {
                     try (BufferedReader r = new BufferedReader(new InputStreamReader(in))) {
                         StringBuilder sb = new StringBuilder();

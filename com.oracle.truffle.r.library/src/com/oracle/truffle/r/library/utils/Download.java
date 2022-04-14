@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,14 +30,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -45,10 +45,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
-import java.io.OutputStream;
-import java.util.Locale;
 
 /**
  * Support for the "internal"method of "utils::download.file". TODO take note of "quiet", "mode" and
@@ -70,8 +66,7 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
     @Specialization
     @TruffleBoundary
     protected int download(String urlString, String destFile, boolean quiet, @SuppressWarnings("unused") String mode, @SuppressWarnings("unused") boolean cacheOK,
-                    @SuppressWarnings("unused") Object headers,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+                    @SuppressWarnings("unused") Object headers) {
         String protocol;
         try {
             String urlStr = urlString;
@@ -97,7 +92,7 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
 
             try (InputStream in = con.getInputStream()) {
 
-                TruffleFile dest = ctxRef.get().getSafeTruffleFile(destFile);
+                TruffleFile dest = getRContext().getSafeTruffleFile(destFile);
                 OutputStream os = dest.newOutputStream();
                 long len = 0L;
                 byte[] buf = new byte[BUFFER_SIZE];
@@ -180,9 +175,8 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
         @Child private Download downloadBuiltin = DownloadNodeGen.create();
 
         @Specialization
-        protected int download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK, Object headers,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            return downloadBuiltin.download(urlString, destFile, quiet, mode, cacheOK, headers, ctxRef);
+        protected int download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK, Object headers) {
+            return downloadBuiltin.download(urlString, destFile, quiet, mode, cacheOK, headers);
         }
 
     }

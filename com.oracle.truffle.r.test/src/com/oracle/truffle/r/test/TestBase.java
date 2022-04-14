@@ -148,6 +148,7 @@ public class TestBase {
         SideEffects("tests that are ignored because they would interfere with other tests"),
         MissingBuiltin("tests that fail because of missing builtins"),
         NewRVersionMigration("temporarily ignored while migrating to new GNU-R version"),
+        NativeGridGraphics("tests that are ignored because of the different behavior of FastrInternalGrid from native grid packages"),
         Unimplemented("tests that fail because of missing functionality");
 
         private final String description;

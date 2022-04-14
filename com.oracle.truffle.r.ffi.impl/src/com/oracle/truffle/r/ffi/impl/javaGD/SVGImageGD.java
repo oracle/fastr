@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,8 +57,9 @@ public class SVGImageGD extends GDInterface {
     }
 
     @Override
-    public void gdOpen(double width, double height) {
+    public boolean gdOpen(double width, double height) {
         super.gdOpen(width, height);
         c = new SVGImageContainer((int) width, (int) height, fileNameTemplate, onefile, family, bg, antialias);
+        return true;
     }
 }

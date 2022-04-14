@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 
@@ -60,12 +59,12 @@ public abstract class Quit extends RBuiltinNode.Arg3 {
     @TruffleBoundary
     protected Object doQuit(String save, final int status, final byte runLastIn) {
         byte runLast = runLastIn;
-        if (RContext.getInstance().stateInstrumentation.getBrowserState().inBrowser()) {
+        if (getRContext().stateInstrumentation.getBrowserState().inBrowser()) {
             warning(RError.Message.BROWSER_QUIT);
             return RNull.instance;
         }
         SA_TYPE ask = checkSaveValue(save);
-        if (ask == SA_TYPE.SAVEASK && !RContext.getInstance().isInteractive()) {
+        if (ask == SA_TYPE.SAVEASK && !getRContext().isInteractive()) {
             warning(RError.Message.QUIT_ASK_INTERACTIVE);
         }
         if (status == RRuntime.INT_NA) {
@@ -76,7 +75,7 @@ public abstract class Quit extends RBuiltinNode.Arg3 {
             warning(RError.Message.QUIT_INVALID_RUNLAST);
             runLast = RRuntime.LOGICAL_FALSE;
         }
-        RCleanUp.cleanUp(RContext.getInstance(), ask, status, RRuntime.fromLogical(runLast));
+        RCleanUp.cleanUp(getRContext(), ask, status, RRuntime.fromLogical(runLast));
         throw RInternalError.shouldNotReachHere("cleanup returned");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,15 +27,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 @RBuiltin(name = "traceback", kind = INTERNAL, parameterNames = {"x"}, behavior = COMPLEX)
 public abstract class Traceback extends RBuiltinNode.Arg1 {
@@ -47,9 +43,8 @@ public abstract class Traceback extends RBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected Object traceback(int x,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-        Object lastInteropTrace = RErrorHandling.getLastInteropTrace(ctxRef.get());
+    protected Object traceback(int x) {
+        Object lastInteropTrace = RErrorHandling.getLastInteropTrace(getRContext());
         return lastInteropTrace != null ? lastInteropTrace : Utils.createTraceback(x);
     }
 }

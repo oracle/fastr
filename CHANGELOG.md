@@ -1,5 +1,21 @@
+# 22.1.0
+* Improved performance of the `order` and `rank` builtin functions
+* FastR does not ship with its own copy of libz.so
+  * System installation of this library becomes a requirement for FastR, but zlib is installed by default on MacOS and in most modern Linux distributions.
+* Use JavaGD as the default graphical subsystem.
+  * Deprecate `--R.UseInternalGridGraphics` option.
+  * The FastR's graphical subsystem is now mostly compatible with GNU-R's, i.e., most functions from `graphics`, `grid`, and `grDevices` base packages are now supported.
+  * Display lists are fully implemented.
+  * Supported devices: SVG, PNG, JPEG, BMP, AWT.
+  * See [graphics docs](./documentation/dev/graphics.md).
+* Updated XZ library for compression to the version XZ-1.9.
+
 # 22.0.0
 * Adopted [NodeLibrary](https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/interop/NodeLibrary.html).
+* In unit tests, use single shared context rather than multiple inner contexts.
+* Update recommended packages:
+  * rpart to version 4.1-16 (2019-05-21)
+  * cluster to version 2.1.2 (2021-04-17)
 
 # 21.3.0
 * Upgrade of [PCRE](https://www.pcre.org/) to PCRE2 version 10.37.

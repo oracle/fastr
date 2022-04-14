@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,21 +31,18 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.ffi.impl.managed.Managed_DownCallNodeFactoryFactory.Managed_DownCallNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
@@ -70,13 +67,12 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Specialization
-        protected Object doCall(Frame frame, NativeFunction f, Object[] args,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-            return doCallImpl(frame, f, args, ctxRef);
+        protected Object doCall(Frame frame, NativeFunction f, Object[] args) {
+            return doCallImpl(frame, f, args);
         }
 
         @Override
-        protected TruffleObject createTarget(ContextReference<RContext> ctxRef, NativeFunction function) {
+        protected TruffleObject createTarget(RContext ctx, NativeFunction function) {
             if (function == NativeFunction.getpid) {
                 return new GetPID();
             } else if (function == NativeFunction.mkdtemp) {
@@ -167,7 +163,8 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         @SuppressWarnings("static-method")
         @ExportMessage
         public Object execute(Object[] args,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+                        @CachedLibrary("this") InteropLibrary interop) {
+            RContext ctx = RContext.getInstance(interop);
             NativeCharArray templateBytes = (NativeCharArray) args[0];
             String template = templateBytes.getString();
             if (!template.endsWith("XXXXXX")) {
@@ -179,7 +176,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
             boolean done = false;
             while (!done) {
                 try {
-                    dir = ctxRef.get().getSafeTruffleFile(templatePrefix + String.format("%06d", counter++));
+                    dir = ctx.getSafeTruffleFile(templatePrefix + String.format("%06d", counter++));
                     if (dir.exists()) {
                         continue;
                     }
@@ -213,9 +210,10 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         @SuppressWarnings("static-method")
         @ExportMessage
         public Object execute(Object[] args,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+                        @CachedLibrary("this") InteropLibrary interop) {
+            RContext ctx = RContext.getInstance(interop);
             NativeCharArray buffer = (NativeCharArray) args[0];
-            byte[] bytes = ctxRef.get().getSafeTruffleFile(".").getAbsoluteFile().normalize().toString().getBytes();
+            byte[] bytes = ctx.getSafeTruffleFile(".").getAbsoluteFile().normalize().toString().getBytes();
             System.arraycopy(bytes, 0, buffer.getValue(), 0, Math.min(bytes.length, buffer.getValue().length));
             return 1;
         }

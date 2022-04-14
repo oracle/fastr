@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,25 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
+
+import java.lang.management.ManagementFactory;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -47,7 +58,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -57,18 +67,6 @@ import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 import com.oracle.truffle.r.runtime.ffi.util.ResourcesCleaner.ReleasableWeakReference;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.lang.management.ManagementFactory;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 
 /**
  * Provides API to work with objects returned by {@link RBaseObject#getNativeMirror()}. The native
@@ -436,8 +434,7 @@ public final class NativeDataAccess {
                         @Cached("createBinaryProfile()") ConditionProfile isCustomNativeMirror,
                         @Cached("createBinaryProfile()") ConditionProfile isInNative,
                         @Cached("createBinaryProfile()") ConditionProfile registerNativeRefNopProfile,
-                        @Cached BranchProfile refRegProfile,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+                        @Cached BranchProfile refRegProfile) {
             if (hasID.profile(mirror.nativeHandle == null)) {
                 RBaseObject obj = mirror.delegate;
                 if (isCustomNativeMirror.profile(obj instanceof CustomNativeMirror)) {
@@ -445,7 +442,7 @@ public final class NativeDataAccess {
                 } else {
                     mirror.initMirror();
                 }
-                RContext rContext = ctxRef.get();
+                RContext rContext = RContext.getInstance(this);
                 if (isInNative.profile(rContext.getStateRFFI().getCallDepth() > 0)) {
                     rContext.getStateRFFI().registerReferenceUsedInNative(obj, registerNativeRefNopProfile, refRegProfile);
                 }

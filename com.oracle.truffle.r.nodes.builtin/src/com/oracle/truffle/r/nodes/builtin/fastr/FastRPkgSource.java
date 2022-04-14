@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,12 +29,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.io.IOException;
+import java.io.Writer;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -48,14 +47,12 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import java.io.Writer;
 
 /**
  * Outputs the deparsed source for functions in one or more loaded packages to the
@@ -78,27 +75,25 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    public RNull pkgSource(VirtualFrame frame, @SuppressWarnings("unused") RNull pkgs, boolean verbose,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+    public RNull pkgSource(VirtualFrame frame, @SuppressWarnings("unused") RNull pkgs, boolean verbose) {
         CompilerDirectives.transferToInterpreter();
         String[] searchPath = REnvironment.searchPath();
         for (String s : searchPath) {
             REnvironment env = REnvironment.lookupOnSearchPath(s);
             String pkg = env.isPackageEnv();
             if (pkg != null) {
-                pkgSource(frame, RDataFactory.createStringVectorFromScalar(pkg.replace("package:", "")), verbose, ctxRef);
+                pkgSource(frame, RDataFactory.createStringVectorFromScalar(pkg.replace("package:", "")), verbose);
             }
         }
         return RNull.instance;
     }
 
     @Specialization
-    public RNull pkgSource(VirtualFrame frame, RStringVector pkgs, boolean verbose,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+    public RNull pkgSource(VirtualFrame frame, RStringVector pkgs, boolean verbose) {
         CompilerDirectives.transferToInterpreter();
         for (int i = 0; i < pkgs.getLength(); i++) {
             String pkg = pkgs.getDataAt(i);
-            REnvironment env = REnvironment.getRegisteredNamespace(pkg);
+            REnvironment env = REnvironment.getRegisteredNamespace(getRContext(), pkg);
             if (env == null) {
                 notFound(pkg);
             } else {
@@ -122,7 +117,7 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
                                     output(name, true);
                                 }
                                 String deparseResult = RDeparse.deparseSyntaxElement((FunctionDefinitionNode) fun.getRootNode());
-                                saveSource(ctxRef.get(), pkg, name, deparseResult);
+                                saveSource(getRContext(), pkg, name, deparseResult);
                             }
                         }
                     } catch (Throwable t) {

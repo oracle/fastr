@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -469,7 +469,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
             if (result == null) {
                 if (throwsError) {
-                    RFunction function = RContext.getInstance().lookupBuiltin(genericName);
+                    RFunction function = getRContext().lookupBuiltin(genericName);
                     if (function != null) {
                         return new Result(genericName, function, RNull.instance, genericName, false);
                     }

@@ -59,6 +59,7 @@ import java.util.logging.Level;
 import org.graalvm.options.OptionKey;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -76,6 +77,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
@@ -799,8 +801,13 @@ public final class RContext {
         isSingleContextAssumption.invalidate();
     }
 
+    public static RContext getInstance(Node node) {
+        return TruffleRLanguage.getCurrentContext(node);
+    }
+
     public static RContext getInstance() {
-        return getRRuntimeASTAccess().getCurrentContext();
+        CompilerAsserts.neverPartOfCompilation();
+        return TruffleRLanguage.getCurrentContext(null);
     }
 
     public boolean isInteractive() {
@@ -1219,9 +1226,8 @@ public final class RContext {
      * request. If so, break the playing back of the display list for the waiting repaint request to
      * be processed.
      */
-    public static void checkPendingRepaintRequest() {
-        RContext rCtx = RContext.getInstance();
-        if (rCtx.getStateRFFI().rffiContextState.primFunBeingDispatched && rCtx.interruptResize.get()) {
+    public void checkPendingRepaintRequest() {
+        if (getStateRFFI().rffiContextState.primFunBeingDispatched && interruptResize.get()) {
             throw new ReturnException(RUnboundValue.instance, dispatchPrimFunNodeCaller);
         }
     }

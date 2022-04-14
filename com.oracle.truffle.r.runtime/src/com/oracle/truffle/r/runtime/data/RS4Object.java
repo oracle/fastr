@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -204,7 +204,7 @@ public final class RS4Object extends RSharingAttributeStorage implements Shareab
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            return delegate.execute(RContext.getInstance().stateREnvironment.getGlobalFrame(), args[0], args[1], args[2]);
+            return delegate.execute(RContext.getInstance(this).stateREnvironment.getGlobalFrame(), args[0], args[1], args[2]);
         }
     }
 

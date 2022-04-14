@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
@@ -39,7 +38,7 @@ public abstract class CommandArgs extends RBuiltinNode.Arg0 {
     @Specialization
     @TruffleBoundary
     protected RStringVector commandArgs() {
-        String[] s = RContext.getInstance().getEnv().getApplicationArguments();
+        String[] s = getRContext().getEnv().getApplicationArguments();
         return RDataFactory.createStringVector(s, RDataFactory.COMPLETE_VECTOR);
     }
 }

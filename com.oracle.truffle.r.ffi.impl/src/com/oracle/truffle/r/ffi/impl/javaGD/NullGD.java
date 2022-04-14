@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,10 @@ public class NullGD extends GDInterface {
     private double height;
 
     @Override
-    public void gdOpen(double w, double h) {
+    public boolean gdOpen(double w, double h) {
         this.width = w;
         this.height = h;
+        return true;
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -204,7 +204,11 @@ public class RErrorHandling {
     private static final Object RESTART_TOKEN = new Object();
 
     private static ContextStateImpl getRErrorHandlingState() {
-        return RContext.getInstance().stateRErrorHandling;
+        return getRErrorHandlingState(RContext.getInstance());
+    }
+
+    private static ContextStateImpl getRErrorHandlingState(RContext ctx) {
+        return ctx.stateRErrorHandling;
     }
 
     public static HandlerStacks resetAndGetHandlerStacks() {
@@ -214,11 +218,19 @@ public class RErrorHandling {
     }
 
     public static Object getHandlerStack() {
-        return getRErrorHandlingState().handlerStack;
+        return getHandlerStack(RContext.getInstance());
+    }
+
+    public static Object getHandlerStack(RContext ctx) {
+        return getRErrorHandlingState(ctx).handlerStack;
     }
 
     public static Object getRestartStack() {
-        return getRErrorHandlingState().restartStack;
+        return getRestartStack(RContext.getInstance());
+    }
+
+    public static Object getRestartStack(RContext ctx) {
+        return getRErrorHandlingState(ctx).restartStack;
     }
 
     /**
@@ -227,7 +239,11 @@ public class RErrorHandling {
      * followed by {@link #restoreStacks} after the evaluation completes.
      */
     public static void resetStacks() {
-        ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        resetStacks(RContext.getInstance());
+    }
+
+    public static void resetStacks(RContext ctx) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState(ctx);
         errorHandlingState.handlerStack = RNull.instance;
         errorHandlingState.restartStack = RNull.instance;
     }
@@ -236,6 +252,7 @@ public class RErrorHandling {
         restoreStacks(handlerStacks.handlerStack, handlerStacks.restartStack);
     }
 
+    @TruffleBoundary
     public static void restoreStacks(Object savedHandlerStack, Object savedRestartStack) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         errorHandlingState.handlerStack = savedHandlerStack;
@@ -247,8 +264,24 @@ public class RErrorHandling {
         errorHandlingState.handlerStack = savedHandlerStack;
     }
 
+    /**
+     * Fast-path version of {@link #restoreHandlerStack(Object)}.
+     */
+    public static void restoreHandlerStack(Object savedHandlerStack, RContext ctx) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState(ctx);
+        errorHandlingState.handlerStack = savedHandlerStack;
+    }
+
     public static void restoreRestartStack(Object savedRestartStack) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
+        errorHandlingState.restartStack = savedRestartStack;
+    }
+
+    /**
+     * Fast-path version of {@link #restoreRestartStack(Object)}.
+     */
+    public static void restoreRestartStack(Object savedRestartStack, RContext ctx) {
+        ContextStateImpl errorHandlingState = getRErrorHandlingState(ctx);
         errorHandlingState.restartStack = savedRestartStack;
     }
 
@@ -328,8 +361,8 @@ public class RErrorHandling {
         return ((REnvironment) restart.getDataAt(1)).getFrame();
     }
 
-    public static Object getRestart(int index) {
-        Object list = getRestartStack();
+    public static Object getRestart(int index, RContext context) {
+        Object list = getRestartStack(context);
         int i = index;
         while (list != RNull.instance && i > 1) {
             RPairList pList = (RPairList) list;
@@ -422,7 +455,7 @@ public class RErrorHandling {
                         RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
                         RFunction f = errorHandlingState.getDotHandleSimpleError();
                         assert f != null;
-                        RContext.getRRuntimeASTAccess().callback(f, new Object[]{handler, errorMsgVec, call});
+                        RContext.getRRuntimeASTAccess().callback(f, RContext.getInstance(callObj), new Object[]{handler, errorMsgVec, call});
                     }
                 } else {
                     throw gotoExitingHandler(RNull.instance, call, entry);
@@ -704,8 +737,8 @@ public class RErrorHandling {
     /**
      * Entry point for Rf_warningCall from RFFI.
      */
-    public static void warningcallRFFI(Object call, String message) {
-        warningCallInvoke(call, RDataFactory.createStringVectorFromScalar(message));
+    public static void warningcallRFFI(Object call, RContext context, String message) {
+        warningCallInvoke(call, context, RDataFactory.createStringVectorFromScalar(message));
     }
 
     /**
@@ -722,10 +755,10 @@ public class RErrorHandling {
     static void warningcall(boolean showCall, RBaseNode callObj, Message msg, Object... args) {
         Object call = showCall ? findCaller(callObj) : RNull.instance;
         RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));
-        warningCallInvoke(call, warningMessage);
+        warningCallInvoke(call, RContext.getInstance(callObj), warningMessage);
     }
 
-    private static void warningCallInvoke(Object call, RStringVector warningMessage) {
+    private static void warningCallInvoke(Object call, RContext context, RStringVector warningMessage) {
         /*
          * Warnings generally do not prevent results being printed. However, this call into R will
          * destroy any visibility setting made by the calling builtin prior to this call.
@@ -733,7 +766,7 @@ public class RErrorHandling {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         RFunction f = errorHandlingState.getDotSignalSimpleWarning();
         if (f != null) {
-            RContext.getRRuntimeASTAccess().callback(f, new Object[]{warningMessage, call});
+            RContext.getRRuntimeASTAccess().callback(f, context, new Object[]{warningMessage, call});
         }
         // otherwise the subsystem is not initialized yet - no warning
     }

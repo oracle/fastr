@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,7 @@ public abstract class FastRRCallerTrace extends RBuiltinNode.Arg0 {
     protected RNull printRCallerTrace(VirtualFrame frame) {
         assert RArguments.isRFrame(frame);
         RCaller caller = RArguments.getCall(frame);
-        RContext.ConsoleIO console = RContext.getInstance().getConsole();
+        RContext.ConsoleIO console = getRContext().getConsole();
         console.println(rcallerToNestedString(caller, 0));
         return RNull.instance;
     }

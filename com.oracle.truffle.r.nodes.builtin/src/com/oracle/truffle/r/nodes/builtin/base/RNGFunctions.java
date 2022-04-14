@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_NORMAL_TYPE_IN_RGNKIND;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_SAMPLE_TYPE_IN_RGNKIND;
 import static com.oracle.truffle.r.runtime.RError.Message.SEED_NOT_VALID_INT;
 import static com.oracle.truffle.r.runtime.RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
@@ -43,13 +44,12 @@ import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError.Message;
-import static com.oracle.truffle.r.runtime.RError.Message.INVALID_SAMPLE_TYPE_IN_RGNKIND;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public class RNGFunctions {
@@ -156,7 +156,7 @@ public class RNGFunctions {
 
         @Specialization
         protected Object getSeed(VirtualFrame frame, @SuppressWarnings("unused") RMissing data) {
-            Object seeds = RContext.getInstance().stateRNG.getCurrentSeeds();
+            Object seeds = getRContext().stateRNG.getCurrentSeeds();
             assert seeds != RMissing.instance;
             if (seeds instanceof int[]) {
                 int[] seedsArr = (int[]) seeds;

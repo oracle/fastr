@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.util.WritePointerNode;
 
@@ -36,13 +37,14 @@ public final class TryRfEvalNode extends FFIUpCallNode.Arg4 {
 
     @Override
     public Object executeObject(Object expr, Object env, Object errorFlag, Object silent) {
-        Object handlerStack = RErrorHandling.getHandlerStack();
-        Object restartStack = RErrorHandling.getRestartStack();
+        RContext context = RContext.getInstance(this);
+        Object handlerStack = RErrorHandling.getHandlerStack(context);
+        Object restartStack = RErrorHandling.getRestartStack(context);
         boolean ok = true;
         Object result = RNull.instance;
         try {
             // TODO handle silent
-            RErrorHandling.resetStacks();
+            RErrorHandling.resetStacks(context);
             result = rfEvalNode.executeObject(expr, env);
         } catch (Throwable t) {
             ok = false;

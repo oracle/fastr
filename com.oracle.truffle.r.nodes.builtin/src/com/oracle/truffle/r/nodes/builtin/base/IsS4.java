@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -44,7 +43,7 @@ public abstract class IsS4 extends RBuiltinNode.Arg1 {
 
     @Specialization
     protected byte isS4(@SuppressWarnings("unused") RNull object) {
-        return RRuntime.asLogical(RContext.getInstance().isNullS4Object());
+        return RRuntime.asLogical(getRContext().isNullS4Object());
     }
 
     @Specialization(guards = "!isNull(object)")

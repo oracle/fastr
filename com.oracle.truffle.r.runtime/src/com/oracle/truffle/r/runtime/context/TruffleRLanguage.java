@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExecutableNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.ExitException;
@@ -57,9 +58,29 @@ import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
-@TruffleLanguage.Registration(name = "R", id = "R", version = "4.0.3", implementationName = "FastR", characterMimeTypes = {RRuntime.R_APP_MIME,
-                RRuntime.R_TEXT_MIME}, defaultMimeType = RRuntime.R_APP_MIME, contextPolicy = ContextPolicy.EXCLUSIVE, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
-@ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootBodyTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
+// @formatter:off
+@TruffleLanguage.Registration(
+        name = "R",
+        id = "R",
+        version = "4.0.3",
+        implementationName = "FastR",
+        characterMimeTypes = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME},
+        defaultMimeType = RRuntime.R_APP_MIME,
+        contextPolicy = ContextPolicy.EXCLUSIVE,
+        interactive = true,
+        fileTypeDetectors = RFileTypeDetector.class,
+        dependentLanguages = "llvm",
+        website = "https://www.graalvm.org/r"
+)
+@ProvidedTags({
+        StandardTags.CallTag.class,
+        StandardTags.StatementTag.class,
+        StandardTags.RootBodyTag.class,
+        StandardTags.RootTag.class,
+        RSyntaxTags.LoopTag.class,
+        FunctionBodyBlockTag.class
+})
+// @formatter:on
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     private static int activeContexts = 0;
@@ -68,6 +89,8 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return getLanguageHome();
     }
 
+    private static final ContextReference<RContext> contextReference = ContextReference.create(TruffleRLanguage.class);
+    private static final LanguageReference<TruffleRLanguage> languageReference = LanguageReference.create(TruffleRLanguage.class);
     private static final String ACCESS_CLASS = "com.oracle.truffle.r.engine.TruffleRLanguageAccessImpl";
     private static final TruffleRLanguageAccess access;
 
@@ -210,12 +233,22 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         }
     }
 
-    public static RContext getCurrentContext() {
-        return TruffleLanguage.getCurrentContext(TruffleRLanguage.class);
+    /**
+     * For null {@code node} parameter this is a slow-path version.
+     */
+    public static RContext getCurrentContext(Node node) {
+        return contextReference.get(node);
     }
 
+    /**
+     * Slow path version of get language.
+     */
     public static TruffleRLanguage getCurrentLanguage() {
-        return TruffleLanguage.getCurrentLanguage(TruffleRLanguage.class);
+        return languageReference.get(null);
+    }
+
+    public static TruffleRLanguage getCurrentLanguage(Node node) {
+        return languageReference.get(node);
     }
 
     @Override

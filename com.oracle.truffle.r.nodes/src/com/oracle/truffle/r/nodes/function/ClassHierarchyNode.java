@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,9 +34,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -52,10 +49,13 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RWeakRef;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 
 @ImportStatic(RRuntime.class)
 public abstract class ClassHierarchyNode extends UnaryNode {
@@ -250,16 +250,16 @@ abstract class S4Class extends RBaseNode {
     protected RStringVector getS4ClassInternal(String classAttr) {
         // GNU R contains an explicit check here to make sure that methods package is available but
         // we operate under this assumption already
-        RStringVector s4Extends = RContext.getInstance().getS4Extends(classAttr);
+        RStringVector s4Extends = getRContext().getS4Extends(classAttr);
         if (s4Extends == null) {
-            REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
+            REnvironment methodsEnv = REnvironment.getRegisteredNamespace(getRContext(), "methods");
             RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame());
             // the assumption here is that the R function can only return either a String or
             // RStringVector
             RStringVector s4ExtendsAbstract = (RStringVector) castToVector.doCast(
                             RContext.getEngine().evalFunction(sExtendsForS3Function, methodsEnv.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, classAttr));
             s4Extends = s4ExtendsAbstract.materialize();
-            RContext.getInstance().putS4Extends(classAttr, s4Extends);
+            getRContext().putS4Extends(classAttr, s4Extends);
         }
         return s4Extends;
     }

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -188,7 +188,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, new CallMatcherUninitializedNode(argsAreEvaluated, depth + 1)));
                 // for splitting if necessary
                 if (cachedNode.call != null && RCallNode.needsSplitting(function.getTarget())) {
-                    if (!RContext.getInstance().getOption(RestrictForceSplitting)) {
+                    if (!RContext.getInstance(this).getOption(RestrictForceSplitting)) {
                         cachedNode.call.getCallNode().cloneCallTarget();
                     }
                 }

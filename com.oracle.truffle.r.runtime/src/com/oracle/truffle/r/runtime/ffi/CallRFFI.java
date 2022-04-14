@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -38,7 +39,9 @@ public interface CallRFFI {
     interface InvokeCallNode extends NodeInterface {
 
         default Object dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            assert this instanceof Node;
+            RContext context = RContext.getInstance((Node) this);
+            RFFIContext stateRFFI = context.getStateRFFI();
             DLLInfo dllInfo = nativeCallInfo.dllInfo;
             LibHandle handle = dllInfo == null ? null : dllInfo.handle;
             Type rffiType = handle == null ? stateRFFI.getDefaultRFFIType() : handle.getRFFIType();
@@ -59,8 +62,8 @@ public interface CallRFFI {
     }
 
     interface InvokeVoidCallNode extends NodeInterface {
-        default void dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+        default void dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, RContext context, Object[] args) {
+            RFFIContext stateRFFI = context.getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame == null ? null : frame.materialize(), nativeCallInfo.dllInfo.handle.getRFFIType());
             try {
                 execute(frame, nativeCallInfo, args);
@@ -104,7 +107,7 @@ public interface CallRFFI {
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            rffiNode.dispatch(frame, (NativeCallInfo) args[0], (Object[]) args[1]);
+            rffiNode.dispatch(frame, (NativeCallInfo) args[0], RContext.getInstance(this), (Object[]) args[1]);
             return RNull.instance; // unused
         }
 

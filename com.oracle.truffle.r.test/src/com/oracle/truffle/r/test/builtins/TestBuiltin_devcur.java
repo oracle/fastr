@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ public class TestBuiltin_devcur extends TestBase {
     @Test
     public void simpleTests() {
         assertEval("{ dev.cur() }");
-        assertEval("{ .Devices <- list(); dev.cur(); }");
+        // With native grid graphics, this causes an error when run with other unit tests.
+        assertEval(Ignored.NativeGridGraphics, "{ .Devices <- list(); dev.cur(); }");
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,6 @@ import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGeneri
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
@@ -50,7 +49,6 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.helpers.GetFromEnvironment;
-import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
@@ -67,13 +65,14 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -81,6 +80,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 
 // Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
@@ -121,7 +121,7 @@ public class MethodsListDispatch {
         @Specialization
         @TruffleBoundary
         protected REnvironment initMethodDispatch(REnvironment env) {
-            RContext.getInstance().setMethodTableDispatchOn(true);
+            getRContext().setMethodTableDispatchOn(true);
             // TBD what should we actually do here
             return env;
         }
@@ -221,7 +221,7 @@ public class MethodsListDispatch {
         @Specialization
         @TruffleBoundary
         protected Object callSetMethodDispatch(byte onOff) {
-            boolean prev = RContext.getInstance().isMethodTableDispatchOn();
+            boolean prev = getRContext().isMethodTableDispatchOn();
 
             if (onOff == RRuntime.LOGICAL_NA) {
                 return RRuntime.asLogical(prev);
@@ -233,7 +233,7 @@ public class MethodsListDispatch {
             // StandardGeneric, the default one (true case) is currently implemented in FastR,
             // the other one is in GnuR implemented by R_standardGeneric and is not implemented
             // in FastR yet.
-            RContext.getInstance().setMethodTableDispatchOn(value);
+            getRContext().setMethodTableDispatchOn(value);
             return RRuntime.asLogical(prev);
         }
     }
@@ -263,12 +263,12 @@ public class MethodsListDispatch {
             RBaseObject fundef = (RBaseObject) fundefObj;
 
             if (op == RNull.instance) {
-                byte value = RRuntime.asLogical(RContext.getInstance().allowPrimitiveMethods());
+                byte value = RRuntime.asLogical(getRContext().allowPrimitiveMethods());
                 if (codeVecString.length() > 0) {
                     if (codeVecString.charAt(0) == 'c' || codeVecString.charAt(0) == 'C') {
-                        RContext.getInstance().setAllowPrimitiveMethods(false);
+                        getRContext().setAllowPrimitiveMethods(false);
                     } else if (codeVecString.charAt(0) == 's' || codeVecString.charAt(0) == 'S') {
-                        RContext.getInstance().setAllowPrimitiveMethods(true);
+                        getRContext().setAllowPrimitiveMethods(true);
                     }
                 }
                 return value;
@@ -277,7 +277,7 @@ public class MethodsListDispatch {
             Object opx = op;
             if ((op instanceof RFunction) && !((RFunction) op).isBuiltin()) {
                 String internalName = RRuntime.asString(initAccessSlotNode().executeAccess(op, "internal"));
-                opx = RContext.getInstance().lookupBuiltin(internalName);
+                opx = getRContext().lookupBuiltin(internalName);
                 if (opx == null) {
                     throw error(RError.Message.GENERIC, "'internal' slot does not name an internal function: " + internalName);
                 }
@@ -306,7 +306,7 @@ public class MethodsListDispatch {
             int primMethodIndex = ((RFunction) op).getRBuiltin().getPrimMethodIndex();
             assert primMethodIndex != PrimitiveMethodsInfo.INVALID_INDEX;
 
-            PrimitiveMethodsInfo primMethodsInfo = RContext.getInstance().getPrimitiveMethodsInfo();
+            PrimitiveMethodsInfo primMethodsInfo = getRContext().getPrimitiveMethodsInfo();
             if (primMethodIndex >= primMethodsInfo.getSize()) {
                 primMethodsInfo = primMethodsInfo.resize(primMethodIndex + 1);
             }
@@ -317,7 +317,7 @@ public class MethodsListDispatch {
                 if (code == MethodCode.NO_METHODS && value != null) {
                     primMethodsInfo.setPrimGeneric(primMethodIndex, null);
                     primMethodsInfo.setPrimMethodList(primMethodIndex, null);
-                } else if (fundef != RNull.instance && (value == null || RContext.getInstance().getKind() == ContextKind.SHARE_NOTHING)) {
+                } else if (fundef != RNull.instance && (value == null || getRContext().getKind() == ContextKind.SHARE_NOTHING)) {
                     // If the context kind is SHARE_NOTHING, primMethodsInfo must also be updated.
                     // Otherwise, the standard generic dispatcher (see StandardGeneric) running in a
                     // child context would get an invalid method table for a given primitive
@@ -396,7 +396,7 @@ public class MethodsListDispatch {
             Object value = getGenericInternal.executeObject(name, env, pckg);
             if (value == RNull.instance) {
                 if (mustFind) {
-                    if (env == RContext.getInstance().stateREnvironment.getGlobalEnv()) {
+                    if (env == getRContext().stateREnvironment.getGlobalEnv()) {
                         throw error(RError.Message.NO_GENERIC_FUN, name);
                     } else {
                         throw error(RError.Message.NO_GENERIC_FUN_IN_ENV, name);

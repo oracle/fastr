@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -35,7 +33,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.Collections.StackLibrary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFILog;
@@ -60,9 +57,8 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
     Object unprotectSingle(@SuppressWarnings("unused") int n,
                     @Cached BranchProfile registerNativeRefProfile,
                     @Cached("createBinaryProfile()") ConditionProfile registerNativeRefNopProfile,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
-        RContext ctx = ctxRef.get();
+        RContext ctx = RContext.getInstance(this);
         RFFIContext rffiCtx = ctx.getRFFI();
         try {
             popProtectedObject(ctx, rffiCtx, stacks, registerNativeRefNopProfile, registerNativeRefProfile);
@@ -78,9 +74,8 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
                     @Cached("n") int nCached,
                     @Cached("createBinaryProfile()") ConditionProfile registerNativeRefNopProfile,
                     @Cached BranchProfile registerNativeRefProfile,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
-        RContext ctx = ctxRef.get();
+        RContext ctx = RContext.getInstance(this);
         RFFIContext rffiCtx = ctx.getRFFI();
         try {
             for (int i = 0; i < nCached; i++) {
@@ -96,9 +91,8 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
     Object unprotectMultipleUnchached(int n,
                     @Cached("createBinaryProfile()") ConditionProfile registerNativeRefNopProfile,
                     @Cached BranchProfile registerNativeRefProfile,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
-        RContext ctx = ctxRef.get();
+        RContext ctx = RContext.getInstance(this);
         RFFIContext rffiCtx = ctx.getRFFI();
         try {
             for (int i = 0; i < n; i++) {

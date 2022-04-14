@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,10 +28,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.StandardOpenOption;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -50,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RObjectSize;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
-import java.nio.file.StandardOpenOption;
 
 public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
 
@@ -63,8 +60,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    public Object doRprofmem(RStringVector filenameVec, byte appendL, RDoubleVector thresholdVec,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+    public Object doRprofmem(RStringVector filenameVec, byte appendL, RDoubleVector thresholdVec) {
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
             // disable
@@ -77,7 +73,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
             }
             boolean append = RRuntime.fromLogical(appendL);
             try {
-                PrintStream out = new PrintStream(ctxRef.get().getSafeTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
+                PrintStream out = new PrintStream(getRContext().getSafeTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
                 assert thresholdVec != null;
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
                 RDataFactory.addListener(LISTENER);

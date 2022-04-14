@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -192,7 +192,7 @@ public final class RFunction extends RSharingAttributeStorage implements Shareab
             for (int i = 0; i < arguments.length; i++) {
                 convertedArguments[i] = foreign2R.convert(arguments[i]);
             }
-            MaterializedFrame globalFrame = RContext.getInstance().stateREnvironment.getGlobalFrame();
+            MaterializedFrame globalFrame = RContext.getInstance(this).stateREnvironment.getGlobalFrame();
             RArgsValuesAndNames argsAndValues = new RArgsValuesAndNames(convertedArguments, ArgumentsSignature.empty(arguments.length));
             Object result = callNode.call(globalFrame, function, argsAndValues);
             return r2Foreign.convert(result);
@@ -213,7 +213,8 @@ public final class RFunction extends RSharingAttributeStorage implements Shareab
             for (int i = 0; i < arguments.length; i++) {
                 convertedArguments[i] = foreign2R.convert(arguments[i]);
             }
-            return r2Foreign.convert(RContext.getRRuntimeASTAccess().callback(function, convertedArguments));
+            RContext context = RContext.getInstance(this);
+            return r2Foreign.convert(RContext.getRRuntimeASTAccess().callback(function, context, convertedArguments));
         }
     }
 }

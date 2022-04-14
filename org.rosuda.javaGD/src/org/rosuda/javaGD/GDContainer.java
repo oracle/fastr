@@ -21,6 +21,7 @@
 package org.rosuda.javaGD;
 
 import java.awt.*;
+import java.util.Collection;
 
 /**
  * <code>GDContainer</code> is the minimal interface that has to be implemented by classes that are
@@ -34,6 +35,13 @@ public interface GDContainer {
      * @param o plot object
      */
     public void add(GDObject o);
+
+    /**
+     * Returns all GDObjects located in this container. fastr-specific method.
+     * 
+     * @return All GDObjects there have been added to this container.
+     */
+    public Collection<GDObject> getGDObjects();
 
     /**
      * reset the plot- remove all objects

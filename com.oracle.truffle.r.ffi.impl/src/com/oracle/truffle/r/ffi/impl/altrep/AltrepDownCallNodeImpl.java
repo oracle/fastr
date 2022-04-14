@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.altrep;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -38,7 +36,6 @@ import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Context;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Context;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepMethodDescriptor;
 import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
@@ -66,7 +63,6 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
     public Object doIt(AltrepMethodDescriptor altrepDowncallIn, boolean unwrapResult, boolean[] wrapArguments, Object[] args,
                     @CachedLibrary("altrepDowncallIn.method") InteropLibrary methodInterop,
                     @Cached(value = "createUnwrapNode(unwrapResult)", uncached = "createUncachedUnwrapNode()") FFIUnwrapNode unwrapNode,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @Cached(value = "createMaterialized(wrapArguments)", allowUncached = true) FFIMaterializeNode[] materializeNodes,
                     @Cached(value = "createToNatives(wrapArguments)", allowUncached = true) FFIToNativeMirrorNode[] toNativeNodes,
                     @Cached("createBinaryProfile()") ConditionProfile isLLVMProfile,
@@ -78,7 +74,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         AltrepMethodDescriptor altrepMethodDescriptor = identityProfile.profile(altrepDowncallIn);
 
         assert methodInterop.isExecutable(altrepMethodDescriptor.method);
-        RContext ctx = ctxRef.get();
+        RContext ctx = RContext.getInstance(this);
 
         Object before;
         if (isLLVMProfile.profile(altrepMethodDescriptor.rffiType == Type.LLVM)) {

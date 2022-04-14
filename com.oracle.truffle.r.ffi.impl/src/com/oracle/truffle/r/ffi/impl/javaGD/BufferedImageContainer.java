@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ public class BufferedImageContainer extends AbstractImageContainer {
     private final String fileType;
     private final float quality;
 
-    BufferedImageContainer(int width, int height, String fileType, String fileNameTemplate, float quality) {
+    public BufferedImageContainer(int width, int height, String fileType, String fileNameTemplate, float quality) {
         super(width, height, fileNameTemplate);
 
         if (!isSupportedFormat(fileType)) {

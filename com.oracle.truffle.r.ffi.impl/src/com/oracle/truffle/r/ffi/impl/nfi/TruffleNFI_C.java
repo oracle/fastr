@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +24,8 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.nfi.api.SignatureLibrary;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode.FunctionObjectGetter;
@@ -62,12 +60,8 @@ public class TruffleNFI_C implements CRFFI {
         @TruffleBoundary
         public TruffleObject execute(TruffleObject address, int arity, NativeCallInfo nativeCallInfo) {
             // cache signatures
-            try {
-                return (TruffleObject) InteropLibrary.getFactory().getUncached().invokeMember(address, "bind",
-                                getSignatureForArity(arity));
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
+            Object signature = TruffleNFI_Context.parseSignature(getSignatureForArity(arity));
+            return (TruffleObject) SignatureLibrary.getUncached().bind(signature, address);
         }
     }
 

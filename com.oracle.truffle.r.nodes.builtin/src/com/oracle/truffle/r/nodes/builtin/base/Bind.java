@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -701,7 +701,7 @@ public abstract class Bind extends RBaseNodeWithWarnings {
             // dispatch
             // In this case, call function 'methods::cbind' or 'methods::rbind'.
             if (dispatchFunction == null && anyS4) {
-                REnvironment methodsEnv = REnvironment.getRegisteredNamespace("methods");
+                REnvironment methodsEnv = REnvironment.getRegisteredNamespace(getRContext(), "methods");
                 dispatchFunction = ReadVariableNode.lookupFunction(type.name(), methodsEnv.getFrame(), true, true);
             }
             return dispatchFunction;

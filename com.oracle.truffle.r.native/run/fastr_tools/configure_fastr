@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -86,10 +86,10 @@ done
       echo "To learn more visit https://www.graalvm.org/docs/reference-manual/languages/r"
       exit 4
     else
-      echo "The basic configuration of FastR was successfull."
+      echo "The basic configuration of FastR was successful."
       echo ""
       echo "Note: if you intend to install R packages you may need additional dependencies."
-      echo "The following packages should cover depenedencies of the most commonly used R packages:"
+      echo "The following packages should cover dependencies of the most commonly used R packages:"
       echo "    On Debian based systems: apt-get install build-essential gfortran libxml2 libc++-dev"
       echo "    On Oracle Linux: yum groupinstall 'Development Tools' && yum install gcc-gfortran"
     fi

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -162,7 +161,7 @@ public abstract class RForceAndCallNode extends AbstractCallInfoEvalNode {
         }
 
         RCaller rCaller = RCaller.create(env.getFrame(), RCallerHelper.createFromArguments(fun, argsAndNames));
-        return RContext.getEngine().evalFunction(fun, env.getFrame(), rCaller, false, argsAndNames.getSignature(), argsAndNames.getArguments());
+        return getRContext().getThisEngine().evalFunction(fun, env.getFrame(), rCaller, false, argsAndNames.getSignature(), argsAndNames.getArguments());
     }
 
     private static RArgsValuesAndNames createArgsAndNames(List<Object> argValues, RArgsValuesAndNames dotArgs) {

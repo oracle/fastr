@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -30,8 +31,6 @@ import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapter.ExtractNati
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -42,9 +41,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 /**
  * {@code .C} and {@code .Fortran} functions, which share a common signature.
@@ -76,22 +72,20 @@ public class FortranAndCFunctions {
         protected RList doFortranList(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding,
                         @Cached ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached CallRegisteredROverride callRegisteredROverride,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             if (callRegisteredROverride.isRegisteredRFunction(nativeCallInfo)) {
                 Object result = callRegisteredROverride.execute(frame, nativeCallInfo, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args, ctxRef.get());
+                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args);
             }
         }
 
         @Specialization
         protected RList doFortranName(VirtualFrame frame, RStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached CallRegisteredROverride callRegisteredROverride,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
             String libName = LookupAdapter.checkPackageArg(rPackage);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
@@ -102,20 +96,19 @@ public class FortranAndCFunctions {
                 Object result = callRegisteredROverride.execute(frame, func, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args, ctxRef.get());
+                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
             }
         }
 
         @Specialization
         protected RList fortranPtr(VirtualFrame frame, RExternalPtr ptr, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding,
-                        @Cached CallRegisteredROverride callRegisteredROverride,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
             if (callRegisteredROverride.isRegisteredRFunction(ptr)) {
                 Object result = callRegisteredROverride.execute(frame, ptr, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, new NativeCallInfo("", ptr.getAddr(), null), naok, dup, args, ctxRef.get());
+                return invokeCNode.dispatch(frame, new NativeCallInfo("", ptr.getAddr(), null), naok, dup, args);
             }
         }
 
@@ -136,22 +129,20 @@ public class FortranAndCFunctions {
         protected RList cList(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding,
                         @Cached ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached CallRegisteredROverride callRegisteredROverride,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             if (callRegisteredROverride.isRegisteredRFunction(nativeCallInfo)) {
                 Object result = callRegisteredROverride.execute(frame, nativeCallInfo, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args, ctxRef.get());
+                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args);
             }
         }
 
         @Specialization
         protected RList cName(VirtualFrame frame, RStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached CallRegisteredROverride callRegisteredROverride,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
             String libName = null;
             if (!(rPackage instanceof RMissing)) {
                 libName = RRuntime.asString(rPackage);
@@ -168,20 +159,19 @@ public class FortranAndCFunctions {
                 Object result = callRegisteredROverride.execute(frame, func, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args, ctxRef.get());
+                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
             }
         }
 
         @Specialization
         protected RList cPtr(VirtualFrame frame, RExternalPtr ptr, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding,
-                        @Cached CallRegisteredROverride callRegisteredROverride,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
             if (callRegisteredROverride.isRegisteredRFunction(ptr)) {
                 Object result = callRegisteredROverride.execute(frame, ptr, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, new NativeCallInfo("", ptr.getAddr(), null), naok, dup, args, ctxRef.get());
+                return invokeCNode.dispatch(frame, new NativeCallInfo("", ptr.getAddr(), null), naok, dup, args);
             }
         }
     }

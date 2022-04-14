@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,18 +29,22 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryMapBooleanFunctionNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Order.CmpNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 
 // TODO support strictly
@@ -138,17 +142,19 @@ public abstract class IsUnsorted extends RBuiltinNode.Arg2 {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization
+    @Specialization(limit = "getVectorAccessCacheSize()")
     protected byte isUnsorted(RComplexVector x, boolean strictly,
+                    @Bind("x.getData()") Object xData,
+                    @CachedLibrary("xData") VectorDataLibrary dataLib,
                     @Cached("createCmpNode()") CmpNode cmpNode) {
         int last = 0;
         for (int k = 1; k < x.getLength(); k++) {
             if (strictlyProfile.profile(strictly)) {
-                if (cmpNode.ccmp(x, last, k, true) >= 0) {
+                if (cmpNode.ccmp(xData, RType.Complex, last, k, true, dataLib) >= 0) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } else {
-                if (cmpNode.ccmp(x, last, k, true) > 0) {
+                if (cmpNode.ccmp(xData, RType.Complex, last, k, true, dataLib) > 0) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             }

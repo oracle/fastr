@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,10 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
@@ -44,9 +41,8 @@ public abstract class ProtectWithIndexNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    int protect(RBaseObject x,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-        RFFIContext ctx = ctxRef.get().getStateRFFI();
+    int protect(RBaseObject x) {
+        RFFIContext ctx = RContext.getInstance(this).getStateRFFI();
         Collections.ArrayListObj<RBaseObject> stack = ctx.rffiContextState.protectStack;
         stack.add(x);
         return stack.size() - 1;

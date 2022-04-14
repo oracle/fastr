@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,10 +38,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.OrderVector1NodeGen;
@@ -51,6 +50,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "rank", kind = INTERNAL, parameterNames = {"x", "len", "ties.method"}, behavior = PURE)
@@ -97,11 +97,12 @@ public abstract class Rank extends RBuiltinNode.Arg3 {
 
     @Specialization
     protected Object rank(RAbstractVector xa, int inN, String tiesMethod,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+                    @CachedLibrary(limit = "getVectorAccessCacheSize()") VectorDataLibrary vecDataLib) {
         int n = inN;
-        if (n > xa.getLength()) {
+        Object xaData = xa.getData();
+        if (n > vecDataLib.getLength(xaData)) {
             errorProfile.enter();
-            n = xa.getLength();
+            n = vecDataLib.getLength(xaData);
             warning(RANK_LARGE_N);
         }
 
@@ -117,13 +118,13 @@ public abstract class Rank extends RBuiltinNode.Arg3 {
         for (int i = 0; i < n; i++) {
             indx[i] = i;
         }
-        RAbstractVector x = xa instanceof RLogicalVector ? xa.castSafe(RType.Integer, isNAProfile) : xa;
-        initOrderVector1().execute(indx, x, RRuntime.LOGICAL_TRUE, false, false);
+        xaData = xa instanceof RLogicalVector ? vecDataLib.cast(xaData, RType.Integer) : xaData;
+        initOrderVector1().execute(indx, xaData, vecDataLib, RRuntime.LOGICAL_TRUE, false, false);
         initOrderCmp();
         int j;
         for (int i = 0; i < n; i = j + 1) {
             j = i;
-            while ((j < n - 1) && orderCmpNode.executeInt(x, indx[j], indx[j + 1], false) == 0) {
+            while ((j < n - 1) && orderCmpNode.executeInt(xaData, indx[j], indx[j + 1], false, vecDataLib) == 0) {
                 j++;
             }
             switch (tiesKind) {

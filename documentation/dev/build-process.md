@@ -143,7 +143,7 @@ to the corresponding FFI subdirectory (except the `managed` FFI).
 Then the dynamic library `libR` is built from the object files made in the previous step, which are stored into `lib`.
 
 In the end, on Darwin, the installation paths of `libRblas.dylib`, `libRlapack.dylib` and `libR.dylib` are updated 
-using `install_name_tool`. Also the paths of `libpcre2-8` and `libz` are updated using `mx.fastr/copylib.py updatelib` command (defined in `mx.fastr/mx_copylib.py`).
+using `install_name_tool`. Also the path of `libpcre2-8` is updated using `mx.fastr/copylib.py updatelib` command (defined in `mx.fastr/mx_copylib.py`).
 
 #### Building `common` FFI
 

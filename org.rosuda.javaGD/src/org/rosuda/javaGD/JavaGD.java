@@ -20,7 +20,7 @@
 //
 package org.rosuda.javaGD;
 
-import java.awt.Frame;
+import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.function.Consumer;
@@ -29,7 +29,7 @@ import javax.swing.JFrame;
 
 /**
  * JavaGD is an implementation of the {@link GDInterface} protocol which displays the R graphics in
- * an AWT window (via {@link GDCanvas}). It can be used as an example gfor implementing custom
+ * an AWT window (via {@link GDCanvas}). It can be used as an example for implementing custom
  * display classes which can then be used by JavaGD. Three sample back-ends are included in the
  * JavaGD sources: {@link GDCanvas} (AWT), {@link JGDPanel} (Swing) and {@link JGDBufferedPanel}
  * (Swing with cached update).
@@ -43,7 +43,7 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     /**
      * default, public constructor - creates a new JavaGD instance. The actual window (and canvas)
-     * is not created until {@link #gdOpen} is called.
+     * is not created until {@link GDInterface#gdOpen} is called.
      */
     public JavaGD(Consumer<Integer> resizer, Consumer<Integer> devOffCall) {
         super();
@@ -53,23 +53,25 @@ public class JavaGD extends GDInterface implements WindowListener {
 
     /**
      * creates a new graphics window containing a canvas
-     *
+     * 
      * @param w width of the canvas
      * @param h height of the canvas
      */
     @Override
-    public void gdOpen(double w, double h) {
+    public boolean gdOpen(double w, double h) {
         if (f != null)
             gdClose();
-
-        f = new JFrame("JavaGD");
+        try {
+            f = new JFrame("JavaGD");
+        } catch (HeadlessException e) {
+            return false;
+        }
         f.addWindowListener(this);
-        // c = new GDCanvas(w, h, resizer);
         c = new JGDBufferedPanel(w, h, resizer);
-        // f.add((GDCanvas) c);
         f.add((JGDPanel) c);
         f.pack();
         f.setVisible(true);
+        return true;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ public final class GcFunctions {
              * It is rarely advisable to actually force a gc in Java, therefore we simply ignore
              * this builtin unless explicitly specified.
              */
-            RContext ctx = RContext.getInstance();
+            RContext ctx = getRContext();
             if (ctx.getOption(FastROptions.EnableExplicitGC)) {
                 doRunGCProfile.enter();
                 doRunGC();
@@ -95,7 +95,7 @@ public final class GcFunctions {
         @TruffleBoundary
         @Specialization
         protected byte gctorture(boolean on) {
-            GCTortureState gcTorture = RContext.getInstance().gcTorture;
+            GCTortureState gcTorture = getRContext().gcTorture;
             boolean result = gcTorture.isOn();
             if (on) {
                 gcTorture.on();
@@ -118,7 +118,7 @@ public final class GcFunctions {
         @TruffleBoundary
         @Specialization
         protected Object gctorture2(int step, @SuppressWarnings("unused") Object wait, @SuppressWarnings("unused") Object inhibitRelease) {
-            GCTortureState gcTorture = RContext.getInstance().gcTorture;
+            GCTortureState gcTorture = getRContext().gcTorture;
             int previous = gcTorture.getSteps();
             if (step != 0) {
                 gcTorture.on(step);

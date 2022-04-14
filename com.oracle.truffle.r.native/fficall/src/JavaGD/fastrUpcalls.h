@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ void gdFlush(int, int);
 double* gdLocator();
 void gdLine(int, double, double, double, double);
 void gdMode(int, int);
-void gdOpen(int, const char*, double, double);
+Rboolean gdOpen(int, const char*, double, double);
 void gdPath(int, int, int*, int, double*, double*, Rboolean);
 void gdPolygon(int, int, double*, double*);
 void gdPolyline(int, int, double*, double*);

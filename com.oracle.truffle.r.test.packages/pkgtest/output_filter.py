@@ -79,7 +79,10 @@ class ContentFilter:
         return self._apply_to_lines(content, filter_action)
 
     def applies_to_pkg(self, pkg_name: str) -> bool:
-        return self.pkg_prog.match(pkg_name) is not None
+        if pkg_name is None:
+            return True
+        else:
+            return self.pkg_prog.match(pkg_name) is not None
 
     def __repr__(self) -> str:
         fmt_str = "{!s} => {!s}"

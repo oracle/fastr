@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,9 +34,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -50,7 +48,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -190,9 +187,8 @@ public class LoadSaveFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector load(String pathIn, @SuppressWarnings("unused") REnvironment envir,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            try (BufferedInputStream bs = new BufferedInputStream(ctxRef.get().getSafeTruffleFile(pathIn).newInputStream())) {
+        protected RStringVector load(String pathIn, @SuppressWarnings("unused") REnvironment envir) {
+            try (BufferedInputStream bs = new BufferedInputStream(getRContext().getSafeTruffleFile(pathIn).newInputStream())) {
                 int magic = readMagic(bs);
                 switch (magic) {
                     case R_MAGIC_EMPTY:
@@ -310,7 +306,7 @@ public class LoadSaveFunctions {
                 }
                 prev = pl;
             }
-            doSaveConn(toSave, RConnection.fromIndex(con), ascii, version);
+            doSaveConn(toSave, RConnection.fromIndex(con, getRContext()), ascii, version);
             return RNull.instance;
         }
 
