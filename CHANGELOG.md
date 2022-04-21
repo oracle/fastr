@@ -1,3 +1,6 @@
+# 22.2.0
+* `--R.DebugLLVMLibs` is no longer a stable option.
+
 # 22.1.0
 * Improved performance of the `order` and `rank` builtin functions
 * FastR does not ship with its own copy of libz.so
