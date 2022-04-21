@@ -739,8 +739,12 @@ public final class FrameSlotChangeMonitor {
             return value;
         }
 
+        public void setMultiSlot(Frame frame, FrameSlot slot, Object newValue) {
+            setMultiSlotImpl(frame.materialize(), slot, newValue);
+        }
+
         @TruffleBoundary
-        public synchronized void setMultiSlot(Frame frame, FrameSlot slot, Object newValue) {
+        private synchronized void setMultiSlotImpl(MaterializedFrame frame, FrameSlot slot, Object newValue) {
             // TODO: perhaps putting the whole thing behind the Truffle boundary an overkill, but on
             // the other hand it shouldn't happen often and not on the fast path
             MultiSlotData data;
@@ -1040,7 +1044,7 @@ public final class FrameSlotChangeMonitor {
             if (!(o instanceof MultiSlotData)) {
                 CompilerDirectives.transferToInterpreter();
                 synchronized (info) {
-                    assert slotExists(slot, frame) : slot;
+                    assert slotExists(slot, frame.materialize()) : slot;
                     o = frame.getObject(slot);
                     assert o != null : slot;
                 }
@@ -1061,7 +1065,7 @@ public final class FrameSlotChangeMonitor {
             if (!(o instanceof MultiSlotData)) {
                 CompilerDirectives.transferToInterpreter();
                 synchronized (info) {
-                    assert slotExists(slot, frame) : slot;
+                    assert slotExists(slot, frame.materialize()) : slot;
                     o = frame.getValue(slot);
                     assert o != null : slot;
                 }
@@ -1073,7 +1077,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     @TruffleBoundary
-    private static boolean slotExists(FrameSlot slot, Frame frame) {
+    private static boolean slotExists(FrameSlot slot, MaterializedFrame frame) {
         return frame.getFrameDescriptor().findFrameSlot(slot.getIdentifier()) != null;
     }
 

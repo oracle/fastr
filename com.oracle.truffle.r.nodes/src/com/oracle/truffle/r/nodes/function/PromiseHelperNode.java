@@ -233,7 +233,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     setVisibility = insert(SetVisibilityNode.create());
                 }
-                setVisibility.execute(frame, getVisibilitySlowPath(execFrame));
+                setVisibility.execute(frame, getVisibilitySlowPath(execFrame.materialize()));
             }
             assert promise.getRawValue() == null;
             assert value != null;
@@ -270,7 +270,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     }
 
     @TruffleBoundary
-    private static boolean getVisibilitySlowPath(Frame frame) {
+    private static boolean getVisibilitySlowPath(MaterializedFrame frame) {
         return GetVisibilityNode.executeSlowPath(frame);
     }
 

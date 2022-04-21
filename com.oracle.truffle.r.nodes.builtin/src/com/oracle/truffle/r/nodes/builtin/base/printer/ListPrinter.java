@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -232,7 +232,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                     String ss = klass.getDataAt(0);
                     String str = snprintf(200, ".__C__%s", ss);
                     Frame frame = com.oracle.truffle.r.runtime.Utils.getActualCurrentFrame();
-                    if (ReadVariableNode.lookupAny(str, frame, false) != null) {
+                    if (ReadVariableNode.lookupAny(str, frame.materialize(), false) != null) {
                         className = ss;
                     }
                 }
