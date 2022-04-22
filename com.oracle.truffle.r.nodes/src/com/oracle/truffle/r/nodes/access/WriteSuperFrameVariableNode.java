@@ -68,6 +68,8 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
         private final BranchProfile invalidateProfile = BranchProfile.create();
+
+        private final ValueProfile frameDescriptorProfile = ValueProfile.createIdentityProfile();
         private final ValueProfile enclosingFrameProfile = ValueProfile.createClassProfile();
         private final ConditionProfile isActiveBindingProfile = ConditionProfile.createBinaryProfile();
 
@@ -83,17 +85,17 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
 
         @Specialization(guards = "isLogicalKind(enclosingFrame, frameIndex)")
         protected void doLogical(byte value, MaterializedFrame enclosingFrame, int frameIndex) {
-            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
+            FrameSlotChangeMonitor.setByteAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile, frameDescriptorProfile);
         }
 
         @Specialization(guards = "isIntegerKind(enclosingFrame, frameIndex)")
         protected void doInteger(int value, MaterializedFrame enclosingFrame, int frameIndex) {
-            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
+            FrameSlotChangeMonitor.setIntAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile, frameDescriptorProfile);
         }
 
         @Specialization(guards = "isDoubleKind(enclosingFrame, frameIndex)")
         protected void doDouble(double value, MaterializedFrame enclosingFrame, int frameIndex) {
-            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile);
+            FrameSlotChangeMonitor.setDoubleAndInvalidate(enclosingFrameProfile.profile(enclosingFrame), frameIndex, value, true, invalidateProfile, frameDescriptorProfile);
         }
 
         @Specialization
@@ -105,9 +107,9 @@ public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode 
             }
             if (containsNoActiveBinding != null && containsNoActiveBinding.isValid()) {
                 Object newValue = shareObjectValue(profiledFrame, frameIndex, storedObjectProfile.profile(value), mode, true);
-                FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameIndex, newValue, true, invalidateProfile);
+                FrameSlotChangeMonitor.setObjectAndInvalidate(profiledFrame, frameIndex, newValue, true, invalidateProfile, frameDescriptorProfile);
             } else {
-                handleActiveBinding(frame, profiledFrame, value, frameIndex, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
+                handleActiveBinding(frame, profiledFrame, value, frameIndex, invalidateProfile, isActiveBindingProfile, storedObjectProfile, frameDescriptorProfile, mode);
             }
         }
     }

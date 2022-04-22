@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNodeFactory.RemoveAndAnswerResolvedNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -79,6 +80,8 @@ public abstract class RemoveAndAnswerNode extends RNode {
          */
         private final int frameIndex;
         private final BranchProfile invalidateProfile = BranchProfile.create();
+
+        private final ValueProfile frameDescriptorProfile = ValueProfile.createIdentityProfile();
 
         protected RemoveAndAnswerResolvedNode(int frameIndex) {
             this.frameIndex = frameIndex;
@@ -150,7 +153,7 @@ public abstract class RemoveAndAnswerNode extends RNode {
 
         private void resetAndInvalidateFrameIndex(VirtualFrame frame) {
             // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false, invalidateProfile, frameDescriptorProfile);
         }
     }
 }

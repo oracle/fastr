@@ -56,6 +56,7 @@ import com.oracle.truffle.api.library.Message;
 import com.oracle.truffle.api.library.ReflectionLibrary;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.StableValue;
@@ -731,8 +732,11 @@ public final class FrameSlotChangeMonitor {
     }
 
     private static FrameSlotInfo getFrameSlotInfo(Frame frame, int frameIndex) {
+        return getFrameSlotInfo(frame.getFrameDescriptor(), frameIndex);
+    }
+
+    private static FrameSlotInfo getFrameSlotInfo(FrameDescriptor frameDescriptor, int frameIndex) {
         CompilerAsserts.partialEvaluationConstant(frameIndex);
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         Object frameSlotInfo;
         if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
             int auxFrameIdx = FrameIndex.toAuxiliaryIndex(frameIndex);
@@ -1295,7 +1299,11 @@ public final class FrameSlotChangeMonitor {
      * @return The "not changed locally" assumption of the given slot at {@code frameIndex}.
      */
     public static Assumption getNotChangedNonLocallyAssumption(Frame frame, int frameIndex) {
-        return getFrameSlotInfo(frame, frameIndex).nonLocalModifiedAssumption;
+        return getNotChangedNonLocallyAssumption(frame.getFrameDescriptor(), frameIndex);
+    }
+
+    private static Assumption getNotChangedNonLocallyAssumption(FrameDescriptor frameDescriptor, int frameIndex) {
+        return getFrameSlotInfo(frameDescriptor, frameIndex).nonLocalModifiedAssumption;
     }
 
     public static synchronized int findOrAddAuxiliaryFrameSlot(FrameDescriptor frameDescriptor, Object identifier) {
@@ -1331,10 +1339,13 @@ public final class FrameSlotChangeMonitor {
      * @param frameIndex Index of the slot into the frame; its "info" is assumed to be an
      *            Assumption, throws an {@link RInternalError} otherwise
      * @param invalidateProfile Used to guard the invalidation code.
+     * @param frameDescriptorProfile An optional identity profile of the frame descriptor of
+     *            {@code curFrame}.
      */
-    private static void checkAndInvalidate(Frame curFrame, int frameIndex, boolean isNonLocal, BranchProfile invalidateProfile) {
+    private static void checkAndInvalidate(Frame curFrame, int frameIndex, boolean isNonLocal, BranchProfile invalidateProfile, ValueProfile frameDescriptorProfile) {
         assert containsIndex(curFrame, frameIndex);
-        if (getNotChangedNonLocallyAssumption(curFrame, frameIndex).isValid()) {
+        FrameDescriptor frameDescriptor = frameDescriptorProfile != null ? frameDescriptorProfile.profile(curFrame.getFrameDescriptor()) : curFrame.getFrameDescriptor();
+        if (getNotChangedNonLocallyAssumption(frameDescriptor, frameIndex).isValid()) {
             // Check whether current frame is used outside a regular stack
             if (isNonLocal || RArguments.getIsIrregular(curFrame)) {
                 // False positive: Also invalidates a slot in the current active frame if that one
@@ -1342,7 +1353,7 @@ public final class FrameSlotChangeMonitor {
                 if (invalidateProfile != null) {
                     invalidateProfile.enter();
                 }
-                getNotChangedNonLocallyAssumption(curFrame, frameIndex).invalidate();
+                getNotChangedNonLocallyAssumption(frameDescriptor, frameIndex).invalidate();
             }
         }
     }
@@ -1389,12 +1400,12 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static void setObjectAndInvalidate(Frame frame, int frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    public static void setObjectAndInvalidate(Frame frame, int frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile, ValueProfile frameDescriptorProfile) {
         assert !ActiveBinding.isActiveBinding(newValue);
-        setAndInvalidate(frame, frameIndex, newValue, isNonLocal, invalidateProfile);
+        setAndInvalidate(frame, frameIndex, newValue, isNonLocal, invalidateProfile, frameDescriptorProfile);
     }
 
-    private static void setAndInvalidate(Frame frame, int frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    private static void setAndInvalidate(Frame frame, int frameIndex, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile, ValueProfile frameDescriptorProfile) {
         FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
         if (hasSharedContext() && isMultislot(slotInfo)) {
             slotInfo.setMultiSlot(frame, frameIndex, newValue);
@@ -1403,7 +1414,7 @@ public final class FrameSlotChangeMonitor {
             if (slotInfo.needsInvalidation()) {
                 slotInfo.setValue(newValue);
             }
-            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile);
+            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile, frameDescriptorProfile);
         }
     }
 
@@ -1439,7 +1450,7 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static void setByteAndInvalidate(Frame frame, int index, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    public static void setByteAndInvalidate(Frame frame, int index, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile, ValueProfile frameDescriptorProfile) {
         FrameSlotInfo slotInfo = getFrameSlotInfo(frame, index);
         if (hasSharedContext()) {
             slotInfo.setMultiSlot(frame, index, newValue);
@@ -1448,7 +1459,7 @@ public final class FrameSlotChangeMonitor {
             if (slotInfo.needsInvalidation()) {
                 slotInfo.setValue(newValue);
             }
-            checkAndInvalidate(frame, index, isNonLocal, invalidateProfile);
+            checkAndInvalidate(frame, index, isNonLocal, invalidateProfile, frameDescriptorProfile);
         }
     }
 
@@ -1467,7 +1478,7 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static void setIntAndInvalidate(Frame frame, int frameIndex, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    public static void setIntAndInvalidate(Frame frame, int frameIndex, int newValue, boolean isNonLocal, BranchProfile invalidateProfile, ValueProfile frameDescriptorProfile) {
         FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
         if (hasSharedContext()) {
             slotInfo.setMultiSlot(frame, frameIndex, newValue);
@@ -1476,7 +1487,7 @@ public final class FrameSlotChangeMonitor {
             if (slotInfo.needsInvalidation()) {
                 slotInfo.setValue(newValue);
             }
-            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile);
+            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile, frameDescriptorProfile);
         }
     }
 
@@ -1495,7 +1506,7 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static void setDoubleAndInvalidate(Frame frame, int frameIndex, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
+    public static void setDoubleAndInvalidate(Frame frame, int frameIndex, double newValue, boolean isNonLocal, BranchProfile invalidateProfile, ValueProfile frameDescriptorProfile) {
         FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
         if (hasSharedContext()) {
             slotInfo.setMultiSlot(frame, frameIndex, newValue);
@@ -1504,7 +1515,7 @@ public final class FrameSlotChangeMonitor {
             if (slotInfo.needsInvalidation()) {
                 slotInfo.setValue(newValue);
             }
-            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile);
+            checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile, frameDescriptorProfile);
         }
     }
 
@@ -1636,8 +1647,8 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    public static void setActiveBinding(Frame frame, int frameIndex, ActiveBinding newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
-        setAndInvalidate(frame, frameIndex, newValue, isNonLocal, invalidateProfile);
+    public static void setActiveBinding(Frame frame, int frameIndex, ActiveBinding newValue, boolean isNonLocal, BranchProfile invalidateProfile, ValueProfile frameDescriptorProfile) {
+        setAndInvalidate(frame, frameIndex, newValue, isNonLocal, invalidateProfile, frameDescriptorProfile);
         getContainsNoActiveBindingAssumption(frame.getFrameDescriptor()).invalidate();
     }
 

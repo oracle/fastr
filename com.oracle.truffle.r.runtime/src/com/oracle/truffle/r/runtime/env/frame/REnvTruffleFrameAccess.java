@@ -129,13 +129,13 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
 
         switch (valueSlotKind) {
             case Byte:
-                FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, (byte) value, false, null);
+                FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, (byte) value, false, null, null);
                 break;
             case Int:
-                FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameIndex, (int) value, false, null);
+                FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameIndex, (int) value, false, null, null);
                 break;
             case Double:
-                FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameIndex, (double) value, false, null);
+                FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameIndex, (double) value, false, null, null);
                 break;
             case Object:
                 Object object;
@@ -148,7 +148,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 if (object != null && ActiveBinding.isActiveBinding(object)) {
                     ((ActiveBinding) object).writeValue(value);
                 } else {
-                    FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, value, false, null);
+                    FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, value, false, null, null);
                 }
                 break;
             case Illegal:
@@ -189,7 +189,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 // ignore
             }
 
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false, null);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false, null, null);
         }
     }
 

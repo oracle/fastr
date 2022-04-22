@@ -47,6 +47,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
@@ -606,6 +607,7 @@ public class EnvFunctions {
         }
 
         @CompilationFinal private BranchProfile frameSlotInvalidateProfile = BranchProfile.create();
+        @CompilationFinal private ValueProfile frameDescriptorProfile = ValueProfile.createIdentityProfile();
 
         @TruffleBoundary
         @Specialization
@@ -616,7 +618,7 @@ public class EnvFunctions {
             if (binding == null) {
                 if (!env.isLocked()) {
                     int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), name);
-                    FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotInvalidateProfile);
+                    FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotInvalidateProfile, frameDescriptorProfile);
                     binding = ReadVariableNode.lookupAny(name, frame, true);
                     assert binding != null;
                     assert binding instanceof ActiveBinding;
@@ -631,7 +633,7 @@ public class EnvFunctions {
                 // update active binding
                 assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), name);
                 int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), name);
-                FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotInvalidateProfile);
+                FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotInvalidateProfile, frameDescriptorProfile);
             }
             return RNull.instance;
         }

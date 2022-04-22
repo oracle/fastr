@@ -230,7 +230,7 @@ public class RRNG {
             ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun, true);
             Frame frame = REnvironment.globalEnv().getFrame();
             int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RRNG.RANDOM_SEED);
-            FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, dotRandomSeed, false, null);
+            FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, dotRandomSeed, false, null, null);
             dotRandomSeedBinding = new WeakReference<>(dotRandomSeed);
         }
 

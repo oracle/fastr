@@ -53,6 +53,8 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
 
     private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
     private final BranchProfile invalidateProfile = BranchProfile.create();
+
+    private final ValueProfile frameDescriptorProfile = ValueProfile.createIdentityProfile();
     private final ConditionProfile isActiveBindingProfile = ConditionProfile.createBinaryProfile();
     @CompilationFinal private Assumption containsNoActiveBinding;
 
@@ -73,21 +75,21 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
     @Specialization(guards = "isLogicalKind(frame, frameIndex)")
     protected byte doLogical(VirtualFrame frame, byte value,
                     @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
-        FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, value, false, invalidateProfile);
+        FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, value, false, invalidateProfile, frameDescriptorProfile);
         return value;
     }
 
     @Specialization(guards = "isIntegerKind(frame, frameIndex)")
     protected int doInteger(VirtualFrame frame, int value,
                     @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
-        FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameIndex, value, false, invalidateProfile);
+        FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameIndex, value, false, invalidateProfile, frameDescriptorProfile);
         return value;
     }
 
     @Specialization(guards = "isDoubleKind(frame, frameIndex)")
     protected double doDouble(VirtualFrame frame, double value,
                     @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
-        FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameIndex, value, false, invalidateProfile);
+        FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameIndex, value, false, invalidateProfile, frameDescriptorProfile);
         return value;
     }
 
@@ -100,10 +102,10 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
         }
         if (containsNoActiveBinding.isValid()) {
             Object newValue = shareObjectValue(frame, frameIndex, storedObjectProfile.profile(value), mode, false);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, newValue, false, invalidateProfile);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, newValue, false, invalidateProfile, frameDescriptorProfile);
         } else {
             // it's a local variable lookup; so use 'frame' for both, executing and looking up
-            return handleActiveBinding(frame, frame, value, frameIndex, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
+            return handleActiveBinding(frame, frame, value, frameIndex, invalidateProfile, isActiveBindingProfile, storedObjectProfile, frameDescriptorProfile, mode);
         }
         return value;
     }
