@@ -1060,7 +1060,7 @@ public class RSerialize {
             Object car = pl.car();
             if (ActiveBinding.isActiveBinding(car)) {
                 int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(env.getFrame().getFrameDescriptor(), name);
-                FrameSlotChangeMonitor.setActiveBinding(env.getFrame(), frameIndex, (ActiveBinding) car, false, null, null);
+                FrameSlotChangeMonitor.setActiveBinding(env.getFrame(), frameIndex, (ActiveBinding) car, false);
             } else {
                 env.safePut(name, car);
             }

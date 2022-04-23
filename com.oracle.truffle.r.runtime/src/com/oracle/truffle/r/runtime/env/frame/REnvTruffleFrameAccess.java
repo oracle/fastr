@@ -148,7 +148,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 if (object != null && ActiveBinding.isActiveBinding(object)) {
                     ((ActiveBinding) object).writeValue(value);
                 } else {
-                    FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, value, false, null, null);
+                    FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, value, false);
                 }
                 break;
             case Illegal:
@@ -189,7 +189,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 // ignore
             }
 
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false, null, null);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false);
         }
     }
 
