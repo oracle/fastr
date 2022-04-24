@@ -156,7 +156,7 @@ public abstract class FastRInspectFrame extends RBuiltinNode.Arg4 {
     }
 
     private static List<Object> getAllIdentifiersInFrame(Frame frame) {
-        return new ArrayList<>(FrameSlotChangeMonitor.getIdentifiers(frame.getFrameDescriptor()));
+        return FrameSlotChangeMonitor.getIdentifiers(frame.getFrameDescriptor());
     }
 
     @TruffleBoundary

@@ -25,15 +25,17 @@ package com.oracle.truffle.r.runtime.env.frame;
 import static com.oracle.truffle.r.runtime.context.FastROptions.SearchPathForcePromises;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -258,7 +260,7 @@ public final class FrameSlotChangeMonitor {
         /**
          * Mapping of identifiers to indexes (transformed with {@link FrameIndex}) into the frame.
          */
-        private final Map<Object, Integer> indexes = new ConcurrentHashMap<>();
+        private final Map<Object, Integer> indexes = new LinkedHashMap<>();
         /**
          * List of frame slot infos for auxiliary slots. The indexes into this list correspond to
          * indexes into auxiliary slots in a frame.
@@ -322,9 +324,9 @@ public final class FrameSlotChangeMonitor {
             return null;
         }
 
-        public Collection<Object> getIdentifiers() {
+        public List<Object> getIdentifiers() {
             CompilerAsserts.neverPartOfCompilation();
-            return indexes.keySet();
+            return new ArrayList<>(indexes.keySet());
         }
 
         public Assumption getNotInFrameAssumption(Object identifier) {
@@ -639,7 +641,7 @@ public final class FrameSlotChangeMonitor {
         return newDescriptor;
     }
 
-    public static Collection<Object> getIdentifiers(FrameDescriptor frameDescriptor) {
+    public static List<Object> getIdentifiers(FrameDescriptor frameDescriptor) {
         return getDescriptorMetadata(frameDescriptor).getIdentifiers();
     }
 
@@ -1687,7 +1689,7 @@ public final class FrameSlotChangeMonitor {
 
     /**
      * Slow-path version of
-     * {@link #setActiveBinding(Frame, int, ActiveBinding, boolean, BranchProfile, ValueProfile)}
+     * {@link #setActiveBinding(Frame, int, ActiveBinding, boolean, BranchProfile, ValueProfile)}.
      */
     public static void setActiveBinding(Frame frame, int frameIndex, ActiveBinding newValue, boolean isNonLocal) {
         setActiveBinding(frame, frameIndex, newValue, isNonLocal, BranchProfile.getUncached(), ValueProfile.getUncached());
