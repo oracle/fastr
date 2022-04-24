@@ -805,12 +805,12 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         return lastLevel;
     }
 
-    public static RFunction lookupFunction(String identifier, Frame variableFrame) {
+    public static RFunction lookupFunction(String identifier, MaterializedFrame variableFrame) {
         return lookupFunction(identifier, variableFrame, false, true);
     }
 
     @TruffleBoundary
-    public static RFunction lookupFunction(String identifier, Frame variableFrame, boolean localOnly, boolean forcePromises) {
+    public static RFunction lookupFunction(String identifier, MaterializedFrame variableFrame, boolean localOnly, boolean forcePromises) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
@@ -850,7 +850,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     }
 
     @TruffleBoundary
-    public static Object lookupAny(String identifier, Frame variableFrame, boolean localOnly) {
+    public static Object lookupAny(String identifier, MaterializedFrame variableFrame, boolean localOnly) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
@@ -877,7 +877,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     }
 
     @TruffleBoundary
-    public static RArgsValuesAndNames lookupVarArgs(Frame variableFrame) {
+    public static RArgsValuesAndNames lookupVarArgs(MaterializedFrame variableFrame) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name

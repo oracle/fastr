@@ -91,7 +91,7 @@ public class PrintFunctions {
         }
 
         protected static RFunction createShowFunction(VirtualFrame frame) {
-            return ReadVariableNode.lookupFunction("show", frame);
+            return ReadVariableNode.lookupFunction("show", frame.materialize());
         }
 
         @Specialization(guards = "isS4(o)")

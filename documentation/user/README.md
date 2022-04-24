@@ -21,9 +21,7 @@ gu install r
 
 After this step, the `R` and `Rscript` launchers will become available in the `GRAALVM_HOME/bin` directory.
 
-The R language home directory, which will be further referenced as `$R_HOME`, is located in:
-* `jre/languages/R` in JDK8-based GraalVM distributions
-* `languages/R` in JDK11-based GraalVM distributions
+The R language home directory, which will be further referenced as `$R_HOME`, is located in `languages/R`.
 
 ## Prerequisites
 

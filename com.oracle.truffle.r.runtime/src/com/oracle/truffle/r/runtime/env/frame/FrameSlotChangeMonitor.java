@@ -552,7 +552,7 @@ public final class FrameSlotChangeMonitor {
 
     /**
      * Creates a frame descriptor suitable for environment representation.
-     * 
+     *
      * @param name Name for debug purposes
      * @param singletonFrame A frame that will hold all the values within the environment as
      *            auxiliary slots.
@@ -571,7 +571,7 @@ public final class FrameSlotChangeMonitor {
     /**
      * Create a frame descriptor suitable for functions. The returned frame descriptor will mostly
      * contain indexed slots, maybe some auxiliary slots.
-     * 
+     *
      * @param name Name for debug purposes
      */
     public static FrameDescriptor createFunctionFrameDescriptor(String name) {
@@ -667,7 +667,7 @@ public final class FrameSlotChangeMonitor {
 
     /**
      * Returns index of the identifier.
-     * 
+     *
      * @return {@code FrameIndex.UNITIALIZED_INDEX} if the given identifier is not in the frame
      *         descriptor
      */
@@ -1251,7 +1251,7 @@ public final class FrameSlotChangeMonitor {
         }
 
         @TruffleBoundary
-        public synchronized void setMultiSlot(Frame frame, int frameIndex, Object newValue) {
+        public synchronized void setMultiSlot(MaterializedFrame frame, int frameIndex, Object newValue) {
             // TODO: perhaps putting the whole thing behind the Truffle boundary an overkill, but on
             // the other hand it shouldn't happen often and not on the fast path
             MultiSlotData data;
@@ -1391,7 +1391,7 @@ public final class FrameSlotChangeMonitor {
         if (hasSharedContext()) {
             FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
             if (isMultislot(slotInfo)) {
-                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+                slotInfo.setMultiSlot(frame.materialize(), frameIndex, newValue);
             }
         } else {
             if (FrameIndex.representsNormalIndex(frameIndex)) {
@@ -1433,7 +1433,7 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptor profiledFrameDescriptor = frameDescriptorProfile.profile(frame.getFrameDescriptor());
         FrameSlotInfo slotInfo = getFrameSlotInfo(profiledFrameDescriptor, frameIndex);
         if (hasSharedContext() && isMultislot(slotInfo)) {
-            slotInfo.setMultiSlot(frame, frameIndex, newValue);
+            slotInfo.setMultiSlot(frame.materialize(), frameIndex, newValue);
         } else {
             setObject(frame, frameIndex, newValue);
             if (slotInfo.needsInvalidation()) {
@@ -1448,7 +1448,7 @@ public final class FrameSlotChangeMonitor {
         if (hasSharedContext()) {
             FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
             if (isMultislot(slotInfo)) {
-                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+                slotInfo.setMultiSlot(frame.materialize(), frameIndex, newValue);
             }
         } else {
             if (FrameIndex.representsNormalIndex(frameIndex)) {
@@ -1464,7 +1464,7 @@ public final class FrameSlotChangeMonitor {
         if (hasSharedContext()) {
             FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
             if (isMultislot(slotInfo)) {
-                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+                slotInfo.setMultiSlot(frame.materialize(), frameIndex, newValue);
             }
         } else {
             if (FrameIndex.representsNormalIndex(frameIndex)) {
@@ -1480,7 +1480,7 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptor profiledFrameDescriptor = frameDescriptorProfile.profile(frame.getFrameDescriptor());
         FrameSlotInfo slotInfo = getFrameSlotInfo(profiledFrameDescriptor, index);
         if (hasSharedContext()) {
-            slotInfo.setMultiSlot(frame, index, newValue);
+            slotInfo.setMultiSlot(frame.materialize(), index, newValue);
         } else {
             setByte(frame, index, newValue);
             if (slotInfo.needsInvalidation()) {
@@ -1494,7 +1494,7 @@ public final class FrameSlotChangeMonitor {
         if (hasSharedContext()) {
             FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
             if (isMultislot(slotInfo)) {
-                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+                slotInfo.setMultiSlot(frame.materialize(), frameIndex, newValue);
             }
         } else {
             if (FrameIndex.representsNormalIndex(frameIndex)) {
@@ -1510,7 +1510,7 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptor profiledFrameDescriptor = frameDescriptorProfile.profile(frame.getFrameDescriptor());
         FrameSlotInfo slotInfo = getFrameSlotInfo(profiledFrameDescriptor, frameIndex);
         if (hasSharedContext()) {
-            slotInfo.setMultiSlot(frame, frameIndex, newValue);
+            slotInfo.setMultiSlot(frame.materialize(), frameIndex, newValue);
         } else {
             setInt(frame, frameIndex, newValue);
             if (slotInfo.needsInvalidation()) {
@@ -1524,7 +1524,7 @@ public final class FrameSlotChangeMonitor {
         if (hasSharedContext()) {
             FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
             if (isMultislot(slotInfo)) {
-                slotInfo.setMultiSlot(frame, frameIndex, newValue);
+                slotInfo.setMultiSlot(frame.materialize(), frameIndex, newValue);
             }
         } else {
             if (FrameIndex.representsNormalIndex(frameIndex)) {
@@ -1540,7 +1540,7 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptor profiledFrameDescriptor = frameDescriptorProfile.profile(frame.getFrameDescriptor());
         FrameSlotInfo slotInfo = getFrameSlotInfo(profiledFrameDescriptor, frameIndex);
         if (hasSharedContext()) {
-            slotInfo.setMultiSlot(frame, frameIndex, newValue);
+            slotInfo.setMultiSlot(frame.materialize(), frameIndex, newValue);
         } else {
             setDouble(frame, frameIndex, newValue);
             if (slotInfo.needsInvalidation()) {
@@ -1579,7 +1579,7 @@ public final class FrameSlotChangeMonitor {
      * Returns an object from an auxiliary slot and checks whether it is instance of given
      * {@code klass}, throws {@link FrameSlotTypeException} if the object in the auxiliary slot is
      * not an instance of klass.
-     * 
+     *
      * @param frame
      * @param frameIndex Auxiliary frame index.
      * @param klass
@@ -1623,8 +1623,8 @@ public final class FrameSlotChangeMonitor {
             if (!(o instanceof MultiSlotData)) {
                 CompilerDirectives.transferToInterpreter();
                 synchronized (info) {
-                    assert containsIndex(frame, frameIndex);
-                    o = getObjectByIndex(frame, frameIndex);
+                    assert containsIndex(frame.materialize(), frameIndex);
+                    o = getObjectByIndex(frame.materialize(), frameIndex);
                     assert o != null;
                 }
             }

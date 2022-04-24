@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -65,7 +66,7 @@ public class RMissingHelper {
      * @return See {@link #isMissingName(RPromise)}
      */
     @TruffleBoundary
-    public static boolean isMissingArgument(Frame frame, String name) {
+    public static boolean isMissingArgument(MaterializedFrame frame, String name) {
         // Check symbols value
         Object value = getMissingValue(frame, name);
         if (isMissing(value)) {
@@ -105,7 +106,7 @@ public class RMissingHelper {
 
     /**
      * @param promise The {@link RPromise} which is checked whether it contains a
-     *            {@link #isMissingArgument(Frame, String)}.
+     *            {@link #isMissingArgument(MaterializedFrame, String)}.
      * @return Whether the given {@link RPromise} represents a name that is 'missing' in its frame
      */
     @TruffleBoundary
