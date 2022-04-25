@@ -1490,6 +1490,14 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
+    /**
+     * Slow-path version of
+     * {@link #setByteAndInvalidate(Frame, int, byte, boolean, BranchProfile, ValueProfile)}.
+     */
+    public static void setByteAndInvalidate(Frame frame, int index, byte newValue, boolean isNonLocal) {
+        setByteAndInvalidate(frame, index, newValue, isNonLocal, null, ValueProfile.getUncached());
+    }
+
     public static void setInt(Frame frame, int frameIndex, int newValue) {
         if (hasSharedContext()) {
             FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
@@ -1520,6 +1528,14 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
+    /**
+     * Slow-path version of
+     * {@link #setIntAndInvalidate(Frame, int, int, boolean, BranchProfile, ValueProfile)}.
+     */
+    public static void setIntAndInvalidate(Frame frame, int frameIndex, int newValue, boolean isNonLocal) {
+        setIntAndInvalidate(frame, frameIndex, newValue, isNonLocal, null, ValueProfile.getUncached());
+    }
+
     public static void setDouble(Frame frame, int frameIndex, double newValue) {
         if (hasSharedContext()) {
             FrameSlotInfo slotInfo = getFrameSlotInfo(frame, frameIndex);
@@ -1548,6 +1564,14 @@ public final class FrameSlotChangeMonitor {
             }
             checkAndInvalidate(frame, frameIndex, isNonLocal, invalidateProfile, profiledFrameDescriptor);
         }
+    }
+
+    /**
+     * Slow-path version of
+     * {@link #setDoubleAndInvalidate(Frame, int, double, boolean, BranchProfile, ValueProfile)}.
+     */
+    public static void setDoubleAndInvalidate(Frame frame, int frameIndex, double newValue, boolean isNonLocal) {
+        setDoubleAndInvalidate(frame, frameIndex, newValue, isNonLocal, null, ValueProfile.getUncached());
     }
 
     public static Object getValue(Frame frame, int frameIndex) {

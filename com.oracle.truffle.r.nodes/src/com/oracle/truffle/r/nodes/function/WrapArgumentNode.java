@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 /**
  * A {@link WrapArgumentNode} is used to wrap all arguments to function calls to implement correct
  * copy semantics for vectors. <br>
- * See {@code documentation/dev/arcane.md} that contains a description of the
+ * See {@code documentation/dev/functions.md} that contains a description of the
  * incrementing/decrementing reference count in arguments.
  */
 public final class WrapArgumentNode extends WrapArgumentBaseNode {
