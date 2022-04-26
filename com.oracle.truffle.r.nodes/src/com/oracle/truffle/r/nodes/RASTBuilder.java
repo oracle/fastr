@@ -417,7 +417,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 logger.fine(() -> String.format("Creating ReadNode for local variable %s, functionLookup = %b", localVar, functionLookup));
                 assert localVar != null;
                 assert FrameIndex.isInitializedIndex(localVar.getFrameIndex());
-                var readVariableNode = functionLookup ? ReadVariableNode.createLocalFunctionLookup(symbol, localVar.getFrameIndex())
+                var readVariableNode = functionLookup ? ReadVariableNode.createForcedLocalFunctionLookup(symbol, localVar.getFrameIndex())
                                 : ReadVariableNode.createLocalVariableLookup(symbol, localVar.getFrameIndex());
                 return ReadVariableNode.wrap(source, readVariableNode);
             }
