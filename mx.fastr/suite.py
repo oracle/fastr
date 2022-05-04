@@ -83,7 +83,7 @@ suite = {
       "path" : "libdownloads/cluster.tar.gz",
       "ext" : ".tar.gz",
       "version" : "2.1.2",
-      "urls" : ["https://cran.r-project.org/src/contrib/cluster_{version}.tar.gz"],
+      "urls" : ["https://cran.r-project.org/src/contrib/Archive/cluster/cluster_{version}.tar.gz"],
       "sha1" : "47763fa44d11e0f2c2feafade3e331c05eda30d1",
       "resource" : "true"
     },
