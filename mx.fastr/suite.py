@@ -1,5 +1,5 @@
 suite = {
-  "mxversion" : "5.316.14",
+  "mxversion" : "6.0.1",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
   "imports" : {
