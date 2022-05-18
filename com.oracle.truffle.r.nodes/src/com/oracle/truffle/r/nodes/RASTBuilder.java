@@ -411,14 +411,16 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 return new ReadVariadicComponentNode(source, index > 0 ? index - 1 : index);
             }
         }
-        if (functionScope != null) {
+        // Pre-initialization of ReadVariableNodes for local variables is not implemented for local
+        // function variables - they are mostly promises that has to be evaluated first anyway, and
+        // the evaluation of the promise has to be done on slow-path.
+        if (functionScope != null && !functionLookup) {
             if (functionScope.containsLocalVariable(symbol)) {
                 LocalVariable localVar = functionScope.getLocalVariable(symbol);
-                logger.fine(() -> String.format("Creating ReadNode for local variable %s, functionLookup = %b", localVar, functionLookup));
+                logger.fine(() -> "Creating ReadNode for local variable " + localVar);
                 assert localVar != null;
                 assert FrameIndex.isInitializedIndex(localVar.getFrameIndex());
-                var readVariableNode = functionLookup ? ReadVariableNode.createForcedLocalFunctionLookup(symbol, localVar.getFrameIndex())
-                                : ReadVariableNode.createLocalVariableLookup(symbol, localVar.getFrameIndex());
+                var readVariableNode = ReadVariableNode.createLocalVariableLookup(symbol, localVar.getFrameIndex());
                 return ReadVariableNode.wrap(source, readVariableNode);
             }
         }
