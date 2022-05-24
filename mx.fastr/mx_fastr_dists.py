@@ -217,7 +217,6 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         'bin/Rscript',
         'bin/R',
     ],
-    include_in_polyglot=False,
     launcher_configs=[
         mx_sdk.LanguageLauncherConfig(
             destination='bin/RMain',
