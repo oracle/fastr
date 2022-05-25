@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -313,6 +313,10 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(TRUELENGTHNode.class)
     int TRUELENGTH(Object x);
+
+    int IS_GROWABLE(Object x);
+
+    void SET_GROWABLE_BIT(Object x);
 
     int LEVELS(Object x);
 

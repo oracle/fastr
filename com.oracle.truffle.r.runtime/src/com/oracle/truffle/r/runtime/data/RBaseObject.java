@@ -49,6 +49,8 @@ public abstract class RBaseObject extends RTruffleBaseObject {
     public static final int S4_MASK_SHIFTED = 1 << (4 + GP_BITS_MASK_SHIFT);
     public static final int ASCII_MASK_SHIFTED = 1 << 14;
 
+    public static final int IS_GROWABLE_MASK_SHIFTED = 1 << (5 + GP_BITS_MASK_SHIFT);
+
     public static final int BYTES_MASK = 1 << 1;
     public static final int LATIN1_MASK = 1 << 2;
     public static final int UTF8_MASK = 1 << 3;
@@ -122,6 +124,14 @@ public abstract class RBaseObject extends RTruffleBaseObject {
 
     public final void unsetAltRep() {
         unsetMask(ALT_MASK_SHIFTED);
+    }
+
+    public final boolean isGrowable() {
+        return isMask(IS_GROWABLE_MASK_SHIFTED);
+    }
+
+    public final void setGrowable() {
+        setMask(IS_GROWABLE_MASK_SHIFTED);
     }
 
     private boolean isMask(int mask) {
