@@ -538,6 +538,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public int IS_GROWABLE(Object x) {
+        return guaranteeInstanceOf(x, RAbstractVector.class).isGrowable() ? 1 : 0;
+    }
+
+    @Override
+    public void SET_GROWABLE_BIT(Object x) {
+        guaranteeInstanceOf(x, RAbstractVector.class).setGrowable();
+    }
+
+    @Override
     public int LEVELS(Object x) {
         if (x instanceof RBaseObject) {
             return ((RBaseObject) x).getGPBits();
