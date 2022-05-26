@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
-import java.util.List;
-
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Property;
-import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess.ArrayAttributeAccess;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
 @GenerateUncached
@@ -49,31 +48,31 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode im
     @Override
     public abstract RAttribute[] execute(Object attrs);
 
-    @Specialization(limit = "getCacheLimit()", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
     @ExplodeLoop
-    protected RAttribute[] getArrayFromConstantLayouts(DynamicObject attrs,
-                    @Cached("findLayout(attrs, createLoopProfiles())") AttrsLayout attrsLayout) {
-        final Property[] props = attrsLayout.properties;
-        RAttribute[] result = new RAttribute[props.length];
-        for (int i = 0; i < props.length; i++) {
-            Object value = readProperty(attrs, attrsLayout.shape, props[i]);
-            result[i] = new RAttributesLayout.AttrInstance((String) props[i].getKey(), value);
+    @Specialization(guards = {"cachedLen <= EXPLODE_LOOP_LIMIT", "cachedLen == keyArray.length"}, limit = "getCacheSize(1)")
+    protected RAttribute[] getArrayExplode(DynamicObject attrs,
+                    @CachedLibrary("attrs") DynamicObjectLibrary dylib,
+                    @Bind("dylib.getKeyArray(attrs)") Object[] keyArray,
+                    @Cached("keyArray.length") int cachedLen) {
+        RAttribute[] result = new RAttribute[cachedLen];
+        for (int i = 0; i < result.length; i++) {
+            Object value = dylib.getOrDefault(attrs, keyArray[i], null);
+            result[i] = new RAttributesLayout.RAttribute((String) keyArray[i], value);
         }
-
         return result;
     }
 
-    @Specialization(replaces = "getArrayFromConstantLayouts")
-    protected RAttribute[] getArrayFallback(DynamicObject attrs) {
-        Shape shape = attrs.getShape();
-        List<Property> props = shape.getPropertyList();
-        RAttribute[] result = new RAttribute[props.size()];
-        for (int i = 0; i < result.length; i++) {
-            Property p = props.get(i);
-            Object value = readProperty(attrs, shape, p);
-            result[i] = new RAttributesLayout.AttrInstance((String) p.getKey(), value);
+    @Specialization(replaces = "getArrayExplode", limit = "getShapeCacheLimit()")
+    protected RAttribute[] getArrayGeneric(DynamicObject attrs,
+                    @Cached LoopConditionProfile loopProfile,
+                    @CachedLibrary("attrs") DynamicObjectLibrary dylib,
+                    @Bind("dylib.getKeyArray(attrs)") Object[] keyArray) {
+        RAttribute[] result = new RAttribute[keyArray.length];
+        loopProfile.profileCounted(result.length);
+        for (int i = 0; loopProfile.inject(i < result.length); i++) {
+            Object value = dylib.getOrDefault(attrs, keyArray[i], null);
+            result[i] = new RAttributesLayout.RAttribute((String) keyArray[i], value);
         }
-
         return result;
     }
 

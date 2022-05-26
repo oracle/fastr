@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,6 +106,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebug;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDebugNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRDispatchNativeHandlers;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRGDSetGraphics;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRGDSetGraphicsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRGetExecutor;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRHelp.FastRAddHelpPath;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRHelp.FastRHelpPath;
@@ -143,6 +145,14 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfoNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRegisterFunctions;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRegisterFunctionsNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGFileName;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGFileNameNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGGetContent;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGGetContentNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGSetFileName;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSVGSetFileNameNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSavePlot;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSavePlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSetConsoleHandler;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSetConsoleHandlerNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSetToolchain;
@@ -529,6 +539,11 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRStackTrace.class, FastRStackTraceNodeGen::create);
         add(FastRSlotAssign.class, FastRSlotAssignNodeGen::create);
         add(FastRSyntaxTree.class, FastRSyntaxTreeNodeGen::create);
+        add(FastRGDSetGraphics.class, FastRGDSetGraphicsNodeGen::create);
+        add(FastRSVGGetContent.class, FastRSVGGetContentNodeGen::create);
+        add(FastRSVGFileName.class, FastRSVGFileNameNodeGen::create);
+        add(FastRSVGSetFileName.class, FastRSVGSetFileNameNodeGen::create);
+        add(FastRSavePlot.class, FastRSavePlotNodeGen::create);
         add(FastRThrowIt.class, FastRThrowItNodeGen::create);
         add(FastRThrowCompilerError.class, FastRThrowCompilerError::new);
         add(FastRTrace.Trace.class, FastRTraceFactory.TraceNodeGen::create);

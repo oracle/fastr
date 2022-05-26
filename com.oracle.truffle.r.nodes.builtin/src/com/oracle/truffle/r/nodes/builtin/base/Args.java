@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RRootNode;
@@ -91,7 +90,7 @@ public abstract class Args extends RBuiltinNode.Arg1 {
         String newDesc = "args(" + rootNode.getDescription() + ")";
         FunctionDefinitionNode newNode = FunctionDefinitionNode.create(getRLanguage(), RSyntaxNode.LAZY_DEPARSE, rootNode.getFrameDescriptor(), null, SaveArgumentsNode.NO_ARGS,
                         ConstantNode.create(RSyntaxNode.LAZY_DEPARSE, RNull.instance), formals, newDesc, null);
-        return RDataFactory.createFunction(newDesc, RFunction.NO_NAME, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame());
+        return RDataFactory.createFunction(newDesc, RFunction.NO_NAME, newNode.getCallTarget(), null, REnvironment.globalEnv().getFrame());
     }
 
     @Specialization(guards = {"!isRFunction(fun)", "!isRStringVector(fun)"})

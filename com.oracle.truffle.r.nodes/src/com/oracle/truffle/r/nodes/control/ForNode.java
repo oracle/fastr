@@ -36,7 +36,6 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
@@ -207,7 +206,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     private abstract static class AbstractIndexRepeatingNode extends AbstractRepeatingNode {
 
-        private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
         private final BranchProfile breakBlock = BranchProfile.create();
         private final BranchProfile nextBlock = BranchProfile.create();
 
@@ -227,8 +225,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
             this.readIndexNode = LocalReadVariableNode.create(indexName, true);
             this.readLengthNode = LocalReadVariableNode.create(lengthName, true);
             this.writeIndexNode = WriteVariableNode.createAnonymous(indexName, Mode.REGULAR, null);
-            // pre-initialize the profile so that loop exits to not deoptimize
-            conditionProfile.profile(false);
         }
 
         private static RNode createPositionLoad(String positionName, String rangeName) {
@@ -252,7 +248,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                 throw RInternalError.shouldNotReachHere("For index must be Integer.");
             }
             try {
-                if (conditionProfile.profile(index <= length)) {
+                if (index <= length) {
                     if (writePosition(frame, index)) {
                         writeElementNode.voidExecute(frame);
                         body.voidExecute(frame);
@@ -300,6 +296,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         @Child private WriteVariableNode writePositionNode;
         @Child private InteropLibrary membersInterop;
         @Child private InteropLibrary rangeInterop;
+        @Child private InteropLibrary keyInterop;
 
         ForMembersRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String positionName, String lengthName, String rangeName, String membersName) {
             super(forNode, var, body, indexName, positionName, lengthName, rangeName);
@@ -309,6 +306,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
             this.readRangeNode = LocalReadVariableNode.create(rangeName, true);
             this.membersInterop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
             this.rangeInterop = InteropLibrary.getFactory().createDispatched(1);
+            this.keyInterop = InteropLibrary.getFactory().createDispatched(1);
         }
 
         @Override
@@ -318,8 +316,9 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                 assert members != null;
                 Object range = readRangeNode.execute(frame);
                 Object position = membersInterop.readArrayElement(members, index - 1);
-                if (rangeInterop.isMemberReadable(range, (String) position)) {
-                    writePositionNode.execute(frame, position);
+                String key = keyInterop.asString(position);
+                if (rangeInterop.isMemberReadable(range, key)) {
+                    writePositionNode.execute(frame, key);
                     return true;
                 } else {
                     return false;

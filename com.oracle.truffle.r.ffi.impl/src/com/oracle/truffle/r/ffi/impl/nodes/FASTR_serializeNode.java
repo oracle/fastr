@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,21 +23,18 @@
 
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.nfi.api.SignatureLibrary;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Context;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
@@ -48,6 +45,24 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
 
     public static FASTR_serializeNode create() {
         return FASTR_serializeNodeGen.create();
+    }
+
+    @GenerateUncached
+    abstract static class BindSignatureNode extends Node {
+
+        abstract Object execute(Object function);
+
+        @TruffleBoundary
+        static Object createSignature() {
+            return TruffleNFI_Context.parseSignature(outBytesFuncSignature);
+        }
+
+        @Specialization
+        Object doBind(Object function,
+                        @Cached(value = "createSignature()", allowUncached = true) Object signature,
+                        @CachedLibrary("signature") SignatureLibrary signatures) {
+            return signatures.bind(signature, function);
+        }
     }
 
     /**
@@ -68,24 +83,20 @@ public abstract class FASTR_serializeNode extends FFIUpCallNode.Arg5 {
      */
     @Specialization
     protected Object doIt(Object object, @SuppressWarnings("unused") int type, int version, Object stream, Object outBytesFunc,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                    @Cached BindSignatureNode bind,
                     @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interopLibrary) {
 
-        TruffleObject outBytesFuncExecutable = null;
-        if (interopLibrary.isMemberInvocable(outBytesFunc, "bind")) {
-            try {
-                outBytesFuncExecutable = (TruffleObject) interopLibrary.invokeMember(outBytesFunc, "bind", outBytesFuncSignature);
-            } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+        Object outBytesFuncExecutable = null;
+        if (!interopLibrary.isExecutable(outBytesFunc)) {
+            outBytesFuncExecutable = bind.execute(outBytesFunc);
         } else {
-            outBytesFuncExecutable = (TruffleObject) outBytesFunc;
+            outBytesFuncExecutable = outBytesFunc;
         }
         assert outBytesFuncExecutable != null;
         assert interopLibrary.isExecutable(outBytesFuncExecutable);
 
         // TODO: Pass type instead of RSerialize.XDR
-        byte[] serializedBuff = RSerialize.serialize(ctxRef.get(), object, RSerialize.XDR, version, null);
+        byte[] serializedBuff = RSerialize.serialize(RContext.getInstance(this), object, RSerialize.XDR, version, null);
         NativeCharArray nativeBuff = new NativeCharArray(serializedBuff);
 
         try {

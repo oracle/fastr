@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -328,7 +329,7 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
         @Specialization
         public Object doIntVector(RIntVector vector) {
             if (vector.getLength() == 0) {
-                throw error(RError.Message.GENERIC, "invalid index during foreign access");
+                throw error(RError.Message.GENERIC, "invalid index during foreign access: zero length int vector");
             }
             return vector.getDataAt(0) - 1;
         }
@@ -336,7 +337,7 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
         @Specialization
         public Object doDoubleVector(RDoubleVector vector) {
             if (vector.getLength() == 0) {
-                throw error(RError.Message.GENERIC, "invalid index during foreign access");
+                throw error(RError.Message.GENERIC, "invalid index during foreign access: zero length double vector");
             }
             return vector.getDataAt(0) - 1;
         }
@@ -350,7 +351,8 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
 
         @Fallback
         public Object fallback(@SuppressWarnings("unused") Object vector) {
-            throw error(RError.Message.GENERIC, "invalid index during foreign access");
+            CompilerDirectives.transferToInterpreter();
+            throw error(RError.Message.GENERIC, "invalid index during foreign access: " + vector + " (" + vector.getClass().getSimpleName() + ")");
         }
 
         protected static FirstStringNode createFirstString() {

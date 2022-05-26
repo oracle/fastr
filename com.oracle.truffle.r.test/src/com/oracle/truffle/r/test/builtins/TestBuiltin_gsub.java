@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -206,25 +206,10 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval("{ .Internal(gsub(\"7\", 42, \"7\", F, F, F, F)) }");
         assertEval("{ .Internal(gsub(\"7\", character(), \"7\", F, F, F, F)) }");
         assertEval("{ .Internal(gsub(\"7\", \"42\", 7, F, F, F, F)) }");
-
-        assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
-        assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
-
         // the dot does not match the new line in a non-Perl regexp
         assertEval("{ gsub('.*X', '', 'a\nXb', perl = FALSE) }");
-        // the dot matches the new line in a Perl regexp
-        assertEval("{ gsub('.*X', '', 'a\nXb', perl = TRUE) }");
 
         assertEval("{ gsub('~', '\\\\\\\\X', '~') }");
-
-        // Expected output: [1] "xaxbx"
-        // FastR output: [1] "axxxxxb"
-        assertEval(Ignored.ImplementationError, "{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
-
-        assertEval("list(gsub('>.*\\n|\\n', '', 'R> Line 1\\n Line 2\\n', perl=T), " +
-                        "gsub('>.*\\n|\\n', '', 'R> Line 1\\n Line 2\\n', perl=F))");
-        assertEval("list(gsub('>.*\\t|\\n', '', 'R> Line 1\\t Line 2\\n', perl=T)," +
-                        "gsub('>.*\\t|\\n', '', 'R> Line 1\\t Line 2\\n', perl=F))");
 
         // Test the special case of appending a missing new line
         assertEval("{ gsub('([^\\n])$', '\\\\1\\n', c('[1] 2', NA, 'aaaa\\n')) }");
@@ -238,5 +223,30 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval("gsub('(_[bB])','\\\\1_m','b_b')");
         assertEval("gsub('b','\\\\1m','Abb')");
         assertEval("gsub('@CXX11@', '$(CXX11)', '    CPLUS=\"@CXX11@\"                           \\'', fixed=FALSE)");
+    }
+
+    @Test
+    public void testGsubPCRE() {
+        assertEval("{ gsub('(a|b)', '\\\\1', 'ab', perl=TRUE) }");
+        assertEval("{ gsub('(a|b)', '\\\\1', 'aa', perl=TRUE) }");
+        assertEval("{ gsub('(a|b)', '\\\\1', 'bb', perl=TRUE) }");
+        assertEval("{ gsub('(a|b)', '\\\\1', 'abab', perl=TRUE) }");
+        assertEval("{ gsub('(a|b)', '\\\\1', 'aabb', perl=TRUE) }");
+        assertEval("{ gsub('(a|b)', '\\\\1', 'XabX', perl=TRUE) }");
+
+        // the dot matches the new line in a Perl regexp
+        assertEval("{ gsub('.*X', '', 'a\nXb', perl = TRUE) }");
+
+        assertEval("list(gsub('>.*\\n|\\n', '', 'R> Line 1\\n Line 2\\n', perl=T), " +
+                        "gsub('>.*\\n|\\n', '', 'R> Line 1\\n Line 2\\n', perl=F))");
+        assertEval("list(gsub('>.*\\t|\\n', '', 'R> Line 1\\t Line 2\\n', perl=T)," +
+                        "gsub('>.*\\t|\\n', '', 'R> Line 1\\t Line 2\\n', perl=F))");
+
+        // Tests with UTF-8 strings
+        assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
+        assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
+        assertEval("{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
+
+        assertEval("{ gsub('([⚽])', '\\\\1', '─', perl=TRUE)} ");
     }
 }

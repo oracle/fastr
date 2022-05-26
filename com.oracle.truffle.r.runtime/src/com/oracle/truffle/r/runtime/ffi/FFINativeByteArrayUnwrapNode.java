@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,7 @@ package com.oracle.truffle.r.runtime.ffi;
 import java.nio.ByteOrder;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -45,7 +43,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
@@ -58,12 +55,12 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
 
     public abstract byte[] execute(Object length, Object x);
 
-    static Object getSulongByteArrayType(ContextReference<RContext> ctxRef) {
-        return ctxRef.get().getRFFI().getSulongArrayType((byte) 42);
+    protected Object getSulongByteArrayType() {
+        return getRContext().getRFFI().getSulongArrayType((byte) 42);
     }
 
-    static Object getSulongIntArrayType(ContextReference<RContext> ctxRef) {
-        return ctxRef.get().getRFFI().getSulongArrayType(42);
+    protected Object getSulongIntArrayType() {
+        return RContext.getInstance(this).getRFFI().getSulongArrayType(42);
     }
 
     static boolean isRObjectDataPtr(Object x) {
@@ -86,8 +83,7 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
     protected byte[] doByteArrayInterop(@SuppressWarnings("unused") Object length, Object x,
                     @SuppressWarnings("unused") @CachedLibrary("x") NativeTypeLibrary typeLib,
                     @CachedLibrary("x") InteropLibrary interopLib,
-                    @SuppressWarnings("unused") @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                    @SuppressWarnings("unused") @Cached(value = "getSulongByteArrayType(ctxRef)", uncached = "getSulongByteArrayType(ctxRef)") Object sulongByteArrayType) {
+                    @SuppressWarnings("unused") @Cached(value = "getSulongByteArrayType()", uncached = "getSulongByteArrayType()") Object sulongByteArrayType) {
         try {
             int size = (int) interopLib.getArraySize(x);
             byte[] result = new byte[size];
@@ -104,8 +100,7 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
     protected byte[] doIntArrayInterop(@SuppressWarnings("unused") Object length, Object x,
                     @SuppressWarnings("unused") @CachedLibrary("x") NativeTypeLibrary typeLib,
                     @CachedLibrary("x") InteropLibrary interopLib,
-                    @SuppressWarnings("unused") @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                    @SuppressWarnings("unused") @Cached(value = "getSulongIntArrayType(ctxRef)", uncached = "getSulongIntArrayType(ctxRef)") Object sulongIntArrayType) {
+                    @SuppressWarnings("unused") @Cached(value = "getSulongIntArrayType()", uncached = "getSulongIntArrayType()") Object sulongIntArrayType) {
         try {
             int size = (int) interopLib.getArraySize(x);
             int[] result = new int[size];
@@ -124,7 +119,7 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
             interopLib.toNative(x);
             long addr = interopLib.asPointer(x);
             byte[] result = new byte[length];
-            NativeMemory.copyMemory(addr, result, ElementType.INT, length);
+            NativeMemory.copyMemory(addr, result, ElementType.BYTE, length);
             return result;
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);

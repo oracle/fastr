@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 #include <Rinternals_common.h>
 #include "../common/rffi_upcalls.h"
 
-__thread void **callbacks = NULL;
+CALLBACKS_T callbacks = NULL;
 
 void Rinternals_addCallback(TruffleEnv* env, void** theCallbacks, int index, void *closure) {
         (*env)->newClosureRef(env, closure);

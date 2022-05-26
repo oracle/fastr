@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -29,9 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RRuntime;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
@@ -59,7 +60,7 @@ public abstract class FastRTestsTry extends RBuiltinNode.Arg1 {
         } catch (Throwable ex) {
             // try to recover from a possibly incosistent state when running tests:
             // some handlers might still be lying around and interfere with subsequent calls
-            RErrorHandling.resetStacks();
+            RErrorHandling.resetStacks(getRContext());
             return formatError(ex);
         }
         return RRuntime.LOGICAL_TRUE;

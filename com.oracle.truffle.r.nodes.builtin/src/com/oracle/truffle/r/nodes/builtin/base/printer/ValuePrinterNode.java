@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,7 +122,7 @@ public final class ValuePrinterNode extends RBaseNode {
 
     public String execute(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource) {
         try {
-            PrintParameters printParams = new PrintParameters(digits, quote, naPrint, printGap, right, max, useSource);
+            PrintParameters printParams = new PrintParameters(digits, quote, naPrint, printGap, right, max, useSource, getRContext());
 
             PrintContext printCtx = PrintContext.enter(this, printParams, RWriter::new);
             try {
@@ -149,7 +149,7 @@ public final class ValuePrinterNode extends RBaseNode {
     @TruffleBoundary
     public Object prettyPrint(Object v, WriterFactory wf) {
         PrintParameters printParams = new PrintParameters();
-        printParams.setDefaults();
+        printParams.setDefaults(getRContext());
         printParams.setSuppressIndexLabels(true);
         PrintContext printCtx = PrintContext.enter(this, printParams, wf);
         try {

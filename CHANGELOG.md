@@ -1,3 +1,61 @@
+# 22.2.0
+* `--R.DebugLLVMLibs` is no longer a stable option.
+* Implemented `SET_GROWABLE_BIT` and `IS_GROWABLE` C API functions.
+  * This fixes installation of the `cpp11` 0.2.6 package.
+
+# 22.1.0
+* Improved performance of the `order` and `rank` builtin functions
+* FastR does not ship with its own copy of libz.so
+  * System installation of this library becomes a requirement for FastR, but zlib is installed by default on MacOS and in most modern Linux distributions.
+* Use JavaGD as the default graphical subsystem.
+  * Deprecate `--R.UseInternalGridGraphics` option.
+  * The FastR's graphical subsystem is now mostly compatible with GNU-R's, i.e., most functions from `graphics`, `grid`, and `grDevices` base packages are now supported.
+  * Display lists are fully implemented.
+  * Supported devices: SVG, PNG, JPEG, BMP, AWT.
+  * See [graphics docs](./documentation/dev/graphics.md).
+* Updated XZ library for compression to the version XZ-1.9.
+
+# 22.0.0
+* Adopted [NodeLibrary](https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/interop/NodeLibrary.html).
+* In unit tests, use single shared context rather than multiple inner contexts.
+* Update recommended packages:
+  * rpart to version 4.1-16 (2019-05-21)
+  * cluster to version 2.1.2 (2021-04-17)
+
+# 21.3.0
+* Upgrade of [PCRE](https://www.pcre.org/) to PCRE2 version 10.37.
+  * See [GNU-R changelog](https://cran.r-project.org/doc/manuals/r-devel/NEWS.html) (section MIGRATION TO PCRE2) for more details
+     on potentially user visible differences between PCRE and PCRE2
+
+Bug fixes:
+
+* Fixed implicit make rule parameters used when building [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html)
+  * Fixes, e.g., installation of [maps](https://cran.r-project.org/web/packages/maps/index.html) package version 3.3.0.
+  * Removed `-shared` flag from `LDFLAGS`, added `-shared` to `DYLIB_LDFLAGS`, added `SHLIB_LDGLAGS_R`
+* Fixed unexpected garbage collection of `CHARSXP` objects in [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html)
+  * FastR did not materialize its internal representation of character vectors to GNU-R compatible CHARSXP objects,
+      which caused unexpected collection of CHARSXP objects returned by STRING_ELT
+* Option --no-init-file is not ignored anymore (do not read the user's profile at startup)
+* Fixed functions `approx` and `approxfun` from the `stats` package
+  * Previously they were always failing with error message "Incorrect number of arguments"
+
+# 21.2.0
+* Support for packages in 2021-02-01 CRAN snapshot:
+  * testthat 3.0.1 is partially supported.
+    * FastR does not support parallel tests run, i.e. run testthat only with `Sys.setenv(TESTTHAT_PARALLEL="false")`.
+  * tibble 3.0.6 , vctrs 0.3.6, and data.table 1.13.6 are mostly supported.
+  * Support for dplyr 1.0.3, ggplot 3.3.3, and knitr 1.31 is a work in progress.
+  
+Bug fixes:
+
+* `read.dcf` does not ignore whitespaces in fields any more.
+* `list.files` gives correct result in a subdirectory with the same prefix as its parent directory.
+* Whitespaces in quantifiers in regular expressions are ignored.
+  * GNU-R does not comply with PCRE with this behavior.
+* `sys.frame` displays frames for `NextMethod` correctly.
+* `parent.frame` is able to get the frame that is no longer on the stack.
+  * Which is not recommended due to the documentation of `parent.frame`, but some packages do that nonetheless.
+
 # 21.1.0
 
 * Upgraded FastR to R 4.0.3

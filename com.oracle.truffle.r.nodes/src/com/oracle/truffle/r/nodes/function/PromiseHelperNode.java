@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -221,7 +221,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         try {
             if (promiseClosureCache == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseClosureCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(RContext.getInstance().getNonNegativeIntOption(PromiseCacheSize))));
+                promiseClosureCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(RContext.getInstance(this).getNonNegativeIntOption(PromiseCacheSize))));
             }
             // TODO: no wrapping of arguments here?, why we do not have to set visibility here?
             promise.setUnderEvaluation();
@@ -233,7 +233,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     setVisibility = insert(SetVisibilityNode.create());
                 }
-                setVisibility.execute(frame, getVisibilitySlowPath(execFrame));
+                setVisibility.execute(frame, getVisibilitySlowPath(execFrame.materialize()));
             }
             assert promise.getRawValue() == null;
             assert value != null;
@@ -270,7 +270,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     }
 
     @TruffleBoundary
-    private static boolean getVisibilitySlowPath(Frame frame) {
+    private static boolean getVisibilitySlowPath(MaterializedFrame frame) {
         return GetVisibilityNode.executeSlowPath(frame);
     }
 

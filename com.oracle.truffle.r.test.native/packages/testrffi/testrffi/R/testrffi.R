@@ -371,3 +371,7 @@ rffi.testInstallTrChar <- function(strvec, envir) {
 rffi.test_RfMatch <- function(x, y) {
 	.Call("test_RfMatch", x, y)
 }
+
+rffi.test_mkCharDoesNotCollect <- function() {
+	.Call("test_mkCharDoesNotCollect")
+}

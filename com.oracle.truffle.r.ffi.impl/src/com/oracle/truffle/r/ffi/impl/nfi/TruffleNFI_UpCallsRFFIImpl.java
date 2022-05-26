@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -75,6 +74,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     @Override
+    @TruffleBoundary
     public Object R_alloc(int n, int size) {
         long result = NativeMemory.allocate(n * (long) size, "R_alloc");
         getContext().transientAllocations.peek().add(result);
@@ -94,7 +94,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     @TruffleBoundary
     protected void setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        setSymbolCallTarget.compareAndSet(null, Truffle.getRuntime().createCallTarget(new SetSymbolRootNode()));
+        setSymbolCallTarget.compareAndSet(null, new SetSymbolRootNode().getCallTarget());
         setSymbolCallTarget.get().call(dllInfo, nstOrd, routines, index);
     }
 
@@ -129,7 +129,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @TruffleBoundary
     private static TruffleObject lookupSetSymbol() {
-        return TruffleNFI_Context.getInstance().lookupNativeFunction(NativeFunction.Rdynload_setSymbol);
+        return TruffleNFI_Context.getInstance().lookupNativeFunction(NativeFunction.Rdynload_setSymbol, RContext.getInstance());
     }
 
     @Override

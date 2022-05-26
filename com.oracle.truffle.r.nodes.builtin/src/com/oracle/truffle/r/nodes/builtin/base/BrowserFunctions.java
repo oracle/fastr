@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -55,6 +54,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState.HelperState;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 public class BrowserFunctions {
 
@@ -89,7 +89,7 @@ public class BrowserFunctions {
                 doBreak = evalClosure(frame.materialize(), expr);
             }
             if ((boolean) castExprNode.doCast(doBreak)) {
-                RContext curContext = RContext.getInstance();
+                RContext curContext = getRContext();
                 if (!curContext.isInitial() && curContext.getKind() == ContextKind.SHARE_ALL && curContext.getParent().getKind() == ContextKind.SHARE_NOTHING) {
                     return RNull.instance;
                 }

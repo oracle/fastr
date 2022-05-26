@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -192,7 +191,7 @@ public final class RS4Object extends RSharingAttributeStorage implements Shareab
     }
 
     protected static CallTarget createUpdateCallTarget() {
-        return RContext.getInstance().getOrCreateCachedCallTarget(UpdateSlotRootNode.class, () -> Truffle.getRuntime().createCallTarget(new UpdateSlotRootNode()));
+        return RContext.getInstance().getOrCreateCachedCallTarget(UpdateSlotRootNode.class, () -> new UpdateSlotRootNode().getCallTarget());
     }
 
     private static class UpdateSlotRootNode extends RootNode {
@@ -205,12 +204,12 @@ public final class RS4Object extends RSharingAttributeStorage implements Shareab
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            return delegate.execute(RContext.getInstance().stateREnvironment.getGlobalFrame(), args[0], args[1], args[2]);
+            return delegate.execute(RContext.getInstance(this).stateREnvironment.getGlobalFrame(), args[0], args[1], args[2]);
         }
     }
 
     protected static CallTarget createAccessCallTarget() {
-        return RContext.getInstance().getOrCreateCachedCallTarget(AccessSlotRootNode.class, () -> Truffle.getRuntime().createCallTarget(new AccessSlotRootNode()));
+        return RContext.getInstance().getOrCreateCachedCallTarget(AccessSlotRootNode.class, () -> new AccessSlotRootNode().getCallTarget());
     }
 
     private static class AccessSlotRootNode extends RootNode {

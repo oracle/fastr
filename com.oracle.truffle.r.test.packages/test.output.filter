@@ -107,6 +107,8 @@ sqldf => D/A svUnit test suite run in
 sqldf => D/test.all (in runit.all.R) run in
 sqldf => D/Could not load tcltk.  Will use slower R code instead.
 sqldf => d/\>
+# This is a logging output from GNU-R that is redundant.
+sqldf => D+1/* : checkIdentical
 
 # --------
 # lpSolveAPI: one of the tests produces either 0 0 0 or three numbers close to 0

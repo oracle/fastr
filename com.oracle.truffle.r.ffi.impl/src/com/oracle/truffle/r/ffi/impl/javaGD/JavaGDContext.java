@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.profiles.BranchProfile;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 import org.rosuda.javaGD.GDInterface;
@@ -44,19 +45,26 @@ import com.oracle.truffle.r.runtime.context.RContext;
 public final class JavaGDContext {
 
     private final Collections.ArrayListObj<GDInterface> devices;
+    private final Collections.ArrayListObj<Integer> deviceIndexes;
+    private static final String awtDeviceName = ".FASTR.AWT";
 
     private JavaGDContext(JavaGDContext parentGDCtx) {
-        this.devices = parentGDCtx.devices;
-    }
-
-    private JavaGDContext() {
-        this.devices = new Collections.ArrayListObj<>();
+        this.devices = parentGDCtx != null ? parentGDCtx.devices : new Collections.ArrayListObj<>();
+        this.deviceIndexes = new Collections.ArrayListObj<>();
+        this.deviceIndexes.push(-1, BranchProfile.getUncached());
     }
 
     public static RError awtNotSupported() {
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "AWT based grid devices are not supported.");
     }
 
+    /**
+     * Called from an up call, i.e. from native code `gdOpen`.
+     * 
+     * @param gdId fastr-specific ID of JavaGD device. See {@code jGDtalk.c:javaGDDeviceCounter}.
+     * @param deviceName Template of the device name is {@code fileType::params:fileNameTemplate}.
+     *            For example "svg::family=sans,bg=white:myfile.svg"
+     */
     @TruffleBoundary
     public GDInterface newGD(int gdId, String deviceName) {
         if (!FastRConfig.AwtSupport) {
@@ -64,6 +72,7 @@ public final class JavaGDContext {
         }
 
         assert gdId == devices.size();
+        deviceIndexes.push(gdId, BranchProfile.getUncached());
         GDInterface gd = newGD(gdId, deviceName, LoggingGD.Mode.getMode());
         devices.add(gd);
         return gd;
@@ -88,10 +97,10 @@ public final class JavaGDContext {
             String fileNameTemplate = nm;
             switch (gdLogMode) {
                 case wrap:
-                    gd = new LoggingGD(newGD(gdId, deviceName, LoggingGD.Mode.off), fileNameTemplate + ".Rgd", gdId, deviceName, false);
+                    gd = new LoggingGD(newGD(gdId, deviceName, LoggingGD.Mode.off), fileNameTemplate + ".Rgd", gdId, deviceName);
                     break;
                 case headless:
-                    gd = new LoggingGD(new NullGD(), fileNameTemplate, gdId, deviceName, false);
+                    gd = new LoggingGD(new NullGD(), fileNameTemplate, gdId, deviceName);
                     break;
                 case off:
                 default:
@@ -106,18 +115,25 @@ public final class JavaGDContext {
             // no device specified, i.e. use the default device
             switch (gdLogMode) {
                 case wrap:
-                    gd = new LoggingGD(new JavaGD(new Resizer(), new DevOffCall()), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
+                    gd = new LoggingGD(createDefaultDevice(deviceName), getDefaultFileTemplate(deviceName), gdId, deviceName);
                     break;
                 case headless:
-                    gd = new LoggingGD(new NullGD(), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
+                    gd = new LoggingGD(new NullGD(), getDefaultFileTemplate(deviceName), gdId, deviceName);
                     break;
                 case off:
                 default:
-                    gd = new JavaGD(new Resizer(), new DevOffCall());
+                    gd = createDefaultDevice(deviceName);
             }
         }
-
         return gd;
+    }
+
+    private static GDInterface createDefaultDevice(String deviceName) {
+        if (deviceName.equals(awtDeviceName)) {
+            return new AWTGraphicsGD();
+        } else {
+            return new JavaGD(new Resizer(), new DevOffCall());
+        }
     }
 
     private static String getDefaultFileTemplate(String deviceName) {
@@ -130,21 +146,35 @@ public final class JavaGDContext {
         return params == null ? fileType + "::/dev/null" : fileType + "::" + params + ":/dev/null";
     }
 
-    public GDInterface getGD(int devId) {
-        if (!FastRConfig.AwtSupport) {
-            throw awtNotSupported();
-        }
-        return this.devices.get(devId);
+    /**
+     * Returns the current device ID, as tracked by javagd package. Note that this should be mapped
+     * to value in {@code jGDtalk.c:javaGDDeviceController}. Also note that this is a different
+     * value than `dev.cur()` returns. `dev.cur()` is mapped to {@code devices.c:R_CurrentDevice}
+     * and is tracked by grDevices.
+     * 
+     * @return Current ID of a JavaGD device. -1 if there is no active JavaGD device.
+     */
+    public int getCurrentGdId() {
+        return (int) deviceIndexes.peek();
     }
 
-    public GDInterface removeGD(int devId) {
+    public GDInterface getGD(int gdId) {
         if (!FastRConfig.AwtSupport) {
             throw awtNotSupported();
         }
-        assert devId < devices.size();
-        GDInterface gd = devices.get(devId);
+        return this.devices.get(gdId);
+    }
+
+    public GDInterface removeGD(int gdId) {
+        if (!FastRConfig.AwtSupport) {
+            throw awtNotSupported();
+        }
+        assert gdId < devices.size();
+        int lastDevIdx = (int) deviceIndexes.pop();
+        assert lastDevIdx == gdId;
+        GDInterface gd = devices.get(gdId);
         assert gd != null;
-        devices.set(devId, null);
+        devices.set(gdId, null);
         return gd;
     }
 
@@ -171,7 +201,7 @@ public final class JavaGDContext {
                 }
             }
             if (doInitialize) {
-                rCtx.gridContext = new JavaGDContext();
+                rCtx.gridContext = new JavaGDContext(null);
             }
         }
         return (JavaGDContext) rCtx.gridContext;

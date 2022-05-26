@@ -55,8 +55,6 @@ int R_DirtyImage; // TODO update this
 void *R_GlobalContext; // TODO what?
 SA_TYPE SaveAction; // ??
 
-int R_wait_usec;    // TODO: necessary to resolve externals? otherwise dead code
-
 typedef jint (JNICALL *JNI_CreateJavaVMFunc)(JavaVM **pvm, void **penv, void *args);
 
 

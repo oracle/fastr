@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -42,7 +42,7 @@ public class TestBuiltin_Sysgetenv extends TestBase {
         assertEval("{ Sys.setenv(\"a\") } ");
         assertEval("{ Sys.setenv(FASTR_A=\"a\"); Sys.getenv(\"FASTR_A\"); } ");
         assertEval("{ Sys.setenv(FASTR_A=\"a\", FASTR_B=\"b\"); Sys.getenv(c(\"FASTR_A\", \"FASTR_B\"));  } ");
-        assertEval("{ Sys.getenv(\"FASTR_A\") } ");
-        assertEval("{ Sys.getenv(\"FASTR_A\", unset=\"UNSET\") } ");
+        assertEval("{ Sys.getenv(\"FASTR_SHOULD_NOT_BE_DEFINED\") } ");
+        assertEval("{ Sys.getenv(\"FASTR_SHOULD_NOT_BE_DEFINED\", unset=\"UNSET\") } ");
     }
 }

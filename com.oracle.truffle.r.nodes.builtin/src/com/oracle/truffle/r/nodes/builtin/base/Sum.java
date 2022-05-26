@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,6 @@ import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantic
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
@@ -80,7 +79,7 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
     }
 
     protected boolean fullPrecision() {
-        return RContext.getInstance().getOption(FullPrecisionSum);
+        return getRContext().getOption(FullPrecisionSum);
     }
 
     @Child private MiscRFFI.ExactSumNode exactSumNode;

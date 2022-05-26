@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_CallFactory.TruffleMixed
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_CallFactory.TruffleMixed_InvokeVoidCallNodeGen;
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLL.MixedLLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Call;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -132,16 +133,17 @@ public class TruffleMixed_Call implements CallRFFI {
         protected void handleLLVMNFIInitLib(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("createLLVMInvocationNode()") InvokeVoidCallNode llvmDelegNode,
                         @Cached("createNFIInvocationNode()") InvokeVoidCallNode nfiDelegNode) {
+            RContext context = RContext.getInstance(this);
             if (nativeCallInfo.address.value instanceof RList) {
                 RList symbols = (RList) nativeCallInfo.address.value;
-                llvmDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, (SymbolHandle) symbols.getDataAt(0), nativeCallInfo.dllInfo), args);
+                llvmDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, (SymbolHandle) symbols.getDataAt(0), nativeCallInfo.dllInfo), context, args);
                 LibHandle nfiLibHandle = ((MixedLLVM_Handle) nativeCallInfo.dllInfo.handle).nfiLibHandle;
                 if (nfiLibHandle != null) {
                     DLLInfo nfiDllInfo = nativeCallInfo.dllInfo.replaceHandle(nfiLibHandle);
-                    nfiDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, (SymbolHandle) symbols.getDataAt(1), nfiDllInfo), new Object[]{nfiDllInfo});
+                    nfiDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, (SymbolHandle) symbols.getDataAt(1), nfiDllInfo), context, new Object[]{nfiDllInfo});
                 }
             } else {
-                llvmDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, nativeCallInfo.address, nativeCallInfo.dllInfo), args);
+                llvmDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, nativeCallInfo.address, nativeCallInfo.dllInfo), context, args);
             }
         }
     }

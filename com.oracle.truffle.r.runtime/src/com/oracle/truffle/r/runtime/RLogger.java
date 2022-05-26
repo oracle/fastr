@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,6 +107,11 @@ public class RLogger {
      * Log file access.
      */
     public static final String LOGGER_FILE_ACCEESS = "com.oracle.truffle.r.fileAccess";
+
+    /**
+     * Log some return values and information from functions wrapping around PCRE2.
+     */
+    public static final String LOGGER_PCRE = "com.oracle.truffle.r.pcre";
 
     public static TruffleLogger getLogger(String name) {
         return TruffleLogger.getLogger(R_LANGUAGE_ID, name);

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1994-9 W. N. Venables and B. D. Ripley
  * Copyright (c) 2007-2017, The R Core Team
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,17 +32,17 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 @RBuiltin(name = "max.col", kind = INTERNAL, parameterNames = {"x", "tie"}, behavior = PURE)
@@ -132,7 +132,7 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
         return findMaxCol(x, tie, x.slowPathAccess(), vectorFactory, getDimNode);
     }
 
-    private static void maxColRandom(int[] cols, RAbstractContainer x, VectorAccess xAccess, int ncols, int nrows, double[] epsilons) {
+    private void maxColRandom(int[] cols, RAbstractContainer x, VectorAccess xAccess, int ncols, int nrows, double[] epsilons) {
         // To be really compatible, because we use random numbers, we have to do this in the same
         // order as GNU R, which is row by row
         int colIdx;
@@ -158,7 +158,7 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
                         RRNG.getRNGState();
                         usedRandom = true;
                     }
-                    if (ntie * RRNG.unifRand() < 1.) {
+                    if (ntie * RRNG.unifRand(getRContext()) < 1.) {
                         cols[rowIdx] = colIdx + 1;
                         // NOTE: GNU R also does not update the actual value
                     }

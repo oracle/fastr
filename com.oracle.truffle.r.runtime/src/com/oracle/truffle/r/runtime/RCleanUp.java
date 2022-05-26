@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2014,  The R Core Team
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ package com.oracle.truffle.r.runtime;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.launcher.RStartParams;
@@ -139,7 +138,7 @@ public abstract class RCleanUp {
         protected UserDefinedCleanUpRootNode(RContext ctx) {
             super(null);
             cleanUpNode = ctx.getRFFI().embedRFFI.createEmbeddedCleanUpNode();
-            Truffle.getRuntime().createCallTarget(this);
+            this.getCallTarget(); // Ensure call target is initialized
         }
 
         @Child private EmbeddedCleanUpNode cleanUpNode;

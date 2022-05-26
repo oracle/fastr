@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,22 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+
+import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.MapCursor;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RLogger;
-import com.oracle.truffle.r.runtime.context.RContext;
-import java.util.logging.Level;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
-import java.util.List;
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 import com.oracle.truffle.r.runtime.data.RPairList;
 
 /**
@@ -72,26 +79,36 @@ public class RFFILog {
 
     @TruffleBoundary
     public static void logRObject(String message, Object obj) {
-        Object mirror = obj instanceof RBaseObject ? mirror = ((RBaseObject) obj).getNativeMirror() : null;
-        log(String.format("%s [%s, native mirror: %s]", message, Utils.getDebugInfo(obj), mirror));
+        log(message + " " + rObjectToDebugString(obj));
     }
 
+    @TruffleBoundary
+    private static String rObjectToDebugString(Object obj) {
+        Object mirror = obj instanceof RBaseObject ? ((RBaseObject) obj).getNativeMirror() : null;
+        return String.format("[%s, native mirror: %s]", Utils.getDebugInfo(obj), mirror);
+    }
+
+    @TruffleBoundary
     public static void logUpCall(String name, List<Object> args) {
         logCall(CallMode.UP, name, getContext().getCallDepth(), args.toArray());
     }
 
+    @TruffleBoundary
     public static void logUpCall(String name, Object... args) {
         logCall(CallMode.UP, name, getContext().getCallDepth(), args);
     }
 
+    @TruffleBoundary
     public static void logUpCallReturn(String name, Object result) {
         logCall(CallMode.UP_RETURN, name, getContext().getCallDepth(), result);
     }
 
+    @TruffleBoundary
     public static void logDownCall(String name, Object... args) {
         logCall(CallMode.DOWN, name, getContext().getCallDepth(), args);
     }
 
+    @TruffleBoundary
     public static void logDownCallReturn(String name, Object result) {
         logCall(CallMode.DOWN_RETURN, name, getContext().getCallDepth(), result);
     }
@@ -100,10 +117,62 @@ public class RFFILog {
         return LOGGER.isLoggable(Level.FINE);
     }
 
+    private static boolean finerLogEnabled() {
+        return LOGGER.isLoggable(Level.FINER);
+    }
+
     private static void logCall(CallMode mode, String name, int depthValue, Object... args) {
         if (logEnabled()) {
             log(callToString(mode, depthValue, name, args));
+            if (finerLogEnabled()) {
+                logNativeObjects();
+            }
         }
+    }
+
+    @TruffleBoundary
+    private static void logNativeObjects() {
+        logPreserveList();
+        logProtectStack();
+    }
+
+    private static void logPreserveList() {
+        assert finerLogEnabled();
+        StringBuilder sb = new StringBuilder();
+        sb.append("preserveList = [");
+        EconomicMap<RBaseObject, AtomicInteger> preserveList = getContext().rffiContextState.preserveList;
+        MapCursor<RBaseObject, AtomicInteger> iterator = preserveList.getEntries();
+        while (iterator.advance()) {
+            sb.append("{");
+            RBaseObject object = iterator.getKey();
+            int id = iterator.getValue().get();
+            sb.append(Long.toHexString(id));
+            sb.append(":");
+            sb.append(rObjectToDebugString(object));
+            sb.append("}");
+            sb.append(",");
+        }
+        if (preserveList.size() > 0) {
+            // Delete last comma
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        sb.append("]");
+        LOGGER.log(Level.FINER, sb.toString());
+    }
+
+    private static void logProtectStack() {
+        assert finerLogEnabled();
+        StringBuilder sb = new StringBuilder();
+        sb.append("protectStack = [");
+        Collections.ArrayListObj<RBaseObject> protectStack = getContext().rffiContextState.protectStack;
+        for (int i = 0; i < protectStack.size(); i++) {
+            sb.append(rObjectToDebugString(protectStack.get(i)));
+            if (i < protectStack.size() - 1) {
+                sb.append(",");
+            }
+        }
+        sb.append("]");
+        LOGGER.log(Level.FINER, sb.toString());
     }
 
     @TruffleBoundary
@@ -130,7 +199,7 @@ public class RFFILog {
             } else {
                 sb.append(", ");
             }
-            // Note: it makes sense to include native mirrors only once they have been create
+            // Note: it makes sense to include native mirrors only once they have been created
             // already
             String additional = "";
             if (mode.logNativeMirror && arg instanceof RBaseObject) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,8 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Scope;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.TruffleLanguage.ContextPolicy;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
@@ -52,6 +50,7 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags;
@@ -59,9 +58,29 @@ import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
-@TruffleLanguage.Registration(name = "R", id = "R", version = "4.0.3", mimeType = {RRuntime.R_APP_MIME,
-                RRuntime.R_TEXT_MIME}, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
-@ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootBodyTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
+// @formatter:off
+@TruffleLanguage.Registration(
+        name = "R",
+        id = "R",
+        version = "4.0.3",
+        implementationName = "FastR",
+        characterMimeTypes = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME},
+        defaultMimeType = RRuntime.R_APP_MIME,
+        contextPolicy = ContextPolicy.EXCLUSIVE,
+        interactive = true,
+        fileTypeDetectors = RFileTypeDetector.class,
+        dependentLanguages = "llvm",
+        website = "https://www.graalvm.org/r"
+)
+@ProvidedTags({
+        StandardTags.CallTag.class,
+        StandardTags.StatementTag.class,
+        StandardTags.RootBodyTag.class,
+        StandardTags.RootTag.class,
+        RSyntaxTags.LoopTag.class,
+        FunctionBodyBlockTag.class
+})
+// @formatter:on
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     private static int activeContexts = 0;
@@ -70,6 +89,8 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return getLanguageHome();
     }
 
+    private static final ContextReference<RContext> contextReference = ContextReference.create(TruffleRLanguage.class);
+    private static final LanguageReference<TruffleRLanguage> languageReference = LanguageReference.create(TruffleRLanguage.class);
     private static final String ACCESS_CLASS = "com.oracle.truffle.r.engine.TruffleRLanguageAccessImpl";
     private static final TruffleRLanguageAccess access;
 
@@ -158,7 +179,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         if (rValue instanceof TruffleObject) {
             return null;
         }
-        RootCallTarget convertCallTarget = context.getOrCreateCachedCallTarget(ConvertForeignRootNode.class, () -> Truffle.getRuntime().createCallTarget(new ConvertForeignRootNode()));
+        RootCallTarget convertCallTarget = context.getOrCreateCachedCallTarget(ConvertForeignRootNode.class, () -> new ConvertForeignRootNode().getCallTarget());
         return convertCallTarget.call(rValue);
     }
 
@@ -212,22 +233,28 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         }
     }
 
-    public static RContext getCurrentContext() {
-        return TruffleLanguage.getCurrentContext(TruffleRLanguage.class);
+    /**
+     * For null {@code node} parameter this is a slow-path version.
+     */
+    public static RContext getCurrentContext(Node node) {
+        return contextReference.get(node);
     }
 
+    /**
+     * Slow path version of get language.
+     */
     public static TruffleRLanguage getCurrentLanguage() {
-        return TruffleLanguage.getCurrentLanguage(TruffleRLanguage.class);
+        return languageReference.get(null);
+    }
+
+    public static TruffleRLanguage getCurrentLanguage(Node node) {
+        return languageReference.get(node);
     }
 
     @Override
-    public Iterable<Scope> findLocalScopes(RContext langContext, Node node, Frame frame) {
-        return RScope.createLocalScopes(langContext, node, frame);
-    }
-
-    @Override
-    protected Iterable<Scope> findTopScopes(RContext langContext) {
-        return RScope.createTopScopes(langContext);
+    protected Object getScope(RContext context) {
+        REnvironment globalEnv = REnvironment.globalEnv(context);
+        return new RScope(globalEnv, globalEnv.getFrameAccess(), null);
     }
 
     private static final class ConvertForeignRootNode extends RootNode {

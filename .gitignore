@@ -165,3 +165,4 @@ com.oracle.truffle.r.test.native/packages/*/*/src/*.so
 com.oracle.truffle.r.test.native/packages/*/*/src/*.o
 com.oracle.truffle.r.test.packages/r/fastr.functions.rdx
 tags
+com.oracle.truffle.r.test.packages/r/fastr.functions.rdx

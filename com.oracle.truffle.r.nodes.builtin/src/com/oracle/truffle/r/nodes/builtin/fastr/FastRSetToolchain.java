@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,16 +31,12 @@ import java.nio.file.StandardCopyOption;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "fastr.setToolchain", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
@@ -53,8 +49,7 @@ public abstract class FastRSetToolchain extends RBuiltinNode.Arg1 {
 
     @TruffleBoundary
     @Specialization
-    protected RNull setToolchain(String name,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+    protected RNull setToolchain(String name) {
         String srcConf;
         String srcLdpaths;
         if ("native".equals(name)) {
@@ -66,7 +61,7 @@ public abstract class FastRSetToolchain extends RBuiltinNode.Arg1 {
         } else {
             throw error(RError.Message.GENERIC, "Only 'native' or 'llvm' argument values accepted");
         }
-        TruffleFile rHome = REnvVars.getRHomeTruffleFile(ctxRef.get());
+        TruffleFile rHome = REnvVars.getRHomeTruffleFile(getRContext());
         TruffleFile etc = rHome.resolve("etc");
         TruffleFile srcConfFile = etc.resolve(srcConf);
         TruffleFile dstConfFile = etc.resolve("Makeconf");

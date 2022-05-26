@@ -553,7 +553,7 @@ public class TestJavaInterop extends TestBase {
                         "c('class', 'field', 'method', 'staticField', 'staticMethod', 'superField', 'superMethod')");
 
         assertEvalFastR("names(java.type('int[]'))", "'class'");
-        assertEvalFastR("names(new(java.type('int[]'), 3))", "NULL");
+        assertEvalFastR("names(new(java.type('int[]'), 3))", "[1] \"length\" \"clone\"");
         assertEvalFastR("{ java.addToClasspath(paste0(Sys.getenv('R_HOME'),'/mxbuild/dists/fastr-unit-tests.jar')); tec<-new('com.oracle.truffle.r.test.library.fastr.TestExceptionsClass'); tec }",
                         "cat('[polyglot value]\\n$exception\\n[polyglot value]\\n\\n$class\\n[polyglot value]\\n\\n')");
     }

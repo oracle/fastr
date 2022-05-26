@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -107,6 +107,22 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval("argv <- list(structure(c('1', '2', '3', '4', '5', '1', '2', '3', '4', '5'), .Dim = 10L), '.', TRUE, FALSE, FALSE); .Internal(strsplit(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
+    /**
+     * A match at the beginning of the string is prepended with "", while a match at the end of the
+     * string is effectively removed.
+     */
+    @Test
+    public void testStrSplitAtBeginningAndEnd() {
+        // Beginning of the string
+        assertEval("{ strsplit('abc', 'a', fixed=FALSE, perl=FALSE) }");
+        assertEval("{ strsplit('abc', 'a', fixed=FALSE, perl=TRUE) }");
+        assertEval("{ strsplit('abc', 'a', fixed=TRUE, perl=FALSE) }");
+        // End of the string
+        assertEval("{ strsplit('abc', 'c', fixed=FALSE, perl=FALSE) }");
+        assertEval("{ strsplit('abc', 'c', fixed=FALSE, perl=TRUE) }");
+        assertEval("{ strsplit('abc', 'c', fixed=TRUE, perl=FALSE) }");
+    }
+
     @Test
     public void testStrSplit() {
         assertEval("{ strsplit(\"helloh\", \"h\", fixed=TRUE) }");
@@ -158,6 +174,9 @@ public class TestBuiltin_strsplit extends TestBase {
         assertEval("strsplit('a[1][1]=x11&a[1][2]=x12', '[[]')");
         assertEval("strsplit('a[1][1]=x11&a[1][2]=x12', '[][]')");
 
-        assertEval("strsplit('/some/path/to/somewhere' , '^(?=/)(?!//)|(?<!^)(?<!^/)/', perl = TRUE)");
+        // This test is ignored because it is a special case with an empty match at the beginning
+        // and positive and negative lookarounds. Empty match at the beginning is normally
+        // replaced by an empty character vector, but in this case gnur does not do that.
+        assertEval(Ignored.ImplementationError, "strsplit('/some/path/to/somewhere' , '^(?=/)(?!//)|(?<!^)(?<!^/)/', perl = TRUE)");
     }
 }

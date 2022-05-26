@@ -4,7 +4,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,12 +78,11 @@ public final class RGridGraphicsAdapter {
         REnvironment baseEnv = REnvironment.baseEnv(rCtx);
         baseEnv.safePut(DOT_DEVICES, RDataFactory.createPairList(NULL_DEVICE));
         setCurrentDevice(rCtx, NULL_DEVICE);
-        RContext ctx = RContext.getInstance();
-        ROptions.ContextStateImpl options = ctx.stateROptions;
+        ROptions.ContextStateImpl options = rCtx.stateROptions;
         if (options.getValue(DEFAULT_DEVICE_OPTION) != RNull.instance) {
             return;
         }
-        String defaultDevice = (ctx.isInteractive() && FastRConfig.AwtSupport) ? "awt" : "svg";
+        String defaultDevice = (rCtx.isInteractive() && FastRConfig.AwtSupport) ? "awt" : "svg";
         try {
             options.setValue(DEFAULT_DEVICE_OPTION, defaultDevice);
         } catch (OptionsException e) {
@@ -150,6 +149,7 @@ public final class RGridGraphicsAdapter {
         dotDevices.appendToEnd(RDataFactory.createPairList(name), BranchProfile.getUncached());
     }
 
+    @TruffleBoundary
     public static String getDefaultDevice() {
         ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
         String defaultDev = RRuntime.asString(options.getValue(DEFAULT_DEVICE_OPTION));

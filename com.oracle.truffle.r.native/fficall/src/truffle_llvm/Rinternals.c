@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ typedef char* (*call_bytesToNativeCharArray)(SEXP e);
 typedef char* (*call_charSXPToNativeCharArray)(SEXP e);
 typedef char* (*call_R_Home)();
 
-__thread void **callbacks = NULL;
+CALLBACKS_T callbacks = NULL;
 
 void Rinternals_setCallbacksAddress(void** theCallbacks) {
 	callbacks = theCallbacks;

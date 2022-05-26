@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
-
 import javax.tools.JavaFileObject;
 
 public final class FFIProcessor extends AbstractProcessor {
@@ -312,7 +311,6 @@ public final class FFIProcessor extends AbstractProcessor {
         if (!returnKind.isPrimitive() && returnKind != TypeKind.VOID) {
             w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
         }
-        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallBase;");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFILog;\n");
         w.append("import com.oracle.truffle.api.interop.InteropLibrary;\n");
@@ -320,6 +318,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.api.library.ExportMessage;\n");
         w.append("import com.oracle.truffle.api.nodes.ControlFlowException;\n");
         w.append("import com.oracle.truffle.api.dsl.Cached;\n");
+        w.append("import com.oracle.truffle.api.library.CachedLibrary;\n");
         w.append("import com.oracle.truffle.api.profiles.ValueProfile;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode;\n");
         w.append("import com.oracle.truffle.r.runtime.RError;\n");
@@ -334,7 +333,6 @@ public final class FFIProcessor extends AbstractProcessor {
         if (needsCallTarget) {
             w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
             w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
-            w.append("import com.oracle.truffle.api.Truffle;\n");
             w.append("import com.oracle.truffle.api.CallTarget;\n");
             w.append("import com.oracle.truffle.r.runtime.context.RFFIUpCallTargets;\n");
         }
@@ -355,10 +353,6 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;\n");
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;\n");
         }
-        w.append("import com.oracle.truffle.api.TruffleLanguage.ContextReference;\n");
-        w.append("import com.oracle.truffle.api.dsl.CachedContext;\n");
-        w.append("import com.oracle.truffle.r.runtime.context.TruffleRLanguage;\n");
-
         w.append("\n");
 
         w.append("// Checkstyle: stop method name check\n");
@@ -383,11 +377,11 @@ public final class FFIProcessor extends AbstractProcessor {
         if (unwrapNodes.length() > 0) {
             w.append(unwrapNodes);
         }
+        w.append("                @CachedLibrary(\"this\") InteropLibrary interopLib,\n");
 
-        w.append("                @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,\n");
         if (needsCallTarget) {
             w.append("                @Cached() com.oracle.truffle.r.ffi.impl.upcalls.UpCallBase.CallNode callNode,\n");
-            w.append("                @Cached(value = \"createCallTarget(ctxRef)\", allowUncached = true) CallTarget callTarget,\n");
+            w.append("                @Cached(value = \"createCallTarget(interopLib)\", allowUncached = true) CallTarget callTarget,\n");
         } else if (needsNode) {
             if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
                 w.append("                @Cached() " + nodeClassName + " node,\n");
@@ -414,7 +408,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("        if (RFFILog.logEnabled()) {\n");
         w.append("            RFFILog.logUpCall(\"" + name + "\", arguments);\n");
         w.append("        }\n");
-        w.append("        RContext ctx = ctxRef.get();\n");
+        w.append("        RContext ctx = RContext.getInstance(interopLib);\n");
         w.append("        RFFIContext rffiCtx = ctxProfile.profile(ctx.getStateRFFI());\n");
 
         if (returnKind != TypeKind.VOID) {
@@ -500,10 +494,11 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("\n");
 
         if (needsCallTarget) {
-            w.append("    protected static CallTarget createCallTarget(ContextReference<RContext> ctxRef) {\n");
-            w.append("        RFFIUpCallTargets targets = ctxRef.get().getRFFIUpCallTargets();\n");
+            w.append("    protected static CallTarget createCallTarget(InteropLibrary interopLib) {\n");
+            w.append("        RContext ctx = RContext.getInstance(interopLib);\n");
+            w.append("        RFFIUpCallTargets targets = ctx.getRFFIUpCallTargets();\n");
             w.append("        if(targets.").append(nodeClassName).append(" == null) {\n");
-            w.append("            targets.").append(nodeClassName).append(" =  Truffle.getRuntime().createCallTarget(new NodeRootNode());\n");
+            w.append("            targets.").append(nodeClassName).append(" =  new NodeRootNode().getCallTarget();\n");
             w.append("        }\n");
             w.append("        return targets.").append(nodeClassName).append(";\n");
             w.append("    }\n");
@@ -591,8 +586,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("// GENERATED; DO NOT EDIT\n\n");
         w.append("package com.oracle.truffle.r.ffi.impl.upcalls;\n\n");
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
-        w.append("import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;\n");
-        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n\n");
+        w.append("import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;\n\n");
         w.append("public enum Callbacks {\n");
         for (int i = 0; i < methods.length; i++) {
             ExecutableElement m = methods[i];

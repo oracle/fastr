@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.Frame;
@@ -72,7 +71,6 @@ import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
-import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -109,6 +107,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -314,13 +313,13 @@ final class REngine implements Engine, Engine.Timings {
     public CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException {
         if (source.getPath() != null && !source.isInteractive()) {
             // Use RScript semantics (delay syntax errors) for non-interactive sources from file
-            return Truffle.getRuntime().createCallTarget(createRScriptRoot(source, executionFrame));
+            return createRScriptRoot(source, executionFrame).getCallTarget();
         } else if (source == Engine.GET_CONTEXT) {
             /*
              * The "get context" operations should be executed with as little influence on the
              * actual engine as possible, therefore this special case takes care of it explicitly.
              */
-            return Truffle.getRuntime().createCallTarget(new RootNode(context.getLanguage()) {
+            return new RootNode(context.getLanguage()) {
                 @Override
                 public SourceSection getSourceSection() {
                     return source.createUnavailableSection();
@@ -330,11 +329,11 @@ final class REngine implements Engine, Engine.Timings {
                 public Object execute(VirtualFrame frame) {
                     return context.getEnv().asGuestValue(context);
                 }
-            });
+            }.getCallTarget();
         } else {
             List<RSyntaxNode> statements = parseSource(source);
             EngineRootNode rootNode = EngineRootNode.createEngineRoot(this, context, statements, createSourceSection(source, statements), executionFrame, false);
-            return Truffle.getRuntime().createCallTarget(rootNode);
+            return rootNode.getCallTarget();
         }
     }
 
@@ -381,12 +380,12 @@ final class REngine implements Engine, Engine.Timings {
         TruffleRLanguage rLanguage = RContext.getInstance().getLanguage();
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(rLanguage, RSyntaxNode.INTERNAL, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction",
                         null);
-        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        RootCallTarget callTarget = rootNode.getCallTarget();
         RFunction fun = RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, getGlobalFrame());
 
         // Create RootNode that uses RExplicitCallNode to invoke that function
         RootNode root = new RootNodeWithArgs(rLanguage, fun, getGlobalFrame(), argumentNames.size());
-        return Truffle.getRuntime().createCallTarget(root);
+        return root.getCallTarget();
     }
 
     private static final class RootNodeWithArgs extends RootNode {
@@ -611,7 +610,7 @@ final class REngine implements Engine, Engine.Timings {
      */
     @TruffleBoundary
     RootCallTarget doMakeCallTarget(RNode body, String description, boolean printResult, boolean topLevel) {
-        return Truffle.getRuntime().createCallTarget(new AnonymousRootNode(this, body, description, printResult, topLevel));
+        return new AnonymousRootNode(this, body, description, printResult, topLevel).getCallTarget();
     }
 
     /**
@@ -670,7 +669,7 @@ final class REngine implements Engine, Engine.Timings {
                 if (printResult && result != null) {
                     assert topLevel;
                     if (visibility.execute(vf)) {
-                        printResultImpl(RContext.getInstance(), result);
+                        printResultImpl(RContext.getInstance(this), result);
                     }
                 }
                 if (topLevel) {

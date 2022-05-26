@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,8 +47,6 @@ import com.oracle.truffle.r.launcher.RMain;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.builtin.base.Rm;
@@ -89,6 +87,8 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNodeGen;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.LoopTag;
@@ -114,12 +114,12 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object callback(RFunction f, Object[] args) {
-        boolean gd = RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(true);
+    public Object callback(RFunction f, RContext context, Object[] args) {
+        boolean gd = context.stateInstrumentation.setDebugGloballyDisabled(true);
         try {
-            return RContext.getEngine().evalFunction(f, null, null, true, null, args);
+            return context.getThisEngine().evalFunction(f, null, null, true, null, args);
         } finally {
-            RContext.getInstance().stateInstrumentation.setDebugGloballyDisabled(gd);
+            context.stateInstrumentation.setDebugGloballyDisabled(gd);
         }
     }
 
@@ -136,7 +136,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public boolean removeFromEnv(REnvironment env, String key) {
         try {
-            return Rm.removeFromEnv(env, key, true);
+            return Rm.removeFromEnv(env, key, true, RContext.getInstance());
         } catch (REnvironment.PutException ex) {
             return false;
         }
@@ -531,11 +531,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public RStringVector getClassHierarchy(RAttributable value) {
         return ClassHierarchyNode.getClassHierarchy(value);
-    }
-
-    @Override
-    public RContext getCurrentContext() {
-        return TruffleRLanguage.getCurrentContext();
     }
 
     private static Closure getOrCreateLanguageClosure(RNode expr) {

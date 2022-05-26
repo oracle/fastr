@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -367,7 +367,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     private static int findSubexpression(RSyntaxElement expr, List<RSyntaxNode> exprlist, String tag) {
-        RSyntaxVisitor<Integer> vis = new RSyntaxVisitor<Integer>() {
+        RSyntaxVisitor<Integer> vis = new RSyntaxVisitor<>() {
             @Override
             protected Integer visit(RSyntaxCall call) {
                 if (call.getSyntaxLHS() instanceof RSyntaxLookup && Utils.identityEquals(((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier(), LEFT_PAREN)) {
@@ -539,7 +539,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
             return countOccurences(subexprName, exprlist, fromIndex + 1);
         }
 
-        RSyntaxVisitor<Integer> vis = new RSyntaxVisitor<Integer>() {
+        RSyntaxVisitor<Integer> vis = new RSyntaxVisitor<>() {
             @Override
             protected Integer visit(RSyntaxCall element) {
                 RSyntaxElement[] args = element.getSyntaxArguments();
@@ -580,7 +580,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
             return;
         }
 
-        RSyntaxVisitor<RSyntaxElement> vis = new RSyntaxVisitor<RSyntaxElement>() {
+        RSyntaxVisitor<RSyntaxElement> vis = new RSyntaxVisitor<>() {
 
             // TODO: do not create a new call node after the first replacement
 

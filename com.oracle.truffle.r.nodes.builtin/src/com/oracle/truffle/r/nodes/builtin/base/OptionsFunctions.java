@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,6 @@ import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.ROptions.ContextStateImpl;
 import com.oracle.truffle.r.runtime.ROptions.OptionsException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -75,12 +74,12 @@ public class OptionsFunctions {
         @Specialization
         @TruffleBoundary
         protected RList options(@SuppressWarnings("unused") RMissing x) {
-            Set<Map.Entry<String, Object>> optionSettings = RContext.getInstance().stateROptions.getValues();
+            Set<Map.Entry<String, Object>> optionSettings = getRContext().stateROptions.getValues();
             Object[] data = new Object[optionSettings.size()];
             String[] names = new String[data.length];
 
             ArrayList<Map.Entry<String, Object>> entries = new ArrayList<>(optionSettings);
-            Locale locale = RContext.getInstance().stateRLocale.getLocale(RLocale.COLLATE);
+            Locale locale = getRContext().stateRLocale.getLocale(RLocale.COLLATE);
             Collator collator = locale == Locale.ROOT || locale == null ? null : RLocale.getOrderCollator(locale);
             Collections.sort(entries, new Comparator<Map.Entry<String, Object>>() {
                 @Override
@@ -128,7 +127,7 @@ public class OptionsFunctions {
         @TruffleBoundary
         private ResultWithVisibility optionsInternal(RArgsValuesAndNames args) throws OptionsException {
             boolean visible = true;
-            ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
+            ROptions.ContextStateImpl options = getRContext().stateROptions;
             Object[] values = args.getArguments();
             ArgumentsSignature signature = args.getSignature();
             ArrayList<Object> data = new ArrayList<>(values.length);
@@ -210,7 +209,7 @@ public class OptionsFunctions {
             if (x.getLength() != 1) {
                 throw error(RError.Message.MUST_BE_STRING);
             }
-            ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
+            ROptions.ContextStateImpl options = getRContext().stateROptions;
             return options.getValue(x.getDataAt(0));
         }
 

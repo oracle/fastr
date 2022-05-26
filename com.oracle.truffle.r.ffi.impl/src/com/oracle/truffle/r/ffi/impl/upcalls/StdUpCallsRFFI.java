@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,6 +94,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.R_CHARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RawGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RealGetRegionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RfAllocArrayNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfAllocVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfFindFun;
@@ -283,6 +284,7 @@ public interface StdUpCallsRFFI {
     Object Rf_allocVector(int mode, long n);
 
     @RFFIRunGC
+    @RFFIUpCallNode(value = RfAllocArrayNode.class, needsCallTarget = true)
     Object Rf_allocArray(int mode, Object dimsObj);
 
     @RFFIRunGC
@@ -311,6 +313,10 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(TRUELENGTHNode.class)
     int TRUELENGTH(Object x);
+
+    int IS_GROWABLE(Object x);
+
+    void SET_GROWABLE_BIT(Object x);
 
     int LEVELS(Object x);
 

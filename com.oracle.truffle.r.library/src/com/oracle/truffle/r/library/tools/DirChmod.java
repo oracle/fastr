@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,13 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import java.io.IOException;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -38,11 +38,7 @@ import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.Set;
 
 public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
 
@@ -59,9 +55,8 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RNull dirChmod(String pathName, boolean setGroupWrite,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-        TruffleFile path = ctxRef.get().getSafeTruffleFile(pathName);
+    protected RNull dirChmod(String pathName, boolean setGroupWrite) {
+        TruffleFile path = getRContext().getSafeTruffleFile(pathName);
         int fileMask = setGroupWrite ? GRPWRITE_FILE_MASK : FILE_MASK;
         int dirMask = setGroupWrite ? GRPWRITE_DIR_MASK : DIR_MASK;
         if (!path.exists()) {

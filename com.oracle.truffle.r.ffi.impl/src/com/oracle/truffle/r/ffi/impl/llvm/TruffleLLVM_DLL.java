@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,10 @@
  * questions.
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -46,10 +50,6 @@ import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 public class TruffleLLVM_DLL implements DLLRFFI {
     // TODO: these dependencies were ignored for some reason, will it be a problem???
     private static final Set<String> ignoredNativeLibs = new HashSet<>();
@@ -62,7 +62,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         @Override
         @TruffleBoundary
         public LibHandle execute(String path, @SuppressWarnings("unused") boolean local, @SuppressWarnings("unused") boolean now) {
-            return dlOpen(RContext.getInstance(), path);
+            return dlOpen(RContext.getInstance(this), path);
         }
     }
 

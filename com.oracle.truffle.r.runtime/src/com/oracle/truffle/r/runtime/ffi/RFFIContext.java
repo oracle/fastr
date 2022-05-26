@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,10 +63,9 @@ public abstract class RFFIContext extends RFFI {
     public final RFFIContextState rffiContextState;
 
     protected RFFIContext(RFFIContextState rffiContextState, CRFFI cRFFI, BaseRFFI baseRFFI, AltrepRFFI altrepRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI,
-                    PCRERFFI pcreRFFI,
-                    LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
+                    PCRE2RFFI pcre2RFFI, LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
                     ToolsRFFI toolsRFFI, REmbedRFFI rEmbedRFFI, MiscRFFI miscRFFI) {
-        super(cRFFI, baseRFFI, altrepRFFI, callRFFI, dllRFFI, userRngRFFI, zipRFFI, pcreRFFI, lapackRFFI, statsRFFI, toolsRFFI, rEmbedRFFI, miscRFFI);
+        super(cRFFI, baseRFFI, altrepRFFI, callRFFI, dllRFFI, userRngRFFI, zipRFFI, pcre2RFFI, lapackRFFI, statsRFFI, toolsRFFI, rEmbedRFFI, miscRFFI);
         this.rffiContextState = rffiContextState;
         // forward constructor
     }
@@ -139,7 +138,7 @@ public abstract class RFFIContext extends RFFI {
         }
     }
 
-    public abstract TruffleObject lookupNativeFunction(NativeFunction function);
+    public abstract TruffleObject lookupNativeFunction(NativeFunction function, RContext ctx);
 
     public abstract <C extends RFFIContext> C as(Class<C> rffiCtxClass);
 

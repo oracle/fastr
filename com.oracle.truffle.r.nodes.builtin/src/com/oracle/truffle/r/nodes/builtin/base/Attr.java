@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
 
     @ImportStatic(DSLConfig.class)
     protected abstract static class PartialSearchCache extends Node {
-        @Child protected ForEachAttributeNode iterAttrAccess = ForEachAttributeNode.create(new PartialAttrSearchAction());
+        @Child protected ForEachAttributeNode iterAttrAccess = ForEachAttributeNode.create(PartialAttrSearchAction.INSTANCE);
 
         public abstract Object execute(RAttributable attributable, String name);
 
@@ -126,7 +126,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
                         @SuppressWarnings("unused") @Bind("getAttributes(attributable)") DynamicObject attrs,
                         @SuppressWarnings("unused") @Cached("attrs.getShape()") Shape cachedShape,
                         @SuppressWarnings("unused") @Cached("name") String cachedName,
-                        @Cached("iterAttrAccess.execute(attributable,name)") Object result) {
+                        @Cached("iterAttrAccess.execute(attributable, name)") Object result) {
             return result;
         }
 
@@ -137,9 +137,11 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
     }
 
     private static final class PartialAttrSearchAction extends AttributeAction {
+        private static final PartialAttrSearchAction INSTANCE = new PartialAttrSearchAction();
+
         @Override
         public boolean action(String name, Object value, Context ctx) {
-            if (name.startsWith((String) ctx.attributeName)) {
+            if (name.startsWith((String) ctx.argument)) {
                 if (ctx.result == RNull.instance) {
                     ctx.result = value;
                 } else {

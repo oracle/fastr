@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,9 @@ package com.oracle.truffle.r.ffi.impl.upcalls;
 import com.oracle.truffle.r.ffi.impl.nodes.FASTR_DATAPTRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.FASTR_serializeNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
+import com.oracle.truffle.r.ffi.processor.RFFIInject;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Up-calls specific to FastR used in FastR native code and not exported as part of any API.
@@ -50,7 +52,7 @@ public interface FastRUpCalls {
 
     boolean isSeekable(Object x);
 
-    void restoreHandlerStacks(Object savedHandlerStack);
+    void restoreHandlerStacks(Object savedHandlerStack, @RFFIInject RContext context);
 
     /**
      * Implements {@code DATAPTR} for types that do not have specialized API function for accessing

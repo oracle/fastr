@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,12 +33,9 @@ import java.util.EnumSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -55,15 +52,15 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.Engine.ParsedExpression;
 import com.oracle.truffle.r.runtime.context.Engine.ParserMetadata;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -113,8 +110,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
 
     @TruffleBoundary
     @Specialization
-    protected RExpression parse(int conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+    protected RExpression parse(int conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding) {
         String[] lines;
         RConnection connection = RConnection.fromIndex(conn);
         if (connection == StdConnections.getStdin()) {
@@ -125,23 +121,22 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         } catch (IOException ex) {
             throw error(RError.Message.PARSE_ERROR);
         }
-        return doParse(connection, n, coalesce(lines), prompt, srcFile, encoding, ctxRef.get());
+        return doParse(connection, n, coalesce(lines), prompt, srcFile, encoding);
     }
 
     @TruffleBoundary
     @Specialization
-    protected RExpression parse(int conn, int n, RStringVector text, String prompt, Object srcFile, String encoding,
-                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+    protected RExpression parse(int conn, int n, RStringVector text, String prompt, Object srcFile, String encoding) {
         RConnection connection = RConnection.fromIndex(conn);
-        return doParse(connection, n, coalesce(text), prompt, srcFile, encoding, ctxRef.get());
+        return doParse(connection, n, coalesce(text), prompt, srcFile, encoding);
     }
 
-    private RExpression doParse(RConnection conn, int n, String coalescedLines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding,
-                    RContext context) {
+    private RExpression doParse(RConnection conn, int n, String coalescedLines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding) {
         if (coalescedLines.length() == 0 || n == 0) {
             return RDataFactory.createExpression(new Object[0]);
         }
         try {
+            RContext context = getRContext();
             Source source = srcFile != RNull.instance ? createSource(context, srcFile, coalescedLines) : createSource(context, conn, coalescedLines);
             boolean keepSource = srcFile instanceof REnvironment;
             ParsedExpression parseRes = RContext.getEngine().parse(source, keepSource);

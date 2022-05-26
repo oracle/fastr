@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,24 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.library.fastr;
 
-import org.junit.Test;
+package com.oracle.truffle.r.ffi.impl.javaGD;
 
-import com.oracle.truffle.r.test.TestRBase;
+import org.rosuda.javaGD.GDInterface;
 
-public class TestChannels extends TestRBase {
+import java.awt.*;
 
-    @Override
-    public String getTestDir() {
-        return "channels";
+public class AWTGraphicsGD extends GDInterface {
+    private Graphics graphics;
+
+    public void setGraphics(Graphics graphics) {
+        assert this.graphics == null : "graphics field should be initialized just once";
+        this.graphics = graphics;
+        ((AWTGraphicsContainer) c).setGraphics(graphics);
     }
 
-    /**
-     * Needs to include a dummy test, otherwise JUnit does not pick it up for execution.
-     */
-    @Test
-    public void dummyTest() {
-        assertEval("42");
+    @Override
+    public boolean gdOpen(double w, double h) {
+        c = new AWTGraphicsContainer(w, h);
+        return true;
     }
 }

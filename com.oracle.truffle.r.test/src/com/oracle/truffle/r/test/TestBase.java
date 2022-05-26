@@ -111,7 +111,7 @@ public class TestBase {
     public static final Map<String, String> options = new HashMap<>();
 
     /**
-     * See {@link com.oracle.truffle.r.test.builtins.TestTestBase} for examples.
+     * See {@code TestTestBase} for examples.
      */
     public enum Output implements TestTrait {
         ImprovedErrorContext, // FastR provides a more accurate error context
@@ -148,6 +148,7 @@ public class TestBase {
         SideEffects("tests that are ignored because they would interfere with other tests"),
         MissingBuiltin("tests that fail because of missing builtins"),
         NewRVersionMigration("temporarily ignored while migrating to new GNU-R version"),
+        NativeGridGraphics("tests that are ignored because of the different behavior of FastrInternalGrid from native grid packages"),
         Unimplemented("tests that fail because of missing functionality");
 
         private final String description;
@@ -552,6 +553,10 @@ public class TestBase {
 
     protected void assertEval(long timeout, TestTrait trait1, TestTrait trait2, String... input) {
         evalAndCompare(input, timeout, trait1, trait2);
+    }
+
+    protected void assertEval(long timeout, TestTrait trait1, TestTrait trait2, TestTrait trait3, String... input) {
+        evalAndCompare(input, timeout, trait1, trait2, trait3);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, String... input) {

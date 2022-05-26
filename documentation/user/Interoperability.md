@@ -96,8 +96,7 @@ as.list(x)
 # gives: list(c(T,F,T), c(1L,2L,3L))
 ```
 
-For more details, refer to the
-[executable specification](https://github.com/oracle/fastr/blob/master/com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/library/fastr/R/interop-array-conversion-test.R#L158) of the implicit and explicit foreign objects conversions.
+For more details, refer to the [executable specification](https://github.com/oracle/fastr/blob/master/com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/library/fastr/R/interop-array-conversion-test.R#L158) of the implicit and explicit foreign objects conversions.
 
 Note: R contexts started from other languages, or Java (as opposed to via the `R` script), will default to non interactive mode, similar to `Rscript`.
 This has implications on console output (the results are not echoed) and graphics (the output defaults to a file instead of a window), and some packages may behave differently in non-interactive mode.
@@ -117,6 +116,4 @@ For more information see the `R --help` message and try these examples:
 * `export`
 * `import`
 
-See the [Polyglot Programming](https://www.graalvm.org/reference-manual/polyglot-programming/)
-reference for more information about interoperability with other programming
-languages.
+See the [Polyglot Programming](https://github.com/oracle/graal/blob/master/docs/reference-manual/polyglot-programming.md) reference for more information about interoperability with other programming languages.

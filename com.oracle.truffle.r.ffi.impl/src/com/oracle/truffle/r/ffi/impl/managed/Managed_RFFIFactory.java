@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
@@ -37,7 +38,7 @@ import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
-import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -106,14 +107,15 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                                 public SeedsNode createSeedsNode() {
                                     throw unsupported("user defined RNG");
                                 }
-                            }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
-                            new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(Managed_DownCallNodeFactory.INSTANCE),
-                            new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
+                            }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE),
+                            new PCRE2RFFI(Managed_DownCallNodeFactory.INSTANCE),
+                            new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE), new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI(),
+                            new REmbedRFFI(Managed_DownCallNodeFactory.INSTANCE), new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
 
         }
 
         @Override
-        public TruffleObject lookupNativeFunction(NativeFunction function) {
+        public TruffleObject lookupNativeFunction(NativeFunction function, RContext ctx) {
             throw unsupported("calling native functions");
         }
 

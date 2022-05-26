@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,9 +31,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -54,8 +52,6 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -326,10 +322,9 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractVector evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b, RDoubleVector c,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        protected RAbstractVector evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b, RDoubleVector c) {
             RRNG.getRNGState();
-            return inner.execute(length, a, b, c, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
+            return inner.execute(length, a, b, c, RandomNumberProvider.fromCurrentRNG(getRContext()));
         }
     }
 
@@ -356,10 +351,9 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected Object evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        protected Object evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b) {
             RRNG.getRNGState();
-            return inner.execute(length, a, b, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
+            return inner.execute(length, a, b, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG(getRContext()));
         }
     }
 
@@ -385,10 +379,9 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected Object evaluate(RAbstractVector length, RDoubleVector a,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        protected Object evaluate(RAbstractVector length, RDoubleVector a) {
             RRNG.getRNGState();
-            return inner.execute(length, a, DUMMY_VECTOR, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG(ctxRef.get()));
+            return inner.execute(length, a, DUMMY_VECTOR, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG(getRContext()));
         }
     }
 }

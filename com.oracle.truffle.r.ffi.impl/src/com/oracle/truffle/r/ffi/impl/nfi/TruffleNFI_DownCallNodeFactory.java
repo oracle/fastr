@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -32,7 +30,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DownCallNodeFactoryFactory.NFIDownCallNodeGen;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -63,21 +60,20 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Specialization
-        protected Object doCall(Frame frame, NativeFunction f, Object[] args,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-            return doCallImpl(frame, f, args, ctxRef);
+        protected Object doCall(Frame frame, NativeFunction f, Object[] args) {
+            return doCallImpl(frame, f, args);
         }
 
         @Override
-        protected TruffleObject createTarget(ContextReference<RContext> ctxRef, NativeFunction fn) {
-            return ctxRef.get().getRFFI(TruffleNFI_Context.class).lookupNativeFunction(fn);
+        protected TruffleObject createTarget(RContext ctx, NativeFunction fn) {
+            return ctx.getRFFI(TruffleNFI_Context.class).lookupNativeFunction(fn, ctx);
         }
 
         @Override
         @ExplodeLoop
         protected Object beforeCall(Frame frame, NativeFunction fn, TruffleObject target, Object[] args) {
+            RContext context = RContext.getInstance(this);
             for (int i = 0; i < args.length; i++) {
-                RContext context = RContext.getInstance();
                 Object obj = args[i];
                 if (obj instanceof double[]) {
                     args[i] = context.getEnv().asGuestValue(obj);
@@ -98,8 +94,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                     args[i] = context.getEnv().asGuestValue(data);
                 }
             }
-
-            return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(maybeMaterializeFrame(frame, fn), RFFIFactory.Type.NFI);
+            return context.getRFFI(TruffleNFI_Context.class).beforeDowncall(maybeMaterializeFrame(frame, fn), RFFIFactory.Type.NFI);
         }
 
         @TruffleBoundary
@@ -113,7 +108,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
         @Override
         @ExplodeLoop
         protected void afterCall(Frame frame, Object before, NativeFunction fn, TruffleObject target, Object[] args) {
-            (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI, AfterDownCallProfiles.getUncached());
+            (RContext.getInstance(this).getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI, AfterDownCallProfiles.getUncached());
             for (Object obj : args) {
                 // TODO: can this ever happen in NFI?
                 if (obj instanceof NativeArray) {

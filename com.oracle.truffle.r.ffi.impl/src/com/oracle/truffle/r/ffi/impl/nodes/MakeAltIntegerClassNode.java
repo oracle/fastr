@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,11 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.context.AltRepContext;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 /**
  * This node represents R_make_altinteger_class upcall and returns a
@@ -46,9 +44,8 @@ public abstract class MakeAltIntegerClassNode extends FFIUpCallNode.Arg3 {
 
     @TruffleBoundary
     @Specialization
-    protected Object makeAltIntegerClass(String className, String packageName, @SuppressWarnings("unused") Object dllInfo,
-                    @CachedContext(TruffleRLanguage.class) RContext context) {
-        AltRepContext altRepCtx = context.altRepContext;
+    protected Object makeAltIntegerClass(String className, String packageName, @SuppressWarnings("unused") Object dllInfo) {
+        AltRepContext altRepCtx = RContext.getInstance(this).altRepContext;
         altrepLogger.fine(() -> "Making new altint class " + packageName + ":" + className);
         return altRepCtx.registerNewAltIntClass(className, packageName);
     }

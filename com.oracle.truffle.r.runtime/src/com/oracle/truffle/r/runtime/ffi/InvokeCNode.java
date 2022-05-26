@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -84,7 +83,7 @@ public abstract class InvokeCNode extends RBaseNode {
      */
     protected abstract void execute(NativeCallInfo nativeCallInfo, Object[] args);
 
-    public final RList dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, byte naok, byte dup, RArgsValuesAndNames args, RContext rCtx) {
+    public final RList dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, byte naok, byte dup, RArgsValuesAndNames args) {
         @SuppressWarnings("unused")
         boolean dupArgs = RRuntime.fromLogical(dup);
         @SuppressWarnings("unused")
@@ -92,7 +91,7 @@ public abstract class InvokeCNode extends RBaseNode {
 
         Object[] preparedArgs = argsWrapperNode.execute(args.getArguments());
 
-        RFFIContext stateRFFI = stateRFFIProfile.profile(rCtx.getStateRFFI());
+        RFFIContext stateRFFI = stateRFFIProfile.profile(getRContext().getStateRFFI());
         LibHandle handle = nativeCallInfo.dllInfo == null ? null : nativeCallInfo.dllInfo.handle;
         Type rffiType = handle == null ? stateRFFI.getDefaultRFFIType() : handle.getRFFIType();
         Object before = stateRFFI.beforeDowncall(frame.materialize(), rffiType);

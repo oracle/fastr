@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.LoadPackagesNativeCode;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +31,6 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -37,7 +38,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.nodes.builtin.base.BaseVariables;
-import static com.oracle.truffle.r.runtime.context.FastROptions.LoadPackagesNativeCode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -73,7 +73,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     public static void loadBase(RContext context, MaterializedFrame baseFrame) {
         basePackage = new BasePackage(context);
         RBuiltinPackage pkg = basePackage;
-        REnvironment baseEnv = REnvironment.baseEnv();
+        REnvironment baseEnv = REnvironment.baseEnv(context);
         BaseVariables.initialize(baseEnv, context);
         /*
          * All the RBuiltin PRIMITIVE methods that were created earlier need to be added to the
@@ -134,7 +134,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             /*
              * Only the overriding code can know which environment to update, package or namespace.
              */
-            REnvironment env = REnvironment.baseEnv();
+            REnvironment env = REnvironment.baseEnv(context);
             for (Source source : componentList) {
                 try {
                     RContext.getEngine().parseAndEval(source, env.getFrame(), false);
@@ -166,7 +166,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         RBuiltinRootNode root = new RBuiltinRootNode(language, builtin, frameDescriptor, null);
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
-        return Truffle.getRuntime().createCallTarget(root);
+        return root.getCallTarget();
     }
 
     private static RFunction createFunction(TruffleRLanguage language, RBuiltinFactory builtinFactory, String methodName) {

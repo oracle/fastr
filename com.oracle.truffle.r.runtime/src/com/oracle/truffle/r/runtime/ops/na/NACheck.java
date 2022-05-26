@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,8 +77,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * </pre>
  *
  * The {@link NACheck} also contains facility for {@code NaN} checks. The trick is that {@code NA}
- * is of the of possible values representing {@code NaN}, so if it is necessary to check for both,
- * the patten is follows:
+ * is one of the of possible values representing {@code NaN}, so if it is necessary to check for
+ * both, the patten is follows:
  *
  * <pre>
  * if (naCheck.checkNAorNan(value)) {

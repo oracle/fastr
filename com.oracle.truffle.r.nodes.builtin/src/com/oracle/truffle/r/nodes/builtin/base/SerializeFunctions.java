@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -231,8 +231,8 @@ public class SerializeFunctions {
             return serialize(object, type, RSerialize.DEFAULT_VERSION);
         }
 
-        private static Object serialize(Object object, int type, int version) {
-            byte[] data = RSerialize.serialize(RContext.getInstance(), object, type, version, null);
+        private Object serialize(Object object, int type, int version) {
+            byte[] data = RSerialize.serialize(getRContext(), object, type, version, null);
             return RDataFactory.createRawVector(data);
         }
     }

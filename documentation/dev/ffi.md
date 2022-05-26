@@ -164,4 +164,4 @@ referencing object in GNU-R. What this approach doesn't solve is that the extens
 may assume that changes done in such objects (e.g., attributes pair-list) will be visible in
 their referencing object. At this point, we ignore this potential problem.
 
-Additionally, in in case of a downcall, the materialized version of a `RBaseObject` has to be kept alive until the downcall returns, so that it is ensured that an eventual upcall might still get access to the original downcalls argument object.
+Additionally, in case of a downcall, the materialized version of a `RBaseObject` has to be kept alive until the downcall returns, so that it is ensured that an eventual upcall might still get access to the original downcalls argument object.

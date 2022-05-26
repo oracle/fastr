@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.RefCountIncrementOnly;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
@@ -31,7 +33,6 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import static com.oracle.truffle.r.runtime.context.FastROptions.RefCountIncrementOnly;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -64,7 +65,7 @@ public abstract class ArgumentStatePush extends Node {
     }
 
     protected int createWriteArgMask(VirtualFrame frame, RSharingAttributeStorage shareable) {
-        if (RContext.getInstance().getOption(RefCountIncrementOnly)) {
+        if (RContext.getInstance(this).getOption(RefCountIncrementOnly)) {
             return -1;
         }
         if (shareable instanceof RAbstractContainer) {

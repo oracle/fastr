@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,11 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 public interface RConnection extends AutoCloseable {
 
     static BaseRConnection fromIndex(int con) {
-        return RContext.getInstance().stateRConnection.getConnection(con, true);
+        return fromIndex(con, RContext.getInstance());
+    }
+
+    static BaseRConnection fromIndex(int con, RContext ctx) {
+        return ctx.stateRConnection.getConnection(con, true);
     }
 
     /**

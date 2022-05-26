@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,16 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
+
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -32,6 +42,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.nfi.api.SignatureLibrary;
 import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLL;
@@ -53,7 +64,7 @@ import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
-import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.PCRE2RFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -63,15 +74,6 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.concurrent.locks.ReentrantLock;
-
-import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 public class TruffleNFI_Context extends RFFIContext {
 
@@ -87,9 +89,10 @@ public class TruffleNFI_Context extends RFFIContext {
                         new TruffleNFI_Call(),
                         new TruffleNFI_DLL(),
                         new TruffleNFI_UserRng(),
-                        new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
-                        new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
-                        new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
+                        new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
+                        new PCRE2RFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
+                        new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(),
+                        new REmbedRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
         // forward constructor
     }
 
@@ -128,11 +131,17 @@ public class TruffleNFI_Context extends RFFIContext {
         return Type.NFI;
     }
 
+    public static Object parseSignature(String signature) {
+        CompilerAsserts.neverPartOfCompilation();
+        Source sigSource = Source.newBuilder("nfi", signature, "(nfi-signature)").build();
+        return RContext.getInstance().getEnv().parseInternal(sigSource).call();
+    }
+
     /**
      * Looks up the given given function and returns the NFI function object.
      */
     @Override
-    public TruffleObject lookupNativeFunction(NativeFunction function) {
+    public TruffleObject lookupNativeFunction(NativeFunction function, RContext ctx) {
         int index = function.ordinal();
         if (nativeFunctions[index] == null) {
             // The look-up is one-off thing
@@ -141,7 +150,7 @@ public class TruffleNFI_Context extends RFFIContext {
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 dllInfo = TruffleNFI_Context.getInstance().defaultLibrary;
             } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
-                DLLInfo lib = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
+                DLLInfo lib = DLL.findLibraryContainingSymbol(ctx, function.getCallName());
                 if (lib == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
                 }
@@ -155,8 +164,9 @@ public class TruffleNFI_Context extends RFFIContext {
             }
             try {
                 InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-                TruffleObject symbol = ((TruffleObject) interop.readMember(dllInfo, function.getCallName()));
-                TruffleObject target = (TruffleObject) interop.invokeMember(symbol, "bind", function.getSignature());
+                Object symbol = interop.readMember(dllInfo, function.getCallName());
+                Object signature = parseSignature(function.getSignature());
+                TruffleObject target = (TruffleObject) SignatureLibrary.getUncached().bind(signature, symbol);
                 nativeFunctions[index] = target;
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -183,16 +193,17 @@ public class TruffleNFI_Context extends RFFIContext {
                     }
                     try {
                         InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                        RContext ctx = RContext.getInstance();
                         if (value instanceof Double) {
-                            interop.execute(lookupNativeFunction(NativeFunction.initvar_double), i, value);
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_double, ctx), i, value);
                         } else if (value instanceof Integer) {
-                            interop.execute(lookupNativeFunction(NativeFunction.initvar_int), i, value);
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_int, ctx), i, value);
                         } else if (value instanceof String) {
-                            interop.execute(lookupNativeFunction(NativeFunction.initvar_string), i, value);
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_string, ctx), i, value);
                         } else {
                             FFIDownCallWrap ffiWrap = new FFIDownCallWrap();
                             try {
-                                interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, ffiWrap.wrapUncached(value));
+                                interop.execute(lookupNativeFunction(NativeFunction.initvar_obj, ctx), i, ffiWrap.wrapUncached(value));
                             } catch (Exception ex) {
                                 throw RInternalError.shouldNotReachHere(ex);
                             } finally {
@@ -218,8 +229,8 @@ public class TruffleNFI_Context extends RFFIContext {
         try {
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
             Object getCallbacksAddress = interop.readMember(getLibRHandle(), "Rinternals_getCallbacksAddress");
-            TruffleObject getCallbacksAddressFunction = (TruffleObject) interop.invokeMember(getCallbacksAddress, "bind", "(): sint64");
-            return (long) interop.execute(getCallbacksAddressFunction);
+            Object signature = parseSignature("(): sint64");
+            return (long) SignatureLibrary.getUncached().call(signature, getCallbacksAddress);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -230,6 +241,7 @@ public class TruffleNFI_Context extends RFFIContext {
             // create and fill a new callbacks table
             callbacks = NativeMemory.allocate(Callbacks.values().length * (long) Long.BYTES, "callbacks");
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+            SignatureLibrary signatures = SignatureLibrary.getUncached();
             Object addCallback;
             try {
                 addCallback = interop.readMember(getLibRHandle(), "Rinternals_addCallback");
@@ -239,9 +251,8 @@ public class TruffleNFI_Context extends RFFIContext {
             try {
                 Callbacks.createCalls(new TruffleNFI_UpCallsRFFIImpl());
                 for (Callbacks callback : Callbacks.values()) {
-                    String addCallbackSignature = String.format("(env, sint64, sint32, %s): void", callback.nfiSignature);
-                    TruffleObject addCallbackFunction = (TruffleObject) interop.invokeMember(addCallback, "bind", addCallbackSignature);
-                    interop.execute(addCallbackFunction, callbacks, callback.ordinal(), callback.call);
+                    Object addCallbackSignature = parseSignature(String.format("(env, sint64, sint32, %s): void", callback.nfiSignature));
+                    signatures.call(addCallbackSignature, addCallback, callbacks, callback.ordinal(), callback.call);
                 }
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);

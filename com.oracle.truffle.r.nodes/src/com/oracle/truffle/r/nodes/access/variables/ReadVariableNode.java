@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,11 @@
  */
 package com.oracle.truffle.r.nodes.access.variables;
 
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_COMPLEX_LOOKUPS;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintComplexLookups;
+
 import java.util.ArrayList;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -51,7 +55,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import static com.oracle.truffle.r.runtime.context.FastROptions.PrintComplexLookups;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -60,17 +63,18 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -82,10 +86,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import java.util.logging.Level;
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_COMPLEX_LOOKUPS;
-import com.oracle.truffle.r.runtime.data.RBaseObject;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
@@ -695,7 +695,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
             lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[assumptions.size()]));
         }
 
-        if (RContext.getInstance().getOption(PrintComplexLookups)) {
+        if (getRContext().getOption(PrintComplexLookups)) {
             System.out.println("WARNING: The PrintComplexLookups option was discontinued.\n" +
                             "You can rerun FastR with --log.R.com.oracle.truffle.r.complexLookups.level=FINE");
         }
@@ -777,12 +777,12 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
         return lastLevel;
     }
 
-    public static RFunction lookupFunction(String identifier, Frame variableFrame) {
+    public static RFunction lookupFunction(String identifier, MaterializedFrame variableFrame) {
         return lookupFunction(identifier, variableFrame, false, true);
     }
 
     @TruffleBoundary
-    public static RFunction lookupFunction(String identifier, Frame variableFrame, boolean localOnly, boolean forcePromises) {
+    public static RFunction lookupFunction(String identifier, MaterializedFrame variableFrame, boolean localOnly, boolean forcePromises) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
@@ -822,7 +822,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     }
 
     @TruffleBoundary
-    public static Object lookupAny(String identifier, Frame variableFrame, boolean localOnly) {
+    public static Object lookupAny(String identifier, MaterializedFrame variableFrame, boolean localOnly) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name
@@ -849,7 +849,7 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
     }
 
     @TruffleBoundary
-    public static RArgsValuesAndNames lookupVarArgs(Frame variableFrame) {
+    public static RArgsValuesAndNames lookupVarArgs(MaterializedFrame variableFrame) {
         Frame current = variableFrame;
         do {
             // see if the current frame has a value of the given name

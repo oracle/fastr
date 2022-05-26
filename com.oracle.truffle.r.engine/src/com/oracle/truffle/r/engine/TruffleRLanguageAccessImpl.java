@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.oracle.truffle.r.engine;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -102,7 +101,7 @@ public final class TruffleRLanguageAccessImpl implements TruffleRLanguageAccess 
 
         @Override
         public RootCallTarget get() {
-            return Truffle.getRuntime().createCallTarget(new ValuePrinterRootNode());
+            return new ValuePrinterRootNode().getCallTarget();
         }
     }
 

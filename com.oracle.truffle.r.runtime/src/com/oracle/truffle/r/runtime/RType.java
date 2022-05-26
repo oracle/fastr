@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ package com.oracle.truffle.r.runtime;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -150,8 +149,8 @@ public enum RType implements TruffleObject {
 
         @Specialization
         static boolean multiSlots(RType receiver, MultiSlotData multiSlotData,
-                        @CachedLibrary("receiver") InteropLibrary interopLib,
-                        @CachedContext(TruffleRLanguage.class) RContext ctx) {
+                        @CachedLibrary("receiver") InteropLibrary interopLib) {
+            RContext ctx = RContext.getInstance(interopLib);
             try {
                 return interopLib.isMetaInstance(receiver, multiSlotData.get(ctx.getMultiSlotInd()));
             } catch (UnsupportedMessageException ex) {
@@ -171,6 +170,32 @@ public enum RType implements TruffleObject {
 
     public int getPrecedence() {
         return precedence;
+    }
+
+    // Simple isXYZ helpers for Truffle DSL usage
+
+    public boolean isInteger() {
+        return this == Integer;
+    }
+
+    public boolean isLogical() {
+        return this == Logical;
+    }
+
+    public boolean isDouble() {
+        return this == Double;
+    }
+
+    public boolean isCharacter() {
+        return this == Character;
+    }
+
+    public boolean isComplex() {
+        return this == Complex;
+    }
+
+    public boolean isList() {
+        return this == List;
     }
 
     public boolean isNumeric() {

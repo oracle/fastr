@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -61,7 +60,6 @@ import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -525,9 +523,9 @@ public final class FrameSlotChangeMonitor {
 
         @ExportMessage
         Object send(Message message, Object[] args,
-                        @CachedContext(TruffleRLanguage.class) RContext ctx,
                         @Cached BranchProfile notFoundProfile,
                         @CachedLibrary(limit = "5") ReflectionLibrary reflection) throws Exception {
+            RContext ctx = RContext.getInstance(reflection);
             Object value = data[ctx.getMultiSlotInd()];
             if (value == null) {
                 notFoundProfile.enter();
@@ -539,7 +537,7 @@ public final class FrameSlotChangeMonitor {
 
     private static final class FrameSlotInfoImpl {
         /**
-         * This is meant to monitor updates performed on {@link FrameSlot}. Each {@link FrameSlot}
+         * This is meant to monitor updates performed on {@code FrameSlot}. Each {@code FrameSlot}
          * holds an {@link Assumption} in it's "info" field; it is valid as long as no non-local
          * update has ever taken place.<br/>
          * The background to this rather strange assumption is that non-local reads are very hard to
@@ -741,8 +739,12 @@ public final class FrameSlotChangeMonitor {
             return value;
         }
 
+        public void setMultiSlot(Frame frame, FrameSlot slot, Object newValue) {
+            setMultiSlotImpl(frame.materialize(), slot, newValue);
+        }
+
         @TruffleBoundary
-        public synchronized void setMultiSlot(Frame frame, FrameSlot slot, Object newValue) {
+        private synchronized void setMultiSlotImpl(MaterializedFrame frame, FrameSlot slot, Object newValue) {
             // TODO: perhaps putting the whole thing behind the Truffle boundary an overkill, but on
             // the other hand it shouldn't happen often and not on the fast path
             MultiSlotData data;
@@ -775,7 +777,7 @@ public final class FrameSlotChangeMonitor {
     /**
      * Retrieves the not-changed-locally {@link Assumption} for the given frame slot.
      *
-     * @return The "not changed locally" assumption of the given {@link FrameSlot}
+     * @return The "not changed locally" assumption of the given {@code FrameSlot}
      */
     public static Assumption getNotChangedNonLocallyAssumption(FrameSlot slot) {
         return getFrameSlotInfo(slot).nonLocalModifiedAssumption;
@@ -817,10 +819,10 @@ public final class FrameSlotChangeMonitor {
     // methods for changing frame slot contents
 
     /**
-     * Checks if the assumption of the given {@link FrameSlot} has to be invalidated.
+     * Checks if the assumption of the given {@code FrameSlot} has to be invalidated.
      *
      * @param curFrame
-     * @param slot {@link FrameSlot}; its "info" is assumed to be an Assumption, throws an
+     * @param slot {@code FrameSlot}; its "info" is assumed to be an Assumption, throws an
      *            {@link RInternalError} otherwise
      * @param invalidateProfile Used to guard the invalidation code.
      */
@@ -1042,7 +1044,7 @@ public final class FrameSlotChangeMonitor {
             if (!(o instanceof MultiSlotData)) {
                 CompilerDirectives.transferToInterpreter();
                 synchronized (info) {
-                    assert slotExists(slot, frame) : slot;
+                    assert slotExists(slot, frame.materialize()) : slot;
                     o = frame.getObject(slot);
                     assert o != null : slot;
                 }
@@ -1063,7 +1065,7 @@ public final class FrameSlotChangeMonitor {
             if (!(o instanceof MultiSlotData)) {
                 CompilerDirectives.transferToInterpreter();
                 synchronized (info) {
-                    assert slotExists(slot, frame) : slot;
+                    assert slotExists(slot, frame.materialize()) : slot;
                     o = frame.getValue(slot);
                     assert o != null : slot;
                 }
@@ -1075,7 +1077,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     @TruffleBoundary
-    private static boolean slotExists(FrameSlot slot, Frame frame) {
+    private static boolean slotExists(FrameSlot slot, MaterializedFrame frame) {
         return frame.getFrameDescriptor().findFrameSlot(slot.getIdentifier()) != null;
     }
 

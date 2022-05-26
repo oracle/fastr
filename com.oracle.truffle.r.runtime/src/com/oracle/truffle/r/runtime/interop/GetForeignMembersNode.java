@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,13 +121,14 @@ public abstract class GetForeignMembersNode extends RBaseNode {
 
         @Specialization(limit = "getInteropLibraryCacheSize()")
         String[] readMembers(Object members,
-                        @CachedLibrary("members") InteropLibrary interop) {
+                        @CachedLibrary("members") InteropLibrary interop,
+                        @CachedLibrary(limit = "1") InteropLibrary keyInterop) {
             try {
                 int size = RRuntime.getForeignArraySize(members, interop);
                 String[] names = new String[size];
                 for (int i = 0; i < size; i++) {
                     Object value = interop.readArrayElement(members, i);
-                    names[i] = (String) value;
+                    names[i] = keyInterop.asString(value);
                 }
                 return names;
             } catch (InteropException ex) {

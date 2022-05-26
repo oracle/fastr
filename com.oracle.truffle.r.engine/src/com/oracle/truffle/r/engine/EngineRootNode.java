@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -39,6 +39,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.REntryPointRootNode;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
@@ -47,17 +48,16 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-class EngineRootNode extends RootNode {
+class EngineRootNode extends RootNode implements REntryPointRootNode {
     private final SourceSection sourceSection;
 
     private final MaterializedFrame executionFrame;
-    private final ContextReference<RContext> contextReference;
+    private final RContext context;
 
     @Child private EngineBodyNode bodyNode;
     @Child private R2Foreign r2Foreign = R2Foreign.create();
@@ -68,12 +68,17 @@ class EngineRootNode extends RootNode {
         this.sourceSection = sourceSection;
         this.bodyNode = bodyNode;
         this.executionFrame = executionFrame;
-        this.contextReference = lookupContextReference(TruffleRLanguage.class);
+        this.context = RContext.getInstance(this);
     }
 
     public static EngineRootNode createEngineRoot(REngine engine, RContext context, List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame,
                     boolean forcePrintResult) {
         return new EngineRootNode(new EngineBodyNode(engine, statements, forcePrintResult || getPrintResult(sourceSection)), context, sourceSection, executionFrame);
+    }
+
+    @Override
+    public Frame getActualExecutionFrame(@SuppressWarnings("unused") Frame currentFrame) {
+        return executionFrame != null ? executionFrame : context.stateREnvironment.getGlobalFrame();
     }
 
     /**
@@ -83,7 +88,7 @@ class EngineRootNode extends RootNode {
      */
     @Override
     public Object execute(VirtualFrame frame) {
-        Object actualFrame = executionFrame != null ? executionFrame : contextReference.get().stateREnvironment.getGlobalFrame();
+        Object actualFrame = getActualExecutionFrame(frame);
         try {
             return r2Foreign.convert(this.bodyNode.execute(actualFrame));
         } catch (ReturnException ex) {

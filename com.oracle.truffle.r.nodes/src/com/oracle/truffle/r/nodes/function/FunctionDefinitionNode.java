@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -227,7 +227,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     private boolean needsAnyBuiltinSplitting() {
-        RSyntaxVisitor<Boolean> visitor = new RSyntaxVisitor<Boolean>() {
+        RSyntaxVisitor<Boolean> visitor = new RSyntaxVisitor<>() {
 
             @Override
             protected Boolean visit(RSyntaxCall element) {
@@ -360,7 +360,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     FrameSlot slot = getHandlerFrameSlot(frame);
                     if (frame.isObject(slot)) {
                         try {
-                            RErrorHandling.restoreHandlerStack(frame.getObject(slot));
+                            RErrorHandling.restoreHandlerStack(frame.getObject(slot), RContext.getInstance(this));
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }
@@ -370,7 +370,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                     FrameSlot slot = getRestartFrameSlot(frame);
                     if (frame.isObject(slot)) {
                         try {
-                            RErrorHandling.restoreRestartStack(frame.getObject(slot));
+                            RErrorHandling.restoreRestartStack(frame.getObject(slot), RContext.getInstance(this));
                         } catch (FrameSlotTypeException e) {
                             throw RInternalError.shouldNotReachHere();
                         }

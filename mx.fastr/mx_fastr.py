@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,7 @@
 # questions.
 #
 import glob
+import logging
 import platform, subprocess, sys, shlex
 from os.path import join, sep
 from argparse import ArgumentParser
@@ -30,6 +31,7 @@ import mx_gate
 import mx_fastr_dists
 import mx_subst
 from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
+import mx_fastr_install_deps
 import mx_fastr_edinclude
 import mx_unittest
 
@@ -53,6 +55,8 @@ _command_class_dict = {'r': ["com.oracle.truffle.r.launcher.RMain", "R"],
                         'rembed': ["com.oracle.truffle.r.engine.shell.REmbedded"],
                     }
 
+GRAAL_OPTIONS = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3',
+                 '-XX:JVMCINMethodSizeLimit=1000000']
 
 # benchmarking support
 def r_path():
@@ -74,27 +78,15 @@ def get_default_jdk():
         tag = None
     return mx.get_jdk(tag=tag)
 
-def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
+def create_cmdline(args, command, extraVmArgs=None, jdk=None):
     '''
-    This is the basic function that runs a FastR process, where args have already been parsed.
-    Args:
-      args: a list of command arguments
-      command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
-      extraVmArgs: additional vm arguments
-      jdk: jdk (an mx.JDKConfig instance) to use
-      **kwargs other keyword args understood by run_java
-      nonZeroIsFatal: whether to terminate the execution run fails
-      out,err possible redirects to collect output
-
-    By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
-    The assumption is that the VM is already built and available.
+    Creates all the arguments that are passed to the JVM to run FastR.
+    For the description of the arguments, see do_run_r
+    :return: list of command-line arguments.
+    :rtype List[str]
     '''
-    env = kwargs['env'] if 'env' in kwargs else os.environ
-
-    setREnvironment(env)
     if not jdk:
         jdk = get_default_jdk()
-
     dists = ['FASTR']
     if mx.suite("sulong", fatalIfMissing=False):
         dists.append('SULONG_NATIVE')
@@ -115,7 +107,29 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
     if command:
         vmArgs.extend(_command_class_dict[command.lower()])
-    return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
+    return vmArgs + args
+
+def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
+    '''
+    This is the basic function that runs a FastR process, where args have already been parsed.
+    Args:
+      args: a list of command arguments
+      command: e.g. 'R', implicitly defines the entry class (can be None for AOT)
+      extraVmArgs: additional vm arguments
+      jdk: jdk (an mx.JDKConfig instance) to use
+      **kwargs other keyword args understood by run_java
+      nonZeroIsFatal: whether to terminate the execution run fails
+      out,err possible redirects to collect output
+
+    By default a non-zero return code will cause an mx.abort, unless nonZeroIsFatal=False
+    The assumption is that the VM is already built and available.
+    '''
+    if not jdk:
+        jdk = get_default_jdk()
+    env = kwargs['env'] if 'env' in kwargs else os.environ
+    setREnvironment(env)
+    all_args = create_cmdline(args, command, extraVmArgs, jdk)
+    return mx.run_java(all_args, jdk=jdk, **kwargs)
 
 def r_classpath(args):
     print(mx.classpath('FASTR', jdk=mx.get_jdk()) + ":" + mx.classpath('SULONG_NATIVE', jdk=mx.get_jdk()))  # pylint: disable=superfluous-parens
@@ -147,7 +161,7 @@ def set_graal_options():
     If Graal is enabled, set some options specific to FastR
     '''
     if mx.suite("compiler", fatalIfMissing=False):
-        result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
+        result = GRAAL_OPTIONS
         return result
     else:
         return []
@@ -210,6 +224,7 @@ def setREnvironment(env=None):
 
 def setUnitTestEnvironment(args):
     env = os.environ
+    env['TZ'] = 'GMT'
     rOptions = []
     for arg in args:
         if arg.startswith("--R."):
@@ -280,11 +295,13 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
     The tests should be compiled by mx build before they can be run.
     Each test (native application) is run and its output compared to the expected output
     file located next to the source file.
+    Since November 2021, this test is ignored on Darwin.
     '''
+    if platform.system().lower() == 'darwin':
+        return 0
     env = os.environ.copy()
     env['R_HOME'] = _fastr_suite.dir
-    so_suffix = '.dylib' if platform.system().lower() == 'darwin' else '.so'
-    env['NFI_LIB'] = join(mx.distribution('TRUFFLE_NFI_NATIVE').get_output(), 'bin', 'libtrufflenfi' + so_suffix)
+    env['NFI_LIB'] = join(mx.distribution('TRUFFLE_NFI_NATIVE').get_output(), 'bin', 'libtrufflenfi.so')
     tests_script = join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/embedded/test.sh')
     return mx.run([tests_script], env=env, nonZeroIsFatal=nonZeroIsFatal)
 
@@ -368,6 +385,7 @@ def _fastr_gate_runner(args, tasks):
     # check that the expected test output file is up to date
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks, tags=[mx_gate.Tags.style]) as t:
         if t:
+            os.environ['TZ'] = 'GMT'
             mx_unittest.unittest(['-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected=true'] + _gate_unit_tests())
 
     # ----------------------------------
@@ -375,6 +393,7 @@ def _fastr_gate_runner(args, tasks):
 
     with mx_gate.Task('UnitTests', tasks, tags=[FastRGateTags.basic_tests, FastRGateTags.unit_tests]) as t:
         if t:
+            os.environ['TZ'] = 'GMT'
             mx_unittest.unittest(_gate_noapps_unit_tests())
 
     with mx_gate.Task('Rembedded', tasks, tags=[FastRGateTags.basic_tests]) as t:
@@ -823,6 +842,43 @@ def pkgtest(args, **kwargs):
     return pkgtest_load().pkgtest(full_args)
 
 
+def pkgtest_cmp(args, **kwargs):
+    """ Compares gnur with fastr output generated from pkgtests.
+    Arguments: <gnur-filename> <fastr-filename> [filter-file] [dump-preprocessed]
+    """
+    mx.logv(["pkgtest_cmp"] + args)
+    if len(args) < 2:
+        mx.abort("Provide at least <gnur-fname> <fastr-fname> arguments")
+    if len(args) == 2:
+        output_filter = os.path.join(_fastr_suite.dir, "com.oracle.truffle.r.test.packages/test.output.filter")
+        mx.log(f"Using default output filter: {output_filter}")
+    else:
+        assert len(args) > 2
+        output_filter = args[3]
+    if not (os.path.exists(output_filter) and os.path.isfile(output_filter)):
+        mx.abort(f"Output filter {output_filter} is not a file")
+
+    gnur_out_file = args[0]
+    fastr_out_file = args[1]
+    for f in (gnur_out_file, fastr_out_file, output_filter):
+        if not os.path.exists(f) or not os.path.isfile(f):
+            mx.abort(f"{f} is not a file")
+
+    pkgtest_cmp_args = [gnur_out_file, fastr_out_file, output_filter]
+    if len(args) > 3:
+        pkgtest_cmp_args += args[3:]
+
+    # Initialize logging, since pkgtest initializes it explicitly.
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format="%(message)s")
+
+    status, statement_passed, statement_failed = pkgtest_load().pkgtest_cmp(pkgtest_cmp_args)
+    print(f"Status = {status}, statement_passed = {statement_passed}, statement_failed = {statement_failed}")
+    if status != 0:
+        mx.abort("Comparison failed")
+    else:
+        mx.log("Comparison successful")
+
+
 def installpkgs(args, **kwargs):
     full_args = _pkgtest_args(args)
     mx.logv(["installpkgs"] + full_args)
@@ -960,6 +1016,7 @@ mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suit
 mx_unittest.add_config_participant(_unittest_config_participant)
 
 _commands = {
+    'r-install-deps' : [mx_fastr_install_deps.install_dependencies, '[options]'],
     'r' : [rshell, '[options]'],
     'R' : [rshell, '[options]'],
     'rscript' : [rscript, '[options]'],
@@ -979,6 +1036,7 @@ _commands = {
     'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
     'pkgtest' : [pkgtest, ['options']],
+    'pkgtest-cmp' : [pkgtest_cmp, '<gnur-output> <fastr-output> ...'],
     'r-pkgtest-analyze' : [r_pkgtest_analyze, ['options']],
     'r-findtop100' : [find_top100, ['options']],
     'r-findtop' : [find_top, ['options']],

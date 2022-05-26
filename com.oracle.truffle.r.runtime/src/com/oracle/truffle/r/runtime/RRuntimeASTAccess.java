@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,7 +92,7 @@ public interface RRuntimeASTAccess {
      * implementation and not part of the user-visible execution debug handling is disabled across
      * the call.
      */
-    Object callback(RFunction f, Object[] args);
+    Object callback(RFunction f, RContext context, Object[] args);
 
     /**
      * Force a promise by slow-path evaluation.
@@ -190,8 +190,6 @@ public interface RRuntimeASTAccess {
     String encodeComplex(RComplex x, int digits);
 
     RStringVector getClassHierarchy(RAttributable value);
-
-    RContext getCurrentContext();
 
     Object createLanguageElement(RSyntaxElement element);
 

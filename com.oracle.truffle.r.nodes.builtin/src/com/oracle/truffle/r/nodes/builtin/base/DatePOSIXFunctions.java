@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -278,7 +278,7 @@ public class DatePOSIXFunctions {
             RAbstractVector yearVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(5));
             TimeZone zone;
             if (tz.isEmpty()) {
-                zone = RContext.getInstance().stateREnvVars.getSystemTimeZone();
+                zone = getRContext().stateREnvVars.getSystemTimeZone();
             } else {
                 zone = TimeZone.getTimeZone(tz);
             }
@@ -403,7 +403,7 @@ public class DatePOSIXFunctions {
                     builder.appendLiteral(' ').appendZoneText(TextStyle.SHORT);
                 }
             } else {
-                zone = RContext.getInstance().stateREnvVars.getSystemTimeZone().toZoneId();
+                zone = getRContext().stateREnvVars.getSystemTimeZone().toZoneId();
             }
 
             DateTimeFormatter[] formatters = new DateTimeFormatter[builders.length];
@@ -625,6 +625,9 @@ public class DatePOSIXFunctions {
                             i++;
                             if (i + 1 < fLen && format.charAt(i + 1) == '3') {
                                 builder.appendLiteral('.').appendValue(ChronoField.MILLI_OF_SECOND, 3);
+                                i++;
+                            } else if (i + 1 < fLen && format.charAt(i + 1) == '6') {
+                                builder.appendLiteral('.').appendValue(ChronoField.MICRO_OF_SECOND, 6);
                                 i++;
                             }
                         } else {

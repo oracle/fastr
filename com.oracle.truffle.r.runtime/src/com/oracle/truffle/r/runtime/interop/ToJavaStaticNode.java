@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,11 +32,11 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.interop.AccessForeignElementNode.ReadElementNode;
 import com.oracle.truffle.r.runtime.interop.ToJavaStaticNodeGen.ExecuteMethodNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -61,16 +61,21 @@ public abstract class ToJavaStaticNode extends RBaseNode {
                     @Cached("create()") ReadElementNode readName,
                     @Cached("create()") ExecuteMethodNode getClass,
                     @Cached("create()") ExecuteMethodNode getName,
-                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
-        Env e = RContext.getInstance().getEnv();
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop,
+                    @CachedLibrary(limit = "1") InteropLibrary nameInterop) {
+        Env e = getRContext().getEnv();
         assert e.isHostLookupAllowed() && e.isHostObject(obj) && !(e.asHostObject(obj) instanceof Class);
 
         if (e.isHostLookupAllowed()) {
             Object gcf = readClass.execute(obj, "getClass");
             Object clazz = getClass.execute(gcf);
             Object cnf = readName.execute(clazz, "getName");
-            String className = (String) getName.execute(cnf);
-            return (TruffleObject) e.lookupHostSymbol(className);
+            try {
+                String className = nameInterop.asString(getName.execute(cnf));
+                return (TruffleObject) e.lookupHostSymbol(className);
+            } catch (UnsupportedMessageException ex) {
+                throw CompilerDirectives.shouldNotReachHere(ex);
+            }
         }
         return null;
     }
@@ -91,18 +96,18 @@ public abstract class ToJavaStaticNode extends RBaseNode {
         return null;
     }
 
-    protected static boolean isHostObject(Object object) {
-        TruffleLanguage.Env env = RContext.getInstance().getEnv();
+    protected boolean isHostObject(Object object) {
+        TruffleLanguage.Env env = getRContext().getEnv();
         return env.isHostObject(object);
     }
 
-    protected static boolean isClassHostObject(Object object) {
-        TruffleLanguage.Env env = RContext.getInstance().getEnv();
+    protected boolean isClassHostObject(Object object) {
+        TruffleLanguage.Env env = getRContext().getEnv();
         return env.isHostObject(object) && (env.asHostObject(object) instanceof Class);
     }
 
-    protected static boolean isNonClassHostObject(TruffleObject object) {
-        TruffleLanguage.Env env = RContext.getInstance().getEnv();
+    protected boolean isNonClassHostObject(TruffleObject object) {
+        TruffleLanguage.Env env = getRContext().getEnv();
         return env.isHostObject(object) && !(env.asHostObject(object) instanceof Class);
     }
 

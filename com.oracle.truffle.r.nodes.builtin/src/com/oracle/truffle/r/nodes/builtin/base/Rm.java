@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -66,7 +67,7 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
             SequentialIterator listIter = listAccess.access(list);
             while (listAccess.next(listIter)) {
                 String key = listAccess.getString(listIter);
-                if (!removeFromEnv(envir, key, inherits)) {
+                if (!removeFromEnv(envir, key, inherits, getRContext())) {
                     warning(RError.Message.UNKNOWN_OBJECT, key);
                 }
             }
@@ -78,7 +79,7 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
         return RNull.instance;
     }
 
-    public static boolean removeFromEnv(REnvironment envir, String key, boolean inherits) throws PutException {
+    public static boolean removeFromEnv(REnvironment envir, String key, boolean inherits, RContext ctx) throws PutException {
         REnvironment curEnv = envir;
         while (curEnv != REnvironment.emptyEnv()) {
             try {
@@ -89,7 +90,7 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
                 // 'key' is not in the 'curEnv'
 
                 // Special treatment for base env and base namespace env
-                if (curEnv == REnvironment.baseEnv() || curEnv == REnvironment.baseNamespaceEnv() || curEnv.isLocked()) {
+                if (curEnv == REnvironment.baseEnv(ctx) || curEnv == REnvironment.baseNamespaceEnv(ctx) || curEnv.isLocked()) {
                     throw ex;
                 }
 

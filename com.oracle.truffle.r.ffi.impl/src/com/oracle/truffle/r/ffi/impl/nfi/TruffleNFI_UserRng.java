@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,10 +47,11 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         @CompilationFinal AfterDownCallProfiles afterDownCallProfiles;
 
         protected RNGNode(NativeFunction userFunction, NativeFunction readFunction) {
-            userFunctionTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(userFunction);
+            RContext ctx = RContext.getInstance(this);
+            userFunctionTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(userFunction, ctx);
             userFunctionInterop = insert(InteropLibrary.getFactory().create(userFunctionTarget));
             if (readFunction != null) {
-                readPointerTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(readFunction);
+                readPointerTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(readFunction, ctx);
                 readPointerInterop = insert(InteropLibrary.getFactory().create(readPointerTarget));
             }
             afterDownCallProfiles = AfterDownCallProfiles.create();
@@ -65,7 +66,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
         @Override
         public void execute(VirtualFrame frame, int seed) {
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            RFFIContext stateRFFI = RContext.getInstance(this).getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame.materialize(), RFFIFactory.Type.NFI);
             try {
                 userFunctionInterop.execute(userFunctionTarget, seed);
@@ -85,7 +86,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
         @Override
         public double execute(VirtualFrame frame) {
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            RFFIContext stateRFFI = RContext.getInstance(this).getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame.materialize(), RFFIFactory.Type.NFI);
             try {
                 Object address = userFunctionInterop.execute(userFunctionTarget);
@@ -106,7 +107,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
         @Override
         public int execute(VirtualFrame frame) {
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            RFFIContext stateRFFI = RContext.getInstance(this).getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame.materialize(), RFFIFactory.Type.NFI);
             try {
                 Object address = userFunctionInterop.execute(userFunctionTarget);
@@ -127,7 +128,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
 
         @Override
         public void execute(VirtualFrame frame, int[] n) {
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            RFFIContext stateRFFI = RContext.getInstance(this).getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame.materialize(), RFFIFactory.Type.NFI);
             try {
                 Object address = userFunctionInterop.execute(userFunctionTarget);
