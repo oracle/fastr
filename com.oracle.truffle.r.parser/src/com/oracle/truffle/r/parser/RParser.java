@@ -69,7 +69,6 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.RCodeToken;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
-import com.oracle.truffle.r.runtime.parsermetadata.LocalVariable;
 
 @SuppressWarnings("all")
 public class RParser extends Parser {
@@ -277,27 +276,9 @@ public class RParser extends Parser {
 	    private static void addArgumentAsLocalVariable(FunctionScope functionScope, String argIdentifier) {
 	        assert functionScope != null;
 	        assert argIdentifier != null;
-	        int nextFrameIndex = functionScope.getNextLocalVariableFrameIndex();
-	        var localVar = new LocalVariable(argIdentifier, FrameSlotKind.Illegal, nextFrameIndex);
-	        functionScope.addLocalVariable(localVar);
+	        functionScope.addLocalVariable(argIdentifier, FrameSlotKind.Illegal);
 	    }
 
-	    /**
-	     * Helper function that creates a localVariable from assignment if lhs is a lookup.
-	     * Returns null otherwise.
-	     */
-	    private LocalVariable localVariable(FunctionScope functionScope, RSyntaxNode lhs, RSyntaxNode rhs) {
-	        if (lhs instanceof RSyntaxLookup) {
-	            String identifier = ((RSyntaxLookup) lhs).getIdentifier();
-	            FrameSlotKind type = infereType(rhs);
-	            int localVarFrameIdx = functionScope.getNextLocalVariableFrameIndex();
-	            var localVar = new LocalVariable(identifier, type, localVarFrameIdx);
-	            return localVar;
-	        } else {
-	            return null;
-	        }
-	    }
-	    
 	    private static FrameSlotKind infereType(RSyntaxNode rhs) {
 	        // TODO
 	        return FrameSlotKind.Illegal;
@@ -312,9 +293,10 @@ public class RParser extends Parser {
 	    */
 	    private void maybeAddLocalVariable(FunctionScope functionScope, RSyntaxNode lhs, RSyntaxNode rhs) {
 	        if (functionScope != null) {
-	            LocalVariable localVariable = localVariable(functionScope, lhs, rhs);
-	            if (localVariable != null) {
-	                functionScope.addLocalVariable(localVariable);
+	            if (lhs instanceof RSyntaxLookup) {
+	                String identifier = ((RSyntaxLookup) lhs).getIdentifier();
+	                FrameSlotKind type = infereType(rhs);
+	                functionScope.addLocalVariable(identifier, type);
 	            }
 	        }
 	    }

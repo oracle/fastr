@@ -74,7 +74,7 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
  * This class handles all the accesses and manipulations with {@link FrameDescriptor frame
  * descriptors} and {@link Frame frames}, e.g., frame descriptor allocation and getting values from
  * a frame. For every frame descriptor, we maintain {@link FrameDescriptorMetaData metadata}
- * describing, among other thing, the mapping of identifiers to their indexes in the frame, as in
+ * describing, among other things, the mapping of identifiers to their indexes in the frame, as in
  * FastR, we use both auxiliary and indexed frame slots.
  * <p>
  * <h3>Frame indexes</h3> In FastR, we use frame descriptors for both functions and environments.
@@ -313,17 +313,6 @@ public final class FrameSlotChangeMonitor {
             auxSlotInfosElements++;
         }
 
-        // TODO: Make more performant
-        public Object getIdentifier(int frameIndex) {
-            CompilerAsserts.neverPartOfCompilation();
-            for (Map.Entry<Object, Integer> entry : indexes.entrySet()) {
-                if (entry.getValue() == frameIndex) {
-                    return entry.getKey();
-                }
-            }
-            return null;
-        }
-
         public List<Object> getIdentifiers() {
             CompilerAsserts.neverPartOfCompilation();
             return new ArrayList<>(indexes.keySet());
@@ -542,14 +531,6 @@ public final class FrameSlotChangeMonitor {
         return builder.build();
     }
 
-    private static boolean isFunctionFrameDescriptor(FrameDescriptor frameDescriptor) {
-        return getDescriptorMetadata(frameDescriptor).singletonFrame == null;
-    }
-
-    private static boolean isEnvironmentFrameDescriptor(FrameDescriptor frameDescriptor) {
-        return !isFunctionFrameDescriptor(frameDescriptor);
-    }
-
     /**
      * Creates a frame descriptor suitable for environment representation.
      *
@@ -591,15 +572,15 @@ public final class FrameSlotChangeMonitor {
      * @param kinds Kind of normal slots to be initialized in the frame descriptor.
      * @param identifiers Identifiers of normal slots
      */
-    public static FrameDescriptor createFunctionFrameDescriptor(String name, FrameSlotKind[] kinds, Object[] identifiers) {
-        assert kinds.length == identifiers.length;
+    public static FrameDescriptor createFunctionFrameDescriptor(String name, List<FrameSlotKind> kinds, List<?> identifiers) {
+        assert kinds.size() == identifiers.size();
         Builder builder = FrameDescriptor.newBuilder();
         var descriptorMetadata = new FrameDescriptorMetaData(name);
         builder.info(descriptorMetadata);
         addInternalIndexedSlots(builder, descriptorMetadata);
-        for (int i = 0; i < kinds.length; i++) {
-            int frameIndex = builder.addSlot(kinds[i], identifiers[i], new FrameSlotInfo(descriptorMetadata, identifiers[i]));
-            descriptorMetadata.addIndex(identifiers[i], FrameIndex.toNormalIndex(frameIndex));
+        for (int i = 0; i < kinds.size(); i++) {
+            int frameIndex = builder.addSlot(kinds.get(i), identifiers.get(i), new FrameSlotInfo(descriptorMetadata, identifiers.get(i)));
+            descriptorMetadata.addIndex(identifiers.get(i), FrameIndex.toNormalIndex(frameIndex));
         }
         FrameDescriptor frameDescriptor = builder.build();
         assert assertValidFrameDescriptor(frameDescriptor);
@@ -608,22 +589,20 @@ public final class FrameSlotChangeMonitor {
 
     /**
      * Internal indexed slots are used only for function frame descriptors, not for environment
-     * frame descriptors.
+     * frame descriptors. See documentation of {@link RFrameSlot}.
      */
     private static void addInternalIndexedSlots(FrameDescriptor.Builder builder, FrameDescriptorMetaData metaData) {
-        // Currently, only visibility.
-        assert INTERNAL_INDEXED_SLOT_COUNT == 1;
-        int visibilityNormalIdx = FrameIndex.toNormalIndex(RFrameSlot.Visibility.getFrameIdx());
-        assert visibilityNormalIdx == 0 : "Visibility should have 0 frame index";
-        builder.addSlot(FrameSlotKind.Boolean, RFrameSlot.Visibility, new FrameSlotInfo(metaData, RFrameSlot.Visibility));
-        metaData.addIndex(RFrameSlot.Visibility, visibilityNormalIdx);
+        for (RFrameSlot internalFrameSlot : RFrameSlot.internalIndexedSlots) {
+            builder.addSlot(internalFrameSlot.getSlotKind(), internalFrameSlot, new FrameSlotInfo(metaData, internalFrameSlot));
+            metaData.addIndex(internalFrameSlot, internalFrameSlot.getFrameIdx());
+        }
     }
 
     public static FrameDescriptor copyFrameDescriptorWithMetadata(FrameDescriptor frameDescriptor) {
         FrameDescriptorMetaData metadata = getDescriptorMetadata(frameDescriptor);
         MaterializedFrame singletonFrame = metadata.singletonFrame != null ? metadata.singletonFrame.get() : null;
         FrameDescriptorMetaData newMetadata = new FrameDescriptorMetaData(metadata.name, singletonFrame);
-        FrameDescriptor.Builder newDescriptorBuilder = FrameDescriptor.newBuilder();
+        FrameDescriptor.Builder newDescriptorBuilder = FrameDescriptor.newBuilder(frameDescriptor.getNumberOfSlots());
         newDescriptorBuilder.info(newMetadata);
         // Copy indexed (normal) slots
         for (int i = 0; i < frameDescriptor.getNumberOfSlots(); i++) {
@@ -808,8 +787,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     /**
-     * Get slot kind of the given frame index from the frame descriptor. Note that this may be
-     * different from the return value of {@link #getFrameSlotKindInFrame(Frame, int)}.
+     * Get slot kind of the given frame index from the frame descriptor.
      */
     public static FrameSlotKind getFrameSlotKindInFrameDescriptor(FrameDescriptor frameDescriptor, int frameIndex) {
         if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
@@ -819,34 +797,8 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    /**
-     * Get slot kind of the given frame index from the frame, i.e., the type of the actual value
-     * stored in the frame. Note that this may be different from the return value of
-     * {@link #getFrameSlotKindInFrameDescriptor(FrameDescriptor, int)}.
-     */
-    public static FrameSlotKind getFrameSlotKindInFrame(Frame frame, int frameIndex) {
-        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
-            return FrameSlotKind.Object;
-        } else {
-            int normalIdx = FrameIndex.toNormalIndex(frameIndex);
-            if (frame.isObject(normalIdx)) {
-                return FrameSlotKind.Object;
-            } else if (frame.isInt(normalIdx)) {
-                return FrameSlotKind.Int;
-            } else if (frame.isDouble(normalIdx)) {
-                return FrameSlotKind.Double;
-            } else if (frame.isByte(normalIdx)) {
-                return FrameSlotKind.Byte;
-            } else if (frame.isBoolean(normalIdx)) {
-                return FrameSlotKind.Boolean;
-            } else if (frame.isFloat(normalIdx)) {
-                return FrameSlotKind.Float;
-            } else if (frame.isLong(normalIdx)) {
-                return FrameSlotKind.Long;
-            } else {
-                throw RInternalError.shouldNotReachHere();
-            }
-        }
+    public static boolean isPrimitiveFrameSlotKind(Frame frame, int frameIndex) {
+        return !FrameIndex.representsAuxiliaryIndex(frameIndex) && frame.getTag(FrameIndex.toNormalIndex(frameIndex)) != FrameSlotKind.Object.ordinal();
     }
 
     public static void setFrameSlotKind(FrameDescriptor frameDescriptor, int frameIndex, FrameSlotKind kind) {
@@ -1311,18 +1263,17 @@ public final class FrameSlotChangeMonitor {
         FrameDescriptorMetaData descriptorMetadata = getDescriptorMetadata(frameDescriptor);
         int auxSlotIdx = frameDescriptor.findOrAddAuxiliarySlot(identifier);
         int transformedAuxSlotIdx = FrameIndex.transformAuxiliaryIndex(auxSlotIdx);
-        if (descriptorMetadata.getIndex(identifier) == null) {
+        Integer frameIndex = descriptorMetadata.getIndex(identifier);
+        if (frameIndex == null) {
             // The identifier was not in the frameDescriptor before, we have to put it there and
-            // invalidate
-            // all the related assumptions.
+            // invalidate all the related assumptions.
             descriptorMetadata.addIndex(identifier, transformedAuxSlotIdx);
             var slotInfo = new FrameSlotInfo(descriptorMetadata, identifier);
             descriptorMetadata.addAuxSlotInfo(slotInfo);
             invalidatePreviousLookups(descriptorMetadata, Collections.singletonList(identifier));
             descriptorMetadata.tryInvalidateNotInFrameAssumption(identifier);
         } else {
-            int presentFrameIndex = descriptorMetadata.getIndex(identifier);
-            if (FrameIndex.representsNormalIndex(presentFrameIndex)) {
+            if (FrameIndex.representsNormalIndex(frameIndex)) {
                 throw RInternalError.shouldNotReachHere("Frame index for '" + identifier + "' already present as normal frame index");
             }
         }

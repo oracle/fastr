@@ -27,7 +27,6 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -111,7 +110,7 @@ public abstract class FrameIndexNode extends RBaseNode {
 
     private static final class PresentFrameIndexNode extends FrameIndexNode {
         private final ConditionProfile isNotNullProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isPrimitiveProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
         private final int frameIndex;
 
@@ -127,8 +126,7 @@ public abstract class FrameIndexNode extends RBaseNode {
         @Override
         public boolean hasValue(Frame frame) {
             Frame typedFrame = frameTypeProfile.profile(frame);
-            FrameSlotKind slotKind = FrameSlotChangeMonitor.getFrameSlotKindInFrame(typedFrame, frameIndex);
-            if (!(isObjectProfile.profile(slotKind == FrameSlotKind.Object))) {
+            if (isPrimitiveProfile.profile(FrameSlotChangeMonitor.isPrimitiveFrameSlotKind(typedFrame, frameIndex))) {
                 // A primitive frame slot kind always has some value.
                 return true;
             } else {

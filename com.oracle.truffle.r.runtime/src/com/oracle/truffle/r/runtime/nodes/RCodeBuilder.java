@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.nodes.Node;
@@ -38,7 +37,6 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
-import com.oracle.truffle.r.runtime.parsermetadata.LocalVariable;
 
 /**
  * Implementers of this interface can be used to generate a representation of an R closure.
@@ -78,25 +76,9 @@ public interface RCodeBuilder<T> {
         public static final CodeBuilderContext DEFAULT = new CodeBuilderContext(0);
 
         private final int replacementVarsStartIndex;
-        private final List<FunctionScope> functionScopes = new ArrayList<>();
 
         public CodeBuilderContext(int replacementVarsStartIndex) {
             this.replacementVarsStartIndex = replacementVarsStartIndex;
-        }
-
-        /**
-         * Creates a function scope of local variables.
-         *
-         * @param localVarsFromParser List of local variables as returned by the parser.
-         */
-        public FunctionScope createFunctionScope(String functionName, Set<LocalVariable> localVarsFromParser) {
-            assert localVarsFromParser != null;
-            var functionScope = new FunctionScope(functionName);
-            for (LocalVariable localVarFromParser : localVarsFromParser) {
-                functionScope.addLocalVariable(localVarFromParser);
-            }
-            functionScopes.add(functionScope);
-            return functionScope;
         }
 
         /**

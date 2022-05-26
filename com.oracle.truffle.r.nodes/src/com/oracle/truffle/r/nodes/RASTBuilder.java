@@ -82,7 +82,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
-import com.oracle.truffle.r.runtime.parsermetadata.LocalVariable;
 
 /**
  * This class can be used to build fragments of Truffle AST that correspond to R language
@@ -345,28 +344,10 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
         // Local variables
         logger.fine(() -> String.format("rootFunction('%s'): functionScope = %s", name, functionScope != null ? functionScope.toString() : "null"));
-        String[] identifiers;
-        FrameSlotKind[] slotKinds;
-        if (functionScope != null && functionScope.getLocalVariablesCount() > 0) {
-            // Sort local variables by frame index - we have to put them into a FrameDescriptor in a
-            // specific order.
-            List<LocalVariable> sortedLocalVariables = functionScope.getLocalVariablesSortedByFrameIdx();
-            identifiers = new String[sortedLocalVariables.size()];
-            slotKinds = new FrameSlotKind[sortedLocalVariables.size()];
-            int currentFrameIdx = FrameSlotChangeMonitor.INTERNAL_INDEXED_SLOT_COUNT;
-            for (int i = 0; i < sortedLocalVariables.size(); i++) {
-                LocalVariable localVariable = sortedLocalVariables.get(i);
-                assert currentFrameIdx == localVariable.getFrameIndex() : "frame indexes of local variables should be ascending";
-                identifiers[i] = localVariable.getName();
-                slotKinds[i] = localVariable.getSlotKind();
-                currentFrameIdx++;
-            }
-        } else {
-            identifiers = new String[]{};
-            slotKinds = new FrameSlotKind[]{};
-        }
-
-        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", slotKinds, identifiers);
+        List<?> identifiers = (functionScope != null) ? functionScope.getLocalVariableNames() : new ArrayList<>();
+        List<FrameSlotKind> slotKinds = (functionScope != null) ? functionScope.getLocalVariableKinds() : new ArrayList<>();
+        String functionFrameDescriptorName = name != null && !name.isEmpty() ? name : "<function>";
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor(functionFrameDescriptorName, slotKinds, identifiers);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(language, source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
 
         if (RContext.getInstance().getOption(ForceSources)) {
@@ -415,12 +396,11 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         // function variables - they are mostly promises that has to be evaluated first anyway, and
         // the evaluation of the promise has to be done on slow-path.
         if (functionScope != null && !functionLookup) {
-            if (functionScope.containsLocalVariable(symbol)) {
-                LocalVariable localVar = functionScope.getLocalVariable(symbol);
-                logger.fine(() -> "Creating ReadNode for local variable " + localVar);
-                assert localVar != null;
-                assert FrameIndex.isInitializedIndex(localVar.getFrameIndex());
-                var readVariableNode = ReadVariableNode.createLocalVariableLookup(symbol, localVar.getFrameIndex());
+            Integer locVarFrameIdx = functionScope.getLocalVariableFrameIndex(symbol);
+            if (locVarFrameIdx != null) {
+                logger.fine(() -> "Creating ReadNode for local variable " + symbol);
+                assert FrameIndex.isInitializedIndex(locVarFrameIdx);
+                var readVariableNode = ReadVariableNode.createLocalVariableLookup(symbol, locVarFrameIdx);
                 return ReadVariableNode.wrap(source, readVariableNode);
             }
         }

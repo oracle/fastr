@@ -174,7 +174,7 @@ final class REngine implements Engine, Engine.Timings {
 
     private void initializeNonShared() {
         suppressWarnings = true;
-        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrameNew("base");
+        MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame("base");
         REnvironment.baseInitialize(baseFrame, globalFrame);
         context.getStateRFFI().initializeVariables(context);
         RBuiltinPackages.loadBase(context, baseFrame);

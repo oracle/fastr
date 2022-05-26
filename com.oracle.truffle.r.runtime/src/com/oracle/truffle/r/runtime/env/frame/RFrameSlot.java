@@ -24,13 +24,19 @@ package com.oracle.truffle.r.runtime.env.frame;
 
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Description of different internal frame slots used by FastR. This enum is used as an identifier,
  * so that these internal frame slots have non-string names.
- * 
+ *
+ * RFrameSlot can either represent an indexed slot or an auxiliary slot. If it represents an indexed
+ * slot, it will be added to every function frame descriptor. On the other hand, if it represents an
+ * auxiliary slot, the user is responsible for allocating a new auxiliary slot to the frame. See
+ * {@link #representsAuxiliarySlot()}.
+ *
  * IMPORTANT NOTE: this class deliberately does not override {@code equals} and {@code hashCode} and
  * uses reference equality. New instances should not be created dynamically but only as
  * "singletons".
@@ -41,15 +47,17 @@ public final class RFrameSlot {
     private final String name;
     private final boolean multiSlot;
     private final int frameIdx;
+    private final FrameSlotKind slotKind;
 
     private RFrameSlot(String name, boolean multiSlot) {
-        this(name, multiSlot, FrameIndex.UNITIALIZED_INDEX);
+        this(name, multiSlot, FrameIndex.UNITIALIZED_INDEX, FrameSlotKind.Illegal);
     }
 
-    private RFrameSlot(String name, boolean multiSlot, int frameIdx) {
+    private RFrameSlot(String name, boolean multiSlot, int frameIdx, FrameSlotKind slotKind) {
         this.name = name;
         this.multiSlot = multiSlot;
         this.frameIdx = frameIdx;
+        this.slotKind = slotKind;
     }
 
     @Override
@@ -57,8 +65,25 @@ public final class RFrameSlot {
         return name == null ? "TempFrameSlot" : name;
     }
 
+    /**
+     *
+     * @return A frame index. If {@link FrameIndex#isInitializedIndex(int) initialized}, then this
+     *         RFrameSlot corresponds to an indexed slot rather than an auxiliary slot.
+     */
     public int getFrameIdx() {
         return frameIdx;
+    }
+
+    public FrameSlotKind getSlotKind() {
+        return slotKind;
+    }
+
+    /**
+     * @return Returns true iff this RFrameSlot is represented as an auxiliary slot in some frame
+     *         descriptor.
+     */
+    public boolean representsAuxiliarySlot() {
+        return FrameIndex.isUninitializedIndex(frameIdx);
     }
 
     public boolean isTemp() {
@@ -83,6 +108,15 @@ public final class RFrameSlot {
     }
 
     /**
+     * Internal indexed slots are added to every function frame descriptor during initialization,
+     * i.e., every function frame descriptor contains these slots as indexed slots rather than
+     * auxiliary slots.
+     */
+    public static final RFrameSlot[] internalIndexedSlots = {
+                    new RFrameSlot("Visibility", false, FrameIndex.toNormalIndex(0), FrameSlotKind.Boolean)
+    };
+
+    /**
      * This frame slot is used to store expressions installed as function exit handlers via on.exit.
      * It contains an {@link ArrayList} with {@link RNode} elements.
      */
@@ -103,7 +137,8 @@ public final class RFrameSlot {
      * callee frame. The callee can "return" the visibility to the caller via setting it in the
      * given {@link RCaller} instance.
      */
-    public static final RFrameSlot Visibility = new RFrameSlot("Visibility", false, FrameIndex.toNormalIndex(0));
+    public static final RFrameSlot Visibility = internalIndexedSlots[0];
+
     /**
      * Used to save the handler stack in frames that modify it.
      */

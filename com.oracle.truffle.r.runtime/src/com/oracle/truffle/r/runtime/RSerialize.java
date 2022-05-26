@@ -110,7 +110,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
-import com.oracle.truffle.r.runtime.parsermetadata.LocalVariable;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -2919,8 +2918,7 @@ public class RSerialize {
                 if (assignmentTarget.value instanceof RSyntaxLookup) {
                     // assignment into a variable
                     String identifier = ((RSyntaxLookup) assignmentTarget.value).getIdentifier();
-                    int varFrameIndex = functionScope.getNextLocalVariableFrameIndex();
-                    functionScope.addLocalVariable(new LocalVariable(identifier, FrameSlotKind.Illegal, varFrameIndex));
+                    functionScope.addLocalVariable(identifier, FrameSlotKind.Illegal);
                 }
             }
             RSyntaxNode call = RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, lhs, arguments);
@@ -2954,8 +2952,7 @@ public class RSerialize {
                 }
                 if (inFunctionDeclaration) {
                     assert name != null;
-                    var localVar = new LocalVariable(name, FrameSlotKind.Illegal, functionScope.getNextLocalVariableFrameIndex());
-                    functionScope.addLocalVariable(localVar);
+                    functionScope.addLocalVariable(name, FrameSlotKind.Illegal);
                 }
                 RSyntaxNode value = arglist.car() == RMissing.instance ? null : process(arglist.car(), false, index == 1 ? assignedName : null, functionScope);
                 list.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, name, value));

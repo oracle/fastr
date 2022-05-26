@@ -35,7 +35,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
@@ -606,8 +605,8 @@ public class EnvFunctions {
             casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
-        @CompilationFinal private BranchProfile frameSlotInvalidateProfile = BranchProfile.create();
-        @CompilationFinal private ValueProfile frameDescriptorProfile = ValueProfile.createIdentityProfile();
+        private final BranchProfile frameSlotInvalidateProfile = BranchProfile.create();
+        private final ValueProfile frameDescriptorProfile = ValueProfile.createIdentityProfile();
 
         @TruffleBoundary
         @Specialization

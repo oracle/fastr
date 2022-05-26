@@ -235,7 +235,7 @@ public class RRuntime {
      * Create an {@link VirtualFrame} for a non-function environment, e.g., a package frame or the
      * global environment.
      */
-    public static MaterializedFrame createNonFunctionFrameNew(String name) {
+    public static MaterializedFrame createNonFunctionFrame(String name) {
         FrameDescriptor frameDescriptor = FrameSlotChangeMonitor.createUninitializedFrameDescriptor(name);
         MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(RArguments.createUnitialized(), frameDescriptor);
         FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor(frameDescriptor, frame);

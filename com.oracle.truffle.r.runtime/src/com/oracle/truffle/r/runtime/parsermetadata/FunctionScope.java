@@ -23,19 +23,24 @@
 
 package com.oracle.truffle.r.runtime.parsermetadata;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public final class FunctionScope {
     private String functionName;
-    private final Map<String, LocalVariable> localVariables = new HashMap<>();
     private int localVarFrameIdx = FrameSlotChangeMonitor.INTERNAL_INDEXED_SLOT_COUNT;
+
+    private static final int INITIAL_LOC_VARS_CAPACITY = 12;
+
+    private final List<FrameSlotKind> localVariableKinds = new ArrayList<>(INITIAL_LOC_VARS_CAPACITY);
+    private final List<String> localVariableNames = new ArrayList<>(INITIAL_LOC_VARS_CAPACITY);
+    private final Map<String, Integer> localVariableIndexes = new HashMap<>(INITIAL_LOC_VARS_CAPACITY);
 
     public FunctionScope() {
         this(null);
@@ -54,34 +59,29 @@ public final class FunctionScope {
     }
 
     public boolean containsLocalVariable(String name) {
-        return localVariables.containsKey(name);
+        return localVariableIndexes.containsKey(name);
     }
 
-    public void addLocalVariable(LocalVariable localVariable) {
-        if (!containsLocalVariable(localVariable.getName())) {
-            RLogger.getLogger("RASTBuilder").fine(() -> String.format("Adding local variable %s to function scope '%s'", localVariable, functionName));
-            localVariables.put(localVariable.getName(), localVariable);
+    public void addLocalVariable(String identifier, FrameSlotKind slotKind) {
+        if (!containsLocalVariable(identifier)) {
+            RLogger.getLogger("RASTBuilder").fine(() -> String.format("Adding local variable %s to function scope '%s'", identifier, functionName));
+            localVariableIndexes.put(identifier, localVarFrameIdx);
+            localVariableKinds.add(slotKind);
+            localVariableNames.add(identifier);
             localVarFrameIdx++;
         }
     }
 
-    public LocalVariable getLocalVariable(String symbol) {
-        return localVariables.get(symbol);
+    public Integer getLocalVariableFrameIndex(String symbol) {
+        return localVariableIndexes.get(symbol);
     }
 
-    public int getLocalVariablesCount() {
-        return localVariables.size();
+    public List<String> getLocalVariableNames() {
+        return localVariableNames;
     }
 
-    public int getNextLocalVariableFrameIndex() {
-        return localVarFrameIdx;
-    }
-
-    /**
-     * Returns list of all the local variables sorted ascending by frame index.
-     */
-    public List<LocalVariable> getLocalVariablesSortedByFrameIdx() {
-        return localVariables.values().stream().sorted(Comparator.comparingInt(LocalVariable::getFrameIndex)).collect(Collectors.toList());
+    public List<FrameSlotKind> getLocalVariableKinds() {
+        return localVariableKinds;
     }
 
     @Override
@@ -90,8 +90,9 @@ public final class FunctionScope {
         sb.append("FunctionScope{");
         sb.append("'").append(functionName).append("', ");
         sb.append("localVariables = [");
-        localVariables.values().forEach(
-                        (localVariable) -> sb.append(localVariable).append(", "));
+        for (int i = 0; i < localVariableNames.size(); i++) {
+            sb.append("(").append(localVariableNames.get(i)).append(",").append(localVariableKinds.get(i)).append("),");
+        }
         sb.append("]"); // localVariables
         sb.append("}"); // FunctionScope
         return sb.toString();
