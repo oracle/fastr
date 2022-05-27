@@ -77,6 +77,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 //Transcribed from GnuR, library/stats/src/deriv.c
 
@@ -190,7 +191,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
                 return result;
             }
             MaterializedFrame frame = functionArg instanceof RFunction ? ((RFunction) functionArg).getEnclosingFrame() : RContext.getInstance().stateREnvironment.getGlobalFrame();
-            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(language, RSyntaxNode.LAZY_DEPARSE, targetArgs, blockCall, null, null);
+            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(language, RSyntaxNode.LAZY_DEPARSE, targetArgs, blockCall, null, FunctionScope.EMPTY_SCOPE);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
             return RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, frame);
         }

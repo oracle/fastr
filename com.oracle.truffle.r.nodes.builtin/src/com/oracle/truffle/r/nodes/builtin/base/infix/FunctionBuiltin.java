@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 @RBuiltin(name = "function", kind = PRIMITIVE, nonEvalArgs = 1, parameterNames = {"args", "body"}, behavior = COMPLEX)
 public final class FunctionBuiltin extends RBuiltinNode.Arg2 {
@@ -76,6 +77,7 @@ public final class FunctionBuiltin extends RBuiltinNode.Arg2 {
     public static FunctionExpressionNode createFunctionExpressionNode(TruffleRLanguage language, Object args, Object body) {
         List<Argument<RSyntaxNode>> finalArgs = RContext.getASTBuilder().getFunctionExprArgs(args);
         // TODO: Search for local variables?
-        return (FunctionExpressionNode) RContext.getASTBuilder().function(language, RSyntaxNode.LAZY_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null, null);
+        return (FunctionExpressionNode) RContext.getASTBuilder().function(language, RSyntaxNode.LAZY_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null,
+                        FunctionScope.EMPTY_SCOPE);
     }
 }

@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 public class RSubstitute {
 
@@ -210,7 +211,7 @@ public class RSubstitute {
             protected T visit(RSyntaxFunction element) {
                 ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
                 // TODO: Search for localVariables
-                return builder.function(language, RSyntaxNode.LAZY_DEPARSE, params, accept(element.getSyntaxBody()), element.getSyntaxDebugName(), null);
+                return builder.function(language, RSyntaxNode.LAZY_DEPARSE, params, accept(element.getSyntaxBody()), element.getSyntaxDebugName(), FunctionScope.EMPTY_SCOPE);
             }
         }.accept(original);
     }

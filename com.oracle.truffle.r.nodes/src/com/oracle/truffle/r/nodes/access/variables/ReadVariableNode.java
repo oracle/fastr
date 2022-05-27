@@ -588,11 +588,11 @@ public final class ReadVariableNode extends ReadVariableNodeBase {
 
         @TruffleBoundary
         private Object getValue(MaterializedFrame current) {
-            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
-            if (FrameIndex.isUninitializedIndex(frameIndex)) {
+            int identifierFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(current.getFrameDescriptor(), identifier);
+            if (FrameIndex.isUninitializedIndex(identifierFrameIndex)) {
                 return null;
             } else {
-                return FrameSlotChangeMonitor.getValue(current, frameIndex);
+                return FrameSlotChangeMonitor.getValue(current, identifierFrameIndex);
             }
         }
 

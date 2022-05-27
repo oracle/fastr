@@ -87,6 +87,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction {
 
@@ -192,7 +193,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             SourceSection source = argSourceSections == null ? getLazySourceSection() : argSourceSections[i];
             args.add(RCodeBuilder.argument(source, getFormalArguments().getSignature().getName(i), value == null ? null : builder.process(value.asRSyntaxNode())));
         }
-        RootCallTarget callTarget = builder.rootFunction(getRLanguage(), getLazySourceSection(), args, builder.process(getBody()), name, null);
+        RootCallTarget callTarget = builder.rootFunction(getRLanguage(), getLazySourceSection(), args, builder.process(getBody()), name, FunctionScope.EMPTY_SCOPE);
         return callTarget;
     }
 

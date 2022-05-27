@@ -209,7 +209,7 @@ public interface RCodeBuilder<T> {
             @Override
             protected T visit(RSyntaxFunction element) {
                 ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return function(RContext.getInstance().getLanguage(), element.getLazySourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName(), null);
+                return function(RContext.getInstance().getLanguage(), element.getLazySourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName(), FunctionScope.EMPTY_SCOPE);
             }
         }.accept(original);
         if (result instanceof Node) {

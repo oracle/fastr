@@ -28,19 +28,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public final class FunctionScope {
     private String functionName;
-    private int localVarFrameIdx = FrameSlotChangeMonitor.INTERNAL_INDEXED_SLOT_COUNT;
+
+    public static final FunctionScope EMPTY_SCOPE = new FunctionScope();
 
     private static final int INITIAL_LOC_VARS_CAPACITY = 12;
 
     private final List<FrameSlotKind> localVariableKinds = new ArrayList<>(INITIAL_LOC_VARS_CAPACITY);
     private final List<String> localVariableNames = new ArrayList<>(INITIAL_LOC_VARS_CAPACITY);
-    private final Map<String, Integer> localVariableIndexes = new HashMap<>(INITIAL_LOC_VARS_CAPACITY);
+
+    /**
+     * Maps identifiers to indexes into lists used in this class. Note that these indexes are not
+     * {@link com.oracle.truffle.r.runtime.env.frame.FrameIndex frame indexes}.
+     */
+    private final Map<String, Integer> localVariableArrayIndexes = new HashMap<>(INITIAL_LOC_VARS_CAPACITY);
+
+    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_AST);
 
     public FunctionScope() {
         this(null);
@@ -58,30 +67,59 @@ public final class FunctionScope {
         return functionName;
     }
 
-    public boolean containsLocalVariable(String name) {
-        return localVariableIndexes.containsKey(name);
-    }
-
     public void addLocalVariable(String identifier, FrameSlotKind slotKind) {
-        if (!containsLocalVariable(identifier)) {
-            RLogger.getLogger("RASTBuilder").fine(() -> String.format("Adding local variable %s to function scope '%s'", identifier, functionName));
-            localVariableIndexes.put(identifier, localVarFrameIdx);
-            localVariableKinds.add(slotKind);
+        Integer arrayIdx = localVariableArrayIndexes.get(identifier);
+        if (arrayIdx == null) {
+            logger.fine(() -> String.format("Adding local variable %s to function scope '%s'", identifier, functionName));
+            localVariableArrayIndexes.put(identifier, localVariableNames.size());
             localVariableNames.add(identifier);
-            localVarFrameIdx++;
+            localVariableKinds.add(slotKind);
+        } else {
+            // Because of the implementation of FrameIndex, frameIndex can also index an array.
+            // In this case, the local variable is redefined, so we replace its old slot kind with
+            // the newly defined slot kind.
+            FrameSlotKind oldKind = localVariableKinds.get(arrayIdx);
+            localVariableKinds.set(arrayIdx, replaceKind(oldKind, slotKind));
         }
     }
 
+    /**
+     * Returns a frame slot kind that should replace the given {@code oldKind} by {@code newKind}.
+     * For example {@code replaceKind(Integer, Double) => Object}, or
+     * {@code replaceKind(Illegal, Object) => Object}, etc.
+     */
+    private static FrameSlotKind replaceKind(FrameSlotKind oldKind, FrameSlotKind newKind) {
+        // TODO: Add if clause that returns Illegal.
+        if (oldKind == newKind) {
+            return oldKind;
+        } else {
+            return FrameSlotKind.Object;
+        }
+    }
+
+    public int getLocalVariableCount() {
+        return localVariableNames.size();
+    }
+
+    /**
+     * Returns {@link com.oracle.truffle.r.runtime.env.frame.FrameIndex frame index} of the given
+     * local variable.
+     *
+     * Note that this method uses knowledge of internal implementation of
+     * {@link com.oracle.truffle.r.runtime.env.frame.FrameIndex} - indexes into normal slots (not
+     * auxiliary) are 0-based positive integers.
+     */
     public Integer getLocalVariableFrameIndex(String symbol) {
-        return localVariableIndexes.get(symbol);
+        Integer locVarArrayIdx = localVariableArrayIndexes.get(symbol);
+        return locVarArrayIdx != null ? locVarArrayIdx + FrameSlotChangeMonitor.INTERNAL_INDEXED_SLOT_COUNT : null;
     }
 
-    public List<String> getLocalVariableNames() {
-        return localVariableNames;
+    public String getLocalVariableName(int locVarIdx) {
+        return localVariableNames.get(locVarIdx);
     }
 
-    public List<FrameSlotKind> getLocalVariableKinds() {
-        return localVariableKinds;
+    public FrameSlotKind getLocalVariableKind(int locVarIdx) {
+        return localVariableKinds.get(locVarIdx);
     }
 
     @Override

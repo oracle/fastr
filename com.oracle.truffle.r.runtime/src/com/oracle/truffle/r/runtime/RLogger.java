@@ -115,6 +115,8 @@ public class RLogger {
 
     public static final String LOGGER_FRAMES = "com.oracle.truffle.r.frames";
 
+    public static final String LOGGER_AST = "com.oracle.truffle.r.ast";
+
     public static TruffleLogger getLogger(String name) {
         return TruffleLogger.getLogger(R_LANGUAGE_ID, name);
     }

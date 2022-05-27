@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 /**
  * This class handles all the accesses and manipulations with {@link FrameDescriptor frame
@@ -569,18 +570,17 @@ public final class FrameSlotChangeMonitor {
      * Creates a {@link FrameDescriptor} with normal indexed slots.
      *
      * @param name Name for debug purposes.
-     * @param kinds Kind of normal slots to be initialized in the frame descriptor.
-     * @param identifiers Identifiers of normal slots
      */
-    public static FrameDescriptor createFunctionFrameDescriptor(String name, List<FrameSlotKind> kinds, List<?> identifiers) {
-        assert kinds.size() == identifiers.size();
-        Builder builder = FrameDescriptor.newBuilder();
+    public static FrameDescriptor createFunctionFrameDescriptor(String name, FunctionScope functionScope) {
+        int localVariableCount = functionScope.getLocalVariableCount();
+        Builder builder = FrameDescriptor.newBuilder(INTERNAL_INDEXED_SLOT_COUNT + localVariableCount);
         var descriptorMetadata = new FrameDescriptorMetaData(name);
         builder.info(descriptorMetadata);
         addInternalIndexedSlots(builder, descriptorMetadata);
-        for (int i = 0; i < kinds.size(); i++) {
-            int frameIndex = builder.addSlot(kinds.get(i), identifiers.get(i), new FrameSlotInfo(descriptorMetadata, identifiers.get(i)));
-            descriptorMetadata.addIndex(identifiers.get(i), FrameIndex.toNormalIndex(frameIndex));
+        for (int i = 0; i < localVariableCount; i++) {
+            String identifier = functionScope.getLocalVariableName(i);
+            int frameIndex = builder.addSlot(functionScope.getLocalVariableKind(i), identifier, new FrameSlotInfo(descriptorMetadata, identifier));
+            descriptorMetadata.addIndex(identifier, FrameIndex.toNormalIndex(frameIndex));
         }
         FrameDescriptor frameDescriptor = builder.build();
         assert assertValidFrameDescriptor(frameDescriptor);

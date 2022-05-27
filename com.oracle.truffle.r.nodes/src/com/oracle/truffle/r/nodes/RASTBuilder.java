@@ -32,7 +32,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
@@ -89,7 +88,7 @@ import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
  */
 public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
-    private static TruffleLogger logger = RLogger.getLogger(RASTBuilder.class.getSimpleName());
+    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_AST);
     private CodeBuilderContext context = CodeBuilderContext.DEFAULT;
     private ParseDataBuilder parseDataBuilder;
 
@@ -297,6 +296,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     @Override
     public RootCallTarget rootFunction(TruffleRLanguage language, SourceSection source, List<Argument<RSyntaxNode>> params, RSyntaxNode body, String name, FunctionScope functionScope) {
+        assert functionScope != null;
         // Parse argument list
         logger.finer("rootFunction '" + name + "'");
         RNode[] defaultValues = new RNode[params.size()];
@@ -343,11 +343,9 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         // Local variables
-        logger.fine(() -> String.format("rootFunction('%s'): functionScope = %s", name, functionScope != null ? functionScope.toString() : "null"));
-        List<?> identifiers = (functionScope != null) ? functionScope.getLocalVariableNames() : new ArrayList<>();
-        List<FrameSlotKind> slotKinds = (functionScope != null) ? functionScope.getLocalVariableKinds() : new ArrayList<>();
+        logger.fine(() -> String.format("rootFunction('%s'): functionScope = %s", name, functionScope != FunctionScope.EMPTY_SCOPE ? functionScope.toString() : "empty scope"));
         String functionFrameDescriptorName = name != null && !name.isEmpty() ? name : "<function>";
-        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor(functionFrameDescriptorName, slotKinds, identifiers);
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor(functionFrameDescriptorName, functionScope);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(language, source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
 
         if (RContext.getInstance().getOption(ForceSources)) {
