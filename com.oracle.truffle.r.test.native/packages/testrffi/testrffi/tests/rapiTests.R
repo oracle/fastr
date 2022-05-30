@@ -273,3 +273,7 @@ gctorture(on = FALSE)
 arr <- api.Rf_allocArray(13L, c(2L, 2L)) # INTSXP
 assertEquals(4, length(arr))
 assertEquals(c(2L, 2L), dim(arr))
+
+# ----------------------------------------------------------------------------------------
+# Set raw vector
+assertEquals(rffi.test_setRRawVector(), as.raw(c(10, 20, 30)))

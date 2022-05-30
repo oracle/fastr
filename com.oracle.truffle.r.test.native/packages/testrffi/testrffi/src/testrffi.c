@@ -1196,3 +1196,19 @@ SEXP test_mkCharDoesNotCollect() {
     UNPROTECT(2);
     return list2(string_one, string_two);
 }
+
+/**
+ * Casts data of a RAWSXP vector into (char *) and (unsigned char *) and sets some data via
+ * these pointers. In gnur, RAWSXP vectors consist of Rbyte (which is defined as unsigned char)
+ * elements.
+ * Remember to run this test both with NFI and LLVM backends.
+ */
+SEXP test_setRRawVector() {
+    SEXP raw_vec = PROTECT(allocVector(RAWSXP, 3));
+    char *data = RAW(raw_vec);
+    data[0] = 10;
+    data[1] = 20;
+    data[2] = 30;
+    UNPROTECT(1);
+    return raw_vec;
+}

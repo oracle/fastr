@@ -375,3 +375,7 @@ rffi.test_RfMatch <- function(x, y) {
 rffi.test_mkCharDoesNotCollect <- function() {
 	.Call("test_mkCharDoesNotCollect")
 }
+
+rffi.test_setRRawVector <- function() {
+	.Call("test_setRRawVector")
+}
