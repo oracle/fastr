@@ -46,6 +46,7 @@ SEXP promises_tests() {
     simple_promise_test();
     reset_promise_environment_test();
     reset_promise_code_test();
+    promise_with_empty_env_test();
     return R_NilValue;
 }
 
@@ -113,5 +114,21 @@ static void reset_promise_code_test() {
         error("reset_promise_code_test: Evaluation of promise failed");
     }
     UNPROTECT(2);
+}
+
+/**
+ * This is used in, e.g., dplyr.
+ */
+static void promise_with_empty_env_test() {
+    SEXP prom = PROTECT(allocSExp(PROMSXP));
+    SEXP expr = PROTECT(ScalarInteger(42));
+    SET_PRCODE(prom, expr);
+    SET_PRENV(prom, R_EmptyEnv);
+    SET_PRVALUE(prom, R_UnboundValue);
+    SEXP res = PROTECT(eval(prom, R_EmptyEnv));
+    if (TYPEOF(res) != INTSXP || LENGTH(res) != 1 || INTEGER_ELT(res, 0) != 42) {
+        error("promise_with_empty_env_test: Evaluation of promise failed");
+    }
+    UNPROTECT(3);
 }
 
