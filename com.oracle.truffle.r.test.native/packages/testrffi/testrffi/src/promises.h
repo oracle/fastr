@@ -23,4 +23,5 @@
 #include <Rinternals.h>
 
 SEXP promises_create_promise(SEXP expr, SEXP env);
+SEXP promises_put_into_env(SEXP env, SEXP name);
 SEXP promises_tests();

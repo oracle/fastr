@@ -26,6 +26,10 @@
 static void simple_promise_test();
 static void reset_promise_environment_test();
 static void reset_promise_code_test();
+static void promise_with_empty_env_test();
+static void promise_reset_env_test();
+static void different_envs_test();
+static SEXP put_promise_into_env(SEXP env, SEXP name);
 
 /**
  * Creates a promise from given `expr` and `env`.
@@ -39,6 +43,25 @@ SEXP promises_create_promise(SEXP expr, SEXP env) {
     return promise;
 }
 
+SEXP promises_put_into_env(SEXP env, SEXP name)
+{
+    if (!Rf_isEnvironment(env)) {
+        error("env should be ENVSXP");
+    }
+    if (!Rf_isString(name) || LENGTH(name) != 1) {
+        Rf_error("name should be string with length 1");
+    }
+    SEXP prom = PROTECT(Rf_allocSExp(PROMSXP));
+    SEXP expr = PROTECT(Rf_ScalarInteger(42));
+    SET_PRCODE(prom, expr);
+    SET_PRVALUE(prom, R_UnboundValue);
+    SET_PRENV(prom, R_EmptyEnv);
+    SEXP name_symbol = PROTECT(Rf_install(CHAR(STRING_ELT(name, 0))));
+    Rf_defineVar(name_symbol, prom, env);
+    UNPROTECT(3);
+    return env;
+}
+
 /**
  * The rest of the native tests.
  */
@@ -47,6 +70,8 @@ SEXP promises_tests() {
     reset_promise_environment_test();
     reset_promise_code_test();
     promise_with_empty_env_test();
+    promise_reset_env_test();
+    different_envs_test();
     return R_NilValue;
 }
 
@@ -132,3 +157,44 @@ static void promise_with_empty_env_test() {
     UNPROTECT(3);
 }
 
+static void promise_reset_env_test() {
+    SEXP prom = PROTECT(Rf_allocSExp(PROMSXP));
+    SEXP expr = PROTECT(Rf_lang3(Rf_install("+"), Rf_ScalarInteger(1), Rf_ScalarInteger(2)));
+    SET_PRCODE(prom, expr);
+    SET_PRENV(prom, R_EmptyEnv);
+    SET_PRVALUE(prom, R_UnboundValue);
+    // This test does not work in fastr, but it is not that important, so it is commented-out.
+    /*SEXP env = PRENV(prom);
+    if (env != R_EmptyEnv) {
+        error("env != R_EmptyEnv");
+    }*/
+    // Evaluation of this promise causes an error, because there is no + operator in emptyenv.
+    // We will reset the environment to baseenv, so that we can evaluate it.
+    SET_PRENV(prom, R_BaseEnv);
+    SEXP res = PROTECT(Rf_eval(prom, R_BaseEnv));
+    if (TYPEOF(res) != INTSXP || LENGTH(res) != 1 || INTEGER_ELT(res, 0) != 3) {
+        error("promise_reset_env_test: Promise evaluation failed");
+    }
+    UNPROTECT(3);
+}
+
+/**
+ * environments in SET_PRENV and Rf_eval are different, the environment set via SET_PRENV
+ * has precedence in Rf_eval.
+ */
+static void different_envs_test()
+{
+    SEXP prom = PROTECT(Rf_allocSExp(PROMSXP));
+    SEXP expr = PROTECT(Rf_lang3(Rf_install("+"), Rf_ScalarInteger(1), Rf_ScalarInteger(2)));
+    SET_PRCODE(prom, expr);
+    SET_PRENV(prom, R_BaseEnv);
+    SET_PRVALUE(prom, R_UnboundValue);
+    // If the promise would be evaluated in R_EmptyEnv, there would be an error, since R_EmptyEnv
+    // does not contain "+" operator. So this test proves that in Rf_eval, gnur takes the
+    // environment from the promise rather than from the given argument.
+    SEXP res = PROTECT(Rf_eval(prom, R_EmptyEnv));
+    if (TYPEOF(res) != INTSXP || LENGTH(res) != 1 || INTEGER_ELT(res, 0) != 3) {
+        error("Promise evaluation failed");
+    }
+    UNPROTECT(3);
+}

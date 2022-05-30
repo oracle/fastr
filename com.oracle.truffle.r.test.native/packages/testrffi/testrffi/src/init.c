@@ -136,6 +136,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(charsxp_revert_via_dataptr, 1),
         CALLDEF(charsxp_tests, 0),
         CALLDEF(promises_create_promise, 2),
+        CALLDEF(promises_put_into_env, 2),
         CALLDEF(promises_tests, 0),
         #include "init_api.h"
         {NULL, NULL, 0}

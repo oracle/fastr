@@ -1205,7 +1205,7 @@ SEXP test_mkCharDoesNotCollect() {
  */
 SEXP test_setRRawVector() {
     SEXP raw_vec = PROTECT(allocVector(RAWSXP, 3));
-    char *data = RAW(raw_vec);
+    char *data = (char *) RAW(raw_vec);
     data[0] = 10;
     data[1] = 20;
     data[2] = 30;
