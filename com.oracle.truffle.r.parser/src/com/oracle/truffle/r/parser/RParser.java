@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,31 +27,48 @@ package com.oracle.truffle.r.parser;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.CommonToken;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.FailedPredicateException;
+import org.antlr.v4.runtime.NoViableAltException;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.RuntimeMetaData;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.Vocabulary;
+import org.antlr.v4.runtime.VocabularyImpl;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNDeserializer;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
+import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.tree.TerminalNode;
+
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.RCodeToken;
-
-import org.antlr.v4.runtime.atn.*;
-import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
-import java.util.List;
-import java.util.ArrayList;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 @SuppressWarnings("all")
 public class RParser extends Parser {
@@ -251,10 +268,60 @@ public class RParser extends Parser {
 	    }
 
 	    /**
+	    * Adds an argument to a function call as a local variable to the given {@code functionScope}.
+	    * This is valid because in the function body the supplied arguments behave as if they were
+	    * local variables initialized with the value supplied and the name of the corresponding
+	    * formal argument [R-lang-specification].
+	    */
+	    private static void addArgumentAsLocalVariable(FunctionScope functionScope, String argIdentifier) {
+	        assert functionScope != null;
+	        assert argIdentifier != null;
+	        functionScope.addLocalVariable(argIdentifier, FrameSlotKind.Illegal);
+	    }
+
+	    private static FrameSlotKind infereType(RSyntaxNode rhs) {
+	        // TODO
+	        return FrameSlotKind.Illegal;
+	    }
+
+	    /**
+	    * Helper function that potentially adds a local variable to the given set of local
+	    * variables iff {@code lhs} is a syntax lookup and if the set of local variables is
+	    * not null.
+	    *
+	    * Note that this method should only be called from assignment expressions.
+	    */
+	    private void maybeAddLocalVariable(FunctionScope functionScope, RSyntaxNode lhs, RSyntaxNode rhs) {
+	        if (functionScope != null) {
+	            if (lhs instanceof RSyntaxLookup) {
+	                String identifier = ((RSyntaxLookup) lhs).getIdentifier();
+	                FrameSlotKind type = infereType(rhs);
+	                functionScope.addLocalVariable(identifier, type);
+	            }
+	        }
+	    }
+
+	    private RSyntaxNode lookup(SourceSection src, String symbol, boolean functionLookup) {
+	        return builder.lookup(src, symbol, functionLookup, null);
+	    }
+
+	    private RSyntaxNode lookup(SourceSection src, String symbol, boolean functionLookup, FunctionScope functionScope) {
+	        return builder.lookup(src, symbol, functionLookup, functionScope);
+	    }
+
+	    /**
 	     * Helper function to create a function lookup for the symbol in a given token.
 	     */
 	    private RSyntaxNode functionLookup(Token op) {
-	        return builder.lookup(src(op), argName(op.getText()), true);
+	        return builder.lookup(src(op), argName(op.getText()), true, null);
+	    }
+
+	    private static String getSimpleFunctionName(RSyntaxNode assignedTo) {
+	        if (assignedTo != null && assignedTo instanceof RSyntaxLookup) {
+	            return ((RSyntaxLookup) assignedTo).getIdentifier();
+	        } else {
+	            return "null";
+	        }
 	    }
 
 	    /**
@@ -405,7 +472,7 @@ public class RParser extends Parser {
 					{
 					{
 					setState(85);
-					_localctx.s = statement();
+					_localctx.s = statement(null);
 					 _localctx.v.add(_localctx.s.v); 
 					}
 					} 
@@ -474,6 +541,7 @@ public class RParser extends Parser {
 
 		        assert source != null && builder != null;
 		        List<Argument<RSyntaxNode>> params = new ArrayList<>();
+		        FunctionScope functionScope = new FunctionScope(name);
 		    
 		int _la;
 		try {
@@ -498,7 +566,7 @@ public class RParser extends Parser {
 			if (((((_la - 6)) & ~0x3f) == 0 && ((1L << (_la - 6)) & ((1L << (VARIADIC - 6)) | (1L << (DD - 6)) | (1L << (ID - 6)))) != 0)) {
 				{
 				setState(100);
-				par_decl(params);
+				par_decl(params, functionScope);
 				setState(109);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,1,_ctx);
@@ -514,7 +582,7 @@ public class RParser extends Parser {
 						setState(104);
 						n_();
 						setState(105);
-						par_decl(params);
+						par_decl(params, functionScope);
 						}
 						} 
 					}
@@ -533,8 +601,8 @@ public class RParser extends Parser {
 			setState(118);
 			n_();
 			setState(119);
-			_localctx.body = expr_or_assign();
-			 _localctx.v =  builder.rootFunction(language, src(_localctx.op, last()), params, _localctx.body.v, name); 
+			_localctx.body = expr_or_assign(functionScope);
+			 _localctx.v =  builder.rootFunction(language, src(_localctx.op, last()), params, _localctx.body.v, name, functionScope); 
 			}
 			_ctx.stop = _input.LT(-1);
 
@@ -555,6 +623,7 @@ public class RParser extends Parser {
 	}
 
 	public static class StatementContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Expr_or_assignContext e;
 		public N_oneContext n_one() {
@@ -563,20 +632,22 @@ public class RParser extends Parser {
 		public Expr_or_assignContext expr_or_assign() {
 			return getRuleContext(Expr_or_assignContext.class,0);
 		}
-		public StatementContext(ParserRuleContext parent, int invokingState) {
+		public StatementContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public StatementContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_statement; }
 	}
 
-	public final StatementContext statement() throws RecognitionException {
-		StatementContext _localctx = new StatementContext(_ctx, getState());
+	public final StatementContext statement(FunctionScope functionScope) throws RecognitionException {
+		StatementContext _localctx = new StatementContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 4, RULE_statement);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(122);
-			_localctx.e = expr_or_assign();
+			_localctx.e = expr_or_assign(functionScope);
 			setState(123);
 			n_one();
 			 _localctx.v =  _localctx.e.v; 
@@ -858,6 +929,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Expr_wo_assignContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public While_exprContext w;
 		public If_exprContext i;
@@ -887,14 +959,16 @@ public class RParser extends Parser {
 			return getRuleContext(ArgsContext.class,0);
 		}
 		public TerminalNode RPAR() { return getToken(RParser.RPAR, 0); }
-		public Expr_wo_assignContext(ParserRuleContext parent, int invokingState) {
+		public Expr_wo_assignContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Expr_wo_assignContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_expr_wo_assign; }
 	}
 
-	public final Expr_wo_assignContext expr_wo_assign() throws RecognitionException {
-		Expr_wo_assignContext _localctx = new Expr_wo_assignContext(_ctx, getState());
+	public final Expr_wo_assignContext expr_wo_assign(FunctionScope functionScope) throws RecognitionException {
+		Expr_wo_assignContext _localctx = new Expr_wo_assignContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 12, RULE_expr_wo_assign);
 		int _la;
 		try {
@@ -905,7 +979,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(157);
-				_localctx.w = while_expr();
+				_localctx.w = while_expr(functionScope);
 				 _localctx.v =  _localctx.w.v; 
 				}
 				break;
@@ -913,7 +987,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(160);
-				_localctx.i = if_expr();
+				_localctx.i = if_expr(functionScope);
 				 _localctx.v =  _localctx.i.v; 
 				}
 				break;
@@ -921,7 +995,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(163);
-				_localctx.f = for_expr();
+				_localctx.f = for_expr(functionScope);
 				 _localctx.v =  _localctx.f.v; 
 				}
 				break;
@@ -929,7 +1003,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(166);
-				_localctx.r = repeat_expr();
+				_localctx.r = repeat_expr(functionScope);
 				 _localctx.v =  _localctx.r.v; 
 				}
 				break;
@@ -996,6 +1070,7 @@ public class RParser extends Parser {
 	}
 
 	public static class SequenceContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token op;
 		public Expr_or_assignContext e;
@@ -1013,16 +1088,20 @@ public class RParser extends Parser {
 		public Expr_or_assignContext expr_or_assign(int i) {
 			return getRuleContext(Expr_or_assignContext.class,i);
 		}
-		public SequenceContext(ParserRuleContext parent, int invokingState) {
+		public SequenceContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public SequenceContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_sequence; }
 	}
 
-	public final SequenceContext sequence() throws RecognitionException {
-		SequenceContext _localctx = new SequenceContext(_ctx, getState());
+	public final SequenceContext sequence(FunctionScope functionScope) throws RecognitionException {
+		SequenceContext _localctx = new SequenceContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 14, RULE_sequence);
-		 ArrayList<Argument<RSyntaxNode>> stmts = new ArrayList<>(); 
+
+		        ArrayList<Argument<RSyntaxNode>> stmts = new ArrayList<>();
+		    
 		int _la;
 		try {
 			int _alt;
@@ -1047,7 +1126,7 @@ public class RParser extends Parser {
 			case 1:
 				{
 				setState(191);
-				_localctx.e = expr_or_assign();
+				_localctx.e = expr_or_assign(functionScope);
 				 stmts.add(RCodeBuilder.argument(_localctx.e.v)); 
 				setState(199);
 				_errHandler.sync(this);
@@ -1059,7 +1138,7 @@ public class RParser extends Parser {
 						setState(193);
 						n_multi();
 						setState(194);
-						_localctx.e = expr_or_assign();
+						_localctx.e = expr_or_assign(functionScope);
 						 stmts.add(RCodeBuilder.argument(_localctx.e.v)); 
 						}
 						} 
@@ -1099,6 +1178,7 @@ public class RParser extends Parser {
 	}
 
 	public static class ExprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Tilde_exprContext l;
 		public Token op;
@@ -1122,14 +1202,16 @@ public class RParser extends Parser {
 		public FunctionContext function() {
 			return getRuleContext(FunctionContext.class,0);
 		}
-		public ExprContext(ParserRuleContext parent, int invokingState) {
+		public ExprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public ExprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_expr; }
 	}
 
-	public final ExprContext expr() throws RecognitionException {
-		ExprContext _localctx = new ExprContext(_ctx, getState());
+	public final ExprContext expr(FunctionScope functionScope) throws RecognitionException {
+		ExprContext _localctx = new ExprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 16, RULE_expr);
 		 Token start = getInputStream().LT(1); RSyntaxNode rhs = null; 
 		int _la;
@@ -1137,7 +1219,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(211);
-			_localctx.l = tilde_expr();
+			_localctx.l = tilde_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(238);
 			_errHandler.sync(this);
@@ -1172,12 +1254,15 @@ public class RParser extends Parser {
 				case 2:
 					{
 					setState(219);
-					_localctx.r2 = expr();
+					_localctx.r2 = expr(functionScope);
 					 rhs = _localctx.r2.v; 
 					}
 					break;
 				}
-				 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op), _localctx.l.v, rhs); 
+
+				         _localctx.v =  builder.call(src(start, last()), operator(_localctx.op), _localctx.l.v, rhs);
+				         maybeAddLocalVariable(functionScope, _localctx.l.v, rhs);
+				       
 				}
 				break;
 			case RIGHT_ARROW:
@@ -1188,8 +1273,11 @@ public class RParser extends Parser {
 				setState(228);
 				n_();
 				setState(229);
-				_localctx.r3 = expr();
-				 _localctx.v =  builder.call(src(start, last()), builder.lookup(src(_localctx.op), "<-", true), _localctx.r3.v, _localctx.l.v); 
+				_localctx.r3 = expr(functionScope);
+
+				          _localctx.v =  builder.call(src(start, last()), lookup(src(_localctx.op), "<-", true, functionScope), _localctx.r3.v, _localctx.l.v);
+				          maybeAddLocalVariable(functionScope, _localctx.r3.v, _localctx.l.v);
+				        
 				}
 				break;
 			case SUPER_RIGHT_ARROW:
@@ -1200,8 +1288,8 @@ public class RParser extends Parser {
 				setState(234);
 				n_();
 				setState(235);
-				_localctx.r4 = expr();
-				 _localctx.v =  builder.call(src(start, last()), builder.lookup(src(_localctx.op), "<<-", true), _localctx.r4.v, _localctx.l.v); 
+				_localctx.r4 = expr(functionScope);
+				 _localctx.v =  builder.call(src(start, last()), lookup(src(_localctx.op), "<<-", true, functionScope), _localctx.r4.v, _localctx.l.v); 
 				}
 				break;
 			case COMMENT:
@@ -1227,6 +1315,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Expr_or_assignContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Tilde_exprContext l;
 		public Token op;
@@ -1251,14 +1340,16 @@ public class RParser extends Parser {
 		public FunctionContext function() {
 			return getRuleContext(FunctionContext.class,0);
 		}
-		public Expr_or_assignContext(ParserRuleContext parent, int invokingState) {
+		public Expr_or_assignContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Expr_or_assignContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_expr_or_assign; }
 	}
 
-	public final Expr_or_assignContext expr_or_assign() throws RecognitionException {
-		Expr_or_assignContext _localctx = new Expr_or_assignContext(_ctx, getState());
+	public final Expr_or_assignContext expr_or_assign(FunctionScope functionScope) throws RecognitionException {
+		Expr_or_assignContext _localctx = new Expr_or_assignContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 18, RULE_expr_or_assign);
 		 Token start = getInputStream().LT(1); RSyntaxNode rhs = null; 
 		int _la;
@@ -1266,7 +1357,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(240);
-			_localctx.l = tilde_expr();
+			_localctx.l = tilde_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(267);
 			_errHandler.sync(this);
@@ -1300,12 +1391,15 @@ public class RParser extends Parser {
 				case 2:
 					{
 					setState(248);
-					_localctx.r2 = expr_or_assign();
+					_localctx.r2 = expr_or_assign(functionScope);
 					 rhs = _localctx.r2.v; 
 					}
 					break;
 				}
-				 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op), _localctx.l.v, rhs); 
+
+				          _localctx.v =  builder.call(src(start, last()), operator(_localctx.op), _localctx.l.v, rhs);
+				          maybeAddLocalVariable(functionScope, _localctx.l.v, rhs);
+				        
 				}
 				break;
 			case 2:
@@ -1316,8 +1410,11 @@ public class RParser extends Parser {
 				setState(257);
 				n_();
 				setState(258);
-				_localctx.r3 = expr_or_assign();
-				 _localctx.v =  builder.call(src(start, last()), builder.lookup(src(_localctx.op), "<-", true), _localctx.r3.v, _localctx.l.v); 
+				_localctx.r3 = expr_or_assign(functionScope);
+
+				          _localctx.v =  builder.call(src(start, last()), lookup(src(_localctx.op), "<-", true, functionScope), _localctx.r3.v, _localctx.l.v);
+				          maybeAddLocalVariable(functionScope, _localctx.r3.v, _localctx.l.v);
+				        
 				}
 				break;
 			case 3:
@@ -1328,8 +1425,8 @@ public class RParser extends Parser {
 				setState(263);
 				n_();
 				setState(264);
-				_localctx.r4 = expr_or_assign();
-				 _localctx.v =  builder.call(src(start, last()), builder.lookup(src(_localctx.op), "<<-", true), _localctx.r4.v, _localctx.l.v); 
+				_localctx.r4 = expr_or_assign(functionScope);
+				 _localctx.v =  builder.call(src(start, last()), lookup(src(_localctx.op), "<<-", true, functionScope), _localctx.r4.v, _localctx.l.v); 
 				}
 				break;
 			}
@@ -1347,6 +1444,7 @@ public class RParser extends Parser {
 	}
 
 	public static class If_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token op;
 		public Expr_or_assignContext cond;
@@ -1368,14 +1466,16 @@ public class RParser extends Parser {
 			return getRuleContext(Expr_or_assignContext.class,i);
 		}
 		public TerminalNode ELSE() { return getToken(RParser.ELSE, 0); }
-		public If_exprContext(ParserRuleContext parent, int invokingState) {
+		public If_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public If_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_if_expr; }
 	}
 
-	public final If_exprContext if_expr() throws RecognitionException {
-		If_exprContext _localctx = new If_exprContext(_ctx, getState());
+	public final If_exprContext if_expr(FunctionScope functionScope) throws RecognitionException {
+		If_exprContext _localctx = new If_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 20, RULE_if_expr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1391,7 +1491,7 @@ public class RParser extends Parser {
 			setState(274);
 			n_();
 			setState(275);
-			_localctx.cond = expr_or_assign();
+			_localctx.cond = expr_or_assign(functionScope);
 			setState(276);
 			n_();
 			setState(277);
@@ -1400,7 +1500,7 @@ public class RParser extends Parser {
 			setState(279);
 			n_();
 			setState(280);
-			_localctx.t = expr_or_assign();
+			_localctx.t = expr_or_assign(functionScope);
 			setState(289);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,21,_ctx) ) {
@@ -1415,7 +1515,7 @@ public class RParser extends Parser {
 				setState(284);
 				n_();
 				setState(285);
-				_localctx.f = expr_or_assign();
+				_localctx.f = expr_or_assign(functionScope);
 				 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), _localctx.cond.v, _localctx.t.v, _localctx.f.v); 
 				}
 				}
@@ -1440,6 +1540,7 @@ public class RParser extends Parser {
 	}
 
 	public static class While_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token op;
 		public Expr_or_assignContext c;
@@ -1459,14 +1560,16 @@ public class RParser extends Parser {
 		public Expr_or_assignContext expr_or_assign(int i) {
 			return getRuleContext(Expr_or_assignContext.class,i);
 		}
-		public While_exprContext(ParserRuleContext parent, int invokingState) {
+		public While_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public While_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_while_expr; }
 	}
 
-	public final While_exprContext while_expr() throws RecognitionException {
-		While_exprContext _localctx = new While_exprContext(_ctx, getState());
+	public final While_exprContext while_expr(FunctionScope functionScope) throws RecognitionException {
+		While_exprContext _localctx = new While_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 22, RULE_while_expr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1482,7 +1585,7 @@ public class RParser extends Parser {
 			setState(296);
 			n_();
 			setState(297);
-			_localctx.c = expr_or_assign();
+			_localctx.c = expr_or_assign(functionScope);
 			setState(298);
 			n_();
 			setState(299);
@@ -1491,7 +1594,7 @@ public class RParser extends Parser {
 			setState(301);
 			n_();
 			setState(302);
-			_localctx.body = expr_or_assign();
+			_localctx.body = expr_or_assign(functionScope);
 			 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), _localctx.c.v, _localctx.body.v); 
 			}
 		}
@@ -1507,6 +1610,7 @@ public class RParser extends Parser {
 	}
 
 	public static class For_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token op;
 		public Token i;
@@ -1529,14 +1633,16 @@ public class RParser extends Parser {
 		public Expr_or_assignContext expr_or_assign(int i) {
 			return getRuleContext(Expr_or_assignContext.class,i);
 		}
-		public For_exprContext(ParserRuleContext parent, int invokingState) {
+		public For_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public For_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_for_expr; }
 	}
 
-	public final For_exprContext for_expr() throws RecognitionException {
-		For_exprContext _localctx = new For_exprContext(_ctx, getState());
+	public final For_exprContext for_expr(FunctionScope functionScope) throws RecognitionException {
+		For_exprContext _localctx = new For_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 24, RULE_for_expr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1561,7 +1667,7 @@ public class RParser extends Parser {
 			setState(315);
 			n_();
 			setState(316);
-			_localctx.in = expr_or_assign();
+			_localctx.in = expr_or_assign(functionScope);
 			setState(317);
 			n_();
 			setState(318);
@@ -1570,8 +1676,8 @@ public class RParser extends Parser {
 			setState(320);
 			n_();
 			setState(321);
-			_localctx.body = expr_or_assign();
-			 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), builder.lookup(src(_localctx.i), _localctx.i.getText(), false), _localctx.in.v, _localctx.body.v); 
+			_localctx.body = expr_or_assign(functionScope);
+			 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), lookup(src(_localctx.i), _localctx.i.getText(), false, functionScope), _localctx.in.v, _localctx.body.v); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -1586,6 +1692,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Repeat_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token op;
 		public Expr_or_assignContext body;
@@ -1596,14 +1703,16 @@ public class RParser extends Parser {
 		public Expr_or_assignContext expr_or_assign() {
 			return getRuleContext(Expr_or_assignContext.class,0);
 		}
-		public Repeat_exprContext(ParserRuleContext parent, int invokingState) {
+		public Repeat_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Repeat_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_repeat_expr; }
 	}
 
-	public final Repeat_exprContext repeat_expr() throws RecognitionException {
-		Repeat_exprContext _localctx = new Repeat_exprContext(_ctx, getState());
+	public final Repeat_exprContext repeat_expr(FunctionScope functionScope) throws RecognitionException {
+		Repeat_exprContext _localctx = new Repeat_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 26, RULE_repeat_expr);
 		try {
 			enterOuterAlt(_localctx, 1);
@@ -1614,7 +1723,7 @@ public class RParser extends Parser {
 			setState(326);
 			n_();
 			setState(327);
-			_localctx.body = expr_or_assign();
+			_localctx.body = expr_or_assign(functionScope);
 			 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), _localctx.body.v); 
 			}
 		}
@@ -1667,7 +1776,10 @@ public class RParser extends Parser {
 	public final FunctionContext function(RSyntaxNode assignedTo) throws RecognitionException {
 		FunctionContext _localctx = new FunctionContext(_ctx, getState(), assignedTo);
 		enterRule(_localctx, 28, RULE_function);
-		 List<Argument<RSyntaxNode>> params = new ArrayList<>(); 
+
+		        List<Argument<RSyntaxNode>> params = new ArrayList<>();
+		        FunctionScope functionScope = new FunctionScope(getSimpleFunctionName(assignedTo));
+		    
 		int _la;
 		try {
 			int _alt;
@@ -1689,7 +1801,7 @@ public class RParser extends Parser {
 			if (((((_la - 6)) & ~0x3f) == 0 && ((1L << (_la - 6)) & ((1L << (VARIADIC - 6)) | (1L << (DD - 6)) | (1L << (ID - 6)))) != 0)) {
 				{
 				setState(336);
-				par_decl(params);
+				par_decl(params, functionScope);
 				setState(345);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,22,_ctx);
@@ -1705,7 +1817,7 @@ public class RParser extends Parser {
 						setState(340);
 						n_();
 						setState(341);
-						par_decl(params);
+						par_decl(params, functionScope);
 						}
 						} 
 					}
@@ -1724,8 +1836,8 @@ public class RParser extends Parser {
 			setState(354);
 			n_();
 			setState(355);
-			_localctx.body = expr_or_assign();
-			 _localctx.v =  builder.function(language, src(_localctx.op, last()), params, _localctx.body.v, assignedTo); 
+			_localctx.body = expr_or_assign(functionScope);
+			 _localctx.v =  builder.function(language, src(_localctx.op, last()), params, _localctx.body.v, assignedTo, functionScope); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -1741,6 +1853,7 @@ public class RParser extends Parser {
 
 	public static class Par_declContext extends ParserRuleContext {
 		public List<Argument<RSyntaxNode>> l;
+		public FunctionScope functionScope;
 		public Token i;
 		public Token a;
 		public ExprContext e;
@@ -1759,15 +1872,16 @@ public class RParser extends Parser {
 		public TerminalNode VARIADIC() { return getToken(RParser.VARIADIC, 0); }
 		public TerminalNode DD() { return getToken(RParser.DD, 0); }
 		public Par_declContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
-		public Par_declContext(ParserRuleContext parent, int invokingState, List<Argument<RSyntaxNode>> l) {
+		public Par_declContext(ParserRuleContext parent, int invokingState, List<Argument<RSyntaxNode>> l, FunctionScope functionScope) {
 			super(parent, invokingState);
 			this.l = l;
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_par_decl; }
 	}
 
-	public final Par_declContext par_decl(List<Argument<RSyntaxNode>> l) throws RecognitionException {
-		Par_declContext _localctx = new Par_declContext(_ctx, getState(), l);
+	public final Par_declContext par_decl(List<Argument<RSyntaxNode>> l,FunctionScope functionScope) throws RecognitionException {
+		Par_declContext _localctx = new Par_declContext(_ctx, getState(), l, functionScope);
 		enterRule(_localctx, 30, RULE_par_decl);
 		try {
 			setState(394);
@@ -1779,7 +1893,7 @@ public class RParser extends Parser {
 				setState(358);
 				_localctx.i = match(ID);
 				tok();
-				 _localctx.l.add(argument(src(_localctx.i), _localctx.i.getText(), null)); 
+				 addArgumentAsLocalVariable(functionScope, _localctx.i.getText()); _localctx.l.add(argument(src(_localctx.i), _localctx.i.getText(), null)); 
 				}
 				break;
 			case 2:
@@ -1796,8 +1910,8 @@ public class RParser extends Parser {
 				setState(366);
 				n_();
 				setState(367);
-				_localctx.e = expr();
-				 _localctx.l.add(argument(src(_localctx.i, last()), _localctx.i.getText(), _localctx.e.v)); 
+				_localctx.e = expr(functionScope);
+				 addArgumentAsLocalVariable(functionScope, _localctx.i.getText()); _localctx.l.add(argument(src(_localctx.i, last()), _localctx.i.getText(), _localctx.e.v)); 
 				}
 				break;
 			case 3:
@@ -1823,7 +1937,7 @@ public class RParser extends Parser {
 				setState(378);
 				n_();
 				setState(379);
-				_localctx.e = expr();
+				_localctx.e = expr(null);
 				 _localctx.l.add(argument(src(_localctx.v), _localctx.v.getText(),  null)); 
 				}
 				break;
@@ -1850,7 +1964,7 @@ public class RParser extends Parser {
 				setState(390);
 				n_();
 				setState(391);
-				expr();
+				expr(null);
 				 _localctx.l.add(argument(src(_localctx.v), _localctx.v.getText(), null)); 
 				}
 				break;
@@ -1868,6 +1982,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Tilde_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Utilde_exprContext l;
 		public Token op;
@@ -1888,21 +2003,23 @@ public class RParser extends Parser {
 		public TerminalNode TILDE(int i) {
 			return getToken(RParser.TILDE, i);
 		}
-		public Tilde_exprContext(ParserRuleContext parent, int invokingState) {
+		public Tilde_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Tilde_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_tilde_expr; }
 	}
 
-	public final Tilde_exprContext tilde_expr() throws RecognitionException {
-		Tilde_exprContext _localctx = new Tilde_exprContext(_ctx, getState());
+	public final Tilde_exprContext tilde_expr(FunctionScope functionScope) throws RecognitionException {
+		Tilde_exprContext _localctx = new Tilde_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 32, RULE_tilde_expr);
 		try {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(396);
-			_localctx.l = utilde_expr();
+			_localctx.l = utilde_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(406);
 			_errHandler.sync(this);
@@ -1918,7 +2035,7 @@ public class RParser extends Parser {
 					setState(400);
 					n_();
 					setState(401);
-					_localctx.r = utilde_expr();
+					_localctx.r = utilde_expr(functionScope);
 					 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), _localctx.v, _localctx.r.v); 
 					}
 					}
@@ -1942,6 +2059,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Utilde_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token op;
 		public Utilde_exprContext l1;
@@ -1956,14 +2074,16 @@ public class RParser extends Parser {
 		public Or_exprContext or_expr() {
 			return getRuleContext(Or_exprContext.class,0);
 		}
-		public Utilde_exprContext(ParserRuleContext parent, int invokingState) {
+		public Utilde_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Utilde_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_utilde_expr; }
 	}
 
-	public final Utilde_exprContext utilde_expr() throws RecognitionException {
-		Utilde_exprContext _localctx = new Utilde_exprContext(_ctx, getState());
+	public final Utilde_exprContext utilde_expr(FunctionScope functionScope) throws RecognitionException {
+		Utilde_exprContext _localctx = new Utilde_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 34, RULE_utilde_expr);
 		try {
 			setState(418);
@@ -1978,7 +2098,7 @@ public class RParser extends Parser {
 				setState(411);
 				n_();
 				setState(412);
-				_localctx.l1 = utilde_expr();
+				_localctx.l1 = utilde_expr(functionScope);
 				 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), _localctx.l1.v); 
 				}
 				break;
@@ -1986,7 +2106,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(415);
-				_localctx.l2 = or_expr();
+				_localctx.l2 = or_expr(functionScope);
 				 _localctx.v =  _localctx.l2.v; 
 				}
 				break;
@@ -2004,6 +2124,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Or_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public And_exprContext l;
 		public Or_operatorContext op;
@@ -2026,14 +2147,16 @@ public class RParser extends Parser {
 		public Or_operatorContext or_operator(int i) {
 			return getRuleContext(Or_operatorContext.class,i);
 		}
-		public Or_exprContext(ParserRuleContext parent, int invokingState) {
+		public Or_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Or_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_or_expr; }
 	}
 
-	public final Or_exprContext or_expr() throws RecognitionException {
-		Or_exprContext _localctx = new Or_exprContext(_ctx, getState());
+	public final Or_exprContext or_expr(FunctionScope functionScope) throws RecognitionException {
+		Or_exprContext _localctx = new Or_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 36, RULE_or_expr);
 		 Token start = getInputStream().LT(1); 
 		try {
@@ -2041,7 +2164,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(420);
-			_localctx.l = and_expr();
+			_localctx.l = and_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(429);
 			_errHandler.sync(this);
@@ -2056,7 +2179,7 @@ public class RParser extends Parser {
 					setState(423);
 					n_();
 					setState(424);
-					_localctx.r = and_expr();
+					_localctx.r = and_expr(functionScope);
 					 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op.v), _localctx.v, _localctx.r.v); 
 					}
 					}
@@ -2080,6 +2203,7 @@ public class RParser extends Parser {
 	}
 
 	public static class And_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Not_exprContext l;
 		public And_operatorContext op;
@@ -2102,14 +2226,16 @@ public class RParser extends Parser {
 		public And_operatorContext and_operator(int i) {
 			return getRuleContext(And_operatorContext.class,i);
 		}
-		public And_exprContext(ParserRuleContext parent, int invokingState) {
+		public And_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public And_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_and_expr; }
 	}
 
-	public final And_exprContext and_expr() throws RecognitionException {
-		And_exprContext _localctx = new And_exprContext(_ctx, getState());
+	public final And_exprContext and_expr(FunctionScope functionScope) throws RecognitionException {
+		And_exprContext _localctx = new And_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 38, RULE_and_expr);
 		 Token start = getInputStream().LT(1); 
 		try {
@@ -2117,7 +2243,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(432);
-			_localctx.l = not_expr();
+			_localctx.l = not_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(441);
 			_errHandler.sync(this);
@@ -2132,7 +2258,7 @@ public class RParser extends Parser {
 					setState(435);
 					n_();
 					setState(436);
-					_localctx.r = not_expr();
+					_localctx.r = not_expr(functionScope);
 					 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op.v), _localctx.v, _localctx.r.v); 
 					}
 					}
@@ -2156,6 +2282,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Not_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token op;
 		public Not_exprContext l;
@@ -2170,14 +2297,16 @@ public class RParser extends Parser {
 		public Comp_exprContext comp_expr() {
 			return getRuleContext(Comp_exprContext.class,0);
 		}
-		public Not_exprContext(ParserRuleContext parent, int invokingState) {
+		public Not_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Not_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_not_expr; }
 	}
 
-	public final Not_exprContext not_expr() throws RecognitionException {
-		Not_exprContext _localctx = new Not_exprContext(_ctx, getState());
+	public final Not_exprContext not_expr(FunctionScope functionScope) throws RecognitionException {
+		Not_exprContext _localctx = new Not_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 40, RULE_not_expr);
 		try {
 			setState(454);
@@ -2194,7 +2323,7 @@ public class RParser extends Parser {
 				setState(447);
 				n_();
 				setState(448);
-				_localctx.l = not_expr();
+				_localctx.l = not_expr(functionScope);
 				 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), _localctx.l.v); 
 				}
 				break;
@@ -2202,7 +2331,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(451);
-				_localctx.b = comp_expr();
+				_localctx.b = comp_expr(functionScope);
 				 _localctx.v =  _localctx.b.v; 
 				}
 				break;
@@ -2220,6 +2349,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Comp_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Add_exprContext l;
 		public Comp_operatorContext op;
@@ -2242,14 +2372,16 @@ public class RParser extends Parser {
 		public Comp_operatorContext comp_operator(int i) {
 			return getRuleContext(Comp_operatorContext.class,i);
 		}
-		public Comp_exprContext(ParserRuleContext parent, int invokingState) {
+		public Comp_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Comp_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_comp_expr; }
 	}
 
-	public final Comp_exprContext comp_expr() throws RecognitionException {
-		Comp_exprContext _localctx = new Comp_exprContext(_ctx, getState());
+	public final Comp_exprContext comp_expr(FunctionScope functionScope) throws RecognitionException {
+		Comp_exprContext _localctx = new Comp_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 42, RULE_comp_expr);
 		 Token start = getInputStream().LT(1); 
 		try {
@@ -2257,7 +2389,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(456);
-			_localctx.l = add_expr();
+			_localctx.l = add_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(465);
 			_errHandler.sync(this);
@@ -2272,7 +2404,7 @@ public class RParser extends Parser {
 					setState(459);
 					n_();
 					setState(460);
-					_localctx.r = add_expr();
+					_localctx.r = add_expr(functionScope);
 					 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op.v), _localctx.v, _localctx.r.v); 
 					}
 					}
@@ -2296,6 +2428,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Add_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Mult_exprContext l;
 		public Add_operatorContext op;
@@ -2318,14 +2451,16 @@ public class RParser extends Parser {
 		public Add_operatorContext add_operator(int i) {
 			return getRuleContext(Add_operatorContext.class,i);
 		}
-		public Add_exprContext(ParserRuleContext parent, int invokingState) {
+		public Add_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Add_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_add_expr; }
 	}
 
-	public final Add_exprContext add_expr() throws RecognitionException {
-		Add_exprContext _localctx = new Add_exprContext(_ctx, getState());
+	public final Add_exprContext add_expr(FunctionScope functionScope) throws RecognitionException {
+		Add_exprContext _localctx = new Add_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 44, RULE_add_expr);
 		 Token start = getInputStream().LT(1); 
 		try {
@@ -2333,7 +2468,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(468);
-			_localctx.l = mult_expr();
+			_localctx.l = mult_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(477);
 			_errHandler.sync(this);
@@ -2348,7 +2483,7 @@ public class RParser extends Parser {
 					setState(471);
 					n_();
 					setState(472);
-					_localctx.r = mult_expr();
+					_localctx.r = mult_expr(functionScope);
 					 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op.v), _localctx.v, _localctx.r.v); 
 					}
 					}
@@ -2372,6 +2507,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Mult_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Operator_exprContext l;
 		public Mult_operatorContext op;
@@ -2394,14 +2530,16 @@ public class RParser extends Parser {
 		public Mult_operatorContext mult_operator(int i) {
 			return getRuleContext(Mult_operatorContext.class,i);
 		}
-		public Mult_exprContext(ParserRuleContext parent, int invokingState) {
+		public Mult_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Mult_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_mult_expr; }
 	}
 
-	public final Mult_exprContext mult_expr() throws RecognitionException {
-		Mult_exprContext _localctx = new Mult_exprContext(_ctx, getState());
+	public final Mult_exprContext mult_expr(FunctionScope functionScope) throws RecognitionException {
+		Mult_exprContext _localctx = new Mult_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 46, RULE_mult_expr);
 		 Token start = getInputStream().LT(1); 
 		try {
@@ -2409,7 +2547,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(480);
-			_localctx.l = operator_expr();
+			_localctx.l = operator_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(489);
 			_errHandler.sync(this);
@@ -2424,7 +2562,7 @@ public class RParser extends Parser {
 					setState(483);
 					n_();
 					setState(484);
-					_localctx.r = operator_expr();
+					_localctx.r = operator_expr(functionScope);
 					 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op.v), _localctx.v, _localctx.r.v); 
 					}
 					}
@@ -2448,6 +2586,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Operator_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Colon_exprContext l;
 		public Token op;
@@ -2468,14 +2607,16 @@ public class RParser extends Parser {
 		public TerminalNode OP(int i) {
 			return getToken(RParser.OP, i);
 		}
-		public Operator_exprContext(ParserRuleContext parent, int invokingState) {
+		public Operator_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Operator_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_operator_expr; }
 	}
 
-	public final Operator_exprContext operator_expr() throws RecognitionException {
-		Operator_exprContext _localctx = new Operator_exprContext(_ctx, getState());
+	public final Operator_exprContext operator_expr(FunctionScope functionScope) throws RecognitionException {
+		Operator_exprContext _localctx = new Operator_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 48, RULE_operator_expr);
 		 Token start = getInputStream().LT(1); 
 		try {
@@ -2483,7 +2624,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(492);
-			_localctx.l = colon_expr();
+			_localctx.l = colon_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(502);
 			_errHandler.sync(this);
@@ -2498,7 +2639,7 @@ public class RParser extends Parser {
 					setState(496);
 					n_();
 					setState(497);
-					_localctx.r = colon_expr();
+					_localctx.r = colon_expr(functionScope);
 					 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op), _localctx.v, _localctx.r.v); 
 					}
 					} 
@@ -2521,6 +2662,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Colon_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Unary_expressionContext l;
 		public Token op;
@@ -2541,14 +2683,16 @@ public class RParser extends Parser {
 		public TerminalNode COLON(int i) {
 			return getToken(RParser.COLON, i);
 		}
-		public Colon_exprContext(ParserRuleContext parent, int invokingState) {
+		public Colon_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Colon_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_colon_expr; }
 	}
 
-	public final Colon_exprContext colon_expr() throws RecognitionException {
-		Colon_exprContext _localctx = new Colon_exprContext(_ctx, getState());
+	public final Colon_exprContext colon_expr(FunctionScope functionScope) throws RecognitionException {
+		Colon_exprContext _localctx = new Colon_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 50, RULE_colon_expr);
 		 Token start = getInputStream().LT(1); 
 		try {
@@ -2556,7 +2700,7 @@ public class RParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(505);
-			_localctx.l = unary_expression();
+			_localctx.l = unary_expression(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(515);
 			_errHandler.sync(this);
@@ -2572,7 +2716,7 @@ public class RParser extends Parser {
 					setState(509);
 					n_();
 					setState(510);
-					_localctx.r = unary_expression();
+					_localctx.r = unary_expression(functionScope);
 					 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op), _localctx.v, _localctx.r.v); 
 					}
 					}
@@ -2596,6 +2740,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Unary_expressionContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token op;
 		public Unary_expressionContext l1;
@@ -2618,14 +2763,16 @@ public class RParser extends Parser {
 		public Power_exprContext power_expr() {
 			return getRuleContext(Power_exprContext.class,0);
 		}
-		public Unary_expressionContext(ParserRuleContext parent, int invokingState) {
+		public Unary_expressionContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Unary_expressionContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_unary_expression; }
 	}
 
-	public final Unary_expressionContext unary_expression() throws RecognitionException {
-		Unary_expressionContext _localctx = new Unary_expressionContext(_ctx, getState());
+	public final Unary_expressionContext unary_expression(FunctionScope functionScope) throws RecognitionException {
+		Unary_expressionContext _localctx = new Unary_expressionContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 52, RULE_unary_expression);
 		int _la;
 		try {
@@ -2653,7 +2800,7 @@ public class RParser extends Parser {
 				setState(520);
 				n_();
 				setState(521);
-				_localctx.l1 = unary_expression();
+				_localctx.l1 = unary_expression(functionScope);
 				 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), _localctx.l1.v); 
 				}
 				break;
@@ -2666,7 +2813,7 @@ public class RParser extends Parser {
 				setState(526);
 				n_();
 				setState(527);
-				_localctx.l2 = utilde_expr();
+				_localctx.l2 = utilde_expr(functionScope);
 				 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), _localctx.l2.v); 
 				}
 				break;
@@ -2699,7 +2846,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(530);
-				_localctx.b = power_expr();
+				_localctx.b = power_expr(functionScope);
 				 _localctx.v =  _localctx.b.v; 
 				}
 				break;
@@ -2719,6 +2866,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Power_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Basic_exprContext l;
 		public Power_operatorContext op;
@@ -2735,21 +2883,23 @@ public class RParser extends Parser {
 		public Unary_expressionContext unary_expression() {
 			return getRuleContext(Unary_expressionContext.class,0);
 		}
-		public Power_exprContext(ParserRuleContext parent, int invokingState) {
+		public Power_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Power_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_power_expr; }
 	}
 
-	public final Power_exprContext power_expr() throws RecognitionException {
-		Power_exprContext _localctx = new Power_exprContext(_ctx, getState());
+	public final Power_exprContext power_expr(FunctionScope functionScope) throws RecognitionException {
+		Power_exprContext _localctx = new Power_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 54, RULE_power_expr);
 		 Token start = getInputStream().LT(1); 
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(535);
-			_localctx.l = basic_expr();
+			_localctx.l = basic_expr(functionScope);
 			 _localctx.v =  _localctx.l.v; 
 			setState(543);
 			_errHandler.sync(this);
@@ -2762,7 +2912,7 @@ public class RParser extends Parser {
 				setState(538);
 				n_();
 				setState(539);
-				_localctx.r = unary_expression();
+				_localctx.r = unary_expression(functionScope);
 				 _localctx.v =  builder.call(src(start, last()), operator(_localctx.op.v), _localctx.v, _localctx.r.v); 
 				}
 				}
@@ -2786,6 +2936,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Basic_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public Token lhsToken;
 		public Token op;
@@ -2855,14 +3006,16 @@ public class RParser extends Parser {
 		public TerminalNode AT(int i) {
 			return getToken(RParser.AT, i);
 		}
-		public Basic_exprContext(ParserRuleContext parent, int invokingState) {
+		public Basic_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Basic_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_basic_expr; }
 	}
 
-	public final Basic_exprContext basic_expr() throws RecognitionException {
-		Basic_exprContext _localctx = new Basic_exprContext(_ctx, getState());
+	public final Basic_exprContext basic_expr(FunctionScope functionScope) throws RecognitionException {
+		Basic_exprContext _localctx = new Basic_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 56, RULE_basic_expr);
 		 Token start = getInputStream().LT(1); 
 		int _la;
@@ -2903,7 +3056,7 @@ public class RParser extends Parser {
 			case 2:
 				{
 				setState(554);
-				_localctx.lhs = simple_expr();
+				_localctx.lhs = simple_expr(functionScope);
 				 _localctx.v =  _localctx.lhs.v; 
 				}
 				break;
@@ -2943,7 +3096,7 @@ public class RParser extends Parser {
 							n_();
 							setState(562);
 							_localctx.name = id();
-							 modifyTok(RCodeToken.SLOT); _localctx.v =  builder.call(src(start, last()), operator(_localctx.op), _localctx.v, builder.lookup(src(_localctx.name.v), _localctx.name.v.getText(), false)); 
+							 modifyTok(RCodeToken.SLOT); _localctx.v =  builder.call(src(start, last()), operator(_localctx.op), _localctx.v, lookup(src(_localctx.name.v), _localctx.name.v.getText(), false, functionScope)); 
 							}
 							}
 							break;
@@ -3054,6 +3207,7 @@ public class RParser extends Parser {
 	}
 
 	public static class Simple_exprContext extends ParserRuleContext {
+		public FunctionScope functionScope;
 		public RSyntaxNode v;
 		public IdContext i;
 		public BoolContext b;
@@ -3112,14 +3266,16 @@ public class RParser extends Parser {
 		public Expr_wo_assignContext expr_wo_assign() {
 			return getRuleContext(Expr_wo_assignContext.class,0);
 		}
-		public Simple_exprContext(ParserRuleContext parent, int invokingState) {
+		public Simple_exprContext(ParserRuleContext parent, int invokingState) { super(parent, invokingState); }
+		public Simple_exprContext(ParserRuleContext parent, int invokingState, FunctionScope functionScope) {
 			super(parent, invokingState);
+			this.functionScope = functionScope;
 		}
 		@Override public int getRuleIndex() { return RULE_simple_expr; }
 	}
 
-	public final Simple_exprContext simple_expr() throws RecognitionException {
-		Simple_exprContext _localctx = new Simple_exprContext(_ctx, getState());
+	public final Simple_exprContext simple_expr(FunctionScope functionScope) throws RecognitionException {
+		Simple_exprContext _localctx = new Simple_exprContext(_ctx, getState(), functionScope);
 		enterRule(_localctx, 58, RULE_simple_expr);
 		 Token start = getInputStream().LT(1); List<Argument<RSyntaxNode>> args = new ArrayList<>(); Token compToken = null; 
 		int _la;
@@ -3132,7 +3288,7 @@ public class RParser extends Parser {
 				{
 				setState(600);
 				_localctx.i = id();
-				 _localctx.v =  builder.lookup(src(_localctx.i.v), (_localctx.i!=null?_input.getText(_localctx.i.start,_localctx.i.stop):null), false); 
+				 _localctx.v =  lookup(src(_localctx.i.v), (_localctx.i!=null?_input.getText(_localctx.i.start,_localctx.i.stop):null), false, functionScope); 
 				}
 				break;
 			case 2:
@@ -3148,7 +3304,7 @@ public class RParser extends Parser {
 				{
 				setState(606);
 				_localctx.d = match(DD);
-				 tok(); _localctx.v =  builder.lookup(src(_localctx.d), _localctx.d.getText(), false); 
+				 tok(); _localctx.v =  lookup(src(_localctx.d), _localctx.d.getText(), false, functionScope); 
 				}
 				break;
 			case 4:
@@ -3245,7 +3401,7 @@ public class RParser extends Parser {
 				n_();
 
 				        SourceSection pkgSource = src(_localctx.pkg.v);
-				        args.add(argument(pkgSource, (String) null, builder.lookup(pkgSource, (_localctx.pkg!=null?_input.getText(_localctx.pkg.start,_localctx.pkg.stop):null), false)));
+				        args.add(argument(pkgSource, (String) null, lookup(pkgSource, (_localctx.pkg!=null?_input.getText(_localctx.pkg.start,_localctx.pkg.stop):null), false, functionScope)));
 				        
 				setState(640);
 				_errHandler.sync(this);
@@ -3258,7 +3414,7 @@ public class RParser extends Parser {
 
 					        SourceSection compSource = src(_localctx.compId.v);
 					        compToken = _localctx.compId.v;
-					        args.add(argument(compSource, (String) null, builder.lookup(compSource, (_localctx.compId!=null?_input.getText(_localctx.compId.start,_localctx.compId.stop):null), false)));
+					        args.add(argument(compSource, (String) null, lookup(compSource, (_localctx.compId!=null?_input.getText(_localctx.compId.start,_localctx.compId.stop):null), false, functionScope)));
 					        
 					}
 					break;
@@ -3289,7 +3445,7 @@ public class RParser extends Parser {
 				setState(646);
 				n_();
 				setState(647);
-				_localctx.ea = expr_or_assign();
+				_localctx.ea = expr_or_assign(functionScope);
 				setState(648);
 				n_();
 				setState(649);
@@ -3301,7 +3457,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 15);
 				{
 				setState(652);
-				_localctx.s = sequence();
+				_localctx.s = sequence(functionScope);
 				 _localctx.v =  _localctx.s.v; 
 				}
 				break;
@@ -3309,7 +3465,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 16);
 				{
 				setState(655);
-				_localctx.e = expr_wo_assign();
+				_localctx.e = expr_wo_assign(functionScope);
 				 _localctx.v =  _localctx.e.v; 
 				}
 				break;
@@ -3985,7 +4141,7 @@ public class RParser extends Parser {
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(739);
-				_localctx.e = expr();
+				_localctx.e = expr(null);
 				 _localctx.l.add(argument(src(start, last()), (String) null, _localctx.e.v)); 
 				}
 				break;
@@ -4040,7 +4196,7 @@ public class RParser extends Parser {
 					setState(756);
 					n_();
 					setState(757);
-					_localctx.e = expr();
+					_localctx.e = expr(null);
 					 value = _localctx.e.v; 
 					}
 					break;

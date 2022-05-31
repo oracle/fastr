@@ -56,7 +56,6 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -78,6 +77,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
@@ -862,9 +862,9 @@ public final class Utils {
                 }
                 if (printFrameSlots) {
                     FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
-                    for (FrameSlot s : frameDescriptor.getSlots()) {
-                        str.append("\n      ").append(s.getIdentifier()).append(" = ");
-                        Object value = unwrapped.getValue(s);
+                    for (Object identifier : FrameSlotChangeMonitor.getIdentifiers(frameDescriptor)) {
+                        str.append("\n      ").append(identifier.toString()).append(" = ");
+                        Object value = FrameSlotChangeMonitor.getObject(unwrapped, identifier);
                         if (value instanceof MultiSlotData) {
                             value = ((MultiSlotData) value).get(RContext.getInstance().getMultiSlotInd());
                         }

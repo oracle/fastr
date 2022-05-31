@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -34,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -91,14 +91,14 @@ public class RMissingHelper {
     public static Object getMissingValue(Frame frame, String name) {
         CompilerAsserts.neverPartOfCompilation();
         // Check binding
-        FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(name);
-        if (frameSlot == null) {
+        int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), name);
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             return null;
         }
 
         // Read name's value
         try {
-            return FrameSlotChangeMonitor.getObject(frameSlot, frame);
+            return FrameSlotChangeMonitor.getObject(frame, frameIndex);
         } catch (FrameSlotTypeException e) {
             return null;
         }

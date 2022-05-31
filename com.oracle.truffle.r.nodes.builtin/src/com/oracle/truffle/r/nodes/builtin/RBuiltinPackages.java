@@ -33,7 +33,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
@@ -55,6 +54,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
@@ -118,9 +118,9 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                 throw new RInternalError(e, "error while parsing base source from %s", baseSource.getName());
             }
             // forcibly clear last.warnings during startup:
-            FrameSlot slot = baseFrame.getFrameDescriptor().findFrameSlot("last.warning");
-            if (slot != null) {
-                FrameSlotChangeMonitor.setObject(baseFrame, slot, null);
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(baseFrame.getFrameDescriptor(), "last.warning");
+            if (FrameIndex.isInitializedIndex(frameIndex)) {
+                FrameSlotChangeMonitor.setObject(baseFrame, frameIndex, null);
             }
         } finally {
             RContext.getInstance().setLoadingBase(false);
@@ -163,9 +163,8 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     private static RootCallTarget createArgumentsCallTarget(TruffleRLanguage language, RBuiltinFactory builtin) {
         CompilerAsserts.neverPartOfCompilation();
 
-        FrameDescriptor frameDescriptor = new FrameDescriptor();
+        FrameDescriptor frameDescriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor(builtin.getName());
         RBuiltinRootNode root = new RBuiltinRootNode(language, builtin, frameDescriptor, null);
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(builtin.getName(), frameDescriptor);
         return root.getCallTarget();
     }
 

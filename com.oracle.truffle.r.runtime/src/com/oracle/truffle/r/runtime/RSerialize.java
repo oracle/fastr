@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,6 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
@@ -97,10 +96,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -108,6 +109,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -222,9 +224,8 @@ public class RSerialize {
         }
 
         public static int packFlags(SEXPTYPE type, int gpbits, boolean isObj, boolean hasAttr, boolean hasTag) {
-            int val = type.code;
             int levs = gpbits & (~(CACHED_MASK | HASHASH_MASK));
-            val = type.code | (levs << 12);
+            int val = type.code | (levs << 12);
 
             if (isObj) {
                 val |= IS_OBJECT_BIT_MASK;
@@ -601,19 +602,28 @@ public class RSerialize {
 
                     RSymbol sym = (RSymbol) info.getDataAtAsObject(0);
                     String altrepClass = sym.getName();
-                    if (altrepClass.equals("compact_intseq")) {
-                        result = readCompactIntSeq(state);
-                    } else if (altrepClass.equals("compact_realseq")) {
-                        result = readCompactRealSeq(state);
-                    } else if (altrepClass.equals("deferred_string")) {
-                        RPairList l = (RPairList) state;
-                        RAbstractVector vec = (RAbstractVector) l.car();
-                        result = vec.castSafe(RType.Character, ConditionProfile.getUncached());
-                    } else if (altrepClass.equals("wrap_real") || altrepClass.equals("wrap_integer") || altrepClass.equals("wrap_string")) {
-                        RPairList l = (RPairList) state;
-                        result = l.car();
-                    } else {
-                        throw RInternalError.unimplemented(sym.getName());
+                    switch (altrepClass) {
+                        case "compact_intseq":
+                            result = readCompactIntSeq(state);
+                            break;
+                        case "compact_realseq":
+                            result = readCompactRealSeq(state);
+                            break;
+                        case "deferred_string": {
+                            RPairList l = (RPairList) state;
+                            RAbstractVector vec = (RAbstractVector) l.car();
+                            result = vec.castSafe(RType.Character, ConditionProfile.getUncached());
+                            break;
+                        }
+                        case "wrap_real":
+                        case "wrap_integer":
+                        case "wrap_string": {
+                            RPairList l = (RPairList) state;
+                            result = l.car();
+                            break;
+                        }
+                        default:
+                            throw RInternalError.unimplemented(sym.getName());
                     }
 
                     if (attr != RNull.instance) {
@@ -1000,6 +1010,7 @@ public class RSerialize {
                     Object attr = readItem();
                     result = setAttributes(result, attr);
                 }
+                assert result instanceof RBaseObject;
                 ((RBaseObject) result).setGPBits(levs);
             }
 
@@ -1047,8 +1058,8 @@ public class RSerialize {
             String name = ((RSymbol) pl.getTag()).getName();
             Object car = pl.car();
             if (ActiveBinding.isActiveBinding(car)) {
-                FrameSlot frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(env.getFrame().getFrameDescriptor(), name, FrameSlotKind.Object);
-                FrameSlotChangeMonitor.setActiveBinding(env.getFrame(), frameSlot, (ActiveBinding) car, false, null);
+                int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(env.getFrame().getFrameDescriptor(), name);
+                FrameSlotChangeMonitor.setActiveBinding(env.getFrame(), frameIndex, (ActiveBinding) car, false);
             } else {
                 env.safePut(name, car);
             }
@@ -1207,8 +1218,7 @@ public class RSerialize {
                     return ans;
                 }
                 default: {
-                    Object ans = readItem();
-                    return ans;
+                    return readItem();
                 }
             }
         }
@@ -1949,11 +1959,11 @@ public class RSerialize {
 
         private static Object getValueIgnoreActiveBinding(Frame frame, String key) {
             FrameDescriptor fd = frame.getFrameDescriptor();
-            FrameSlot slot = fd.findFrameSlot(key);
-            if (slot == null) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, key);
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return null;
             } else {
-                return frame.getValue(slot);
+                return FrameSlotChangeMonitor.getValue(frame, frameIndex);
             }
         }
 
@@ -2517,9 +2527,7 @@ public class RSerialize {
 
         private static void print(String format, Object... objects) {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < indent * 2; i++) {
-                sb.append(' ');
-            }
+            sb.append(" ".repeat(indent * 2));
             sb.append(String.format(format, objects));
             LOGGER.info(sb.toString());
         }
@@ -2829,9 +2837,11 @@ public class RSerialize {
             // car == arguments, cdr == body, tag == PairList(attributes, environment)
 
             MaterializedFrame enclosingFrame = environment.getFrame();
+            var functionScope = new FunctionScope(functionName);
 
-            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false), processBody(cdr),
-                            functionName == null ? "<deserialized function>" : functionName);
+            RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false, functionScope, true),
+                            processBody(cdr, functionScope),
+                            functionName == null ? "<deserialized function>" : functionName, functionScope);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
             RFunction func = RDataFactory.createFunction(functionName, packageName, callTarget, null, enclosingFrame);
 
@@ -2842,14 +2852,15 @@ public class RSerialize {
         }
 
         public static RPairList processLanguage(Object car, Object cdr, Object tag) {
-            Closure closure = Closure.createLanguageClosure(processCall(car, cdr, tag, null).asRNode());
+            var functionScope = new FunctionScope();
+            Closure closure = Closure.createLanguageClosure(processCall(car, cdr, tag, null, functionScope).asRNode());
             return RDataFactory.createLanguage(closure);
         }
 
         public static RPromise processPromise(Object car, Object cdr, Object tag) {
             // car == value, cdr == expression, tag == environment
-
-            Closure closure = Closure.createPromiseClosure(processBody(cdr).asRNode());
+            var functionScope = new FunctionScope();
+            Closure closure = Closure.createPromiseClosure(processBody(cdr, functionScope).asRNode());
             if (car == RUnboundValue.instance) {
                 REnvironment env = tag == RNull.instance ? REnvironment.baseEnv() : (REnvironment) tag;
                 return RDataFactory.createPromise(PromiseState.Explicit, closure, env.getFrame());
@@ -2858,16 +2869,17 @@ public class RSerialize {
             }
         }
 
-        private static RSyntaxNode process(Object value, boolean isCallLHS, String name) {
+        private static RSyntaxNode process(Object value, boolean isCallLHS, String name, FunctionScope functionScope) {
+            assert functionScope != null;
             if (value instanceof RSymbol) {
-                return RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) value).getName(), isCallLHS);
+                return RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) value).getName(), isCallLHS, functionScope);
             } else if (value instanceof RPairList) {
                 RPairList pl = (RPairList) value;
                 switch (pl.getType()) {
                     case LANGSXP:
-                        return processCall(pl.car(), pl.cdr(), pl.getTag(), name);
+                        return processCall(pl.car(), pl.cdr(), pl.getTag(), name, functionScope);
                     case CLOSXP:
-                        return processFunctionExpression(pl.car(), pl.cdr(), pl.getTag(), name);
+                        return processFunctionExpression(pl.car(), pl.cdr(), pl.getTag(), name, functionScope);
                     default:
                         // other pairlists: include as constants
                         return RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, unwrapScalarValues(value));
@@ -2892,26 +2904,41 @@ public class RSerialize {
             return value;
         }
 
-        private static RSyntaxNode processCall(Object car, Object cdr, @SuppressWarnings("unused") Object tag, String name) {
+        private static RSyntaxNode processCall(Object car, Object cdr, @SuppressWarnings("unused") Object tag, String name, FunctionScope functionScope) {
+            assert functionScope != null;
             if (car instanceof RSymbol && ((RSymbol) car).getName().equals("function")) {
                 RPairList function = (RPairList) cdr;
-                return processFunctionExpression(function.car(), function.cdr(), function.getTag(), name);
+                return processFunctionExpression(function.car(), function.cdr(), function.getTag(), name, functionScope);
             }
             boolean isAssignment = car instanceof RSymbol && ((RSymbol) car).getName().equals("<-");
-            RSyntaxNode call = RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, process(car, true, null), processArguments(cdr, isAssignment));
+            RSyntaxNode lhs = process(car, true, null, functionScope);
+            List<Argument<RSyntaxNode>> arguments = processArguments(cdr, isAssignment, functionScope, false);
+            if (isAssignment) {
+                Argument<RSyntaxNode> assignmentTarget = arguments.get(0);
+                if (assignmentTarget.value instanceof RSyntaxLookup) {
+                    // assignment into a variable
+                    String identifier = ((RSyntaxLookup) assignmentTarget.value).getIdentifier();
+                    functionScope.addLocalVariable(identifier, FrameSlotKind.Illegal);
+                }
+            }
+            RSyntaxNode call = RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, lhs, arguments);
             if (cdr instanceof RAttributable) {
                 handleSrcrefAttr((RAttributable) cdr, call);
             }
             return call;
         }
 
-        private static RSyntaxNode processFunctionExpression(Object car, Object cdr, @SuppressWarnings("unused") Object tag, String name) {
+        private static RSyntaxNode processFunctionExpression(Object car, Object cdr, @SuppressWarnings("unused") Object tag, String name, FunctionScope functionScope) {
             // car == arguments, cdr == body
-            return RContext.getASTBuilder().function(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false), processBody(cdr),
-                            name == null ? "<deserialized function>" : name);
+            return RContext.getASTBuilder().function(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, processArguments(car, false, functionScope, true), processBody(cdr, functionScope),
+                            name == null ? "<deserialized function>" : name, functionScope);
         }
 
-        private static List<RCodeBuilder.Argument<RSyntaxNode>> processArguments(Object args, boolean isAssignment) {
+        /**
+         * @param inFunctionDeclaration true iff we are processing formal arguments of some
+         *            function, as opposed to processing arguments to a function call.
+         */
+        private static List<RCodeBuilder.Argument<RSyntaxNode>> processArguments(Object args, boolean isAssignment, FunctionScope functionScope, boolean inFunctionDeclaration) {
             List<RCodeBuilder.Argument<RSyntaxNode>> list = new ArrayList<>();
 
             RPairList arglist = args instanceof RNull ? null : (RPairList) args;
@@ -2923,7 +2950,11 @@ public class RSerialize {
                 if (isAssignment && index == 0 && arglist.car() instanceof RSymbol) {
                     assignedName = ((RSymbol) arglist.car()).getName();
                 }
-                RSyntaxNode value = arglist.car() == RMissing.instance ? null : process(arglist.car(), false, index == 1 ? assignedName : null);
+                if (inFunctionDeclaration) {
+                    assert name != null;
+                    functionScope.addLocalVariable(name, FrameSlotKind.Illegal);
+                }
+                RSyntaxNode value = arglist.car() == RMissing.instance ? null : process(arglist.car(), false, index == 1 ? assignedName : null, functionScope);
                 list.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, name, value));
                 arglist = next(arglist);
                 index++;
@@ -2940,23 +2971,23 @@ public class RSerialize {
             }
         }
 
-        private static RSyntaxNode processBody(Object cdr) {
+        private static RSyntaxNode processBody(Object cdr, FunctionScope functionScope) {
             if (cdr instanceof RPairList) {
                 RPairList pl = (RPairList) cdr;
                 RSyntaxNode body;
                 switch (pl.getType()) {
                     case BCODESXP:
                         RAbstractListVector list = (RAbstractListVector) pl.cdr();
-                        body = process(list.getDataAt(0), false, null);
+                        body = process(list.getDataAt(0), false, null, functionScope);
                         break;
                     case LISTSXP:
                         // TODO: it is not clear why is this assertion here
                         // assert pl.cdr() == RNull.instance || (pl.cadr() == RNull.instance &&
                         // pl.cddr() == RNull.instance);
-                        body = process(pl.car(), false, null);
+                        body = process(pl.car(), false, null, functionScope);
                         break;
                     case LANGSXP:
-                        body = processCall(pl.car(), pl.cdr(), pl.getTag(), null);
+                        body = processCall(pl.car(), pl.cdr(), pl.getTag(), null, functionScope);
                         break;
                     default:
                         throw RInternalError.shouldNotReachHere("unexpected SXP type in body: " + pl.getType());
@@ -2964,7 +2995,7 @@ public class RSerialize {
                 handleSrcrefAttr(pl, body);
                 return body;
             }
-            return process(cdr, false, null);
+            return process(cdr, false, null, functionScope);
         }
     }
 

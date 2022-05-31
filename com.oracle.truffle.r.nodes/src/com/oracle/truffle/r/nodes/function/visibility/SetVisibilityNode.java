@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -37,6 +35,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
@@ -46,7 +45,7 @@ import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 @NodeInfo(cost = NodeCost.NONE)
 public final class SetVisibilityNode extends Node {
 
-    @CompilationFinal private FrameSlot frameSlot;
+    @CompilationFinal private int frameIndex = RFrameSlot.Visibility.getFrameIdx();
 
     private SetVisibilityNode() {
     }
@@ -55,16 +54,17 @@ public final class SetVisibilityNode extends Node {
         return new SetVisibilityNode();
     }
 
-    private void ensureFrameSlot(Frame frame) {
-        if (frameSlot == null) {
+    private void ensureFrameIndex(Frame frame) {
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
         }
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.Visibility);
     }
 
     public void execute(Frame frame, boolean value) {
-        ensureFrameSlot(frame);
-        frame.setBoolean(frameSlot, value);
+        ensureFrameIndex(frame);
+        FrameSlotChangeMonitor.setBoolean(frame, frameIndex, value);
     }
 
     public void execute(VirtualFrame frame, RVisibility visibility) {
@@ -80,8 +80,8 @@ public final class SetVisibilityNode extends Node {
      * {@link RCaller} to the current frame.
      */
     public void executeAfterCall(VirtualFrame frame, RCaller caller) {
-        ensureFrameSlot(frame);
-        frame.setBoolean(frameSlot, caller.getVisibility());
+        ensureFrameIndex(frame);
+        FrameSlotChangeMonitor.setBoolean(frame, frameIndex, caller.getVisibility());
     }
 
     /**
@@ -89,10 +89,11 @@ public final class SetVisibilityNode extends Node {
      * the current frame into the {@link RCaller}.
      */
     public void executeEndOfFunction(VirtualFrame frame) {
-        ensureFrameSlot(frame);
+        ensureFrameIndex(frame);
         try {
-            if (frame.isBoolean(frameSlot)) {
-                RArguments.getCall(frame).setVisibility(frame.getBoolean(frameSlot) == Boolean.TRUE);
+            if (frame.isBoolean(frameIndex)) {
+                boolean visibility = FrameSlotChangeMonitor.getBoolean(frame, frameIndex);
+                RArguments.getCall(frame).setVisibility(visibility);
             }
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere(e);
@@ -104,7 +105,8 @@ public final class SetVisibilityNode extends Node {
      */
     public static void executeAfterCallSlowPath(Frame frame, RCaller caller) {
         CompilerAsserts.neverPartOfCompilation();
-        frame.setBoolean(FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean), caller.getVisibility());
+        int frameIndex = getOrAddVisibilityFrameIndex(frame);
+        FrameSlotChangeMonitor.setBoolean(frame, frameIndex, caller.getVisibility());
     }
 
     /**
@@ -112,6 +114,17 @@ public final class SetVisibilityNode extends Node {
      */
     public static void executeSlowPath(Frame frame, boolean visibility) {
         CompilerAsserts.neverPartOfCompilation();
-        frame.setBoolean(FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean), visibility);
+        int frameIndex = getOrAddVisibilityFrameIndex(frame);
+        FrameSlotChangeMonitor.setBoolean(frame, frameIndex, visibility);
+    }
+
+    private static int getOrAddVisibilityFrameIndex(Frame frame) {
+        int frameIndex = RFrameSlot.Visibility.getFrameIdx();
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        }
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.Visibility);
+        assert FrameIndex.isInitializedIndex(frameIndex);
+        return frameIndex;
     }
 }

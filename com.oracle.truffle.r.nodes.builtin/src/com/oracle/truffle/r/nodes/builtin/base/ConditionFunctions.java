@@ -31,7 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -70,23 +69,23 @@ public class ConditionFunctions {
             return getHandlerStack(getRContext());
         }
 
-        protected FrameSlot createHandlerFrameSlot(VirtualFrame frame) {
+        protected int createHandlerFrameIndex(VirtualFrame frame) {
             RootNode rootNode = RArguments.getFunction(frame).getRootNode();
-            return ((FunctionDefinitionNode) rootNode).getHandlerFrameSlot(frame);
+            return ((FunctionDefinitionNode) rootNode).getHandlerFrameIndex(frame);
         }
 
         @Specialization
         protected Object addCondHands(VirtualFrame frame, RStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling,
-                        @Cached("createHandlerFrameSlot(frame)") FrameSlot handlerFrameSlot) {
+                        @Cached("createHandlerFrameIndex(frame)") int handlerFrameIndex) {
             if (classes.getLength() != handlers.getLength()) {
                 CompilerDirectives.transferToInterpreter();
                 throw error(RError.Message.BAD_HANDLER_DATA);
             }
             try {
-                if (!frame.isObject(handlerFrameSlot) || FrameSlotChangeMonitor.getObject(handlerFrameSlot, frame) == null) {
+                if (!FrameSlotChangeMonitor.isObject(frame, handlerFrameIndex) || FrameSlotChangeMonitor.getObject(frame, handlerFrameIndex) == null) {
                     // We save the original condition handlers to a frame slot, so that
                     // FunctionDefinitionNode can restore them on function exit
-                    FrameSlotChangeMonitor.setObject(frame, handlerFrameSlot, RErrorHandling.getHandlerStack(getRContext()));
+                    FrameSlotChangeMonitor.setObject(frame, handlerFrameIndex, RErrorHandling.getHandlerStack(getRContext()));
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
@@ -123,20 +122,21 @@ public class ConditionFunctions {
             casts.arg("restart").mustBe(instanceOf(RList.class), RError.Message.BAD_RESTART);
         }
 
-        protected FrameSlot createRestartFrameSlot(VirtualFrame frame) {
+        protected int createRestartFrameIndex(VirtualFrame frame) {
             RootNode rootNode = RArguments.getFunction(frame).getRootNode();
-            return ((FunctionDefinitionNode) rootNode).getRestartFrameSlot(frame);
+            return ((FunctionDefinitionNode) rootNode).getRestartFrameIndex(frame);
         }
 
         @Specialization
         protected Object addRestart(VirtualFrame frame, RList restart,
-                        @Cached("createRestartFrameSlot(frame)") FrameSlot restartFrameSlot) {
+                        @Cached("createRestartFrameIndex(frame)") int restartFrameIndex) {
             if (restart.getLength() < 2) {
                 throw error(RError.Message.BAD_RESTART);
             }
             try {
-                if (!frame.isObject(restartFrameSlot) || frame.getObject(restartFrameSlot) == null) {
-                    FrameSlotChangeMonitor.setObject(frame, restartFrameSlot, RErrorHandling.getRestartStack(getRContext()));
+                if (!FrameSlotChangeMonitor.isObject(frame, restartFrameIndex) ||
+                                FrameSlotChangeMonitor.getObject(frame, restartFrameIndex) == null) {
+                    FrameSlotChangeMonitor.setObject(frame, restartFrameIndex, RErrorHandling.getRestartStack(getRContext()));
                 }
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();

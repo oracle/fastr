@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -53,6 +53,8 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
 
     private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
     private final BranchProfile invalidateProfile = BranchProfile.create();
+
+    private final ValueProfile frameDescriptorProfile = ValueProfile.createIdentityProfile();
     private final ConditionProfile isActiveBindingProfile = ConditionProfile.createBinaryProfile();
     @CompilationFinal private Assumption containsNoActiveBinding;
 
@@ -61,44 +63,49 @@ public abstract class WriteLocalFrameVariableNode extends BaseWriteVariableNode 
         this.mode = mode;
     }
 
-    protected FrameSlot findOrAddFrameSlot(VirtualFrame frame, FrameSlotKind initialKind) {
-        return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), getName(), initialKind);
+    protected int findOrAddFrameIndex(VirtualFrame frame) {
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        if (FrameSlotChangeMonitor.containsIdentifier(frameDescriptor, getName())) {
+            return FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, getName());
+        } else {
+            return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, getName());
+        }
     }
 
-    @Specialization(guards = "isLogicalKind(frame, frameSlot)")
+    @Specialization(guards = "isLogicalKind(frame, frameIndex)")
     protected byte doLogical(VirtualFrame frame, byte value,
-                    @Cached("findOrAddFrameSlot(frame, Byte)") FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+                    @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
+        FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, value, false, invalidateProfile, frameDescriptorProfile);
         return value;
     }
 
-    @Specialization(guards = "isIntegerKind(frame, frameSlot)")
+    @Specialization(guards = "isIntegerKind(frame, frameIndex)")
     protected int doInteger(VirtualFrame frame, int value,
-                    @Cached("findOrAddFrameSlot(frame, Int)") FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+                    @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
+        FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameIndex, value, false, invalidateProfile, frameDescriptorProfile);
         return value;
     }
 
-    @Specialization(guards = "isDoubleKind(frame, frameSlot)")
+    @Specialization(guards = "isDoubleKind(frame, frameIndex)")
     protected double doDouble(VirtualFrame frame, double value,
-                    @Cached("findOrAddFrameSlot(frame, Double)") FrameSlot frameSlot) {
-        FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameSlot, value, false, invalidateProfile);
+                    @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
+        FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameIndex, value, false, invalidateProfile, frameDescriptorProfile);
         return value;
     }
 
     @Specialization
     protected Object doObject(VirtualFrame frame, Object value,
-                    @Cached("findOrAddFrameSlot(frame, Object)") FrameSlot frameSlot) {
+                    @Cached("findOrAddFrameIndex(frame)") int frameIndex) {
         if (containsNoActiveBinding == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             containsNoActiveBinding = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(frame.getFrameDescriptor());
         }
         if (containsNoActiveBinding.isValid()) {
-            Object newValue = shareObjectValue(frame, frameSlot, storedObjectProfile.profile(value), mode, false);
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameSlot, newValue, false, invalidateProfile);
+            Object newValue = shareObjectValue(frame, frameIndex, storedObjectProfile.profile(value), mode, false);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, newValue, false, invalidateProfile, frameDescriptorProfile);
         } else {
             // it's a local variable lookup; so use 'frame' for both, executing and looking up
-            return handleActiveBinding(frame, frame, value, frameSlot, invalidateProfile, isActiveBindingProfile, storedObjectProfile, mode);
+            return handleActiveBinding(frame, frame, value, frameIndex, invalidateProfile, isActiveBindingProfile, storedObjectProfile, frameDescriptorProfile, mode);
         }
         return value;
     }
