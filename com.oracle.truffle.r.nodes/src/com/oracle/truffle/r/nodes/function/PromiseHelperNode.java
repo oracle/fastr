@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -70,6 +71,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         @Child private PromiseHelperNode promiseHelper;
 
         private final ConditionProfile isPromiseProfile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile isFrameNullProfile = ConditionProfile.createBinaryProfile();
 
         /**
          * Check promise evaluation and update visibility.
@@ -77,28 +79,36 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
          * @return If obj is an {@link RPromise}, it is evaluated and its result returned
          */
         public Object checkVisibleEvaluate(VirtualFrame frame, Object obj) {
-            if (isPromiseProfile.profile(obj instanceof RPromise)) {
-                if (promiseHelper == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseHelper = insert(new PromiseHelperNode());
-                }
-                return promiseHelper.visibleEvaluate(frame, (RPromise) obj);
-            }
-            return obj;
+            return doCheckEvaluate(frame, obj, true);
         }
 
         /**
          * @return If obj is an {@link RPromise}, it is evaluated and its result returned
          */
         public Object checkEvaluate(VirtualFrame frame, Object obj) {
+            return doCheckEvaluate(frame, obj, false);
+        }
+
+        private Object doCheckEvaluate(VirtualFrame frame, Object obj, boolean visible) {
+            CompilerAsserts.partialEvaluationConstant(visible);
             if (isPromiseProfile.profile(obj instanceof RPromise)) {
+                if (isFrameNullProfile.profile(frame == null)) {
+                    REnvironment emptyEnv = RContext.getInstance(this).stateREnvironment.getEmptyDummy();
+                    frame = emptyEnv.getFrame();
+                }
                 if (promiseHelper == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseHelper = insert(new PromiseHelperNode());
                 }
-                return promiseHelper.evaluate(frame, (RPromise) obj);
+                assert frame != null;
+                if (visible) {
+                    return promiseHelper.visibleEvaluate(frame, (RPromise) obj);
+                } else {
+                    return promiseHelper.evaluate(frame, (RPromise) obj);
+                }
+            } else {
+                return obj;
             }
-            return obj;
         }
     }
 
@@ -185,6 +195,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     }
 
     private Object evaluateImpl(VirtualFrame frame, RPromise promise, boolean visibleExec) {
+        assert frame != null;
         Object value = promise.getRawValue();
         if (isEvaluatedProfile.profile(value != null)) {
             return value;
