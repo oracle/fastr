@@ -186,3 +186,5 @@ extern SEXP test_RfMatch(SEXP x, SEXP y);
 extern SEXP test_mkCharDoesNotCollect();
 
 extern SEXP test_setRRawVector();
+
+extern SEXP test_setRRawVector2();

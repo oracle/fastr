@@ -1225,3 +1225,19 @@ SEXP test_setRRawVector() {
     UNPROTECT(1);
     return raw_vec;
 }
+
+struct S {
+    SEXP self;
+};
+
+/**
+ * This function uses another pattern that is used by vctrs package - RAWSXP vector is used as a
+ * backing store for a C struct.
+ */
+SEXP test_setRRawVector2() {
+    SEXP raw_vec = PROTECT(allocVector(RAWSXP, sizeof(struct S)));
+    struct S *s = (struct S *) RAW(raw_vec);
+    s->self = raw_vec; // This is where LLVM used to fail.
+    UNPROTECT(1);
+    return raw_vec;
+}

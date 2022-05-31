@@ -379,3 +379,7 @@ rffi.test_mkCharDoesNotCollect <- function() {
 rffi.test_setRRawVector <- function() {
 	.Call("test_setRRawVector")
 }
+
+rffi.test_setRRawVector2 <- function() {
+	.Call("test_setRRawVector2")
+}
