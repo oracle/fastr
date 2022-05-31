@@ -339,6 +339,19 @@ SEXP mkStringFromChar(void) {
 	return mkString("hello");
 }
 
+/**
+ * Make string from buffer into RAWSXP vector. This pattern is used e.g. by vctrs package.
+ * Run both with NFI and LLVM backends.
+ */
+SEXP mkStringFromRaw() {
+    SEXP buff_holder = PROTECT(allocVector(RAWSXP, 2));
+    char *buff = (char *) RAW(buff_holder);
+    buff[0] = 'X';
+    buff[1] = '\0';
+    UNPROTECT(1);
+    return Rf_mkString(buff);
+}
+
 SEXP mkStringFromBytes(void) {
 	char *helloworld = "hello world";
 	return ScalarString(mkCharLen(helloworld, 5));

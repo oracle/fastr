@@ -69,6 +69,8 @@ extern SEXP r_home(void);
 
 extern SEXP mkStringFromChar(void);
 
+extern SEXP mkStringFromRaw();
+
 extern SEXP mkStringFromBytes(void);
 
 extern SEXP null(void);
