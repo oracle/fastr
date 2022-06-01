@@ -1040,7 +1040,10 @@ def pkgcache(args: List[str]) -> int:
     Options:
         --cache-dir DIR                     Use package cache in directory DIR (will be created if not existing).
                                             Can be set via FASTR_PKGS_CACHE_OPT env var.
-        --library [fastr=DIR][[,]gnur=DIR]  The library folders to install to.
+        --library [fastr=DIR][[,]gnur=DIR]  The library folders to install to. If you don't want to create
+                                            any new temporary library, point the library to the existing
+                                            library dirs, e.g. $FASTR_HOME/library.
+                                            Defaults to "lib.install.packages".
         --vm [fastr|gnur]                   Whether to install the packages on fastr or on gnur.
                                             Defaults to both.
         --sync                              Synchronize access to the package cache.

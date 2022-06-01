@@ -38,9 +38,10 @@ gnur_default_testdir = 'test.gnur'
 _opts = argparse.Namespace()
 _common_arg_parser = argparse.ArgumentParser()
 _common_arg_parser.add_argument('--fastr-home', metavar='FASTR_HOME', dest="fastr_home", type=str, default=None,
-                    required=True, help='The FastR standalone repo home directory (required).')
+                                required=True,
+                                help='The FastR standalone repo home directory (required, computed if not provided).')
 _common_arg_parser.add_argument('--gnur-home', metavar="GNUR_HOME", dest="gnur_home", default=None, required=True,
-                    help='The GnuR home directory (required).')
+                                help='The GnuR home directory (required, computed if not provided).')
 _common_arg_parser.add_argument('--graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
                     help='The GraalVM root directory (optional).')
 _common_arg_parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,

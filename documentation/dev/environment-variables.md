@@ -32,7 +32,8 @@ In this file, we enumerate all the fastr-related environment variables
 ## Run-time environment variables
 - `FASTR_MRAN_MIRROR`
   - MRAN mirror used by FastR for installing packages.
-  - If this env var is set, the package installation works as if calling `install.packages(..., repos=Sys.getenv('FASTR_PKGS_CACHE_OPT'))`.
+  - If this env var is set, the package installation works as if
+    calling `install.packages(..., repos=Sys.getenv('FASTR_MRAN_MIRROR'))`.
 - `FASTR_REPOS`
   - name=value pairs for setting R repositories.
   - Will be used for something like `options(repos = ...)` in R.

@@ -18,8 +18,11 @@
 #  Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 #  or visit www.oracle.com if you need additional information or have any
 #  questions.
+"""
+TODO: This is a work in progress and should be implemented as soon as a new package cache
+that uses artifact_uploader is available.
+"""
 import os
-import re
 import shutil
 import subprocess
 import tempfile
