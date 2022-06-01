@@ -217,10 +217,14 @@ def prepare_r_install_arguments(args: List[str]) -> List[str]:
         args += ["--very-verbose"]
 
     # Set pkg cache from env var if possible
-    if "--cache-pkgs" not in args and "FASTR_PKGS_CACHE_OPT" in os.environ:
+    if "FASTR_PKGS_CACHE_OPT" in os.environ:
+        if "--cache-pkgs" in args:
+            warn(f"Both 'FASTR_PKGS_CACHE_OPT' env var and --cache-pkgs option are set, env var precedes the option")
+            arg_idx = args.index("--cache-pkgs")
+            # Drop the option with its value
+            args.pop(arg_idx)
+            args.pop(arg_idx)
         args += ["--cache-pkgs", os.environ["FASTR_PKGS_CACHE_OPT"]]
-    elif "--cache-pkgs" in args and "FASTR_PKGS_CACHE_OPT" in os.environ:
-        abort(1, "Both --cache-pkgs option and FASTR_PKGS_CACHE_OPT env var set. Set just one of them.")
     elif "--cache-pkgs" not in args:
         warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT or use "
              "--cache-pkgs option. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
@@ -1097,7 +1101,7 @@ def pkgcache(args: List[str]) -> int:
 
     if "FASTR_PKGS_CACHE_OPT" in os.environ:
         if _opts.sync or _opts.cache_dir:
-            abort(1, "If 'FASTR_PKGS_CACHE_OPT' env var is set, neither of --sync or --cache-dir can be set")
+            logging.warning(f"Both 'FASTR_PKGS_CACHE_OPT' env var and --sync or --cache-dir options are set, env var precedes options")
         logging.info("Taking package cache settins from 'FASTR_PKGS_CACHE_OPT' env var")
         install_args += ["--cache-pkgs", os.environ["FASTR_PKGS_CACHE_OPT"]]
     else:
