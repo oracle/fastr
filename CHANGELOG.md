@@ -1,3 +1,8 @@
+# 22.2.0
+* `--R.DebugLLVMLibs` is no longer a stable option.
+* Implemented `SET_GROWABLE_BIT` and `IS_GROWABLE` C API functions.
+  * This fixes installation of the `cpp11` 0.2.6 package.
+
 # 22.1.0
 * Improved performance of the `order` and `rank` builtin functions
 * FastR does not ship with its own copy of libz.so

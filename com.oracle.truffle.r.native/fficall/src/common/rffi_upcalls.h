@@ -178,6 +178,8 @@ typedef void (*call_SETLENGTH)(SEXP x, int v);
 typedef void (*call_SET_TRUELENGTH)(SEXP x, int v);
 typedef R_xlen_t (*call_XLENGTH)(SEXP x);
 typedef R_xlen_t (*call_XTRUELENGTH)(SEXP x);
+typedef int (*call_IS_GROWABLE)(SEXP x);
+typedef void (*call_SET_GROWABLE_BIT)(SEXP x);
 typedef int (*call_LEVELS)(SEXP x);
 typedef int (*call_IS_LONG_VEC)(SEXP x);
 typedef int (*call_LEVELS)(SEXP x);

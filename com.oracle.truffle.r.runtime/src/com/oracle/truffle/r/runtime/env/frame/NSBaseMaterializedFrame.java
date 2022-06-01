@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,8 +50,7 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
     public NSBaseMaterializedFrame(MaterializedFrame packageBaseFrame, MaterializedFrame globalFrame) {
         this.packageBaseFrame = packageBaseFrame;
         this.arguments = Arrays.copyOf(packageBaseFrame.getArguments(), packageBaseFrame.getArguments().length);
-        this.markerFrameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeNonFunctionFrameDescriptor("namespace:base", this);
+        this.markerFrameDescriptor = FrameSlotChangeMonitor.createEnvironmentFrameDescriptor("namespace:base", this);
         RArguments.initializeEnclosingFrame(this, globalFrame);
     }
 
@@ -194,5 +193,145 @@ public final class NSBaseMaterializedFrame implements MaterializedFrame {
     @Override
     public boolean isDouble(FrameSlot slot) {
         return getPackageBaseFrame().isDouble(slot);
+    }
+
+    @Override
+    public Object getObject(int slot) throws FrameSlotTypeException {
+        return getPackageBaseFrame().getObject(slot);
+    }
+
+    @Override
+    public void setObject(int slot, Object value) {
+        getPackageBaseFrame().setObject(slot, value);
+    }
+
+    @Override
+    public byte getByte(int slot) throws FrameSlotTypeException {
+        return getPackageBaseFrame().getByte(slot);
+    }
+
+    @Override
+    public void setByte(int slot, byte value) {
+        getPackageBaseFrame().setByte(slot, value);
+    }
+
+    @Override
+    public boolean getBoolean(int slot) throws FrameSlotTypeException {
+        return getPackageBaseFrame().getBoolean(slot);
+    }
+
+    @Override
+    public void setBoolean(int slot, boolean value) {
+        getPackageBaseFrame().setBoolean(slot, value);
+    }
+
+    @Override
+    public int getInt(int slot) throws FrameSlotTypeException {
+        return getPackageBaseFrame().getInt(slot);
+    }
+
+    @Override
+    public void setInt(int slot, int value) {
+        getPackageBaseFrame().setInt(slot, value);
+    }
+
+    @Override
+    public long getLong(int slot) throws FrameSlotTypeException {
+        return getPackageBaseFrame().getLong(slot);
+    }
+
+    @Override
+    public void setLong(int slot, long value) {
+        getPackageBaseFrame().setLong(slot, value);
+    }
+
+    @Override
+    public float getFloat(int slot) throws FrameSlotTypeException {
+        return getPackageBaseFrame().getFloat(slot);
+    }
+
+    @Override
+    public void setFloat(int slot, float value) {
+        getPackageBaseFrame().setFloat(slot, value);
+    }
+
+    @Override
+    public double getDouble(int slot) throws FrameSlotTypeException {
+        return getPackageBaseFrame().getDouble(slot);
+    }
+
+    @Override
+    public void setDouble(int slot, double value) {
+        getPackageBaseFrame().setDouble(slot, value);
+    }
+
+    @Override
+    public Object getValue(int slot) {
+        return getPackageBaseFrame().getValue(slot);
+    }
+
+    @Override
+    public void copy(int srcSlot, int destSlot) {
+        getPackageBaseFrame().copy(srcSlot, destSlot);
+    }
+
+    @Override
+    public void swap(int first, int second) {
+        getPackageBaseFrame().swap(first, second);
+    }
+
+    @Override
+    public byte getTag(int slot) {
+        return getPackageBaseFrame().getTag(slot);
+    }
+
+    @Override
+    public boolean isObject(int slot) {
+        return getPackageBaseFrame().isObject(slot);
+    }
+
+    @Override
+    public boolean isByte(int slot) {
+        return getPackageBaseFrame().isByte(slot);
+    }
+
+    @Override
+    public boolean isBoolean(int slot) {
+        return getPackageBaseFrame().isBoolean(slot);
+    }
+
+    @Override
+    public boolean isInt(int slot) {
+        return getPackageBaseFrame().isInt(slot);
+    }
+
+    @Override
+    public boolean isLong(int slot) {
+        return getPackageBaseFrame().isLong(slot);
+    }
+
+    @Override
+    public boolean isFloat(int slot) {
+        return getPackageBaseFrame().isFloat(slot);
+    }
+
+    @Override
+    public boolean isDouble(int slot) {
+        return getPackageBaseFrame().isDouble(slot);
+    }
+
+    @Override
+    public void clear(int slot) {
+        getPackageBaseFrame().clear(slot);
+    }
+
+    @Override
+    public Object getAuxiliarySlot(int slot) {
+        return getPackageBaseFrame().getAuxiliarySlot(slot);
+    }
+
+    @Override
+    public void setAuxiliarySlot(int slot, Object value) {
+        getPackageBaseFrame().setAuxiliarySlot(slot, value);
     }
 }

@@ -32,13 +32,13 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -107,6 +107,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
@@ -265,11 +266,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected FunctionDispatch createUninitializedCall() {
-        return FunctionDispatchNodeGen.create(this, explicitArgs != null, null);
+        return FunctionDispatchNodeGen.create(this, explicitArgs != null, FrameIndex.UNITIALIZED_INDEX);
     }
 
     protected FunctionDispatch createUninitializedExplicitCall() {
-        return FunctionDispatchNodeGen.create(this, true, null);
+        return FunctionDispatchNodeGen.create(this, true, FrameIndex.UNITIALIZED_INDEX);
     }
 
     /**
@@ -332,11 +333,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             throw error(RError.Message.ARGUMENT_EMPTY, 1);
         }
 
-        FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject);
+        int dispatchTempSlotIdx = dispatchTempSlot.initialize(frame, dispatchObject);
         try {
             boolean isFieldAccess = builtin.isFieldAccess();
             if (internalDispatchCall == null) {
-                createInternDispatchCall(isFieldAccess, slot);
+                createInternDispatchCall(isFieldAccess, dispatchTempSlotIdx);
             }
 
             if (isAttributableProfile.profile(dispatchObject instanceof RAttributable) && isS4Profile.profile(((RAttributable) dispatchObject).isS4())) {
@@ -371,16 +372,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 s3Args = null;
                 resultFunction = function;
             }
-            if (internalDispatchCall == null || internalDispatchCall.tempFrameSlot != slot) {
-                createInternDispatchCall(isFieldAccess, slot);
+            if (internalDispatchCall == null || internalDispatchCall.tempFrameSlotIdx != dispatchTempSlotIdx) {
+                createInternDispatchCall(isFieldAccess, dispatchTempSlotIdx);
             }
             return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame, isFieldAccess, builtin), s3Args, null);
         } finally {
-            TemporarySlotNode.cleanup(frame, dispatchObject, slot);
+            TemporarySlotNode.cleanup(frame, dispatchObject, dispatchTempSlotIdx);
         }
     }
 
-    private void createInternDispatchCall(boolean isFieldAccess, FrameSlot slot) {
+    private void createInternDispatchCall(boolean isFieldAccess, int slotIdx) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         AlteredArguments alteredArguments = null;
         if (isFieldAccess) {
@@ -391,7 +392,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             // case it would think it should lookup varargs.
             alteredArguments = new AlteredArguments(newArgs, new int[0]);
         }
-        internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, alteredArguments, false, slot));
+        internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, alteredArguments, false, slotIdx));
     }
 
     @Specialization(guards = {"explicitArgs != null", "isInternalGenericDispatch(function)"})
@@ -446,7 +447,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected CallArgumentsNode createGenericDispatchArguments() {
-        return signature == null ? null : createArguments(null, false, true);
+        return signature == null ? null : createArguments(FrameIndex.UNITIALIZED_INDEX, false, true);
     }
 
     protected boolean isGroupGenericDispatch(RFunction function) {
@@ -748,14 +749,14 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected ForeignExecute createForeignCall() {
-        return new ForeignExecute(this, createArguments(null, true, true));
+        return new ForeignExecute(this, createArguments(FrameIndex.UNITIALIZED_INDEX, true, true));
     }
 
     /**
      * Creates a foreign invoke node for a call of structure {@code lhsReceiver$lhsMember(args)}.
      */
     protected ForeignInvoke createForeignInvoke() {
-        return new ForeignInvoke(this, createArguments(null, true, true));
+        return new ForeignInvoke(this, createArguments(FrameIndex.UNITIALIZED_INDEX, true, true));
     }
 
     protected static boolean isForeignObject(Object value) {
@@ -774,22 +775,22 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         throw RError.error(RError.SHOW_CALLER, RError.Message.APPLY_NON_FUNCTION);
     }
 
-    public CallArgumentsNode createArguments(FrameSlot tempFrameSlot, boolean modeChange, boolean modeChangeAppliesToAll) {
-        return createArguments(tempFrameSlot, modeChange, modeChangeAppliesToAll, arguments, varArgIndexes, signature);
+    public CallArgumentsNode createArguments(int tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll) {
+        return createArguments(tempFrameSlotIdx, modeChange, modeChangeAppliesToAll, arguments, varArgIndexes, signature);
     }
 
-    public CallArgumentsNode createArguments(FrameSlot tempFrameSlot, boolean modeChange, boolean modeChangeAppliesToAll, AlteredArguments alteredArguments) {
+    public CallArgumentsNode createArguments(int tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll, AlteredArguments alteredArguments) {
         RSyntaxNode[] args = alteredArguments == null ? arguments : alteredArguments.arguments;
         int[] varArgIdx = alteredArguments == null ? varArgIndexes : alteredArguments.varArgIndexes;
-        return createArguments(tempFrameSlot, modeChange, modeChangeAppliesToAll, args, varArgIdx, signature);
+        return createArguments(tempFrameSlotIdx, modeChange, modeChangeAppliesToAll, args, varArgIdx, signature);
     }
 
-    private static CallArgumentsNode createArguments(FrameSlot tempFrameSlot, boolean modeChange, boolean modeChangeAppliesToAll, RSyntaxNode[] arguments, int[] varArgIndexes,
+    private static CallArgumentsNode createArguments(int tempFrameSlotIdx, boolean modeChange, boolean modeChangeAppliesToAll, RSyntaxNode[] arguments, int[] varArgIndexes,
                     ArgumentsSignature signature) {
         RNode[] args = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            if (tempFrameSlot != null && i == 0) {
-                args[i] = new GetTempNode(tempFrameSlot, arguments[i]);
+            if (FrameIndex.isInitializedIndex(tempFrameSlotIdx) && i == 0) {
+                args[i] = new GetTempNode(tempFrameSlotIdx, arguments[i]);
             } else {
                 args[i] = arguments[i] == null ? null : RASTUtils.cloneNode(arguments[i].asRNode());
             }
@@ -824,11 +825,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     public static final class GetTempNode extends RNode {
 
-        private final FrameSlot slot;
+        private final int slotIdx;
         private final RSyntaxNode arg;
 
-        GetTempNode(FrameSlot slot, RSyntaxNode arg) {
-            this.slot = slot;
+        GetTempNode(int slotIdx, RSyntaxNode arg) {
+            assert FrameIndex.isInitializedIndex(slotIdx);
+            this.slotIdx = slotIdx;
             this.arg = arg;
         }
 
@@ -845,7 +847,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                return FrameSlotChangeMonitor.getObject(slot, frame);
+                return FrameSlotChangeMonitor.getObject(frame, slotIdx);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -872,17 +874,17 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         private final AlteredArguments alteredArguments;
         private final boolean explicitArgs;
 
-        private final FrameSlot tempFrameSlot;
+        private final int tempFrameSlotIdx;
 
-        public FunctionDispatch(RCallNode originalCall, AlteredArguments alteredArguments, boolean explicitArgs, FrameSlot tempFrameSlot) {
+        public FunctionDispatch(RCallNode originalCall, AlteredArguments alteredArguments, boolean explicitArgs, int tempFrameSlotIdx) {
             this.originalCall = originalCall;
             this.explicitArgs = explicitArgs;
-            this.tempFrameSlot = tempFrameSlot;
+            this.tempFrameSlotIdx = tempFrameSlotIdx;
             this.alteredArguments = alteredArguments;
         }
 
-        public FunctionDispatch(RCallNode originalCall, boolean explicitArgs, FrameSlot tempFrameSlot) {
-            this(originalCall, null, explicitArgs, tempFrameSlot);
+        public FunctionDispatch(RCallNode originalCall, boolean explicitArgs, int tempFrameSlotIdx) {
+            this(originalCall, null, explicitArgs, tempFrameSlotIdx);
         }
 
         protected LeafCallFunctionNode createCacheNode(RootCallTarget cachedTarget) {
@@ -902,7 +904,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             if (explicitArgs) {
                 return PrepareArguments.createExplicit(root);
             } else {
-                CallArgumentsNode args = originalCall.createArguments(tempFrameSlot, root.getBuiltin() == null, true, alteredArguments);
+                CallArgumentsNode args = originalCall.createArguments(tempFrameSlotIdx, root.getBuiltin() == null, true, alteredArguments);
                 return PrepareArguments.create(root, args, noOpt);
             }
         }
@@ -1249,6 +1251,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return arguments == null ? new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "...", false)} : arguments;
     }
 
+    @ValueType
     public static final class ExplicitArgs {
         public final RArgsValuesAndNames args;
         public final RCaller caller;

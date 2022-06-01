@@ -61,10 +61,12 @@ compare => D/Error in source(filename, local = TRUE) : parse error
 compare => D+3/Error in source(filename, local = TRUE) :
 
 # different list elements order: list created from env with env2list(... sorted=F)
-# we remove the list item value and one line before, which will be the attribute name "$class"
-# plus we remove factor's "Levels" followed by the attribute value
-compare => D-1/[1] poor   poor   poor   middle middle middle
-compare => D/Levels: poor middle
+# The items are listed in completely different order, so we basically ignore the whole statement
+# and delete all the listed items.
+compare => D+2/$edu
+compare => D+2/$id
+compare => D+3/$class
+compare => D+2/$age
 
 # ------
 # "Error in try(stop("!!")) :" vs "Error :"

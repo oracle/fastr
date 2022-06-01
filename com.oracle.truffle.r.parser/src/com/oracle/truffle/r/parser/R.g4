@@ -41,11 +41,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -54,10 +54,13 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.RCodeToken;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 }
 
 @rulecatch {
@@ -150,10 +153,60 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.RCodeToken;
     }
 
     /**
+    * Adds an argument to a function call as a local variable to the given {@code functionScope}.
+    * This is valid because in the function body the supplied arguments behave as if they were
+    * local variables initialized with the value supplied and the name of the corresponding
+    * formal argument [R-lang-specification].
+    */
+    private static void addArgumentAsLocalVariable(FunctionScope functionScope, String argIdentifier) {
+        assert functionScope != null;
+        assert argIdentifier != null;
+        functionScope.addLocalVariable(argIdentifier, FrameSlotKind.Illegal);
+    }
+
+    private static FrameSlotKind infereType(RSyntaxNode rhs) {
+        // TODO
+        return FrameSlotKind.Illegal;
+    }
+
+    /**
+    * Helper function that potentially adds a local variable to the given set of local
+    * variables iff {@code lhs} is a syntax lookup and if the set of local variables is
+    * not null.
+    *
+    * Note that this method should only be called from assignment expressions.
+    */
+    private void maybeAddLocalVariable(FunctionScope functionScope, RSyntaxNode lhs, RSyntaxNode rhs) {
+        if (functionScope != null) {
+            if (lhs instanceof RSyntaxLookup) {
+                String identifier = ((RSyntaxLookup) lhs).getIdentifier();
+                FrameSlotKind type = infereType(rhs);
+                functionScope.addLocalVariable(identifier, type);
+            }
+        }
+    }
+
+    private RSyntaxNode lookup(SourceSection src, String symbol, boolean functionLookup) {
+        return builder.lookup(src, symbol, functionLookup, null);
+    }
+
+    private RSyntaxNode lookup(SourceSection src, String symbol, boolean functionLookup, FunctionScope functionScope) {
+        return builder.lookup(src, symbol, functionLookup, functionScope);
+    }
+
+    /**
      * Helper function to create a function lookup for the symbol in a given token.
      */
     private RSyntaxNode functionLookup(Token op) {
-        return builder.lookup(src(op), argName(op.getText()), true);
+        return builder.lookup(src(op), argName(op.getText()), true, null);
+    }
+
+    private static String getSimpleFunctionName(RSyntaxNode assignedTo) {
+        if (assignedTo != null && assignedTo instanceof RSyntaxLookup) {
+            return ((RSyntaxLookup) assignedTo).getIdentifier();
+        } else {
+            return "null";
+        }
     }
 
     /**
@@ -443,24 +496,25 @@ script returns [List<RSyntaxNode> v]
         	throw new NoViableAltException(this);
         }
     }
-    : n_ ( s=statement { $v.add($s.v); })*
+    : n_ ( s=statement[null] { $v.add($s.v); })*
     ;
 
 root_function [String name] returns [RootCallTarget v]
     @init {
         assert source != null && builder != null;
         List<Argument<RSyntaxNode>> params = new ArrayList<>();
+        FunctionScope functionScope = new FunctionScope(name);
     }
     @after {
         if (getInputStream().LT(1).getType() != EOF) {
         	throw RInternalError.shouldNotReachHere("not at EOF after parsing deserialized function");
         }
     }
-    : n_ op=FUNCTION{tok();} n_ LPAR{tok();}  n_ (par_decl[params] (n_ COMMA{tok();} n_ par_decl[params])* n_)? RPAR{tok();} n_ body=expr_or_assign { $v = builder.rootFunction(language, src($op, last()), params, $body.v, name); }
+    : n_ op=FUNCTION{tok();} n_ LPAR{tok();}  n_ (par_decl[params, functionScope] (n_ COMMA{tok();} n_ par_decl[params, functionScope])* n_)? RPAR{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.rootFunction(language, src($op, last()), params, $body.v, name, functionScope); }
     ;
 
-statement returns [RSyntaxNode v]
-    : e=expr_or_assign n_one { $v = $e.v; }
+statement [FunctionScope functionScope] returns [RSyntaxNode v]
+    : e=expr_or_assign[functionScope] n_one { $v = $e.v; }
     ;
 
 n_ : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); }
@@ -470,160 +524,186 @@ n_one  : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); }
 n_multi  : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); }
             | SEMICOLON)+ | EOF;
 
-expr_wo_assign returns [RSyntaxNode v]
-    : w=while_expr                                      { $v = $w.v; }
-    | i=if_expr                                         { $v = $i.v; }
-    | f=for_expr                                        { $v = $f.v; }
-    | r=repeat_expr                                     { $v = $r.v; }
-    | fun=function[null]                                { $v = $fun.v; }
+expr_wo_assign [FunctionScope functionScope] returns [RSyntaxNode v]
+    : w=while_expr[functionScope]                                      { $v = $w.v; }
+    | i=if_expr[functionScope]                                         { $v = $i.v; }
+    | f=for_expr[functionScope]                                        { $v = $f.v; }
+    | r=repeat_expr[functionScope]                                     { $v = $r.v; }
+    | fun=function[null]                                           { $v = $fun.v; }
     // break/next can be accompanied by arguments, but those are simply ignored
     | op=(NEXT|BREAK){tok();} (LPAR{tok();} args[null] RPAR{tok();} | ) { $v = builder.call(src($op), operator($op)); }
     ;
 
-sequence returns [RSyntaxNode v]
-    @init  { ArrayList<Argument<RSyntaxNode>> stmts = new ArrayList<>(); }
+sequence [FunctionScope functionScope] returns [RSyntaxNode v]
+    @init  {
+        ArrayList<Argument<RSyntaxNode>> stmts = new ArrayList<>();
+    }
     : op=LBRACE{tok();} n_multi?
       (
-        e=expr_or_assign           { stmts.add(RCodeBuilder.argument($e.v)); }
-        ( n_multi e=expr_or_assign { stmts.add(RCodeBuilder.argument($e.v)); } )*
+        e=expr_or_assign[functionScope]           { stmts.add(RCodeBuilder.argument($e.v)); }
+        ( n_multi e=expr_or_assign[functionScope] { stmts.add(RCodeBuilder.argument($e.v)); } )*
         n_multi?
       )?
       RBRACE{tok();}
       { $v = builder.call(src($op, last()), operator($op), stmts); }
     ;
 
-expr returns [RSyntaxNode v]
+expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); RSyntaxNode rhs = null; }
-    : l=tilde_expr { $v = $l.v; }
-      ( op=(ARROW | SUPER_ARROW){tok();} n_ ( r1=function[$l.v] { rhs = $r1.v; } | r2=expr { rhs = $r2.v; } )
-                                           { $v = builder.call(src(start, last()), operator($op), $l.v, rhs); }
-      | op=RIGHT_ARROW{tok();} n_ r3=expr           { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r3.v, $l.v); }
-      | op=SUPER_RIGHT_ARROW{tok();} n_ r4=expr     { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r4.v, $l.v); }
+    : l=tilde_expr[functionScope] { $v = $l.v; }
+      ( op=(ARROW | SUPER_ARROW){tok();} n_ ( r1=function[$l.v] { rhs = $r1.v; } | r2=expr[functionScope] { rhs = $r2.v; } )
+       {
+         $v = builder.call(src(start, last()), operator($op), $l.v, rhs);
+         maybeAddLocalVariable(functionScope, $l.v, rhs);
+       }
+      | op=RIGHT_ARROW{tok();} n_ r3=expr[functionScope]
+        {
+          $v = builder.call(src(start, last()), lookup(src($op), "<-", true, functionScope), $r3.v, $l.v);
+          maybeAddLocalVariable(functionScope, $r3.v, $l.v);
+        }
+      | op=SUPER_RIGHT_ARROW{tok();} n_ r4=expr[functionScope]     { $v = builder.call(src(start, last()), lookup(src($op), "<<-", true, functionScope), $r4.v, $l.v); }
       )?
     ;
 
-expr_or_assign returns [RSyntaxNode v]
+expr_or_assign [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); RSyntaxNode rhs = null; }
-    : l=tilde_expr { $v = $l.v; }
-      ( op=(ARROW | SUPER_ARROW | ASSIGN){tok();} n_  ( r1=function[$l.v] { rhs = $r1.v; } | r2=expr_or_assign { rhs = $r2.v; } )
-                                                                      { $v = builder.call(src(start, last()), operator($op), $l.v, rhs); }
-      | op=RIGHT_ARROW{tok();} n_ r3=expr_or_assign             { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r3.v, $l.v); }
-      | op=SUPER_RIGHT_ARROW{tok();} n_ r4=expr_or_assign { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r4.v, $l.v); }
+    : l=tilde_expr[functionScope] { $v = $l.v; }
+      ( op=(ARROW | SUPER_ARROW | ASSIGN){tok();} n_  ( r1=function[$l.v] { rhs = $r1.v; } | r2=expr_or_assign[functionScope] { rhs = $r2.v; } )
+        {
+          $v = builder.call(src(start, last()), operator($op), $l.v, rhs);
+          maybeAddLocalVariable(functionScope, $l.v, rhs);
+        }
+      | op=RIGHT_ARROW{tok();} n_ r3=expr_or_assign[functionScope]
+        {
+          $v = builder.call(src(start, last()), lookup(src($op), "<-", true, functionScope), $r3.v, $l.v);
+          maybeAddLocalVariable(functionScope, $r3.v, $l.v);
+        }
+      | op=SUPER_RIGHT_ARROW{tok();} n_ r4=expr_or_assign[functionScope] { $v = builder.call(src(start, last()), lookup(src($op), "<<-", true, functionScope), $r4.v, $l.v); }
       )?
     ;
 
-if_expr returns [RSyntaxNode v]
-    : op=IF{tok();} n_ LPAR{tok();} n_ cond=expr_or_assign n_ RPAR{tok();} n_ t=expr_or_assign
+if_expr [FunctionScope functionScope] returns [RSyntaxNode v]
+    : op=IF{tok();} n_ LPAR{tok();} n_ cond=expr_or_assign[functionScope] n_ RPAR{tok();} n_ t=expr_or_assign[functionScope]
       (
-        ( n_ ELSE{tok();} n_ f=expr_or_assign
+        ( n_ ELSE{tok();} n_ f=expr_or_assign[functionScope]
               { $v = builder.call(src($op, last()), operator($op), $cond.v, $t.v, $f.v); })
       |       { $v = builder.call(src($op, last()), operator($op), $cond.v, $t.v); }
       )
     ;
 
-while_expr returns [RSyntaxNode v]
-    : op=WHILE{tok();} n_ LPAR{tok();} n_ c=expr_or_assign n_ RPAR{tok();} n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), $c.v, $body.v); }
+while_expr [FunctionScope functionScope] returns [RSyntaxNode v]
+    : op=WHILE{tok();} n_ LPAR{tok();} n_ c=expr_or_assign[functionScope] n_ RPAR{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.call(src($op, last()), operator($op), $c.v, $body.v); }
     ;
 
-for_expr returns [RSyntaxNode v]
-    : op=FOR{tok();} n_ LPAR{tok();} n_ i=ID n_ IN{tok();} n_ in=expr_or_assign n_ RPAR{tok();} n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), builder.lookup(src($i), $i.getText(), false), $in.v, $body.v); }
+for_expr [FunctionScope functionScope] returns [RSyntaxNode v]
+    : op=FOR{tok();} n_ LPAR{tok();} n_ i=ID n_ IN{tok();} n_ in=expr_or_assign[functionScope] n_ RPAR{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.call(src($op, last()), operator($op), lookup(src($i), $i.getText(), false, functionScope), $in.v, $body.v); }
     ;
 
-repeat_expr returns [RSyntaxNode v]
-    : op=REPEAT{tok();} n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), $body.v); }
+repeat_expr [FunctionScope functionScope] returns [RSyntaxNode v]
+    : op=REPEAT{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.call(src($op, last()), operator($op), $body.v); }
     ;
 
 function [RSyntaxNode assignedTo] returns [RSyntaxNode v]
-    @init { List<Argument<RSyntaxNode>> params = new ArrayList<>(); }
-    : op=FUNCTION{tok();} n_ LPAR{tok();} n_ (par_decl[params] (n_ COMMA{tok();} n_ par_decl[params])* n_)? RPAR{tok();} n_ body=expr_or_assign { $v = builder.function(language, src($op, last()), params, $body.v, assignedTo); }
+    @init {
+        List<Argument<RSyntaxNode>> params = new ArrayList<>();
+        FunctionScope functionScope = new FunctionScope(getSimpleFunctionName(assignedTo));
+    }
+    : op=FUNCTION{tok();} n_ LPAR{tok();} n_ (par_decl[params, functionScope] (n_ COMMA{tok();} n_ par_decl[params, functionScope])* n_)? RPAR{tok();} n_ body=expr_or_assign[functionScope] { $v = builder.function(language, src($op, last()), params, $body.v, assignedTo, functionScope); }
     ;
 
-par_decl [List<Argument<RSyntaxNode>> l]
-    : i=ID{tok();}                                                      { $l.add(argument(src($i), $i.getText(), null)); }
-    | i=ID{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr   { $l.add(argument(src($i, last()), $i.getText(), $e.v)); }
+// functionScope is the scope of the function for which we are creating parameters in this rule.
+// We expect that functionScope != null for this rule.
+// The function scope is supplied so that we can also consider formal arguments as local variables,
+// i.e. we pass all the identifiers of the arguments as local variables to the function scope.
+par_decl [List<Argument<RSyntaxNode>> l, FunctionScope functionScope]
+    : i=ID{tok();}                                                      { addArgumentAsLocalVariable(functionScope, $i.getText()); $l.add(argument(src($i), $i.getText(), null)); }
+    | i=ID{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr[functionScope]   { addArgumentAsLocalVariable(functionScope, $i.getText()); $l.add(argument(src($i, last()), $i.getText(), $e.v)); }
     | v=VARIADIC{tok();}                                                { $l.add(argument(src($v), $v.getText(), null)); }
     // The 3 following cases (e.g. "...=42") are weirdness of the reference implementation,
     // the formal argument must be actually created, because they play their role in positional argument matching,
     // but the expression for the default value (if any) is never executed and the value of the paremter
     // cannot be accessed (at least it seems so).
-    | v=VARIADIC{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr { $l.add(argument(src($v), $v.getText(),  null)); }
+    // Moreover, we do not pass functionScope to these cases because we do not want to add variadic components
+    // into the function scope - we want to add variadic components as auxiliary slots to the corresponding
+    // frame descriptor.
+    | v=VARIADIC{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr[null] { $l.add(argument(src($v), $v.getText(),  null)); }
     | v=DD{tok();}                                                          { $l.add(argument(src($v), $v.getText(), null)); }
-    | v=DD{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ expr         { $l.add(argument(src($v), $v.getText(), null)); }
+    | v=DD{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ expr[null]         { $l.add(argument(src($v), $v.getText(), null)); }
     ;
 
-tilde_expr returns [RSyntaxNode v]
-    : l=utilde_expr { $v = $l.v; }
-      ( (op=TILDE{tok();} n_ r=utilde_expr { $v = builder.call(src($op, last()), operator($op), $v, $r.v); }) )*
+tilde_expr [FunctionScope functionScope] returns [RSyntaxNode v]
+    : l=utilde_expr[functionScope] { $v = $l.v; }
+      ( (op=TILDE{tok();} n_ r=utilde_expr[functionScope] { $v = builder.call(src($op, last()), operator($op), $v, $r.v); }) )*
     ;
 
-utilde_expr returns [RSyntaxNode v]
-    : op=TILDE{tok();} n_ l1=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l1.v); }
-    | l2=or_expr             { $v = $l2.v; }
+utilde_expr [FunctionScope functionScope] returns [RSyntaxNode v]
+    : op=TILDE{tok();} n_ l1=utilde_expr[functionScope] { $v = builder.call(src($op, last()), operator($op), $l1.v); }
+    | l2=or_expr[functionScope]             { $v = $l2.v; }
     ;
 
-or_expr returns [RSyntaxNode v]
+or_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
-    : l=and_expr { $v = $l.v; }
-      ( (op=or_operator n_ r=and_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
+    : l=and_expr[functionScope] { $v = $l.v; }
+      ( (op=or_operator n_ r=and_expr[functionScope] { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-and_expr returns [RSyntaxNode v]
+and_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
-    : l=not_expr { $v = $l.v; }
-      ( (op=and_operator n_ r=not_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
+    : l=not_expr[functionScope] { $v = $l.v; }
+      ( (op=and_operator n_ r=not_expr[functionScope] { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-not_expr returns [RSyntaxNode v]
-    : {true}? op=NOT{tok();} n_ l=not_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
-    | b=comp_expr         { $v = $b.v; }
+not_expr [FunctionScope functionScope] returns [RSyntaxNode v]
+    : {true}? op=NOT{tok();} n_ l=not_expr[functionScope] { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    | b=comp_expr[functionScope]         { $v = $b.v; }
     ;
 
-comp_expr returns [RSyntaxNode v]
+comp_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
-    : l=add_expr { $v = $l.v; }
-      ( (op=comp_operator n_ r=add_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
+    : l=add_expr[functionScope] { $v = $l.v; }
+      ( (op=comp_operator n_ r=add_expr[functionScope] { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-add_expr returns [RSyntaxNode v]
+add_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
-    : l=mult_expr { $v = $l.v; }
-      ( (op=add_operator n_ r=mult_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
+    : l=mult_expr[functionScope] { $v = $l.v; }
+      ( (op=add_operator n_ r=mult_expr[functionScope] { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-mult_expr returns [RSyntaxNode v]
+mult_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
-    : l=operator_expr { $v = $l.v; }
-      ( (op=mult_operator n_ r=operator_expr { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
+    : l=operator_expr[functionScope] { $v = $l.v; }
+      ( (op=mult_operator n_ r=operator_expr[functionScope] { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); }) )*
     ;
 
-operator_expr returns [RSyntaxNode v]
+operator_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
-    : l=colon_expr { $v = $l.v; }
-      ( op=OP{tok();} n_ r=colon_expr { $v = builder.call(src(start, last()), operator($op), $v, $r.v); } )*
+    : l=colon_expr[functionScope] { $v = $l.v; }
+      ( op=OP{tok();} n_ r=colon_expr[functionScope] { $v = builder.call(src(start, last()), operator($op), $v, $r.v); } )*
     ;
 
-colon_expr returns [RSyntaxNode v]
+colon_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
-    : l=unary_expression { $v = $l.v; }
-      ( (op=COLON{tok();} n_ r=unary_expression { $v = builder.call(src(start, last()), operator($op), $v, $r.v); }) )*
+    : l=unary_expression[functionScope] { $v = $l.v; }
+      ( (op=COLON{tok();} n_ r=unary_expression[functionScope] { $v = builder.call(src(start, last()), operator($op), $v, $r.v); }) )*
     ;
 
-unary_expression returns [RSyntaxNode v]
-    : op=(PLUS | MINUS | NOT | QM){tok();} n_ l1=unary_expression { $v = builder.call(src($op, last()), operator($op), $l1.v); }
-	| op=TILDE {tok();} n_ l2=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l2.v); }
-    | b=power_expr                                  { $v = $b.v; }
+unary_expression [FunctionScope functionScope] returns [RSyntaxNode v]
+    : op=(PLUS | MINUS | NOT | QM){tok();} n_ l1=unary_expression[functionScope] { $v = builder.call(src($op, last()), operator($op), $l1.v); }
+	| op=TILDE {tok();} n_ l2=utilde_expr[functionScope] { $v = builder.call(src($op, last()), operator($op), $l2.v); }
+    | b=power_expr[functionScope]                                  { $v = $b.v; }
     ;
 
-power_expr returns [RSyntaxNode v]
+power_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
-    : l=basic_expr { $v = $l.v; }
+    : l=basic_expr[functionScope] { $v = $l.v; }
       (
-        (op=power_operator n_ r=unary_expression { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); } )
+        (op=power_operator n_ r=unary_expression[functionScope] { $v = builder.call(src(start, last()), operator($op.v), $v, $r.v); } )
       |
       )
     ;
 
-basic_expr returns [RSyntaxNode v]
+basic_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); }
     :
     (
@@ -631,11 +711,11 @@ basic_expr returns [RSyntaxNode v]
       (lhsToken=(ID | DD | VARIADIC | STRING){tok(RCodeToken.SYMBOL_FUNCTION_CALL);} op=LPAR{tok();} a=args[null] y=RPAR{tok();}
                       { $v = builder.call(src(start, $y), functionLookup($lhsToken), $a.v); } )
     |
-      lhs=simple_expr { $v = $lhs.v; }
+      lhs=simple_expr[functionScope] { $v = $lhs.v; }
     )
     (
       ( (
-          (op=(FIELD|AT){tok();} n_ name=id                    { modifyTok(RCodeToken.SLOT); $v = builder.call(src(start, last()), operator($op), $v, builder.lookup(src($name.v), $name.v.getText(), false)); })
+          (op=(FIELD|AT){tok();} n_ name=id                    { modifyTok(RCodeToken.SLOT); $v = builder.call(src(start, last()), operator($op), $v, lookup(src($name.v), $name.v.getText(), false, functionScope)); })
         | (op=(FIELD|AT){tok();} n_ sname=conststring          { $v = builder.call(src(start, last()), operator($op), $v, $sname.v); })
         | (op=LBRAKET{tok();} subset=args[$v] y=RBRAKET        { tok();
                                                            if ($subset.v.size() == 1) {
@@ -656,11 +736,11 @@ basic_expr returns [RSyntaxNode v]
     )?
     ;
 
-simple_expr returns [RSyntaxNode v]
+simple_expr [FunctionScope functionScope] returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); List<Argument<RSyntaxNode>> args = new ArrayList<>(); Token compToken = null; }
-    : i=id                                      { $v = builder.lookup(src($i.v), $i.text, false); }
+    : i=id                                      { $v = lookup(src($i.v), $i.text, false, functionScope); }
     | b=bool                                    { $v = builder.constant(src(start, last()), $b.v); }
-    | d=DD                                      { tok(); $v = builder.lookup(src($d), $d.getText(), false); }
+    | d=DD                                      { tok(); $v = lookup(src($d), $d.getText(), false, functionScope); }
     | t=NULL                                    { tok(); $v = builder.constant(src($t), RNull.instance); }
     | t=INF                                     { tok(); $v = builder.constant(src($t), Double.POSITIVE_INFINITY); }
     | t=NAN                                     { tok(); $v = builder.constant(src($t), Double.NaN); }
@@ -672,12 +752,12 @@ simple_expr returns [RSyntaxNode v]
     | cstr=conststring                          { $v = $cstr.v; }
     | pkg=id{modifyTok(RCodeToken.SYMBOL_PACKAGE);} op=(NS_GET|NS_GET_INT){tok();} n_          {
         SourceSection pkgSource = src($pkg.v);
-        args.add(argument(pkgSource, (String) null, builder.lookup(pkgSource, $pkg.text, false)));
+        args.add(argument(pkgSource, (String) null, lookup(pkgSource, $pkg.text, false, functionScope)));
         }
       ( compId=id                               {
         SourceSection compSource = src($compId.v);
         compToken = $compId.v;
-        args.add(argument(compSource, (String) null, builder.lookup(compSource, $compId.text, false)));
+        args.add(argument(compSource, (String) null, lookup(compSource, $compId.text, false, functionScope)));
         }
       | compString=STRING{tok();}                       {
         SourceSection compSource = src($compString);
@@ -685,9 +765,9 @@ simple_expr returns [RSyntaxNode v]
         args.add(argument(compSource, (String) null, builder.constant(compSource, $compString.getText())));
         }
         )                                       { $v = builder.call(src($pkg.v, compToken), operator($op), args); }
-    | op=LPAR{tok();} n_ ea=expr_or_assign n_ y=RPAR    { tok(); $v = builder.call(src($op, $y), operator($op), $ea.v); }
-    | s=sequence                                { $v = $s.v; }
-    | e=expr_wo_assign                          { $v = $e.v; }
+    | op=LPAR{tok();} n_ ea=expr_or_assign[functionScope] n_ y=RPAR    { tok(); $v = builder.call(src($op, $y), operator($op), $ea.v); }
+    | s=sequence[functionScope]                                { $v = $s.v; }
+    | e=expr_wo_assign[functionScope]                          { $v = $e.v; }
     ;
 
 number returns [RSyntaxNode v]
@@ -765,10 +845,10 @@ args [RSyntaxNode firstArg] returns [List<Argument<RSyntaxNode>> v]
 
 arg_expr [List<Argument<RSyntaxNode>> l]
     @init { Token start = getInputStream().LT(1); }
-    : e=expr                                                   { $l.add(argument(src(start, last()), (String) null, $e.v)); }
+    : e=expr[null]                                                   { $l.add(argument(src(start, last()), (String) null, $e.v)); }
     | { Token name = null; RSyntaxNode value = null; }
       (ID{name = $ID; tok(RCodeToken.SYMBOL_SUB);} | VARIADIC{name=$VARIADIC; tok();} | NULL{name = $NULL; tok();} | STRING{name = $STRING; tok();}) n_ a=ASSIGN{tok(RCodeToken.EQ_SUB);}
-      ( n_ e=expr { value = $e.v; }
+      ( n_ e=expr[null] { value = $e.v; }
       |
       )
       { $l.add(argument(src(name, last()), argName(name.getText()), value)); }

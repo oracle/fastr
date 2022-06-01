@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1189,6 +1189,16 @@ R_xlen_t XTRUELENGTH(SEXP x) {
     TRACE0();
     unimplemented("XTRUELENGTH");
     return 0;
+}
+
+int IS_GROWABLE(SEXP x) {
+    TRACE0();
+    return ((call_IS_GROWABLE) callbacks[IS_GROWABLE_x])(x);
+}
+
+void SET_GROWABLE_BIT(SEXP x) {
+    TRACE0();
+    ((call_SET_GROWABLE_BIT) callbacks[SET_GROWABLE_BIT_x])(x);
 }
 
 int IS_LONG_VEC(SEXP x) {

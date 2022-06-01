@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,8 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
@@ -42,7 +41,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -57,9 +55,10 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -111,19 +110,20 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
     private static final class ExtractElementInternal extends RSourceSectionNode implements RSyntaxCall {
 
         @Child private ExtractVectorNode extractElementNode = ExtractVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false);
-        private final FrameSlot vectorSlot;
-        private final FrameSlot indexSlot;
+        private final int vectorFrameIndex;
+        private final int indexFrameIndex;
 
-        protected ExtractElementInternal(FrameSlot vectorSlot, FrameSlot indexSlot) {
+        private ExtractElementInternal(int vectorFrameIndex, int indexFrameIndex) {
             super(RSyntaxNode.LAZY_DEPARSE);
-            this.vectorSlot = vectorSlot;
-            this.indexSlot = indexSlot;
+            this.vectorFrameIndex = vectorFrameIndex;
+            this.indexFrameIndex = indexFrameIndex;
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                return extractElementNode.apply(FrameSlotChangeMonitor.getObject(vectorSlot, frame), new Object[]{frame.getInt(indexSlot)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
+                Object[] positions = {FrameSlotChangeMonitor.getInt(frame, indexFrameIndex)};
+                return extractElementNode.apply(FrameSlotChangeMonitor.getObject(frame, vectorFrameIndex), positions, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
             } catch (FrameSlotTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("frame type mismatch in lapply");
@@ -158,33 +158,42 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
 
         public abstract Object[] execute(VirtualFrame frame, Object vector, RFunction function);
 
-        protected static FrameSlot createIndexSlot(Frame frame) {
-            return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), INDEX_NAME, FrameSlotKind.Int);
+        protected static int findOrCreateIndexFrameIndex(Frame frame) {
+            return findOrCreateFrameIndexForIdentifier(frame, INDEX_NAME);
         }
 
-        protected static FrameSlot createVectorSlot(Frame frame) {
-            return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), VECTOR_NAME, FrameSlotKind.Object);
+        protected static int findOrCreateVectorFrameIndex(Frame frame) {
+            return findOrCreateFrameIndexForIdentifier(frame, VECTOR_NAME);
+        }
+
+        private static int findOrCreateFrameIndexForIdentifier(Frame frame, String identifier) {
+            FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+            if (FrameSlotChangeMonitor.containsIdentifier(frameDescriptor, identifier)) {
+                return FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier);
+            } else {
+                return FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, identifier);
+            }
         }
 
         @Specialization
         protected Object[] cachedLApply(VirtualFrame frame, Object vector, RFunction function,
-                        @Cached("createIndexSlot(frame)") FrameSlot indexSlot,
-                        @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
+                        @Cached("findOrCreateIndexFrameIndex(frame)") int indexFrameIndex,
+                        @Cached("findOrCreateVectorFrameIndex(frame)") int vectorFrameIndex,
                         @Cached("create()") RLengthNode lengthNode,
                         @Cached("createCountingProfile()") LoopConditionProfile loop,
-                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode firstCallNode,
-                        @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode callNode) {
+                        @Cached("createCallNode(vectorFrameIndex, indexFrameIndex)") RCallBaseNode firstCallNode,
+                        @Cached("createCallNode(vectorFrameIndex, indexFrameIndex)") RCallBaseNode callNode) {
             // TODO: R switches to double if x.getLength() is greater than 2^31-1
-            FrameSlotChangeMonitor.setObject(frame, vectorSlot, vector);
+            FrameSlotChangeMonitor.setObject(frame, vectorFrameIndex, vector);
             int length = lengthNode.executeInteger(vector);
             Object[] result = new Object[length];
             if (length > 0) {
                 reportWork(this, length);
                 loop.profileCounted(length);
-                frame.setInt(indexSlot, 1);
+                FrameSlotChangeMonitor.setInt(frame, indexFrameIndex, 1);
                 result[0] = firstCallNode.execute(frame, function);
                 for (int i = 2; loop.inject(i <= length); i++) {
-                    frame.setInt(indexSlot, i);
+                    FrameSlotChangeMonitor.setInt(frame, indexFrameIndex, i);
                     result[i - 1] = callNode.execute(frame, function);
                 }
             }
@@ -194,10 +203,10 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
         /**
          * Creates the {@link RCallNode} for this target and {@code varArgs}.
          */
-        protected RCallBaseNode createCallNode(FrameSlot vectorSlot, FrameSlot indexSlot) {
+        protected RCallBaseNode createCallNode(int vectorFrameIndex, int indexFrameIndex) {
             CompilerAsserts.neverPartOfCompilation();
 
-            ExtractElementInternal element = new ExtractElementInternal(vectorSlot, indexSlot);
+            ExtractElementInternal element = new ExtractElementInternal(vectorFrameIndex, indexFrameIndex);
             RSyntaxNode readArgs = ReadVariableNode.wrap(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.createSilent(ArgumentsSignature.VARARG_NAME, RType.Any));
             RNode function = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, "FUN", false).asRNode();
 

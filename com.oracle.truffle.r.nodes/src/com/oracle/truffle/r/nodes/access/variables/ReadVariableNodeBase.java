@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,10 @@ package com.oracle.truffle.r.nodes.access.variables;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -44,41 +44,72 @@ public class ReadVariableNodeBase extends RBaseNode {
         return (set & (1 << kind.ordinal())) != 0;
     }
 
-    protected final Object getValue(Frame variableFrame, FrameSlot frameSlot) {
-        assert variableFrame.getFrameDescriptor().getSlots().contains(frameSlot) : frameSlot.getIdentifier();
-        Object value = variableFrame.getValue(frameSlot);
-        if (variableFrame.isObject(frameSlot)) {
-            value = FrameSlotChangeMonitor.getValue(frameSlot, variableFrame);
-            this.seenValueKinds = setKind(this.seenValueKinds, FrameSlotKind.Object);
-        } else if (variableFrame.isByte(frameSlot)) {
-            this.seenValueKinds = setKind(this.seenValueKinds, FrameSlotKind.Byte);
-        } else if (variableFrame.isInt(frameSlot)) {
-            this.seenValueKinds = setKind(this.seenValueKinds, FrameSlotKind.Int);
-        } else if (variableFrame.isDouble(frameSlot)) {
-            this.seenValueKinds = setKind(this.seenValueKinds, FrameSlotKind.Double);
+    protected final Object getValue(Frame variableFrame, int frameIndex) {
+        assert FrameSlotChangeMonitor.containsIndex(variableFrame, frameIndex);
+        Object value = FrameSlotChangeMonitor.getValue(variableFrame, frameIndex);
+        if (isObjectSlot(variableFrame, frameIndex)) {
+            seenValueKinds = setKind(seenValueKinds, FrameSlotKind.Object);
+        } else if (isByteSlot(variableFrame, frameIndex)) {
+            seenValueKinds = setKind(seenValueKinds, FrameSlotKind.Byte);
+        } else if (isIntSlot(variableFrame, frameIndex)) {
+            seenValueKinds = setKind(seenValueKinds, FrameSlotKind.Int);
+        } else if (isDoubleSlot(variableFrame, frameIndex)) {
+            seenValueKinds = setKind(seenValueKinds, FrameSlotKind.Double);
         }
         return value;
     }
 
-    final Object profiledGetValue(Frame variableFrame, FrameSlot frameSlot) {
-        assert variableFrame.getFrameDescriptor().getSlots().contains(frameSlot) : frameSlot.getIdentifier();
+    final Object profiledGetValue(Frame variableFrame, int frameIndex) {
+        assert FrameSlotChangeMonitor.containsIndex(variableFrame, frameIndex);
         try {
-            if (hasKind(this.seenValueKinds, FrameSlotKind.Object) && variableFrame.isObject(frameSlot)) {
-                return FrameSlotChangeMonitor.getObject(frameSlot, variableFrame);
-            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Byte) && variableFrame.isByte(frameSlot)) {
-                return variableFrame.getByte(frameSlot);
-            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Int) && variableFrame.isInt(frameSlot)) {
-                return variableFrame.getInt(frameSlot);
-            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Double) && variableFrame.isDouble(frameSlot)) {
-                return variableFrame.getDouble(frameSlot);
+            if (hasKind(this.seenValueKinds, FrameSlotKind.Object) && isObjectSlot(variableFrame, frameIndex)) {
+                return FrameSlotChangeMonitor.getObject(variableFrame, frameIndex);
+            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Byte) && isByteSlot(variableFrame, frameIndex)) {
+                return FrameSlotChangeMonitor.getByte(variableFrame, frameIndex);
+            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Int) && isIntSlot(variableFrame, frameIndex)) {
+                return FrameSlotChangeMonitor.getInt(variableFrame, frameIndex);
+            } else if (hasKind(this.seenValueKinds, FrameSlotKind.Double) && isDoubleSlot(variableFrame, frameIndex)) {
+                return FrameSlotChangeMonitor.getDouble(variableFrame, frameIndex);
             } else {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 // re-profile to widen the set of expected types
-                return getValue(variableFrame, frameSlot);
+                return getValue(variableFrame, frameIndex);
             }
         } catch (FrameSlotTypeException e) {
             CompilerDirectives.transferToInterpreter();
             throw new RInternalError(e, "unexpected frame slot type mismatch");
+        }
+    }
+
+    private static boolean isObjectSlot(Frame frame, int frameIndex) {
+        if (FrameIndex.representsAuxiliaryIndex(frameIndex)) {
+            return true;
+        } else {
+            return frame.isObject(FrameIndex.toNormalIndex(frameIndex));
+        }
+    }
+
+    private static boolean isByteSlot(Frame frame, int frameIndex) {
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            return frame.isByte(FrameIndex.toNormalIndex(frameIndex));
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean isIntSlot(Frame frame, int frameIndex) {
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            return frame.isInt(FrameIndex.toNormalIndex(frameIndex));
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean isDoubleSlot(Frame frame, int frameIndex) {
+        if (FrameIndex.representsNormalIndex(frameIndex)) {
+            return frame.isDouble(FrameIndex.toNormalIndex(frameIndex));
+        } else {
+            return false;
         }
     }
 }

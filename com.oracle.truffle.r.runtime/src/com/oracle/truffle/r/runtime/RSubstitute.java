@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -39,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 public class RSubstitute {
 
@@ -92,10 +93,10 @@ public class RSubstitute {
                     ((EagerPromise) promise).materialize();
                 }
                 MaterializedFrame promiseFrame = promise.getFrame();
-                FrameSlot dotsSlot = promiseFrame.getFrameDescriptor().findFrameSlot("...");
+                int dotsFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(promiseFrame.getFrameDescriptor(), "...");
                 RArgsValuesAndNames dots = null;
                 try {
-                    dots = (RArgsValuesAndNames) promiseFrame.getObject(dotsSlot);
+                    dots = (RArgsValuesAndNames) FrameSlotChangeMonitor.getObject(promiseFrame, dotsFrameIndex);
                 } catch (FrameSlotTypeException e) {
                     e.printStackTrace();
                 }
@@ -209,7 +210,8 @@ public class RSubstitute {
             @Override
             protected T visit(RSyntaxFunction element) {
                 ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return builder.function(language, RSyntaxNode.LAZY_DEPARSE, params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
+                // TODO: Search for localVariables
+                return builder.function(language, RSyntaxNode.LAZY_DEPARSE, params, accept(element.getSyntaxBody()), element.getSyntaxDebugName(), FunctionScope.EMPTY_SCOPE);
             }
         }.accept(original);
     }

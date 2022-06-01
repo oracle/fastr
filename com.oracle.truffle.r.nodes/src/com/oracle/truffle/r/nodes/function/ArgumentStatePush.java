@@ -28,8 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -39,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
@@ -50,7 +49,7 @@ public abstract class ArgumentStatePush extends Node {
 
     public abstract void executeObject(VirtualFrame frame, Object shareable);
 
-    @CompilationFinal private FrameSlot frameSlot;
+    @CompilationFinal private int frameIndex = FrameIndex.UNITIALIZED_INDEX;
 
     private final ConditionProfile isRefCountUpdateable = ConditionProfile.createBinaryProfile();
 
@@ -103,13 +102,13 @@ public abstract class ArgumentStatePush extends Node {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
             shareable.incRefCount();
             if (writeArgMask != -1) {
-                if (frameSlot == null) {
+                if (FrameIndex.isUninitializedIndex(frameIndex)) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     synchronized (FrameSlotChangeMonitor.class) {
-                        frameSlot = frame.getFrameDescriptor().findOrAddFrameSlot(writeArgMask, FrameSlotKind.Object);
+                        frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), writeArgMask);
                     }
                 }
-                frame.setObject(frameSlot, shareable);
+                FrameSlotChangeMonitor.setObject(frame, frameIndex, shareable);
             }
         }
     }

@@ -29,8 +29,6 @@ import java.util.function.Supplier;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -231,8 +229,8 @@ public class RRNG {
             RFunction fun = context.lookupBuiltin(".fastr.set.seed");
             ActiveBinding dotRandomSeed = new ActiveBinding(RType.Any, fun, true);
             Frame frame = REnvironment.globalEnv().getFrame();
-            FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RRNG.RANDOM_SEED, FrameSlotKind.Object);
-            FrameSlotChangeMonitor.setActiveBinding(frame, slot, dotRandomSeed, false, null);
+            int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RRNG.RANDOM_SEED);
+            FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, dotRandomSeed, false);
             dotRandomSeedBinding = new WeakReference<>(dotRandomSeed);
         }
 

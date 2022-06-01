@@ -32,7 +32,6 @@ import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridG
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -104,8 +103,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -257,7 +254,6 @@ public class CallAndExternalFunctions {
      */
     protected abstract static class Dot extends LookupAdapter {
         @Child private InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
-        @CompilationFinal private ContextReference<RContext> ctxRef;
 
         protected Object dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
             return callRFFINode.dispatch(frame, nativeCallInfo, args);
@@ -266,14 +262,6 @@ public class CallAndExternalFunctions {
         protected static void applyCommonCasts(Casts casts) {
             casts.arg(".NAME").mustBe(instanceOf(RList.class).or(instanceOf(RExternalPtr.class)).or(stringValue())).mapIf(stringValue(), asStringVector().setNext(findFirst().stringElement()));
             casts.arg("PACKAGE").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-        }
-
-        protected RContext getContext() {
-            if (ctxRef == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                ctxRef = lookupContextReference(TruffleRLanguage.class);
-            }
-            return ctxRef.get();
         }
 
         // Note: we cannot declare "abstract" methods, because Truffle DSL
@@ -476,8 +464,8 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         public final RExternalBuiltinNode lookupBuiltin(String name) {
             assert name != null;
-            if (getContext().getOption(UseInternalGridGraphics)) {
-                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(getContext(), name);
+            if (getRContext().getOption(UseInternalGridGraphics)) {
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(getRContext(), name);
                 if (gridExternal != null) {
                     return gridExternal;
                 }
@@ -767,10 +755,10 @@ public class CallAndExternalFunctions {
                     return PPSum.IntgrtVecNode.create();
 
                 case "updateform":
-                    return getExternalModelBuiltinNode(getContext(), "updateform");
+                    return getExternalModelBuiltinNode(getRContext(), "updateform");
 
                 case "Cdqrls":
-                    return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(getContext(), RandFunctionsNodes.class, "lm.R"), "Cdqrls");
+                    return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(getRContext(), RandFunctionsNodes.class, "lm.R"), "Cdqrls");
 
                 case "dnorm":
                     return StatsFunctionsNodes.Function3_1Node.create(new DNorm());
@@ -839,7 +827,7 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public final RExternalBuiltinNode lookupBuiltin(String name) {
-            if (getContext().getOption(UseInternalGridGraphics)) {
+            if (getRContext().getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -861,7 +849,7 @@ public class CallAndExternalFunctions {
                 case "download":
                     return DownloadNodeGen.create();
                 case "termsform":
-                    return getExternalModelBuiltinNode(getContext(), "termsform");
+                    return getExternalModelBuiltinNode(getRContext(), "termsform");
                 case "Rprof":
                     return RprofNodeGen.create();
                 case "Rprofmem":
@@ -950,7 +938,7 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public final RExternalBuiltinNode lookupBuiltin(String name) {
-            if (getContext().getOption(UseInternalGridGraphics)) {
+            if (getRContext().getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal2(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -966,7 +954,7 @@ public class CallAndExternalFunctions {
                     return C_ParseRdNodeGen.create();
                 case "modelmatrix":
                 case "modelframe":
-                    return getExternalModelBuiltinNode(getContext(), name);
+                    return getExternalModelBuiltinNode(getRContext(), name);
                 case "zeroin2":
                     return Zeroin2.create();
 
@@ -1060,7 +1048,7 @@ public class CallAndExternalFunctions {
 
         @Override
         public final RExternalBuiltinNode lookupBuiltin(String name) {
-            if (getContext().getOption(UseInternalGridGraphics)) {
+            if (getRContext().getOption(UseInternalGridGraphics)) {
                 return FastRGridExternalLookup.lookupDotCallGraphics(name);
             } else {
                 return null;

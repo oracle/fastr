@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,10 @@ package com.oracle.truffle.r.runtime.env.frame;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -36,7 +37,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -50,10 +50,10 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import java.util.List;
 
 /**
- * Variant of {@link REnvFrameAccess} that provides access to an actual Truffle execution frame.
+ * Variant of {@link REnvFrameAccess} that provides access to an actual Truffle execution frame. All
+ * the slots used within the frame that corresponds to the environment are auxiliary slots.
  */
 public final class REnvTruffleFrameAccess extends REnvFrameAccess {
 
@@ -76,12 +76,11 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     @Override
     public Object get(String key) {
         CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptor fd = frame.getFrameDescriptor();
-        FrameSlot slot = fd.findFrameSlot(key);
-        if (slot == null) {
+        int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), key);
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             return null;
         } else {
-            Object value = FrameSlotChangeMonitor.getValue(slot, frame);
+            Object value = FrameSlotChangeMonitor.getValue(frame, frameIndex);
             // special treatment for active binding: call bound function
             if (ActiveBinding.isActiveBinding(value)) {
                 Object readValue = ((ActiveBinding) value).readValue();
@@ -96,12 +95,11 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     @Override
     public boolean isActiveBinding(String key) {
         CompilerAsserts.neverPartOfCompilation();
-        FrameDescriptor fd = frame.getFrameDescriptor();
-        FrameSlot slot = fd.findFrameSlot(key);
-        if (slot == null) {
+        int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), key);
+        if (FrameIndex.isUninitializedIndex(frameIndex)) {
             return false;
         } else {
-            Object value = FrameSlotChangeMonitor.getValue(slot, frame);
+            Object value = FrameSlotChangeMonitor.getValue(frame, frameIndex);
             return ActiveBinding.isActiveBinding(value);
         }
     }
@@ -116,27 +114,33 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         }
         FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
         FrameDescriptor fd = frame.getFrameDescriptor();
-        FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(fd, key, valueSlotKind);
-        if (valueSlotKind != fd.getFrameSlotKind(slot)) {
+
+        int frameIndex;
+        if (FrameSlotChangeMonitor.containsIdentifier(fd, key)) {
+            frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, key);
+        } else {
+            frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(fd, key);
+        }
+        assert FrameIndex.isInitializedIndex(frameIndex);
+        if (valueSlotKind != FrameSlotChangeMonitor.getFrameSlotKindInFrameDescriptor(fd, frameIndex)) {
             // we must not toggle between slot kinds, so go to Object
             valueSlotKind = FrameSlotKind.Object;
-            fd.setFrameSlotKind(slot, valueSlotKind);
         }
 
         switch (valueSlotKind) {
             case Byte:
-                FrameSlotChangeMonitor.setByteAndInvalidate(frame, slot, (byte) value, false, null);
+                FrameSlotChangeMonitor.setByteAndInvalidate(frame, frameIndex, (byte) value, false);
                 break;
             case Int:
-                FrameSlotChangeMonitor.setIntAndInvalidate(frame, slot, (int) value, false, null);
+                FrameSlotChangeMonitor.setIntAndInvalidate(frame, frameIndex, (int) value, false);
                 break;
             case Double:
-                FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, slot, (double) value, false, null);
+                FrameSlotChangeMonitor.setDoubleAndInvalidate(frame, frameIndex, (double) value, false);
                 break;
             case Object:
                 Object object;
                 try {
-                    object = frame.getObject(slot);
+                    object = FrameSlotChangeMonitor.getObject(frame, frameIndex);
                 } catch (FrameSlotTypeException e) {
                     object = null;
                 }
@@ -144,7 +148,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 if (object != null && ActiveBinding.isActiveBinding(object)) {
                     ((ActiveBinding) object).writeValue(value);
                 } else {
-                    FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, value, false, null);
+                    FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, value, false);
                 }
                 break;
             case Illegal:
@@ -162,22 +166,19 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
             lockedBindings.remove(key);
         }
         FrameDescriptor fd = frame.getFrameDescriptor();
-        FrameSlot slot = fd.findFrameSlot(key);
-
-        // Handle all other values
-        if (slot == null) {
-            // TODO: also throw this error when slot contains "null" value
+        if (!FrameSlotChangeMonitor.containsIdentifier(fd, key)) {
             throw new PutException(RError.Message.UNKNOWN_OBJECT, key);
         } else {
-            if (fd.getFrameSlotKind(slot) != FrameSlotKind.Object) {
-                fd.setFrameSlotKind(slot, FrameSlotKind.Object);
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, key);
+            if (FrameSlotChangeMonitor.getFrameSlotKindInFrameDescriptor(fd, frameIndex) != FrameSlotKind.Object) {
+                FrameSlotChangeMonitor.setFrameSlotKind(fd, frameIndex, FrameSlotKind.Object);
             }
 
             Assumption containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(fd);
             Object result = null;
             // special treatment for active binding: call bound function
             try {
-                if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result = FrameSlotChangeMonitor.getObject(slot, frame))) {
+                if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result = FrameSlotChangeMonitor.getObject(frame, frameIndex))) {
                     ActiveBinding binding = (ActiveBinding) result;
                     if (binding.isHidden()) {
                         binding.setInitialized(false);
@@ -188,7 +189,7 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
                 // ignore
             }
 
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, null);
+            FrameSlotChangeMonitor.setObjectAndInvalidate(frame, frameIndex, null, false);
         }
     }
 
@@ -197,25 +198,20 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         FrameDescriptor fd = frame.getFrameDescriptor();
 
-        ArrayList<String> names = new ArrayList<>(fd.getIdentifiers().size());
+        ArrayList<String> names = new ArrayList<>(fd.getNumberOfAuxiliarySlots());
         getStringIdentifiersAndValues(frame, names, null);
 
-        ArrayList<String> matchedNamesList = new ArrayList<>(fd.getIdentifiers().size());
+        ArrayList<String> matchedNamesList = new ArrayList<>(fd.getNumberOfAuxiliarySlots());
         for (String name : names) {
             if (REnvironment.includeName(name, allNames, pattern)) {
                 matchedNamesList.add(name);
             }
         }
-        String[] data = matchedNamesList.toArray(new String[matchedNamesList.size()]);
+        String[] data = matchedNamesList.toArray(new String[0]);
         if (sorted) {
             Locale locale = RContext.getInstance().stateRLocale.getLocale(RLocale.COLLATE);
             Collator collator = locale == Locale.ROOT || locale == null ? null : RLocale.getOrderCollator(locale);
-            Arrays.sort(data, new Comparator<String>() {
-                @Override
-                public int compare(String o1, String o2) {
-                    return RLocale.compare(collator, o1, o2);
-                }
-            });
+            Arrays.sort(data, (o1, o2) -> RLocale.compare(collator, o1, o2));
         }
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }
@@ -229,9 +225,10 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     @Override
     @TruffleBoundary
     public void lockBindings() {
-        for (Object binding : frame.getFrameDescriptor().getIdentifiers()) {
-            if (binding instanceof String) {
-                lockBinding((String) binding);
+        for (Map.Entry<Object, Integer> entry : frame.getFrameDescriptor().getAuxiliarySlots().entrySet()) {
+            Object identifier = entry.getKey();
+            if (identifier instanceof String) {
+                lockBinding((String) identifier);
             }
         }
     }
@@ -254,14 +251,16 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     public static void getStringIdentifiersAndValues(Frame frame, List<String> names, List<Object> values) {
+        assert names != null;
         FrameDescriptor fd = frame.getFrameDescriptor();
-        for (FrameSlot frameSlot : fd.getSlots()) {
-            if (frameSlot.getIdentifier() instanceof String) {
-                Object value = FrameSlotChangeMonitor.getValue(frameSlot, frame);
+        for (Object identifier : FrameSlotChangeMonitor.getIdentifiers(fd)) {
+            if (identifier instanceof String) {
+                int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(fd, identifier);
+                Object value = FrameSlotChangeMonitor.getValue(frame, frameIndex);
                 if (value == null || !ActiveBinding.isListed(value)) {
                     continue;
                 }
-                names.add((String) frameSlot.getIdentifier());
+                names.add((String) identifier);
                 if (values != null) {
                     values.add(value);
                 }

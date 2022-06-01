@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -32,6 +31,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -66,30 +66,31 @@ public abstract class GetMissingValueNode extends RBaseNode {
         @Override
         public Object execute(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
-            return varArgIndex < 0 ? replace(new ResolvedGetMissingValueNode(slot)).execute(frame) : replace(new ResolvedGetMissingVarArgIndexedValueNode(slot, varArgIndex)).execute(frame);
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), name);
+            return varArgIndex < 0 ? replace(new ResolvedGetMissingValueNode(frameIndex)).execute(frame)
+                            : replace(new ResolvedGetMissingVarArgIndexedValueNode(frameIndex, varArgIndex)).execute(frame);
         }
     }
 
     private static final class ResolvedGetMissingValueNode extends GetMissingValueNode {
 
-        private final FrameSlot slot;
+        private final int frameIndex;
         private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
 
         private static final Object NON_PROMISE_OBJECT = new Object();
 
-        private ResolvedGetMissingValueNode(FrameSlot slot) {
-            this.slot = slot;
+        private ResolvedGetMissingValueNode(int frameIndex) {
+            this.frameIndex = frameIndex;
         }
 
         @Override
         public Object execute(Frame frame) {
-            if (slot == null) {
+            if (FrameIndex.isUninitializedIndex(frameIndex)) {
                 return null;
             }
-            if (isObjectProfile.profile(frame.isObject(slot))) {
+            if (isObjectProfile.profile(FrameSlotChangeMonitor.isObject(frame, frameIndex))) {
                 try {
-                    return FrameSlotChangeMonitor.getObject(slot, frame);
+                    return FrameSlotChangeMonitor.getObject(frame, frameIndex);
                 } catch (FrameSlotTypeException e) {
                     return null;
                 }
@@ -101,19 +102,19 @@ public abstract class GetMissingValueNode extends RBaseNode {
 
     private static final class ResolvedGetMissingVarArgIndexedValueNode extends GetMissingValueNode {
 
-        private final FrameSlot varArgSlot;
+        private final int varArgFrameIndex;
         private final int varArgIndex;
         private final ConditionProfile isArgMissingProfile = ConditionProfile.createBinaryProfile();
 
-        private ResolvedGetMissingVarArgIndexedValueNode(FrameSlot varArgSlot, int varArgIndex) {
-            assert varArgSlot != null;
-            this.varArgSlot = varArgSlot;
+        private ResolvedGetMissingVarArgIndexedValueNode(int varArgFrameIndex, int varArgIndex) {
+            assert FrameIndex.isInitializedIndex(varArgFrameIndex);
+            this.varArgFrameIndex = varArgFrameIndex;
             this.varArgIndex = varArgIndex;
         }
 
         @Override
         public Object execute(Frame frame) {
-            RArgsValuesAndNames varArgs = (RArgsValuesAndNames) frame.getValue(varArgSlot);
+            RArgsValuesAndNames varArgs = (RArgsValuesAndNames) FrameSlotChangeMonitor.getObject(frame, varArgFrameIndex);
             if (isArgMissingProfile.profile(varArgIndex >= varArgs.getLength())) {
                 return RMissing.instance;
             } else {

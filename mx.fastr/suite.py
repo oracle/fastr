@@ -1,5 +1,5 @@
 suite = {
-  "mxversion" : "5.316.14",
+  "mxversion" : "6.0.1",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
   "imports" : {
@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "0fe1c259dc4527560a948f288b6329dfaf15ad43",
+               "version" : "3354d2f70983c0ae7327f6719bac4a02a55aa16a",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "0fe1c259dc4527560a948f288b6329dfaf15ad43",
+               "version" : "3354d2f70983c0ae7327f6719bac4a02a55aa16a",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -83,7 +83,7 @@ suite = {
       "path" : "libdownloads/cluster.tar.gz",
       "ext" : ".tar.gz",
       "version" : "2.1.2",
-      "urls" : ["https://cran.r-project.org/src/contrib/cluster_{version}.tar.gz"],
+      "urls" : ["https://cran.r-project.org/src/contrib/Archive/cluster/cluster_{version}.tar.gz"],
       "sha1" : "47763fa44d11e0f2c2feafade3e331c05eda30d1",
       "resource" : "true"
     },

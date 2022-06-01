@@ -119,6 +119,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRIdentityNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInitEventLoop;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInitEventLoopNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspect;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspectFrame;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspectFrameNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInspectNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop.FastRInteropCheckException;
@@ -511,6 +513,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRInteropGetException.class, FastRInteropGetExceptionNodeGen::create);
         add(FastRInteropClearException.class, FastRInteropClearExceptionNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
+        add(FastRInspectFrame.class, FastRInspectFrameNodeGen::create);
         add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);
         add(FastRInterop.Export.class, FastRInteropFactory.ExportNodeGen::create);
         add(FastRInterop.Import.class, FastRInteropFactory.ImportNodeGen::create);

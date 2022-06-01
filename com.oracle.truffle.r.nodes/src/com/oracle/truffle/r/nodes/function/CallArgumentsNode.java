@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -117,7 +117,7 @@ public final class CallArgumentsNode extends RBaseNode {
         return new CallArgumentsNode(wrappedArgs, signature, varArgsSymbolIndicesArr);
     }
 
-    public static RArgsValuesAndNames getVarargsAndNames(Frame frame) {
+    public static RArgsValuesAndNames getVarargsAndNames(MaterializedFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
         RArgsValuesAndNames varArgs = ReadVariableNode.lookupVarArgs(frame);
         if (varArgs == null) {

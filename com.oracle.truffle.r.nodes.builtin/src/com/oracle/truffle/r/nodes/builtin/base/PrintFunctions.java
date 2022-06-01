@@ -67,13 +67,20 @@ public class PrintFunctions {
 
         static {
             Casts casts = new Casts(OldPrintDefault.class);
+            // digits
             casts.arg(1).mapMissing(nullConstant()).allowNull().defaultError(RError.Message.INVALID_ARGUMENT, "digits").asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(
                             gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)));
+            // quote
             casts.arg(2).mapMissing(constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            // na.print
             casts.arg(3).mapMissing(nullConstant()).defaultError(RError.Message.INVALID_NA_PRINT_SPEC).allowNull().mustBe(stringValue()).asStringVector().findFirst();
+            // print.gap
             casts.arg(4).mapMissing(nullConstant()).defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
+            // right
             casts.arg(5).mapMissing(constant(RRuntime.LOGICAL_FALSE)).defaultError(RError.Message.INVALID_ARGUMENT, "right").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            // max
             casts.arg(6).mapMissing(nullConstant()).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
+            // useSource
             casts.arg(7).mapMissing(constant(RRuntime.LOGICAL_TRUE)).defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
@@ -84,7 +91,7 @@ public class PrintFunctions {
         }
 
         protected static RFunction createShowFunction(VirtualFrame frame) {
-            return ReadVariableNode.lookupFunction("show", frame);
+            return ReadVariableNode.lookupFunction("show", frame.materialize());
         }
 
         @Specialization(guards = "isS4(o)")
@@ -107,14 +114,14 @@ public class PrintFunctions {
         }
     }
 
-    @RBuiltin(name = "print.default", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "args", "missing"}, behavior = IO)
+    @RBuiltin(name = "print.default", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "args", "missings"}, behavior = IO)
     public abstract static class PrintDefault extends RBuiltinNode.Arg3 {
         private static final int OLD_PRINT_ARGS_SIZE = 7;
 
         static {
             Casts casts = new Casts(PrintDefault.class);
             casts.arg("args").mustBe(RPairList.class);
-            casts.arg("missing").mustBe(logicalValue()).asLogicalVector();
+            casts.arg("missings").mustBe(logicalValue()).asLogicalVector();
         }
 
         @Specialization

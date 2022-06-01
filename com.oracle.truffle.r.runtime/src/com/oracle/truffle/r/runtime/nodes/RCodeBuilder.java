@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.parsermetadata.FunctionScope;
 
 /**
  * Implementers of this interface can be used to generate a representation of an R closure.
@@ -127,25 +128,38 @@ public interface RCodeBuilder<T> {
      */
     T constant(SourceSection source, Object value);
 
-    T specialLookup(SourceSection source, String symbol, boolean functionLookup);
+    default T specialLookup(SourceSection source, String symbol, boolean functionLookup) {
+        return specialLookup(source, symbol, functionLookup, null);
+    }
+
+    T specialLookup(SourceSection source, String symbol, boolean functionLookup, FunctionScope functionScope);
+
+    default T lookup(SourceSection source, String symbol, boolean functionLookup) {
+        return lookup(source, symbol, functionLookup, null);
+    }
 
     /**
      * Creates a symbol lookup, either of mode "function" if {@code functionLookup} is true, and
      * "any" otherwise.
      */
-    T lookup(SourceSection source, String symbol, boolean functionLookup);
+    T lookup(SourceSection source, String symbol, boolean functionLookup, FunctionScope functionScope);
 
     /**
      * Creates a function expression literal. {@code assignedTo} can be used to determine function
      * names - if it is non-null, it represents the left hand side that this function is assigned
      * to.
+     * 
+     * @param assignedTo An identifier to which this function is assigned to.
+     * @param functionScope May be null
      */
-    T function(TruffleRLanguage language, SourceSection source, List<Argument<T>> arguments, T body, Object assignedTo);
+    T function(TruffleRLanguage language, SourceSection source, List<Argument<T>> arguments, T body, Object assignedTo, FunctionScope functionScope);
 
     /**
      * Creates a new call target from a given function expression literal.
+     * 
+     * @param functionScope May be null
      */
-    RootCallTarget rootFunction(TruffleRLanguage language, SourceSection source, List<Argument<T>> arguments, T body, String name);
+    RootCallTarget rootFunction(TruffleRLanguage language, SourceSection source, List<Argument<T>> arguments, T body, String name, FunctionScope functionScope);
 
     /**
      * Given a {@link com.oracle.truffle.r.runtime.data.RPairList} or {@link RNull}, this method
@@ -195,7 +209,7 @@ public interface RCodeBuilder<T> {
             @Override
             protected T visit(RSyntaxFunction element) {
                 ArrayList<Argument<T>> params = createArguments(element.getSyntaxSignature(), element.getSyntaxArgumentDefaults());
-                return function(RContext.getInstance().getLanguage(), element.getLazySourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
+                return function(RContext.getInstance().getLanguage(), element.getLazySourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName(), FunctionScope.EMPTY_SCOPE);
             }
         }.accept(original);
         if (result instanceof Node) {

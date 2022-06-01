@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -37,6 +36,7 @@ import com.oracle.truffle.api.instrumentation.TruffleInstrument;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.LanguageInfo;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.test.tck.MetaObjTesterInstrument.MetaObjTestData;
 
 @TruffleInstrument.Registration(id = MetaObjTesterInstrument.ID, name = MetaObjTesterInstrument.ID, version = "1.0", services = MetaObjTestData.class)
@@ -74,10 +74,10 @@ public class MetaObjTesterInstrument extends TruffleInstrument {
                     throw new RuntimeException(e);
                 }
 
-                FrameSlot lazySlot = frame.getFrameDescriptor().findFrameSlot("lazy");
+                int lazyFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), "lazy");
                 Object lazyValue;
                 try {
-                    lazyValue = frame.getObject(lazySlot);
+                    lazyValue = FrameSlotChangeMonitor.getObject(frame, lazyFrameIndex);
                 } catch (FrameSlotTypeException e) {
                     throw new RuntimeException(e);
                 }

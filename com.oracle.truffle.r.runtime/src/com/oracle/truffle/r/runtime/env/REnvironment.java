@@ -37,8 +37,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -219,8 +217,7 @@ public abstract class REnvironment extends RAttributable {
 
                 fd = RRuntime.createFrameDescriptorWithMetaData("<new-cachedfd-env>");
                 for (int i = 0; i < list.getLength(); i++) {
-                    FrameSlotKind valueSlotKind = RRuntime.getSlotKind(list.getDataAt(i));
-                    FrameSlotChangeMonitor.findOrAddFrameSlot(fd, names.getDataAt(i), valueSlotKind);
+                    FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(fd, names.getDataAt(i));
                 }
                 frameDescriptorCache.put(names, new WeakReference<>(fd));
             }
@@ -1126,10 +1123,9 @@ public abstract class REnvironment extends RAttributable {
         Frame namespacesFrame = namespaces.getFrame();
         fun.apply(namespacesFrame, true);
         // make a copy avoid potential updates to the array iterated over
-        FrameSlot[] slots = new FrameSlot[namespacesFrame.getFrameDescriptor().getSlots().size()];
-        slots = namespacesFrame.getFrameDescriptor().getSlots().toArray(slots);
-        for (int i = 0; i < slots.length; i++) {
-            REnvironment namespaceEnv = (REnvironment) FrameSlotChangeMonitor.getValue(slots[i], namespacesFrame);
+        for (Object identifier : FrameSlotChangeMonitor.getIdentifiers(namespacesFrame.getFrameDescriptor())) {
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(namespacesFrame.getFrameDescriptor(), identifier);
+            REnvironment namespaceEnv = (REnvironment) FrameSlotChangeMonitor.getValue(namespacesFrame, frameIndex);
             // Could be 'null' due to multi slot data and an error during package loading
             if (namespaceEnv != Base.baseNamespaceEnv() && namespaceEnv != null) {
                 // base namespace frame redirects all accesses to base frame and this would

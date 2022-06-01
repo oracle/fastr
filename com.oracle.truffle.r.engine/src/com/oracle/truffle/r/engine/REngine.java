@@ -374,8 +374,7 @@ final class REngine implements Engine, Engine.Timings {
         }
 
         // Create RFunction
-        FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<as.function.default>", descriptor);
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor("<as.function.default>");
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, REnvironment.globalEnv().getFrame());
         TruffleRLanguage rLanguage = RContext.getInstance().getLanguage();
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(rLanguage, RSyntaxNode.INTERNAL, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction",

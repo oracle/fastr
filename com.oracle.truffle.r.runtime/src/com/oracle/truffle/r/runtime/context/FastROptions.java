@@ -67,8 +67,6 @@ public class FastROptions {
     public static final OptionKey<Boolean> PrintErrorStacktraces = new OptionKey<>(false);
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Dumps Java and R stack traces to 'fastr_errors-{context ID}_{PID}.log' for all internal errors") //
     public static final OptionKey<Boolean> PrintErrorStacktracesToFile = new OptionKey<>(false);
-    @Option(category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, usageSyntax = "<package1>,<package2>,...", help = "Activates LLVM debugging of shared libraries.") //
-    public static final OptionKey<String> DebugLLVMLibs = new OptionKey<>("");
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, usageSyntax = "native|llvm", help = "Specifies the RFFI backend.") //
     public static final OptionKey<String> BackEnd = new OptionKey<>("native");
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, usageSyntax = "<package1>,<package2>,...", help = "Native code of specified packages will be executed by LLVM backend.") //
@@ -83,6 +81,8 @@ public class FastROptions {
     public static final OptionKey<String> Debug = new OptionKey<>("");
     @Option(category = OptionCategory.INTERNAL, usageSyntax = "<function1>,<function2>,...", help = "List of R function to call debug on (implies +Instrument).") //
     public static final OptionKey<String> Rdebug = new OptionKey<>("");
+    @Option(category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, usageSyntax = "<package1>,<package2>,...", help = "Activates LLVM debugging of shared libraries.") //
+    public static final OptionKey<String> DebugLLVMLibs = new OptionKey<>("");
     @Option(category = OptionCategory.EXPERT, help = "Load the system, site and user profile scripts.") //
     public static final OptionKey<Boolean> LoadProfiles = new OptionKey<>(!FastRConfig.ManagedMode);
     @Option(category = OptionCategory.EXPERT, help = "Use 128 bit arithmetic in sum builtin.") //

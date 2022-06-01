@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -40,18 +36,13 @@ public final class GetBaseEnvFrameNode extends Node {
     private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
     private final ValueProfile frameProfile = ValueProfile.createClassProfile();
     private final ValueProfile baseEnvProfile = ValueProfile.createIdentityProfile();
-    @CompilationFinal private TruffleLanguage.ContextReference<RContext> ctxRef;
 
     public static GetBaseEnvFrameNode create() {
         return new GetBaseEnvFrameNode();
     }
 
     public MaterializedFrame execute() {
-        if (ctxRef == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            ctxRef = lookupContextReference(TruffleRLanguage.class);
-        }
-        REnvironment baseEnv = baseEnvProfile.profile(REnvironment.baseEnv(ctxRef.get()));
+        REnvironment baseEnv = baseEnvProfile.profile(REnvironment.baseEnv(RContext.getInstance(this)));
         return frameProfile.profile(baseEnv.getFrame(frameAccessProfile));
     }
 }

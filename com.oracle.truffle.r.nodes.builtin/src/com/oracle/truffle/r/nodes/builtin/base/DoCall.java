@@ -34,9 +34,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -58,7 +55,6 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
@@ -81,6 +77,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
@@ -274,15 +271,16 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
 
         @TruffleBoundary
         private static boolean getVisibilitySlowPath(MaterializedFrame envFrame) {
-            FrameSlot envVisibilitySlot = FrameSlotChangeMonitor.findOrAddFrameSlot(envFrame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
-            if (envVisibilitySlot != null) {
-                try {
-                    return envFrame.getBoolean(envVisibilitySlot);
-                } catch (FrameSlotTypeException e) {
-                    throw RInternalError.shouldNotReachHere();
-                }
+            int envVisibilityFrameIndex = RFrameSlot.Visibility.getFrameIdx();
+            if (FrameIndex.isUninitializedIndex(envVisibilityFrameIndex)) {
+                envVisibilityFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(envFrame.getFrameDescriptor(), RFrameSlot.Visibility);
             }
-            return false;
+            assert FrameIndex.isInitializedIndex(envVisibilityFrameIndex);
+            if (FrameSlotChangeMonitor.isBoolean(envFrame, envVisibilityFrameIndex)) {
+                return FrameSlotChangeMonitor.getBoolean(envFrame, envVisibilityFrameIndex);
+            } else {
+                return false;
+            }
         }
     }
 }
