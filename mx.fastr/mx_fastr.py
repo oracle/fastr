@@ -815,28 +815,21 @@ def pkgtest_load():
 
 
 def _pkgtest_args(args):
-    graalvm_home = None
-    if 'FASTR_GRAALVM' in os.environ:
-        graalvm_home = os.environ['FASTR_GRAALVM']
-    elif 'GRAALVM_FASTR' in os.environ:
-        graalvm_home = os.environ['GRAALVM_FASTR']
+    if 'GRAALVM_HOME' in os.environ:
+        graalvm_home = os.environ['GRAALVM_HOME']
+    else:
+        import mx_sdk_vm_impl
+        graalvm_home = mx_sdk_vm_impl.graalvm_home(fatalIfMissing=False)
     pkgtest_args = []
     pkgtest_args += ['--very-verbose']
     pkgtest_args += ["--fastr-home"]
     pkgtest_args += [_fastr_suite.dir]
+    pkgtest_args += ["--gnur-home"]
+    pkgtest_args += [_gnur_path()]
     if graalvm_home:
-        # In GRAALVM mode, we assume FastR is not built so we need to
-        _gnur_suite = mx.suite('gnur')
-        pkgtest_args += ["--gnur-home"]
-        pkgtest_args += [join(_gnur_suite.dir, 'gnur', _gnur_suite.extensions.r_version())]
         pkgtest_args += ["--graalvm-home"]
         pkgtest_args += [graalvm_home]
-    else:
-        pkgtest_args += ["--gnur-home"]
-        pkgtest_args += [_gnur_path()]
-    mx.logv(args)
     full_args = pkgtest_args + list(args)
-    mx.logv(full_args)
     return full_args
 
 

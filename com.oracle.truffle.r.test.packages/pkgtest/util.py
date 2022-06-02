@@ -104,11 +104,11 @@ def get_gnur_include_path() -> str:
 
 def get_fastr_home() -> str:
     if get_graalvm_home():
-        homes = [join(get_graalvm_home(), "jre", "languages", "R"), join(get_graalvm_home(), "languages", "R")]
-        for result in homes:
-            if os.path.exists(result):
-                return result
-        logging.error("Could not find FastR home. Tried: " + ",".join(homes))
+        fastr_home = join(get_graalvm_home(), "languages", "R")
+        if os.path.exists(fastr_home):
+            return fastr_home
+        else:
+            logging.error(f"Could not find FastR home at {fastr_home}")
     return get_fastr_repo_dir()
 
 
