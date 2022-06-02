@@ -47,11 +47,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -164,6 +166,7 @@ public final class NativeDataAccess {
      * vectors. See {@link com.oracle.truffle.r.runtime.ffi.RObjectDataPtr} for more details.
      */
     @ExportLibrary(InteropLibrary.class)
+    @ExportLibrary(value = NativeTypeLibrary.class, useForAOT = false)
     public static final class NativeMirror implements TruffleObject {
         /**
          * Artificial member accessible via the Truffle interop that allows to inspect the wrapped R
@@ -293,6 +296,24 @@ public final class NativeDataAccess {
         @ExportMessage
         public void toNative(@Cached() ToNativeNode toNative) {
             toNative.execute(this);
+        }
+
+        @ExportMessage(library = NativeTypeLibrary.class)
+        @SuppressWarnings("static-method")
+        public boolean hasNativeType() {
+            return true;
+        }
+
+        /**
+         * For Sulong, NativeMirror acts like a pointer to a byte array, so that Sulong uses
+         * toNative/asPointer messages when necessary.
+         * 
+         * @return Byte array type.
+         */
+        @ExportMessage(library = NativeTypeLibrary.class)
+        public Object getNativeType(@CachedLibrary("this") NativeTypeLibrary nativeTypeLib) {
+            RContext ctx = RContext.getInstance(nativeTypeLib);
+            return ctx.getRFFI().getSulongArrayType((byte) 42);
         }
 
         public void setExternalDataAddress(long address) {
