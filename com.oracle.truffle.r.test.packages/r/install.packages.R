@@ -820,7 +820,7 @@ test.package <- function(pkgname) {
         res <- 1L
     }
 	end.time <- proc.time()[[3]]
-	log.message("TEST_TIME: ", pkgname, end.time - start.time)
+	log.message("TEST_TIME: ", pkgname, " ", end.time - start.time)
     return (res)
 }
 
