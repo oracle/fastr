@@ -39,22 +39,22 @@ _opts = argparse.Namespace()
 _common_arg_parser = argparse.ArgumentParser()
 _common_arg_parser.add_argument('--fastr-home', metavar='FASTR_HOME', dest="fastr_home", type=str, default=None,
                                 required=True,
-                                help='The FastR standalone repo home directory (required, computed if not provided).')
+                                help='The FastR standalone repo home directory (required).')
 _common_arg_parser.add_argument('--gnur-home', metavar="GNUR_HOME", dest="gnur_home", default=None, required=True,
-                                help='The GnuR home directory (required, computed if not provided).')
+                                help='The GnuR home directory (required).')
 _common_arg_parser.add_argument('--graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
-                    help='The GraalVM root directory (optional).')
+                    help='The GraalVM root directory (optional). If provided, FastR binaries are taken from this directory')
 _common_arg_parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,
                     help='Repos to install packages from. Can be set by "FASTR_REPOS" env var. '
                          'Example: "--repos FASTR=file://$HOME/fastr_repo,CRAN=file://$HOME/minicran"')
 _common_arg_parser.add_argument('-v', '--verbose', dest="verbose", action="store_const", const=1, default=0,
                     help='Do verbose logging.')
 _common_arg_parser.add_argument('-V', '--very-verbose', dest="verbose", action="store_const", const=2,
-                    help='Do verbose logging.')
+                    help='Do very verbose logging.')
 _common_arg_parser.add_argument('--dump-preprocessed', dest="dump_preprocessed", action="store_true",
                     help='Dump processed output files where replacement filters have been applied.')
 _common_arg_parser.add_argument('-q', '--quiet', dest="quiet", action="store_true",
-                    help='Do verbose logging.')
+                    help="Don't log anything")
 _common_arg_parser.add_argument('--fastr-testdir', metavar="FASTR_TESTDIR", dest="fastr_testdir", default=fastr_default_testdir,
                     help='FastR test result directory (default: "test.fastr").')
 _common_arg_parser.add_argument('--gnur-testdir', metavar="GNUR_TESTDIR", dest="gnur_testdir", default=gnur_default_testdir,

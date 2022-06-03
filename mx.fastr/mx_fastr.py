@@ -832,7 +832,6 @@ def _pkgtest_args(args):
         import mx_sdk_vm_impl
         graalvm_home = mx_sdk_vm_impl.graalvm_home(fatalIfMissing=False)
     pkgtest_args = []
-    pkgtest_args += ['--very-verbose']
     pkgtest_args += ["--fastr-home"]
     pkgtest_args += [_fastr_suite.dir]
     pkgtest_args += ["--gnur-home"]
@@ -844,8 +843,49 @@ def _pkgtest_args(args):
     return full_args
 
 
+# The majority of the doc string is copied from util.py in package testing.
+# We should not just take the help message from the package testing framework, as it
+# is meant to be an internal tool invoked via mx command.
 def pkgtest(args, **kwargs):
-    """ See 'mx r-pkgtest --help' """
+    """ Runs a FastR-specific package testing framework.
+
+    options:
+      -q, --quiet
+      -v, --verbose
+      -V, --very-verbose
+      --repos REPO_NAME=URL
+              Repos to install packages from. Can be set by 'FASTR_REPOS' env var.
+              Example: '--repos FASTR=file://$HOME/fastr_repo,CRAN=file://$HOME/minicran'
+      --dump-preprocessed
+              Dump processed output files where replacement filters have been applied.
+      --fastr-testdir FASTR_TESTDIR
+              FastR test result directory (default: 'test.fastr')
+      --gnur-testdir GNUR_TESTDIR
+              GnuR test result directory (default: 'test.gnur')
+      -l LOG_FILE, --log-file LOG_FILE
+              Log file name (default: 'FASTR_TESTDIR/pkgtest.log')
+      --pkg-pattern PATTERN
+              Pattern of packages to install and potentially test.
+              Mutually exclusive with '--pkg-filelist'.
+      --pkg-filelist FILE
+              File containing a list of packages to install and potentially test.
+              Mutually exclusive with '--pkg-pattern'.
+
+      --cache-pkgs dir=DIR
+              Use package cache in directory DIR (will be created if not existing).
+              Optional parameters:
+                  size=N             Maximum number of different API versions in the cache.
+                  sync=[true|false]  Synchronize the cache
+                  vm=[fastr|gnur]
+              Example: '--cache-pkgs dir=DIR,size=N,sync=true,vm=fastr'
+              Can be set by FASTR_PKGS_CACHE_OPT environment variable.
+      --no-install
+              Do not install any packages. Can only test installed packages.
+      --list-versions
+              List packages to be installed/tested without installing/testing them.
+
+    See 'mx r-pkgtest --help' for more info.
+    """
     full_args = _pkgtest_args(args)
     mx.logv(["r-pkgtest"] + full_args)
     return pkgtest_load().pkgtest(full_args)
@@ -916,7 +956,53 @@ def r_pkgtest_analyze(args, **kwargs):
 
 
 def pkgcache(args, **kwargs):
-    """ See 'mx r-pkgcache --help' """
+    """ Installs and cache packages.
+
+    options:
+      -q, --quiet
+      -v, --verbose
+      -V, --very-verbose
+      --repos REPO_NAME=URL
+              Repos to install packages from. Can be set by 'FASTR_REPOS' env var.
+              Example: '--repos FASTR=file://$HOME/fastr_repo,CRAN=file://$HOME/minicran'
+      --dump-preprocessed
+              Dump processed output files where replacement filters have been applied.
+      --fastr-testdir FASTR_TESTDIR
+              FastR test result directory (default: 'test.fastr')
+      --gnur-testdir GNUR_TESTDIR
+              GnuR test result directory (default: 'test.gnur')
+      -l LOG_FILE, --log-file LOG_FILE
+              Log file name (default: 'FASTR_TESTDIR/pkgtest.log')
+      --pkg-pattern PATTERN
+              Pattern of packages to install and potentially test.
+              Mutually exclusive with '--pkg-filelist'.
+      --pkg-filelist FILE
+              File containing a list of packages to install and potentially test.
+              Mutually exclusive with '--pkg-pattern'.
+
+      --cache-dir DIR
+              Use package cache in directory DIR (will be created if not existing).
+              Optional parameters:
+                  size=N             Maximum number of different API versions in the cache.
+                  sync=[true|false]  Synchronize the cache
+                  vm=[fastr|gnur]
+              Example: '--cache-pkgs dir=DIR,size=N,sync=true,vm=fastr'
+              Can be set by FASTR_PKGS_CACHE_OPT environment variable.
+      --library [fastr=DIR][[,]gnur=DIR]
+              The library folders to install to. If you don't want to create any new temporary
+              library, point the library to the existing library dirs, e.g. $FASTR_HOME/library.
+              Defaults to 'lib.install.packages'.
+      --vm <fastr|gnur>
+              Whether to install the packages on fastr or on gnur. Defaults to both.
+      --sync
+              Synchronize access to the package cache. Can be set via FASTR_PKGS_CACHE_OPT env var.
+      --print-api-checksum
+              Compute and print the API checksum for the specified VMs and exit.
+      --install-opts
+              R specific install options.
+
+    See 'mx r-pkgcache --help' for more info.
+    """
     full_args = _pkgtest_args(args)
     mx.logv(["r-pkgcache"] + full_args)
     return pkgtest_load().pkgcache(full_args)
@@ -1045,12 +1131,12 @@ _commands = {
     'rembed' : [rembed, '[options]'],
     'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
-    'r-pkgtest' : [pkgtest, '[options]'],
+    'r-pkgtest' : [pkgtest, '[options] <--pkg-pattern PATTERN | --pkg-filelist FILE>'],
     'r-pkgtest-cmp': [pkgtest_cmp, '<gnur-output> <fastr-output> ...'],
     'r-pkgtest-analyze' : [r_pkgtest_analyze, ['options']],
     'r-findtop100' : [find_top100, ['options']],
     'r-findtop' : [find_top, ['options']],
-    'r-pkgcache' : [pkgcache, '[options]'],
+    'r-pkgcache' : [pkgcache, '[options] <--pkg-pattern PATTERN | --pkg-filelist FILE | --print-api-checksum >'],
     'installpkgs' : [installpkgs, '[options]'],
     'edinclude' : [mx_fastr_edinclude.edinclude, '[]'],
     'gnu-r' : [gnu_r, '[]'],
