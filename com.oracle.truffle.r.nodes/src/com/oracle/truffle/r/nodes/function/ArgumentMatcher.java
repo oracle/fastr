@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -64,6 +63,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -299,20 +299,20 @@ public class ArgumentMatcher {
             try {
                 // TODO: GNUR would show "name = value" in the error, but here we seem to be getting
                 // only the value.
-                FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
-                if (frameSlot == null) {
+                int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
+                if (FrameIndex.isUninitializedIndex(frameIndex)) {
                     // If the formal signature does not have "...", but the actual does pass
                     // "...", then the current frame will not contain slot for "..." and we should
                     // reach
                     // to caller frame to get it.
                     frame = Utils.getCallerFrame(RArguments.getCall(frame), FrameAccess.READ_ONLY);
-                    frameSlot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
+                    frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
                 }
-                if (frameSlot == null) {
-                    assert false : "could not find frame slot for ...";
+                if (FrameIndex.isUninitializedIndex(frameIndex)) {
+                    assert false : "could not find frame index for ...";
                     return "<unknown from ...>";
                 }
-                Object varArgObj = FrameSlotChangeMonitor.getObject(frameSlot, frame);
+                Object varArgObj = FrameSlotChangeMonitor.getObject(frame, frameIndex);
                 if (!(varArgObj instanceof RArgsValuesAndNames)) {
                     assert false : "frame slot for ... does not contain RArgsValuesAndNames";
                     return "<unknown from ...>";

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,8 +76,7 @@ public final class RBuiltinRootNode extends RRootNode {
 
     @Override
     public RootCallTarget duplicateWithNewFrameDescriptor() {
-        FrameDescriptor frameDescriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("builtin", frameDescriptor);
+        FrameDescriptor frameDescriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor("builtin");
         // getLanguage deprecation: we cannot remove this now, because the new API does not work
         // with our unit tests
         return new RBuiltinRootNode(getLanguage(RContext.getTruffleRLanguage()), factory, frameDescriptor, getFastPath()).getCallTarget();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,10 +26,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -62,14 +61,16 @@ public abstract class MakeActiveBindingNode extends RBaseNode {
 
     @Specialization
     @TruffleBoundary
-    protected Object makeActiveBinding(RSymbol sym, RFunction fun, REnvironment env, @Cached("create()") BranchProfile frameSlotBranchProfile) {
+    protected Object makeActiveBinding(RSymbol sym, RFunction fun, REnvironment env,
+                    @Cached("create()") BranchProfile frameSlotBranchProfile,
+                    @Cached("createIdentityProfile()") ValueProfile frameDescriptorProfile) {
         String name = sym.getName();
         MaterializedFrame frame = env.getFrame();
         Object binding = ReadVariableNode.lookupAny(name, frame, true);
         if (binding == null) {
             if (!env.isLocked()) {
-                FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), name, FrameSlotKind.Object);
-                FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile);
+                int frameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), name);
+                FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile, frameDescriptorProfile);
                 binding = ReadVariableNode.lookupAny(name, frame, true);
                 assert binding != null;
                 assert binding instanceof ActiveBinding;
@@ -82,8 +83,9 @@ public abstract class MakeActiveBindingNode extends RBaseNode {
             throw error(RError.Message.CANNOT_CHANGE_LOCKED_ACTIVE_BINDING);
         } else {
             // update active binding
-            FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
-            FrameSlotChangeMonitor.setActiveBinding(frame, slot, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile);
+            assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), name);
+            int frameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(frame.getFrameDescriptor(), name);
+            FrameSlotChangeMonitor.setActiveBinding(frame, frameIndex, new ActiveBinding(sym.getRType(), fun), false, frameSlotBranchProfile, frameDescriptorProfile);
         }
         return RNull.instance;
     }

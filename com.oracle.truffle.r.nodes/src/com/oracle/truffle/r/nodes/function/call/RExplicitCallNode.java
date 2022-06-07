@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
@@ -37,6 +35,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess.ExplicitFunctionCall;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
@@ -56,20 +55,21 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
 
     public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame);
 
-    @CompilationFinal private FrameSlot argsFrameSlot;
+    @CompilationFinal private int argsFrameIndex = RFrameSlot.ExplicitCallArgs.getFrameIdx();
 
     @Specialization
     protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
                     @Cached("createExplicitCall()") RCallBaseNode call) {
-        if (argsFrameSlot == null) {
+        if (FrameIndex.isUninitializedIndex(argsFrameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs, FrameSlotKind.Object);
+            argsFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs);
         }
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs);
         try {
-            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, new ExplicitArgs(args, caller, callerFrame));
+            FrameSlotChangeMonitor.setObject(frame, argsFrameIndex, new ExplicitArgs(args, caller, callerFrame));
             return call.execute(frame, function);
         } finally {
-            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, null);
+            FrameSlotChangeMonitor.setObject(frame, argsFrameIndex, null);
         }
     }
 

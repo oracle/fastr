@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -141,8 +141,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
         if (!RBaseNode.isRSyntaxNode(body)) {
             throw RInternalError.unimplemented();
         }
-        FrameDescriptor descriptor = new FrameDescriptor();
-        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<as.function.default>", descriptor);
+        FrameDescriptor descriptor = FrameSlotChangeMonitor.createFunctionFrameDescriptor("<as.function.default>");
         FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, envir.getFrame());
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(getRLanguage(), RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction",
                         null);

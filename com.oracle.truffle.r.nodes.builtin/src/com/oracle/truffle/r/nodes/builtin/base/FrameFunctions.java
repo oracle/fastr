@@ -35,7 +35,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -81,6 +80,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -468,7 +468,7 @@ public class FrameFunctions {
             } else {
                 callNode = (RCallNode) call.getSyntaxElement();
             }
-            CallArgumentsNode callArgs = callNode.createArguments(null, false, true);
+            CallArgumentsNode callArgs = callNode.createArguments(FrameIndex.UNITIALIZED_INDEX, false, true);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
             RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true, null).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
@@ -476,8 +476,8 @@ public class FrameFunctions {
             ArrayList<RSyntaxNode> nodes = new ArrayList<>();
             ArrayList<String> names = new ArrayList<>();
 
-            FrameSlot varArgSlot = cframe.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
-            RArgsValuesAndNames varArgParameter = varArgSlot == null ? null : (RArgsValuesAndNames) FrameSlotChangeMonitor.getValue(varArgSlot, cframe);
+            int varArgFrameIndex = FrameSlotChangeMonitor.getIndexOfIdentifier(cframe.getFrameDescriptor(), ArgumentsSignature.VARARG_NAME);
+            RArgsValuesAndNames varArgParameter = FrameIndex.isUninitializedIndex(varArgFrameIndex) ? null : (RArgsValuesAndNames) FrameSlotChangeMonitor.getValue(cframe, varArgFrameIndex);
 
             for (int i = 0; i < sig.getLength(); i++) {
                 RNode arg = matchedArgNodes[i];

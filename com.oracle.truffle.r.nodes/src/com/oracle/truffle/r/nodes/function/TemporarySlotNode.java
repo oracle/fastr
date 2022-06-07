@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,52 +24,57 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 public final class TemporarySlotNode extends Node {
-    @CompilationFinal private FrameSlot tempSlot;
+    @CompilationFinal private int tempSlotIdx = FrameIndex.UNITIALIZED_INDEX;
     private int tempIdentifier;
 
-    public FrameSlot initialize(VirtualFrame frame, Object value) {
-        if (tempSlot == null) {
+    /**
+     * Searches for an empty temporary slot in the given frame, and puts the given {@code value}
+     * there.
+     * 
+     * @param value Value to put in a temporary frame slot.
+     * @return Index into auxiliary frame slot.
+     */
+    public int initialize(VirtualFrame frame, Object value) {
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        if (FrameIndex.isUninitializedIndex(tempSlotIdx)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            tempSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.getTemp(tempIdentifier), FrameSlotKind.Object);
+            tempSlotIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, RFrameSlot.getTemp(tempIdentifier));
         }
-        FrameSlot slot = tempSlot;
+
         try {
-            if (frame.getObject(slot) != null) {
+            // If the frame slot is not empty, we have to find another empty temporary frame slot.
+            if (FrameSlotChangeMonitor.getObject(frame, tempSlotIdx) != null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                // keep the complete loop in the slow path
                 do {
                     tempIdentifier++;
                     RFrameSlot identifier = RFrameSlot.getTemp(tempIdentifier);
-                    tempSlot = slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), identifier, FrameSlotKind.Object);
-                    if (frame.getObject(slot) == null) {
-                        break;
-                    }
-                } while (true);
+                    tempSlotIdx = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frameDescriptor, identifier);
+                } while (FrameSlotChangeMonitor.getObject(frame, tempSlotIdx) != null);
             }
         } catch (FrameSlotTypeException e) {
             CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere();
         }
-        FrameSlotChangeMonitor.setObject(frame, slot, value);
-        return slot;
+        FrameSlotChangeMonitor.setObject(frame, tempSlotIdx, value);
+        return tempSlotIdx;
     }
 
-    public static void cleanup(VirtualFrame frame, Object object, FrameSlot tempSlot) {
+    public static void cleanup(VirtualFrame frame, Object object, int tempSlotIdx) {
         try {
-            assert FrameSlotChangeMonitor.getObject(tempSlot, frame) == object;
+            assert FrameSlotChangeMonitor.getObject(frame, tempSlotIdx) == object;
         } catch (FrameSlotTypeException e) {
             throw RInternalError.shouldNotReachHere();
         }
-        FrameSlotChangeMonitor.setObject(frame, tempSlot, null);
+        FrameSlotChangeMonitor.setObject(frame, tempSlotIdx, null);
     }
 }

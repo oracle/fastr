@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,11 +24,11 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.access.FrameIndexNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -57,9 +57,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *     foo(a) # must give 42
  * </pre>
  *
- * The problem is solved by getting {@link FrameSlotChangeMonitor#getNotChangedNonLocallyAssumption}
- * for the given frame slot and putting that into the promise object. The promise object, when asked
- * for its value checks this assumption first, which happens in
+ * The problem is solved by getting
+ * {@link FrameSlotChangeMonitor#getNotChangedNonLocallyAssumption(Frame, int)} for the given frame
+ * slot and putting that into the promise object. The promise object, when asked for its value
+ * checks this assumption first, which happens in
  * {@link com.oracle.truffle.r.nodes.function.PromiseHelperNode}.
  *
  * The implementors override functions that handle the fallback case when the assumption is
@@ -68,7 +69,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
     private final UnwrapPromiseCallerProfile unwrapCallerProfile = new UnwrapPromiseCallerProfile();
     private final RSyntaxLookup originalRvn;
-    @Child private FrameSlotNode frameSlotNode;
+    @Child private FrameIndexNode frameIndexNode;
     @Child private RNode fallback = null;
     @Child private LocalReadVariableNode readNode;
     private final int wrapIndex;
@@ -78,7 +79,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
         // Should be caught by optimization check
         assert !lookup.isFunctionLookup();
         this.originalRvn = lookup;
-        this.frameSlotNode = FrameSlotNode.create(lookup.getIdentifier(), false);
+        this.frameIndexNode = FrameIndexNode.create(lookup.getIdentifier(), false);
         this.readNode = LocalReadVariableNode.create(lookup.getIdentifier(), false);
         this.wrapIndex = wrapIndex;
     }
@@ -91,15 +92,15 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
     @Override
     public Object execute(VirtualFrame frame) {
         // If the frame slot we're looking for is not present yet, wait for it!
-        if (!frameSlotNode.hasValue(frame)) {
+        if (!frameIndexNode.hasValue(frame)) {
             // We don't want to rewrite, as the the frame slot might show up later on (after 1.
             // execution), which might still be worth to optimize
             return executeFallback(frame);
         }
-        FrameSlot slot = frameSlotNode.executeFrameSlot(frame);
+        int frameIndex = frameIndexNode.executeFrameIndex(frame);
 
         // Check if we may apply eager evaluation on this frame slot
-        Assumption notChangedNonLocally = FrameSlotChangeMonitor.getNotChangedNonLocallyAssumption(slot);
+        Assumption notChangedNonLocally = FrameSlotChangeMonitor.getNotChangedNonLocallyAssumption(frame, frameIndex);
         try {
             notChangedNonLocally.check();
         } catch (InvalidAssumptionException e) {

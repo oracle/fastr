@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -46,13 +44,14 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.frame.FrameIndex;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 @RBuiltin(name = "on.exit", visibility = OFF, kind = PRIMITIVE, parameterNames = {"expr", "add"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class OnExit extends RBuiltinNode.Arg2 {
 
-    @CompilationFinal private FrameSlot onExitSlot;
+    @CompilationFinal private int onExitFrameIndex = RFrameSlot.OnExit.getFrameIdx();
 
     private final ConditionProfile addProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile newProfile = ConditionProfile.createBinaryProfile();
@@ -72,29 +71,30 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
     protected Object onExit(VirtualFrame frame, RPromise expr, boolean add,
                     @Cached BranchProfile appendToEndProfile) {
 
-        if (onExitSlot == null) {
+        if (FrameIndex.isUninitializedIndex(onExitFrameIndex)) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            onExitSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.OnExit, FrameSlotKind.Object);
+            onExitFrameIndex = FrameSlotChangeMonitor.findOrAddAuxiliaryFrameSlot(frame.getFrameDescriptor(), RFrameSlot.OnExit);
         }
+        assert FrameSlotChangeMonitor.containsIdentifier(frame.getFrameDescriptor(), RFrameSlot.OnExit);
 
         // the empty (RNull.instance) expression is used to clear on.exit
         if (emptyPromiseProfile.profile(expr.isDefaultArgument())) {
             assert expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
-            FrameSlotChangeMonitor.setObject(frame, onExitSlot, RDataFactory.createPairList());
+            FrameSlotChangeMonitor.setObject(frame, onExitFrameIndex, RDataFactory.createPairList());
         } else {
             // if optimized then evaluated is already true,
             // otherwise the expression has to be evaluated exactly at this point
             assert expr.isOptimized() || !expr.isEvaluated() : "promise cannot be evaluated anymore";
             Object value;
             try {
-                value = FrameSlotChangeMonitor.getObject(onExitSlot, frame);
+                value = FrameSlotChangeMonitor.getObject(frame, onExitFrameIndex);
             } catch (FrameSlotTypeException e) {
                 throw RInternalError.shouldNotReachHere();
             }
             RPairList list;
             if (newProfile.profile(value == null)) {
                 // initialize the list of exit handlers
-                FrameSlotChangeMonitor.setObject(frame, onExitSlot, list = RDataFactory.createPairList());
+                FrameSlotChangeMonitor.setObject(frame, onExitFrameIndex, list = RDataFactory.createPairList());
             } else {
                 list = (RPairList) value;
                 if (addProfile.profile(!add)) {

@@ -216,7 +216,7 @@ public class HiddenInternalFunctions {
         }
 
         /**
-         * No error checking here as this called by trusted library code.
+         * No error checking here as this is called by trusted library code.
          */
         @Specialization
         protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, int compressed, RFunction envhook,
