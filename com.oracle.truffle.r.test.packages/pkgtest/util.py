@@ -231,12 +231,14 @@ def parse_arguments(argv: List[str], r_version_check=True) -> List[str]:
         log_level = logging.INFO
     logging.basicConfig(filename=_opts.log_file, filemode="w", level=log_level, format=log_format)
 
-    # also log to console
-    console_handler = logging.StreamHandler(stream=sys.stdout)
-    console_handler.setLevel(log_level)
-
-    console_handler.setFormatter(logging.Formatter(log_format))
-    logging.getLogger("").addHandler(console_handler)
+    logger = logging.getLogger("")
+    if len(logger.handlers) < 2:
+        # We want to have 2 handlers in total - one that logs in _opts.log_file and one that logs
+        # to console.
+        console_handler = logging.StreamHandler(stream=sys.stdout)
+        console_handler.setLevel(log_level)
+        console_handler.setFormatter(logging.Formatter(log_format))
+        logger.addHandler(console_handler)
 
     logging.log(VERY_VERBOSE, "known_args: %s" % _opts)
 
