@@ -189,7 +189,6 @@ Testing packages requires that they are first installed, so all of the above is 
     --no-install | -n: suppress installation phase (useful for --run-tests)
     --random count: install count packages randomly chosen from the candidate set
     --testdir dir: store test output in dir (defaults to "test").
-    --print-ok-installs: print the successfully installed packages
     --list-versions: for the candidate set of packages to install list the name and version in format: name,version,
     --run-tests: run packages tests on the successfully installed packages (not including dependents)
     --dump-preprocessed: dump the preprocessed output (see below)

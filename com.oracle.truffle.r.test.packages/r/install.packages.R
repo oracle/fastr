@@ -99,35 +99,75 @@ cat("Running install.packages.R:\n")
 args <- commandArgs(TRUE)
 
 usage <- function() {
-	cat(paste("usage: Rscript ",
-					  "[--repos name=value,...]",
-					  "[--cache-pkgs name=value,...]",
-                      "[--verbose | -v] [-V] [--dryrun]",
-                      "[--no-install | -n] ",
-					  "[--random count]",
-					  "[--install-dependents-first]",
-					  "[--run-mode mode]",
-					  "[--test-mode mode]",
-					  "[--test-executable path_to_rscript]",
-					  "[--install-mode mode]",
-					  "[--pkg-filelist file]",
-					  "[--find-top100]",
-					  "[--find-top n]",
-					  "[--run-tests]",
-					  "[--testdir dir]",
-					  "[--print-ok-installs]",
-					  "[--list-versions]",
-					  "[--list-canonical]",
-					  "[--use-installed-pkgs]",
-					  "[--invert-pkgset]",
-					  "[--alpha-daily]",
-					  "[--count-daily count]",
-					  "[--ok-only]",
-					  "[--important-pkgs file]",
-					  "[--ignore-suggests file]",
-                      "[--pkg-pattern package-pattern] \n"))
-	cat("See documentation/dev/testing.md for the full description. \n")
-	quit(status=100)
+    cat(paste(
+        "usage: Rscript install.packages.R [options] <--list-versions|--pkg-pattern pattern|--pkg-filelist file>",
+        "This script gets default library path from R_LIBS_USER env var.",
+        "",
+        "Options: ",
+        "[--repos name=value,...]",
+        "  Comma-separated list of repositories to use for the package installation",
+        "  Example: --repos FASTR=file://home/user/fastr/com.oracle.truffle.r.test.native/packages/repo,CRAN=file://home/user/minicran",
+        "[--cache-pkgs name=value,...]",
+        "  Comma-separated list of key=value pairs of package cache attributes:",
+        "    dir ... directory path to the package cache",
+        "    vm ... fastr | gnur",
+        "    sync ... TRUE | FALSE",
+        "[--verbose | -v]",
+        "[--very-verbose | -V]",
+        "[--dry-run | --dryrun]",
+        "[--no-install | -n] ",
+        "  Do not install any packages, use already installed ones.",
+        "[--random count]",
+        "  Test only `count` random packages of all the packages to be tested.",
+        "[--install-dependents-first]",
+        "",
+        "[--run-mode mode]",
+        "  `mode` can be one of 'system', 'internal', or 'context': ",
+        "    system: Uses a subprocess via the `system2` function. ",
+        "    internal: Uses internal functions like utils::install.packages. ",
+        "    context: Run in separate FastR context.",
+        "  Default is system",
+        "[--test-mode mode]",
+        "[--test-executable path_to_rscript]",
+        "  The executable to use in 'system' test mode.",
+        "[--install-mode mode]",
+        "  Default install mode is 'internal'.",
+        "",
+        "[--find-top100]",
+        "[--find-top n]",
+        "  Only finds top `n` packages according to `cranlogs` package and prints them.",
+        "",
+        "[--run-tests]",
+        "  Whether to run any tests on successfully installed packages (not including dependents).",
+        "  Default is false.",
+        "[--testdir dir]",
+        "  The directory to use for the outputs of testing the packages.",
+        "  Default is 'test'",
+        "[--print-install-status]",
+        "  Report status of package installation.",
+        "[--list-versions]",
+        "  Only list versions of the packages to be installed or tested, do not install nor test anything.",
+        "  Implies --dry-run",
+        "[--list-canonical]",
+        "[--use-installed-pkgs]",
+        "  If set, the lib install directory is analyzed for existing (correctly) installed packages ",
+        "  and these are not re-installed.",
+        "[--invert-pkgset]",
+        "[--alpha-daily]",
+        "[--count-daily count]",
+        "[--ok-only]",
+        "[--important-pkgs file]",
+        "[--ignore-suggests file]",
+        "[--pkg-filelist file]",
+        "  File containing a list of packages to install and potentially test.",
+        "  Mutually exclusive with --pkg-pattern",
+        "[--pkg-pattern package-pattern]",
+        "  A pattern for the packages to install and/or test.",
+        "  Mutually exclusive with --pkg-filelist.",
+        sep="\n"
+    ))
+    cat("See documentation/dev/testing.md for the full description. \n")
+    quit(status=100)
 }
 
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
@@ -471,7 +511,7 @@ get.pkgs <- function() {
 
     match.fun <- set.match.fun()
     log.output(function() {
-        cat("Filtering the packages to install: invert.pkgset =", invert.pkgset, ", pkg.pattern =", pkg.pattern, ".\n")
+        cat("Filtering the packages to install: invert.pkgset=", invert.pkgset, ", pkg.pattern=", pkg.pattern, ".\n")
         cat("pkg.filelist:\n"); print(pkg.filelist)
     }, level = 1)
 
