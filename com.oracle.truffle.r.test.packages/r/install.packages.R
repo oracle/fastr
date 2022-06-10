@@ -1217,15 +1217,20 @@ run.setup <- function() {
 
 # Determines the directory of the script assuming that there is a "--file=" argument on the command line.
 getCurrentScriptDir <- function() {
-     cmdArgs <- commandArgs()
-     res <- startsWith(cmdArgs, '--file=')
-     fileArg <- cmdArgs[res]
-     if (length(fileArg) > 0L) {
-         p <- strsplit(fileArg, "=")[[1]][[2]]
-         dirname(p)
-     } else {
-        NULL
-     }
+    if (!interactive()) {
+        cmdArgs <- commandArgs()
+        res <- startsWith(cmdArgs, '--file=')
+        fileArg <- cmdArgs[res]
+        if (length(fileArg) > 0L) {
+            p <- strsplit(fileArg, "=")[[1]][[2]]
+            return(dirname(p))
+        }
+    } else {
+        if ("install.packages.R" %in% dir(getwd())) {
+            return (getwd())
+        }
+    }
+    return (NULL)
 }
 
 run <- function() {
