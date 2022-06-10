@@ -633,7 +633,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
                     }
                 }
                 if (should.install) {
-                    log.message.always("installing: ", pkgname, "(", install.count, "of", install.total, ")", "\n")
+                    log.message.always("installing: ", pkgname, "(", install.count, " of ", install.total, ")", "\n")
                     log.timestamp()
                     this.result <- install.pkg(pkgname)
                     result <- result && this.result
@@ -1054,7 +1054,8 @@ cat.args <- function() {
         cat("invert.pkgset:", invert.pkgset, "\n")
         cat("testdir.path:", testdir, "\n")
         cat("ignore.suggests.file:", ignore.suggests.file, "\n")
-        cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "; mode=", pkg.cache$mode, "; ignore=", pkg.cache$ignore, "\n")
+        cat("pkg.cache: enabled =", pkg.cache$enabled, "; vm =", pkg.cache$vm, "; dir =", pkg.cache$dir,
+            "; mode =", pkg.cache$mode, "; version =", pkg.cache$version, "; ignore =", pkg.cache$ignore, "\n")
     }, level=1)
 }
 

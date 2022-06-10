@@ -21,12 +21,47 @@
 # questions.
 #
 
+# Most of the functions in this file takes as an argument `pkg.cache.env` environment which
+# should contain the following symbols:
+#  dir ... a directory of the package cache, character vector of size 1
+#  enabled ... either TRUE of FALSE
+#  ignore ... "base", "none", "default"
+#  mode ... either "local" or "os"
+#  version ... Version of the package cache. Usually, there are at least two versions - one for fastr, and one for gnur.
+#      Currently, version is represented as API checksum of header files in include dir, obtained by
+#      `mx r-pkgcache --api-checksum`. Which means that as soon as there is any modification to an internal API,
+#      there will be a new version of the package cache created. This version has to be passed to this script, as we
+#      have no way of fetching it here.
+#      Character vector of size 1.
+#  size ... integer
+#  sync ... TRUE/FALSE, whether to synchronize access to the cache via a lock file
+#  table.file.name ... 
+
+
 lock.file.name <- ".lock"
 
 pkg.cache.max.retries <- 3L
 
 # expiration time of a lock in seconds (default: 1 hour)
 pkg.cache.lock.expiration <- 3600
+
+# A simple log function; to be replaced by a user of this file.
+log.message <- if(!exists("log.message")) {
+    function(..., level=0) {
+        if(level == 0 || verbose) {
+            cat(paste0(..., "\n"))
+        }
+    }
+} else {
+    log.message
+}
+
+assert <- function(condition, ...) {
+    if (!condition) {
+        cat("Assertion failed: ", ..., "\n")
+        quit(save="no", status=100)
+    }
+}
 
 pkg.cache.lock <- function(pkg.cache.env, version.dir) {
     if (!(as.logical(pkg.cache.env$sync) && pkg.cache.mode.local(pkg.cache.env))) {
@@ -114,24 +149,13 @@ pkg.cache.unlock <- function(pkg.cache.env, version.dir) {
 
 
 is.fastr <- function() {
-    length(grep('FastR', R.Version()$version.string))
+    length(grep("FastR", R.Version()$version.string))
 }
 
 get.vm <- function() if (is.fastr()) "fastr" else "gnur"
 
 pkg.cache.is.enabled <- function(pkg.cache.env) {
     pkg.cache.env$enabled && (!is.character(pkg.cache.env$vm) || grepl(get.vm(), pkg.cache.env$vm))
-}
-
-# A simple log function; to be replaced by a user of this file.
-log.message <- if(!exists("log.message")) {
-    function(..., level=0) {
-        if(level == 0 || verbose) {
-            cat(paste0(..., "\n"))
-        }
-    }
-} else {
-    log.message
 }
 
 pkg.cache.install <- function(pkg.cache.env, pkgname, pkg.version, lib.install, install.cmd) {
@@ -147,6 +171,8 @@ pkg.cache.install <- function(pkg.cache.env, pkgname, pkg.version, lib.install, 
     }
 }
 
+#'
+#' @param pkg A named character vector taken from a matrix given by `available.packages`.
 pkg.cache.entry.filename <- function(pkg) {
     paste0(as.character(pkg["Package"]), "_", as.character(pkg["Version"]), ".zip")
 }
@@ -206,7 +232,7 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
     })
     pkg.cache.unlock(pkg.cache.env, version.dir)
     
-    FALSE
+    return (FALSE)
 }
 
 pkg.cache.create.version.dir <- function(pkg.cache.env, version.dir) {
@@ -371,7 +397,7 @@ pkg.cache.os.delete <- function(pkg.cache.env, os.object.name, recursive=FALSE) 
 pkg.cache.os.list <- function(pkg.cache.env, os.prefix) {
     result <- pkg.cache.os.run.client("list", "--force --prefix", os.object.name, capture.output=TRUE)
     if (require(jsonlite)) {
-        parsed <- fromJSON(result)
+        parsed <- jsonlite::fromJSON(result)
         parsed$data[,"name"]
     } else {
         log.message("package 'jsonlite' not available")
@@ -480,6 +506,7 @@ pkg.cache.gen.version.dir.name <- function(version) {
 }
 
 pkg.cache.init <- function(pkg.cache.env, version, table.file.name, cache.size) {
+    assert( is.character(version) && length(version) == 1, "Version has to be specified")
     if (is.null(version)) {
         # This has been logged during argument parsing.
         return (NULL)
@@ -539,6 +566,7 @@ pkg.cache.delete.version <- function(pkg.cache.env, version.dir.basename) {
 
 # creates package lib dir for this version (if not existing)
 pkg.cache.create.version <- function(pkg.cache.env, version, version.table) {
+    assert( is.character(version) && length(version) == 1, "Version has to be specified")
     version.subdir <- pkg.cache.gen.version.dir.name(version)
 
     # We do not create the version directory here because we cannot guarantee that this will stay in sync
@@ -617,6 +645,7 @@ pkg.cache.read.version.from.table <- function(pkg.cache.env, cache.version, vers
 }
 
 pkg.cache.get.version <- function(pkg.cache.env, cache.dir, cache.version, table.file.name, cache.size) {
+    assert( is.character(cache.version) && length(cache.version) == 1, "Version has to be specified")
 
     version.table.file <- file.path(cache.dir, table.file.name)
     if (pkg.cache.mode.oci(pkg.cache.env)) {
@@ -646,11 +675,11 @@ pkg.cache.get.ignored.packages <- function(pkg.cache.env) {
     }
 }
 
-# Computes the direct dependencies of a package.
+# Computes the direct, not-yet-installed, dependencies of a package.
 # Returns a data frame containing the with rows c("Package", "Version")
 package.dependencies <- function(pkg.cache.env, pkg, lib, dependencies = c("Depends", "Imports", "LinkingTo"), pl = as.data.frame(available.packages(), stringAsFactors=FALSE)) {
     if (!(pkg %in% rownames(pl))) {
-        log.message("Package", as.character(pkg), "not on CRAN\n", level=1)
+        log.message("Package ", as.character(pkg), " not on CRAN\n", level=1)
         return (NULL)
     }
     fields <- pl[pkg, dependencies]
@@ -680,9 +709,10 @@ package.dependencies <- function(pkg.cache.env, pkg, lib, dependencies = c("Depe
     non.ignored.deps[!(non.ignored.deps$Package %in% installed.pkgs.table$Package & non.ignored.deps$Version %in% installed.pkgs.table$Version),c("Package", "Version")]
 }
 
-# Computes the transitive dependencies of a package by ignoring installed packages and 'pkg.cache.get.ignored.packages()'.
-# The result is a data frame with columns named "Package" and "Version".
-# Every row represents a package by the name and its version.
+#' Computes the transitive dependencies of a package by ignoring installed packages and 'pkg.cache.get.ignored.packages()'.
+#' The result is a data frame with columns named "Package" and "Version".
+#' Every row represents a package by the name and its version.
+#' @param pkg Name of the package
 transitive.dependencies <- function(pkg.cache.env, pkg, lib, pl = as.data.frame(available.packages(), stringAsFactors=FALSE), deptype=c("Depends", "Imports", "LinkingTo"), suggests=FALSE) {
     deps <- data.frame(Package=character(0), Version=character(0))
     more <- pkg
@@ -784,11 +814,11 @@ pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.i
         # if we reach here, installation was a success
         0L
     }, error = function(e) {
-        log.message(e$message)
+        log.message("error: ", e$message)
         log.message(traceback())
         return (1L)
     }, warning = function(e) {
-        log.message(e$message)
+        log.message("error: ", e$message)
         return (1L)
     })
 }
