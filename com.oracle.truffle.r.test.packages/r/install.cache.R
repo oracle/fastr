@@ -223,7 +223,7 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
     tryCatch({
         if (file.exists(fromPath)) {
             unzip(fromPath, exdir=toPath, unzip = getOption("unzip"))
-            log.message("package cache hit, using package from ", fromPath)
+            log.message("package cache hit, using package from ", fromPath, ", unzipping to ", toPath)
             pkg.cache.unlock(pkg.cache.env, version.dir)
             return (TRUE)
         } else {
@@ -280,12 +280,13 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     }
 
     tryCatch({
-        fromPath <- file.path(lib, pkgname)
+        pkg.path <- file.path(lib, pkgname)
         toPath <- pkg.cache.file.path(pkg.cache.env, version.dir, pkg)
 
         # to produce a ZIP with relative paths, we need to change the working dir
         prev.wd <- getwd()
-        setwd(lib)
+        stopifnot( dir.exists(pkg.path))
+        setwd(pkg.path)
 
         # cleanup older package versions
         pkg.cache.cleanup.pkg.versions(pkg.cache.env, version.dir, pkgname)
@@ -293,9 +294,9 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         if (file.exists(toPath)) {
             file.remove(toPath)
         }
-        if(zip(toPath, pkgname, flags="-r9Xq") != 0L) {
+        if(zip(zipfile=toPath, files=dir(), flags="-r9Xq") != 0L) {
             pkg.cache.unlock(pkg.cache.env, version.dir)
-            log.message("could not compress package dir ", fromPath , " and store it to ", toPath, level=1)
+            log.message("could not compress package dir ", pkg.path , " and store it to ", toPath, level=1)
             return (FALSE)
         }
 
@@ -308,7 +309,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
             }
         }
         setwd(prev.wd)
-        log.message("successfully inserted package ", pkgname , " to package cache (", toPath, ")")
+        log.message("successfully inserted package ", pkgname , " from path ", pkg.path, " to package cache (", toPath, ")")
         pkg.cache.unlock(pkg.cache.env, version.dir)
         return (TRUE)
     }, error = function(e) {
