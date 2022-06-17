@@ -599,8 +599,8 @@ public class RChannel {
         private SerializedEnv.Bindings createShareable(REnvironment e) throws IOException {
             MaterializedFrame f = e.getFrame();
             FrameDescriptor fd = f.getFrameDescriptor();
-            List<String> names = new ArrayList<>(fd.getIdentifiers().size());
-            List<Object> values = new ArrayList<>(fd.getIdentifiers().size());
+            List<String> names = new ArrayList<>(fd.getNumberOfSlots());
+            List<Object> values = new ArrayList<>(fd.getNumberOfSlots());
             getStringIdentifiersAndValues(f, names, values);
             assert names.size() == values.size();
 
