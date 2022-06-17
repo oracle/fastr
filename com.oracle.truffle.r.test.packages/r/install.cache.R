@@ -75,6 +75,7 @@ verbose <- if (!exists("verbose")) {
 assert <- function(condition, ...) {
     if (!condition) {
         cat("Assertion failed: ", ..., "\n")
+        traceback(2)
         quit(save="no", status=100)
     }
 }
@@ -203,6 +204,7 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
     if(is.null(version.dir)) {
         return (FALSE)
     }
+    assert( dir.exists(version.dir))
 
     # lock version directory
     if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
@@ -267,11 +269,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     if(is.null(version.dir)) {
         return (FALSE)
     }
-
-    # create the version directory
-    if (!pkg.cache.create.version.dir(version.dir)) {
-        return (FALSE)
-    }
+    assert( dir.exists(version.dir))
 
     # lock version directory
     if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
@@ -411,6 +409,10 @@ pkg.cache.check <- function(pkg.cache.env) {
     version.dir <- pkg.cache.get.version(pkg.cache.env, pkg.cache.env$dir, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
     if (is.null(version.dir)) {
         log.message("cannot access or create version subdir for ", as.character(pkg.cache.env$version), level=1)
+    }
+    version.dir.path <- file.path(pkg.cache.env$dir, version.dir)
+    if (!pkg.cache.create.version.dir(version.dir.path)) {
+        return (NULL)
     }
 
     if (verbose) {
