@@ -66,6 +66,12 @@ log.message <- if(!exists("log.message")) {
     log.message
 }
 
+verbose <- if (!exists("verbose")) {
+    TRUE
+} else {
+    verbose
+}
+
 assert <- function(condition, ...) {
     if (!condition) {
         cat("Assertion failed: ", ..., "\n")
@@ -407,6 +413,23 @@ pkg.cache.check <- function(pkg.cache.env) {
         log.message("cannot access or create version subdir for ", as.character(pkg.cache.env$version), level=1)
     }
 
+    if (verbose) {
+        cat("===== Start of initialized cache contents log =====\n")
+        cat("Package cache is already initialized at ", pkg.cache.env$dir, " with contents:\n")
+        cat("dir(pkg.cache.env$dir) = ", dir(pkg.cache.env$dir), "\n", sep="")
+        table.path <- file.path(pkg.cache.env$dir, pkg.cache.env$table.file.name)
+        table.lines <- readLines(table.path)
+        cat("Contents of version table:\n", sapply(table.lines, function(line) paste0("  ", line, "\n")))
+        for (subdir in dir(pkg.cache.env$dir)) {
+            subdir.path <- file.path(pkg.cache.env$dir, subdir)
+            if (dir.exists(subdir.path)) {
+                subdir.files <- dir(subdir.path)
+                cat("dir('", subdir.path, "'): ", subdir.files, "\n", sep="")
+            }
+        }
+        cat("===== End of initialized cache contents log =====\n")
+    }
+
     return (file.path(pkg.cache.env$dir, version.dir))
 }
 
@@ -422,7 +445,7 @@ is.valid.cache.dir <- function(cache.dir, table.file.name) {
     }
 
     tryCatch({
-        version.table <- read.csv(version.table.name)
+        read.csv(version.table.name)
         TRUE
     }, error = function(e) {
         log.message("could not read package cache's version table: ", e$message, level=1)
