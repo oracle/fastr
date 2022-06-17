@@ -72,6 +72,8 @@ verbose <- if (!exists("verbose")) {
     verbose
 }
 
+PRINT_PKGCACHE_DIR_CONTENTS <- FALSE
+
 assert <- function(condition, ...) {
     if (!condition) {
         cat("Assertion failed: ", ..., "\n")
@@ -346,7 +348,7 @@ pkg.cache.artifact.upload <- function(source.path, artifact.name) {
     assert( is.character(source.path) && length(source.path) == 1)
     artifact.repo.key <- Sys.getenv("ARTIFACT_REPO_KEY_LOCATION")
     assert( is.character(artifact.repo.key) && length(artifact.repo.key) == 1)
-    args <- c(source.path, artifact.name, ARTIFACT_PREFIX, "--lifecycle", "cache", "--artifact-repo-key", artifact.repo.key)
+    args <- c(source.path, artifact.name, ARTIFACT_PREFIX, "--lifecycle", "cache", "--artifact-repo-key", artifact.repo.key, "--skip-existing")
     cat("Uploading artifact '", artifact.name, "' with `artifact_uploader.py ", args, "`", "\n")
     tryCatch({
         rc <- system2("artifact_uploader.py", args)
@@ -415,7 +417,7 @@ pkg.cache.check <- function(pkg.cache.env) {
         return (NULL)
     }
 
-    if (verbose) {
+    if (PRINT_PKGCACHE_DIR_CONTENTS) {
         cat("===== Start of initialized cache contents log =====\n")
         cat("Package cache is already initialized at ", pkg.cache.env$dir, " with contents:\n")
         cat("dir(pkg.cache.env$dir) = ", dir(pkg.cache.env$dir), "\n", sep="")
@@ -426,7 +428,7 @@ pkg.cache.check <- function(pkg.cache.env) {
             subdir.path <- file.path(pkg.cache.env$dir, subdir)
             if (dir.exists(subdir.path)) {
                 subdir.files <- dir(subdir.path)
-                cat("dir('", subdir.path, "'): ", subdir.files, "\n", sep="")
+                cat("dir('", subdir.path, "'): [", paste(subdir.files, sep=", "), "]\n", sep="")
             }
         }
         cat("===== End of initialized cache contents log =====\n")
