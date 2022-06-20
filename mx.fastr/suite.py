@@ -446,7 +446,6 @@ suite = {
       "dependencies" : ["com.oracle.truffle.r.launcher"],
       "distDependencies" : [
         "sdk:GRAAL_SDK",
-        "sdk:LAUNCHER_COMMON",
       ],
       # FASTR and FASTR_LAUNCHER share one common helper class RCmdOptions
       # This could be refactored in the future
@@ -472,7 +471,6 @@ suite = {
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_API",
-        "sdk:LAUNCHER_COMMON",
       ],
       # TODO: is this intentional that we embed things from LAUNCHER_COMMON?
       "overlaps": ["sdk:LAUNCHER_COMMON"],
