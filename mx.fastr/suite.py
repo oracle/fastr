@@ -445,7 +445,7 @@ suite = {
       "description" : "launcher for the GraalVM (at the moment used only when native image is installed)",
       "dependencies" : ["com.oracle.truffle.r.launcher"],
       "distDependencies" : [
-        "sdk:GRAAL_SDK"
+        "sdk:GRAAL_SDK",
       ],
       # FASTR and FASTR_LAUNCHER share one common helper class RCmdOptions
       # This could be refactored in the future
