@@ -78,7 +78,7 @@ def get_graalvm_home(fatalIfMissing=False) -> Optional[str]:
         return os.environ['GRAALVM_HOME']
     else:
         import mx_sdk_vm_impl
-        return mx_sdk_vm_impl.graalvm_home(fatalIfMissing)
+        return mx_sdk_vm_impl.graalvm_home(fatalIfMissing=fatalIfMissing)
 
 def get_default_jdk():
     if mx.suite("compiler", fatalIfMissing=False):
