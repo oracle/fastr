@@ -2,7 +2,7 @@
 * `--R.DebugLLVMLibs` is no longer a stable option.
 * Implemented `SET_GROWABLE_BIT` and `IS_GROWABLE` C API functions.
   * This fixes installation of the `cpp11` 0.2.6 package.
-* Add `akima` package to the list of "native packages", so that the native toolchain is used for its installation.
+* Add `akima` package to the list of "native packages", so it is by default loaded by the native backend.
 
 # 22.1.0
 * Improved performance of the `order` and `rank` builtin functions
