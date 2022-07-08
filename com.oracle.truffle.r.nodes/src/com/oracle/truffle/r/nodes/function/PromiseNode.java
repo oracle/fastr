@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.api.utilities.AlwaysValidAssumption;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -44,8 +43,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
-import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -57,6 +54,8 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RAttributableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -120,7 +119,7 @@ public abstract class PromiseNode extends RNode {
         }
         boolean alwaysEager = expr != null && expr.forceEagerEvaluation();
         if (forcedEager || alwaysEager) {
-            Assumption assumption = alwaysEager ? AlwaysValidAssumption.INSTANCE : allArgPromisesCanOptimize;
+            Assumption assumption = alwaysEager ? Assumption.ALWAYS_VALID : allArgPromisesCanOptimize;
             return new OptForcedEagerPromiseNode(factory, wrapIndex, assumption, alwaysEager);
         } else {
             Object optimizableConstant = getOptimizableConstant(expr);

@@ -633,23 +633,13 @@ public final class Utils {
     @TruffleBoundary
     public static Frame getActualCurrentFrame() {
         RError.performanceWarning("slow frame access - getActualCurrentFrame");
-        FrameInstance frameInstance = Truffle.getRuntime().getCurrentFrame();
-        if (frameInstance == null) {
-            // Might be the case during initialization, when envs are prepared before the actual
-            // Truffle/R system has started
-            return null;
-        }
-        Frame frame = RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE));
-        if (!RArguments.isRFrame(frame)) {
-            return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
-                @Override
-                public Frame visitFrame(FrameInstance instance) {
-                    Frame current = RArguments.unwrap(instance.getFrame(FrameAccess.MATERIALIZE));
-                    return RArguments.isRFrame(current) ? current : null;
-                }
-            });
-        }
-        return frame;
+        return Truffle.getRuntime().iterateFrames((frameInstance) -> {
+            Frame frame = RArguments.unwrap(frameInstance.getFrame(FrameAccess.MATERIALIZE));
+            if (!RArguments.isRFrame(frame)) {
+                return null;
+            }
+            return frame;
+        });
     }
 
     /**
@@ -813,25 +803,27 @@ public final class Utils {
     @TruffleBoundary
     public static String createStackTrace(boolean printFrameSlots) {
         RError.performanceWarning("slow frame access - createStackTrace");
-        FrameInstance current = Truffle.getRuntime().getCurrentFrame();
-        if (current == null) {
+
+        StringBuilder str = new StringBuilder();
+        Truffle.getRuntime().iterateFrames((frameInstance) -> {
+            dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY), false, frameInstance.isVirtualFrame());
+            return null;
+        });
+
+        if (str.length() == 0) {
             return "no R stack trace available\n";
-        } else {
-            StringBuilder str = new StringBuilder();
+        }
+
+        if (printFrameSlots) {
+            str.append("\n\nwith frame slot contents:\n");
             Truffle.getRuntime().iterateFrames(frameInstance -> {
-                dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY), false, frameInstance.isVirtualFrame());
+                dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY), true, frameInstance.isVirtualFrame());
                 return null;
             });
-            if (printFrameSlots) {
-                str.append("\n\nwith frame slot contents:\n");
-                Truffle.getRuntime().iterateFrames(frameInstance -> {
-                    dumpFrame(str, frameInstance.getCallTarget(), frameInstance.getFrame(FrameAccess.READ_ONLY), true, frameInstance.isVirtualFrame());
-                    return null;
-                });
-            }
-            str.append("\n");
-            return str.toString();
         }
+
+        str.append("\n");
+        return str.toString();
     }
 
     private static void dumpFrame(StringBuilder str, CallTarget callTarget, Frame frame, boolean printFrameSlots, boolean isVirtual) {
