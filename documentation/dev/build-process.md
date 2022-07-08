@@ -267,7 +267,7 @@ This build requires `PKG_LDFLAGS_OVERRIDE` environment variable, for example on 
 
 or on some Linux distributions
 
-    export PKG_LDFLAGS_OVERRIDE="-L/lib/x86_64-linux-gnu -L/usr/lib/x86_64-linux-gnu/
+    export PKG_LDFLAGS_OVERRIDE="-L/lib/x86_64-linux-gnu -L/usr/lib/x86_64-linux-gnu/"
 
 ### Installing recommended packages
 
