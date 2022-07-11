@@ -174,6 +174,8 @@ public interface Engine {
      */
     void activate(REnvironment.ContextStateImpl stateREnvironment);
 
+    void deactivate();
+
     interface Timings {
         /**
          * Elapsed time of runtime.

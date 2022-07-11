@@ -381,7 +381,7 @@ public final class RContext {
     // concrete library.
     @CompilationFinal public Object gridContext = null;
     public final AtomicBoolean interruptResize = new AtomicBoolean(false);
-    public boolean internalGraphicsInitialized = false;
+    public boolean graphicsInitialized = false;
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
@@ -641,6 +641,9 @@ public final class RContext {
     public synchronized void dispose() {
         if (!state.contains(State.DISPOSED)) {
             if (state.contains(State.INITIALIZED)) {
+                if (!embedded) {
+                    engine.deactivate();
+                }
                 for (ContextState contextState : contextStates()) {
                     contextState.beforeDispose(this);
                 }

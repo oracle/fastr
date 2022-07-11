@@ -22,11 +22,8 @@
  */
 package com.oracle.truffle.r.library.graphics;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import static com.oracle.truffle.r.runtime.context.FastROptions.LoadPackagesNativeCode;
-import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -38,19 +35,23 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
  * too, or it runs a Java version of it if the internal grid package implementation is to be used.
  */
 public class RGraphics {
-    private static final AtomicBoolean initialized = new AtomicBoolean();
-
     public static void initialize(RContext context) {
-        if (context.getOption(UseInternalGridGraphics)) {
-            if (!context.internalGraphicsInitialized) {
-                RGridGraphicsAdapter.initialize(context);
-            }
-        } else if (initialized.compareAndSet(false, true) && context.getOption(LoadPackagesNativeCode)) {
-            DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol(context, "InitGraphics");
-            DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
-            assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
-            CallRFFI.InvokeVoidCallRootNode.create(context).call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), new Object[0]);
+        if (!context.graphicsInitialized) {
+            callVoidNativeFunction(context, "InitGraphics");
+            context.graphicsInitialized = true;
         }
-        context.internalGraphicsInitialized = true;
+    }
+
+    public static void dispose(RContext context) {
+        callVoidNativeFunction(context, "KillAllDevices");
+        context.graphicsInitialized = false;
+    }
+
+    private static void callVoidNativeFunction(RContext context, String funcName) {
+        assert context.getOption(LoadPackagesNativeCode);
+        DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol(context, funcName);
+        DLL.SymbolHandle symbolHandle = DLL.findSymbol(funcName, dllInfo);
+        assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
+        CallRFFI.InvokeVoidCallRootNode.create(context).call(new NativeCallInfo(funcName, symbolHandle, dllInfo), new Object[0]);
     }
 }
