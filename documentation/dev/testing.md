@@ -205,7 +205,7 @@ Sys.setenv("R_LIBS_USER" = install_lib)
 commandArgs <- function(...) {
   c(
     executable, 
-    "--repos", "FASTR=file://home/pmarek/dev/fastr/com.oracle.truffle.r.test.native/packages/repo,CRAN=https://graalvm.oraclecorp.com/fastr-mran-mirror/snapshot/2021-02-01/",
+    "--repos", "FASTR=file://.../com.oracle.truffle.r.test.native/packages/repo,CRAN=file://.../minicran/2021-02-01/",
     "--no-install",
     "--very-verbose",
     "--dry-run",
