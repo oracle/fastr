@@ -26,6 +26,8 @@ import platform, subprocess, sys, shlex
 from os.path import join, sep
 from argparse import ArgumentParser
 import tarfile
+from typing import Optional
+
 import mx
 import mx_gate
 import mx_fastr_dists
@@ -70,6 +72,13 @@ def gnur_path():
     if 'GNUR_HOME_BINARY' in os.environ:
         return os.environ['GNUR_HOME_BINARY']
     return os.path.join(_fastr_suite.dir, 'libdownloads', r_version())
+
+def get_graalvm_home(fatalIfMissing=False) -> Optional[str]:
+    if 'GRAALVM_HOME' in os.environ:
+        return os.environ['GRAALVM_HOME']
+    else:
+        import mx_sdk_vm_impl
+        return mx_sdk_vm_impl.graalvm_home(fatalIfMissing=fatalIfMissing)
 
 def get_default_jdk():
     if mx.suite("compiler", fatalIfMissing=False):
@@ -444,25 +453,31 @@ def _fastr_gate_runner(args, tasks):
                 else:
                     mx.warn('File %s is empty, skipping cran_pkg_test' % list_file)
 
-def common_pkg_tests_args(graalvm_home):
-    gvm_home_arg = [] if graalvm_home is None else ['--graalvm-home', graalvm_home]
-    # SNAPSHOT is transformed by the pkgtest script, where it also checks for FASTR_MRAN_MIRROR env. variable
-    # FASTR cannot be transformed by the pkgtest script, because it may not know FastR repo home, just graalvm_home
-    fastr_pkgs_repo = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages', 'repo')
-    return gvm_home_arg + ["--gnur-home", gnur_path(), "--fastr-home", _fastr_suite.dir, "--repos", "SNAPSHOT,FASTR=file://" + fastr_pkgs_repo]
+def common_pkg_tests_args():
+    if "FASTR_REPOS" in os.environ:
+        repos_arg = os.environ["FASTR_REPOS"]
+    else:
+        # SNAPSHOT is transformed by the pkgtest script, where it also checks for FASTR_MRAN_MIRROR env. variable
+        # FASTR cannot be transformed by the pkgtest script, because it may not know FastR repo home, just graalvm_home
+        fastr_pkgs_repo = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages', 'repo')
+        repos_arg = "SNAPSHOT,FASTR=file://" + fastr_pkgs_repo
+    graalvm_home = get_graalvm_home(fatalIfMissing=True)
+    return ["--graalvm-home", graalvm_home, "--gnur-home", gnur_path(), "--fastr-home", _fastr_suite.dir, "--repos", repos_arg]
 
-def cran_pkg_tests(list_file, graalvm_home=None):
+def cran_pkg_tests(list_file):
     cache_args = []
     cache = os.environ.get('FASTR_PKGS_CACHE_OPT')
     if cache is None:
         mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
     else:
         cache_args += ['--cache-pkgs', cache]
-    result = pkgtest(["--verbose"] + cache_args + common_pkg_tests_args(graalvm_home) + ["--pkg-filelist", list_file])
+    result = pkgtest(["--verbose"] + cache_args + common_pkg_tests_args() + ["--pkg-filelist", list_file])
     if result != 0:
         mx.abort("package test failed")
 
-def internal_pkg_tests(graalvm_home=None):
+def internal_pkg_tests():
+    if not mx.suite("compiler", fatalIfMissing=False) and not mx.suite("graal-enterprise", fatalIfMissing=False):
+        mx.abort("internal_pkg_tests must only be run with compiler or graal-enterprise suites")
     list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages/pkg-filelist')
     if os.environ.get('FASTR_RFFI') == 'llvm':
         list_file_llvm = list_file + '.llvm'
@@ -472,7 +487,7 @@ def internal_pkg_tests(graalvm_home=None):
         list_file_gctorture = list_file + '.gctorture'
         if os.path.exists(list_file_gctorture):
             list_file = list_file_gctorture
-    result = pkgtest(["--verbose", "--pkg-filelist", list_file] + common_pkg_tests_args(graalvm_home))
+    result = pkgtest(["--verbose", "--pkg-filelist", list_file] + common_pkg_tests_args())
     if result != 0:
         mx.abort("internal package test failed")
 
@@ -811,34 +826,68 @@ def pkgtest_load():
 
 
 def _pkgtest_args(args):
-    graalvm_home = None
-    if 'FASTR_GRAALVM' in os.environ:
-        graalvm_home = os.environ['FASTR_GRAALVM']
-    elif 'GRAALVM_FASTR' in os.environ:
-        graalvm_home = os.environ['GRAALVM_FASTR']
-
-    pkgtest_args = ['--very-verbose']
+    if 'GRAALVM_HOME' in os.environ:
+        graalvm_home = os.environ['GRAALVM_HOME']
+    else:
+        import mx_sdk_vm_impl
+        graalvm_home = mx_sdk_vm_impl.graalvm_home(fatalIfMissing=False)
+    pkgtest_args = []
     pkgtest_args += ["--fastr-home"]
     pkgtest_args += [_fastr_suite.dir]
+    pkgtest_args += ["--gnur-home"]
+    pkgtest_args += [_gnur_path()]
     if graalvm_home:
-        # In GRAALVM mode, we assume FastR is not built so we need to
-        _gnur_suite = mx.suite('gnur')
-        pkgtest_args += ["--gnur-home"]
-        pkgtest_args += [join(_gnur_suite.dir, 'gnur', _gnur_suite.extensions.r_version())]
         pkgtest_args += ["--graalvm-home"]
         pkgtest_args += [graalvm_home]
-    else:
-        pkgtest_args += ["--gnur-home"]
-        pkgtest_args += [_gnur_path()]
-    mx.logv(args)
     full_args = pkgtest_args + list(args)
-    mx.logv(full_args)
     return full_args
 
 
+# The majority of the doc string is copied from util.py in package testing.
+# We should not just take the help message from the package testing framework, as it
+# is meant to be an internal tool invoked via mx command.
 def pkgtest(args, **kwargs):
+    """ Runs a FastR-specific package testing framework.
+
+    options:
+      -q, --quiet
+      -v, --verbose
+      -V, --very-verbose
+      --repos REPO_NAME=URL
+              Repos to install packages from. Can be set by 'FASTR_REPOS' env var.
+              Example: '--repos FASTR=file://$HOME/fastr_repo,CRAN=file://$HOME/minicran'
+      --dump-preprocessed
+              Dump processed output files where replacement filters have been applied.
+      --fastr-testdir FASTR_TESTDIR
+              FastR test result directory (default: 'test.fastr')
+      --gnur-testdir GNUR_TESTDIR
+              GnuR test result directory (default: 'test.gnur')
+      -l LOG_FILE, --log-file LOG_FILE
+              Log file name (default: 'FASTR_TESTDIR/pkgtest.log')
+      --pkg-pattern PATTERN
+              Pattern of packages to install and potentially test.
+              Mutually exclusive with '--pkg-filelist'.
+      --pkg-filelist FILE
+              File containing a list of packages to install and potentially test.
+              Mutually exclusive with '--pkg-pattern'.
+
+      --cache-pkgs dir=DIR
+              Use package cache in directory DIR (will be created if not existing).
+              Optional parameters:
+                  size=N             Maximum number of different API versions in the cache.
+                  sync=[true|false]  Synchronize the cache
+                  vm=[fastr|gnur]
+              Example: '--cache-pkgs dir=DIR,size=N,sync=true,vm=fastr'
+              Can be set by FASTR_PKGS_CACHE_OPT environment variable.
+      --no-install
+              Do not install any packages. Can only test installed packages.
+      --list-versions
+              List packages to be installed/tested without installing/testing them.
+
+    See 'mx r-pkgtest --help' for more info.
+    """
     full_args = _pkgtest_args(args)
-    mx.logv(["pkgtest"] + full_args)
+    mx.logv(["r-pkgtest"] + full_args)
     return pkgtest_load().pkgtest(full_args)
 
 
@@ -907,6 +956,53 @@ def r_pkgtest_analyze(args, **kwargs):
 
 
 def pkgcache(args, **kwargs):
+    """ Installs and cache packages.
+
+    options:
+      -q, --quiet
+      -v, --verbose
+      -V, --very-verbose
+      --repos REPO_NAME=URL
+              Repos to install packages from. Can be set by 'FASTR_REPOS' env var.
+              Example: '--repos FASTR=file://$HOME/fastr_repo,CRAN=file://$HOME/minicran'
+      --dump-preprocessed
+              Dump processed output files where replacement filters have been applied.
+      --fastr-testdir FASTR_TESTDIR
+              FastR test result directory (default: 'test.fastr')
+      --gnur-testdir GNUR_TESTDIR
+              GnuR test result directory (default: 'test.gnur')
+      -l LOG_FILE, --log-file LOG_FILE
+              Log file name (default: 'FASTR_TESTDIR/pkgtest.log')
+      --pkg-pattern PATTERN
+              Pattern of packages to install and potentially test.
+              Mutually exclusive with '--pkg-filelist'.
+      --pkg-filelist FILE
+              File containing a list of packages to install and potentially test.
+              Mutually exclusive with '--pkg-pattern'.
+
+      --cache-dir DIR
+              Use package cache in directory DIR (will be created if not existing).
+              Optional parameters:
+                  size=N             Maximum number of different API versions in the cache.
+                  sync=[true|false]  Synchronize the cache
+                  vm=[fastr|gnur]
+              Example: '--cache-pkgs dir=DIR,size=N,sync=true,vm=fastr'
+              Can be set by FASTR_PKGS_CACHE_OPT environment variable.
+      --library [fastr=DIR][[,]gnur=DIR]
+              The library folders to install to. If you don't want to create any new temporary
+              library, point the library to the existing library dirs, e.g. $FASTR_HOME/library.
+              Defaults to 'lib.install.packages'.
+      --vm <fastr|gnur>
+              Whether to install the packages on fastr or on gnur. Defaults to both.
+      --sync
+              Synchronize access to the package cache. Can be set via FASTR_PKGS_CACHE_OPT env var.
+      --print-api-checksum
+              Compute and print the API checksum for the specified VMs and exit.
+      --install-opts
+              R specific install options.
+
+    See 'mx r-pkgcache --help' for more info.
+    """
     full_args = _pkgtest_args(args)
     mx.logv(["r-pkgcache"] + full_args)
     return pkgtest_load().pkgcache(full_args)
@@ -1035,12 +1131,12 @@ _commands = {
     'rembed' : [rembed, '[options]'],
     'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
-    'pkgtest' : [pkgtest, ['options']],
-    'pkgtest-cmp' : [pkgtest_cmp, '<gnur-output> <fastr-output> ...'],
+    'r-pkgtest' : [pkgtest, '[options] <--pkg-pattern PATTERN | --pkg-filelist FILE>'],
+    'r-pkgtest-cmp': [pkgtest_cmp, '<gnur-output> <fastr-output> ...'],
     'r-pkgtest-analyze' : [r_pkgtest_analyze, ['options']],
     'r-findtop100' : [find_top100, ['options']],
     'r-findtop' : [find_top, ['options']],
-    'r-pkgcache' : [pkgcache, ['options']],
+    'r-pkgcache' : [pkgcache, '[options] <--pkg-pattern PATTERN | --pkg-filelist FILE | --print-api-checksum >'],
     'installpkgs' : [installpkgs, '[options]'],
     'edinclude' : [mx_fastr_edinclude.edinclude, '[]'],
     'gnu-r' : [gnu_r, '[]'],

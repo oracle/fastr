@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,66 @@
 # questions.
 #
 
+# Functions that take care of package caching mechanism.
+# There are two modes for packache caching - 'local' and 'os', both of these modes create a directory structure
+# under `pkg.cache.env$dir` directory. If a package is located inside this directory structure, it is copied from
+# there to the library location. If the package is not located in the directory structure, we call it 'cache miss',
+# and in such case we either copy the package from the library loocation, or install it and then insert it in the cache.
+# Additionally, in 'os' mode, we try to fetch the package as an artifact from the OCI.
+
+# Functions that should be used outside this script are:
+#   - pkg.cache.internal.install
+
+# Most of the functions in this file takes as an argument `pkg.cache.env` environment which
+# should contain the following symbols:
+#  dir ... a directory of the package cache, character vector of size 1
+#  enabled ... either TRUE of FALSE
+#  ignore ... "base", "none", "default"
+#  mode ... either "local" or "os"
+#  version ... Version of the package cache. Usually, there are at least two versions - one for fastr, and one for gnur.
+#      Currently, version is represented as API checksum of header files in include dir, obtained by
+#      `mx r-pkgcache --api-checksum`. Which means that as soon as there is any modification to an internal API,
+#      there will be a new version of the package cache created. This version has to be passed to this script, as we
+#      have no way of fetching it here.
+#      Character vector of size 1.
+#  size ... integer
+#  sync ... TRUE/FALSE, whether to synchronize access to the cache via a lock file
+#  table.file.name ... Filename of the CSV file that contains description of the subdirectories.
+
+
 lock.file.name <- ".lock"
 
 pkg.cache.max.retries <- 3L
 
 # expiration time of a lock in seconds (default: 1 hour)
 pkg.cache.lock.expiration <- 3600
+
+# A simple log function; to be replaced by a user of this file.
+log.message <- if(!exists("log.message")) {
+    function(..., level=0) {
+        if(level == 0 || verbose) {
+            cat(paste0(..., "\n"))
+        }
+    }
+} else {
+    log.message
+}
+
+verbose <- if (!exists("verbose")) {
+    TRUE
+} else {
+    verbose
+}
+
+PRINT_PKGCACHE_DIR_CONTENTS <- FALSE
+
+assert <- function(condition, ...) {
+    if (!condition) {
+        cat("Assertion failed: ", ..., "\n")
+        traceback(2)
+        quit(save="no", status=100)
+    }
+}
 
 pkg.cache.lock <- function(pkg.cache.env, version.dir) {
     if (!(as.logical(pkg.cache.env$sync) && pkg.cache.mode.local(pkg.cache.env))) {
@@ -114,24 +168,13 @@ pkg.cache.unlock <- function(pkg.cache.env, version.dir) {
 
 
 is.fastr <- function() {
-    length(grep('FastR', R.Version()$version.string))
+    length(grep("FastR", R.Version()$version.string))
 }
 
 get.vm <- function() if (is.fastr()) "fastr" else "gnur"
 
 pkg.cache.is.enabled <- function(pkg.cache.env) {
     pkg.cache.env$enabled && (!is.character(pkg.cache.env$vm) || grepl(get.vm(), pkg.cache.env$vm))
-}
-
-# A simple log function; to be replaced by a user of this file.
-log.message <- if(!exists("log.message")) {
-    function(..., level=0) {
-        if(level == 0 || verbose) {
-            cat(paste0(..., "\n"))
-        }
-    }
-} else {
-    log.message
 }
 
 pkg.cache.install <- function(pkg.cache.env, pkgname, pkg.version, lib.install, install.cmd) {
@@ -147,18 +190,15 @@ pkg.cache.install <- function(pkg.cache.env, pkgname, pkg.version, lib.install, 
     }
 }
 
+#'
+#' @param pkg A named character vector taken from a matrix given by `available.packages`.
 pkg.cache.entry.filename <- function(pkg) {
     paste0(as.character(pkg["Package"]), "_", as.character(pkg["Version"]), ".zip")
 }
 
-pkg.cache.file.path <- function(pkg.cache.env, version.dir, cache.entry.name) {
-    if (pkg.cache.mode.oci(pkg.cache.env)) {
-        # In mode="os", we temporarily store the archive file to the package cache dir 
-        # which is in this case just a working directory for transferring the files.
-        file.path(pkg.cache.env$dir, cache.entry.name)
-    } else {
-        file.path(version.dir, cache.entry.name)
-    }
+pkg.cache.file.path <- function(version.dir, pkg) {
+    cache.entry.name <- pkg.cache.entry.filename(pkg)
+    return (file.path(version.dir, cache.entry.name))
 }
 
 pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
@@ -166,6 +206,7 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
     if(is.null(version.dir)) {
         return (FALSE)
     }
+    assert( dir.exists(version.dir))
 
     # lock version directory
     if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
@@ -176,58 +217,51 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
     pkg.name <- as.character(pkg["Package"])
 
     log.message("using package cache directory ", version.dir, level=1)
-    cache.entry.name <- pkg.cache.entry.filename(pkg)
 
-    fromPath <- pkg.cache.file.path(pkg.cache.env, version.dir, cache.entry.name)
-    if (pkg.cache.mode.oci(pkg.cache.env)) {
-        dest.file <- fromPath
-        object.name <- paste0(version.dir, "/", cache.entry.name)
-        if (!pkg.cache.os.get(pkg.cache.env, object.name, dest.file)) {
+    fromPath <- pkg.cache.file.path(version.dir, pkg)
+    toPath <- file.path(lib, pkg.name)
+    if (pkg.cache.mode.oci(pkg.cache.env) && !file.exists(fromPath)) {
+        artifact.name <- create.pkg.artifact.name(pkg.cache.env, pkg["Package"], pkg["Version"])
+        if (!pkg.cache.artifact.download(artifact.name, location=fromPath)) {
             pkg.cache.unlock(pkg.cache.env, version.dir)
             log.message("cache miss for package ", pkg.name, level=1)
             return (FALSE)
         }
-    } 
-
-
-    toPath <- lib
-    # extract cached package to library directory
-    tryCatch({
-        if (file.exists(fromPath)) {
-            unzip(fromPath, exdir=toPath, unzip = getOption("unzip"))
-            log.message("package cache hit, using package from ", fromPath)
+    }
+    if (file.exists(fromPath)) {
+        tryCatch({
+            unzip(fromPath, exdir=toPath, unzip=getOption("unzip"))
+            log.message("package cache hit, using package from ", fromPath, ", unzipping to ", toPath)
             pkg.cache.unlock(pkg.cache.env, version.dir)
             return (TRUE)
-        } else {
-            log.message("cache miss for package ", pkg.name, " (path=", fromPath, ")", level=1)
+        }, error = function(e) {
+            log.message("could not extract cached package from ", fromPath , " to ", toPath, level=1)
+        })
+    } else {
+        log.message("cache miss for package ", pkg.name, level=1)
+    }
+    pkg.cache.unlock(pkg.cache.env, version.dir)
+    return (FALSE)
+}
+
+pkg.cache.create.version.dir <- function(version.dir) {
+    tryCatch({
+        # Create version directory if inexisting
+        if (!dir.exists(version.dir)) {
+            log.message("creating version directory ", version.dir, level=1)
+            dir.create(version.dir, recursive=T)
         }
     }, error = function(e) {
-        log.message("could not extract cached package from ", fromPath , " to ", toPath, level=1)
+        log.message("could not create version dir '", version.dir, "' because: ", e$message)
+        return (FALSE)
     })
-    pkg.cache.unlock(pkg.cache.env, version.dir)
-    
-    FALSE
+    return (TRUE)
 }
 
-pkg.cache.create.version.dir <- function(pkg.cache.env, version.dir) {
-    # we don't need to create anything in mode="os"
-    if (pkg.cache.mode.local(pkg.cache.env)) {
-        tryCatch({
-            # Create version directory if inexisting
-            if (!dir.exists(version.dir)) {
-                log.message("creating version directory ", version.dir, level=1)
-                dir.create(version.dir, recursive=T)
-            }
-        }, error = function(e) {
-            log.message("could not insert package '", pkgname, "' because: ", e$message)
-            return (FALSE)
-        })
-    }
-    TRUE
-}
-
+#' Compresses the given `pkg` into zip archive and puts it in the package cache.
 pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     pkgname <- as.character(pkg["Package"])
+    pkg.version <- as.character(pkg["Version"])
     if (pkgname %in% pkg.cache.get.ignored.packages(pkg.cache.env)) {
         log.message("reject to insert ignored package '", pkgname, "'", level=1)
         return (FALSE)
@@ -237,11 +271,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     if(is.null(version.dir)) {
         return (FALSE)
     }
-
-    # create the version directory
-    if (!pkg.cache.create.version.dir(pkg.cache.env, version.dir)) {
-        return (FALSE)
-    }
+    assert( dir.exists(version.dir))
 
     # lock version directory
     if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
@@ -250,13 +280,13 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     }
 
     tryCatch({
-        fromPath <- file.path(lib, pkgname)
-        cache.entry.name <- pkg.cache.entry.filename(pkg)
-        toPath <- pkg.cache.file.path(pkg.cache.env, version.dir, cache.entry.name)
+        pkg.path <- file.path(lib, pkgname)
+        toPath <- pkg.cache.file.path(version.dir, pkg)
 
         # to produce a ZIP with relative paths, we need to change the working dir
         prev.wd <- getwd()
-        setwd(lib)
+        stopifnot( dir.exists(pkg.path))
+        setwd(pkg.path)
 
         # cleanup older package versions
         pkg.cache.cleanup.pkg.versions(pkg.cache.env, version.dir, pkgname)
@@ -264,25 +294,22 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         if (file.exists(toPath)) {
             file.remove(toPath)
         }
-        if(zip(toPath, pkgname, flags="-r9Xq") != 0L) {
+        if(zip(zipfile=toPath, files=dir(), flags="-r9Xq") != 0L) {
             pkg.cache.unlock(pkg.cache.env, version.dir)
-            log.message("could not compress package dir ", fromPath , " and store it to ", toPath, level=1)
+            log.message("could not compress package dir ", pkg.path , " and store it to ", toPath, level=1)
             return (FALSE)
         }
 
-        # transfer archive file to object store
+        # Upload archive file via artifact_uploader
         if (pkg.cache.mode.oci(pkg.cache.env)) {
-            object.name <- paste0(version.dir, "/", cache.entry.name)
-            pkg.cache.os.put(pkg.cache.env, object.name, toPath)
-            dest.name <- object.name
-
-            # delete temporary file (in any case)
-            unlink(toPath)
-        } else {
-            dest.name <- toPath
+            artifact.name <- create.pkg.artifact.name(pkg.cache.env, pkgname, pkg.version)
+            ret <- pkg.cache.artifact.upload(toPath, artifact.name)
+            if (!ret) {
+                stop("pkg.cache.artifact.put failed")
+            }
         }
         setwd(prev.wd)
-        log.message("successfully inserted package ", pkgname , " to package cache (", dest.name, ")")
+        log.message("successfully inserted package ", pkgname , " from path ", pkg.path, " to package cache (", toPath, ")")
         pkg.cache.unlock(pkg.cache.env, version.dir)
         return (TRUE)
     }, error = function(e) {
@@ -312,71 +339,45 @@ pkg.cache.cleanup.pkg.versions <- function(pkg.cache.env, version.dir, pkgname) 
     NULL
 }
 
-# return value: if 'capture.output=FALSE' then TRUE/FALSE; otherwise the captured output
-pkg.cache.os.run.client <- function(os.cmd, os.cmd.args, os.object.name, os.object.dest="", capture.output=FALSE) {
-    # consider env var 'FASTR_OS_PKG_CACHE_PREFIX'
-    pkg.cache.os.prefix <- Sys.getenv("FASTR_OS_PKG_CACHE_PREFIX")
+# Set this to a different character to force cache repopulation
+MANUAL_VERSION_OVERRIDE <- "1"
+ARTIFACT_PREFIX <- "fastr"
 
-    # assemble final object name
-    os.object.qname <- paste0(pkg.cache.os.prefix, os.object.name)
-
-    # consider env var 'FASTR_OCI_CLIENT_ARGS'
-    os.client.args <- Sys.getenv("FASTR_OCI_CLIENT_ARGS")
-
-    # consider env var 'FASTR_OS_BUCKET_NAME'
-    os.bucket.name <- Sys.getenv("FASTR_OS_BUCKET_NAME")
-    os.bucket.option <- if (os.bucket.name != "") paste("-bn", os.bucket.name) else ""
-
-    # optional: 'os.object.dest'
-    os.file.option <- if (os.object.dest != "") paste("--file", os.object.dest) else ""
-
-    # assemble command line
-    cmd.line <- paste("oci", os.client.args, "os object", os.cmd, os.bucket.option, os.cmd.args, os.object.qname, os.file.option)
-    log.message("object store client command line: ", cmd.line, level=1)
-
-    result <- system(cmd.line, ignore.stdout=verbose, intern=capture.output)
-
-    # status code is stored in attribute 'status'
-    rc <- if (capture.output) attr(result, "status") else result
-
-    if (rc != 0L) {
-        log.message("object store ", os.cmd, " failed with status code=", rc)
-    }
-
-    if (capture.output) result else (rc == 0L)
+pkg.cache.artifact.upload <- function(source.path, artifact.name) {
+    assert( is.character(artifact.name) && length(artifact.name) == 1)
+    assert( is.character(source.path) && length(source.path) == 1)
+    artifact.repo.key <- Sys.getenv("ARTIFACT_REPO_KEY_LOCATION")
+    assert( is.character(artifact.repo.key) && length(artifact.repo.key) == 1)
+    args <- c(source.path, artifact.name, ARTIFACT_PREFIX, "--lifecycle", "cache", "--artifact-repo-key", artifact.repo.key, "--skip-existing")
+    cat("Uploading artifact '", artifact.name, "' with `artifact_uploader.py ", args, "`", "\n")
+    tryCatch({
+        rc <- system2("artifact_uploader.py", args)
+    }, error = function(e) {
+        return (FALSE)
+    })
+    return (rc == 0L)
 }
 
-# get an object from the object store; TRUE on success, FALSE otherwise
-pkg.cache.os.get <- function(pkg.cache.env, os.object.name, os.object.dest) {
-    # ensure that 'os.object.dest' does not exist
-    unlink(os.object.dest)
-    pkg.cache.os.run.client("get", "--name", os.object.name, os.object.dest)
+pkg.cache.artifact.download <- function(artifact.name, location) {
+    assert( is.character(artifact.name) && length(artifact.name) == 1)
+    assert( is.character(location) && length(location) == 1)
+    args <- c(paste0(ARTIFACT_PREFIX, "/", artifact.name), location)
+    cat("Downloading artifact '", artifact.name, "' with `artifact_download.py ", args, "`", "\n")
+    tryCatch({
+        rc <- system2("artifact_download.py", args)
+    }, error = function(e) {
+        return (FALSE)
+    })
+    return (rc == 0L)
 }
 
-# put an object to the object store; TRUE on success, FALSE otherwise
-pkg.cache.os.put <- function(pkg.cache.env, os.object.name, os.object.dest) {
-    pkg.cache.os.run.client("put", "--force --name", os.object.name, os.object.dest)
-}
-
-# delete objects from the object storage
-pkg.cache.os.delete <- function(pkg.cache.env, os.object.name, recursive=FALSE) {
-    if (recursive) {
-        pkg.cache.os.run.client("bulk-delete", "--force --prefix", os.object.name)
-    } else {
-        pkg.cache.os.run.client("delete", "--force --name", os.object.name)
-    }
-}
-
-# list objects in the object storage
-pkg.cache.os.list <- function(pkg.cache.env, os.prefix) {
-    result <- pkg.cache.os.run.client("list", "--force --prefix", os.object.name, capture.output=TRUE)
-    if (require(jsonlite)) {
-        parsed <- fromJSON(result)
-        parsed$data[,"name"]
-    } else {
-        log.message("package 'jsonlite' not available")
-        character(0)
-    }
+create.pkg.artifact.name <- function(pkg.cache.env, pkg.name, pkg.version) {
+    assert( is.character(pkg.name) && length(pkg.name) == 1)
+    assert( is.character(pkg.version) && length(pkg.version) == 1)
+    api.checksum <- pkg.cache.env$version
+    artifact.name <- paste(pkg.name, pkg.version, api.checksum, MANUAL_VERSION_OVERRIDE, sep="_")
+    artifact.name <- paste0(artifact.name, ".zip")
+    return (artifact.name)
 }
 
 pkg.cache.mode.oci <- function(pkg.cache.env) {
@@ -387,40 +388,53 @@ pkg.cache.mode.local <- function(pkg.cache.env) {
     !pkg.cache.mode.oci(pkg.cache.env)
 }
 
+#'
+#' @return Version sub-directory, e.g., 'library1ed4288f477ec3161cc4'.
 pkg.cache.check <- function(pkg.cache.env) {
     # check if caching is enabled
     if (!pkg.cache.is.enabled(pkg.cache.env)) {
         return (NULL)
     }
 
-    if (pkg.cache.mode.oci(pkg.cache.env)) {
-        version.table <- pkg.cache.os.initialized(pkg.cache.env)
-        if (is.null(version.table)) {
-            pkg.cache.init(pkg.cache.env, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
-        }
-    } else {
-        # check if package cache directory can be accessed
-        if (dir.exists(pkg.cache.env$dir) && any(file.access(pkg.cache.env$dir, mode = 6) == -1)) {
-            log.message("cannot access package cache dir ", pkg.cache.env$dir, level=1)
-            return (NULL)
-        }
-
-        # check cache directory has valid structure
-        if (!is.valid.cache.dir(pkg.cache.env$dir, pkg.cache.env$table.file.name)) {
-            pkg.cache.init(pkg.cache.env, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
-        }
+    # Check if package cache dir can be accessed.
+    if (dir.exists(pkg.cache.env$dir) && any(file.access(pkg.cache.env$dir, mode = 6) == -1)) {
+        log.message("cannot access package cache dir ", pkg.cache.env$dir, level=1)
+        return (NULL)
     }
+
+    # check cache directory has valid structure
+    if (!is.valid.cache.dir(pkg.cache.env$dir, pkg.cache.env$table.file.name)) {
+        pkg.cache.init(pkg.cache.env, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
+    }
+
     # get version sub-directory
     version.dir <- pkg.cache.get.version(pkg.cache.env, pkg.cache.env$dir, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
     if (is.null(version.dir)) {
         log.message("cannot access or create version subdir for ", as.character(pkg.cache.env$version), level=1)
     }
-
-    if (pkg.cache.mode.local(pkg.cache.env)) {
-        file.path(pkg.cache.env$dir, version.dir)
-    } else {
-        version.dir
+    version.dir.path <- file.path(pkg.cache.env$dir, version.dir)
+    if (!pkg.cache.create.version.dir(version.dir.path)) {
+        return (NULL)
     }
+
+    if (PRINT_PKGCACHE_DIR_CONTENTS) {
+        cat("===== Start of initialized cache contents log =====\n")
+        cat("Package cache is already initialized at ", pkg.cache.env$dir, " with contents:\n")
+        cat("dir(pkg.cache.env$dir) = ", dir(pkg.cache.env$dir), "\n", sep="")
+        table.path <- file.path(pkg.cache.env$dir, pkg.cache.env$table.file.name)
+        table.lines <- readLines(table.path)
+        cat("Contents of version table:\n", sapply(table.lines, function(line) paste0("  ", line, "\n")))
+        for (subdir in dir(pkg.cache.env$dir)) {
+            subdir.path <- file.path(pkg.cache.env$dir, subdir)
+            if (dir.exists(subdir.path)) {
+                subdir.files <- dir(subdir.path)
+                cat("dir('", subdir.path, "'): [", paste(subdir.files, sep=", "), "]\n", sep="")
+            }
+        }
+        cat("===== End of initialized cache contents log =====\n")
+    }
+
+    return (file.path(pkg.cache.env$dir, version.dir))
 }
 
 is.valid.cache.dir <- function(cache.dir, table.file.name) {
@@ -435,42 +449,11 @@ is.valid.cache.dir <- function(cache.dir, table.file.name) {
     }
 
     tryCatch({
-        version.table <- read.csv(version.table.name)
+        read.csv(version.table.name)
         TRUE
     }, error = function(e) {
         log.message("could not read package cache's version table: ", e$message, level=1)
         FALSE
-    })
-}
-
-# checks if the package cache structure is initialized on the object storage
-pkg.cache.os.initialized <- function(pkg.cache.env) {
-    table.file.name <- pkg.cache.env$table.file.name
-    dst.file <- file.path(pkg.cache.env$dir, table.file.name)
-
-    # download version table file to temporary location
-    if (!pkg.cache.os.get(pkg.cache.env, table.file.name, dst.file)) {
-        # error already logged
-        return (NULL)
-    }
-
-
-    if (any(file.access(dst.file, mode = 6) == -1)) {
-        # delete temporary file
-        unlink(dst.file)
-        return (NULL)
-    }
-
-    tryCatch({
-        version.table <- read.csv(dst.file)
-        # delete temporary file
-        unlink(dst.file)
-        version.table
-    }, error = function(e) {
-        log.message("could not read package cache's version table: ", e$message, level=1)
-        # delete temporary file
-        unlink(dst.file)
-        NULL
     })
 }
 
@@ -480,6 +463,7 @@ pkg.cache.gen.version.dir.name <- function(version) {
 }
 
 pkg.cache.init <- function(pkg.cache.env, version, table.file.name, cache.size) {
+    assert( is.character(version) && length(version) == 1, "Version has to be specified")
     if (is.null(version)) {
         # This has been logged during argument parsing.
         return (NULL)
@@ -488,16 +472,15 @@ pkg.cache.init <- function(pkg.cache.env, version, table.file.name, cache.size) 
     log.message("initializing package cache (mode=", pkg.cache.env$mode, ")")
 
     cache.dir <- pkg.cache.env$dir
-    if (pkg.cache.mode.local(pkg.cache.env)) {
-        if (!dir.exists(cache.dir)) {
-            log.message("creating cache directory ", cache.dir, level=1)
+    if (!dir.exists(cache.dir)) {
+        log.message("creating cache directory ", cache.dir, level=1)
 
-            tryCatch({
-                dir.create(cache.dir, recursive=T)
-            }, error = function(e) {
-                log.message("could create package cache dir '", cache.dir, "' because: ", e$message)
-            })
-        }
+        tryCatch({
+            dir.create(cache.dir, recursive=T)
+        }, error = function(e) {
+            log.message("could create package cache dir '", cache.dir, "' because: ", e$message)
+            return (NULL)
+        })
     }
 
     # create package lib dir for this version (if not existing)
@@ -511,34 +494,25 @@ pkg.cache.init <- function(pkg.cache.env, version, table.file.name, cache.size) 
         log.message("could not write version table to file ", version.table.name, " because: ", e$message)
     })
 
-    # in mode="os", we need to upload the file to the object store
-    if (pkg.cache.mode.oci(pkg.cache.env)) {
-        pkg.cache.os.put(pkg.cache.env, table.file.name, version.table.name)
-    }
-
-    NULL
+    return (NULL)
 }
 
 pkg.cache.delete.version <- function(pkg.cache.env, version.dir.basename) {
-
     log.message("removing oldest version dir ", version.dir.basename, level=1)
-    if (pkg.cache.mode.oci(pkg.cache.env)) {
-        pkg.cache.os.delete(pkg.cache.env, version.dir.basename, recursive=TRUE)
-    } else {
-        # delete directory
-        tryCatch({
-            oldest.dir <- file.path(pkg.cache.env$dir, version.dir.basename)
-            version.table <- version.table[-order[[1]],]
-            unlink(oldest.dir, recursive=TRUE)
-        }, error = function(e) {
-            log.message("could not remove directory ", oldest.dir, " from cache", level=1)
-        })
-    }
+    # delete directory
+    tryCatch({
+        oldest.dir <- file.path(pkg.cache.env$dir, version.dir.basename)
+        version.table <- version.table[-order[[1]],]
+        unlink(oldest.dir, recursive=TRUE)
+    }, error = function(e) {
+        log.message("could not remove directory ", oldest.dir, " from cache", level=1)
+    })
 }
 
 
 # creates package lib dir for this version (if not existing)
 pkg.cache.create.version <- function(pkg.cache.env, version, version.table) {
+    assert( is.character(version) && length(version) == 1, "Version has to be specified")
     version.subdir <- pkg.cache.gen.version.dir.name(version)
 
     # We do not create the version directory here because we cannot guarantee that this will stay in sync
@@ -598,31 +572,20 @@ pkg.cache.read.version.from.table <- function(pkg.cache.env, cache.version, vers
             }, error = function(e) {
                 pkg.cache.unlock(pkg.cache.env, pkg.cache.env$dir)
             })
-
-            # send updated file to object store
-            if (pkg.cache.mode.oci(pkg.cache.env)) {
-                if (!pkg.cache.os.put(pkg.cache.env, pkg.cache.env$table.file.name, version.table.file)) {
-                    return (NULL)
-                }
-            }
-
         }
 
         # return the version directory
-        version.subdir
+        return (version.subdir)
     }, error = function(e) {
         log.message("error reading/writing 'version.table': ", e$message, level=1)
-        NULL
+        return (NULL)
     })
 }
 
+#' Returns the version subdirectory.
 pkg.cache.get.version <- function(pkg.cache.env, cache.dir, cache.version, table.file.name, cache.size) {
-
+    assert( is.character(cache.version) && length(cache.version) == 1, "Version has to be specified")
     version.table.file <- file.path(cache.dir, table.file.name)
-    if (pkg.cache.mode.oci(pkg.cache.env)) {
-        pkg.cache.os.get(pkg.cache.env, table.file.name, version.table.file)
-    }
-
     pkg.cache.read.version.from.table(pkg.cache.env, cache.version, version.table.file)
 }
 
@@ -646,11 +609,11 @@ pkg.cache.get.ignored.packages <- function(pkg.cache.env) {
     }
 }
 
-# Computes the direct dependencies of a package.
+# Computes the direct, not-yet-installed, dependencies of a package.
 # Returns a data frame containing the with rows c("Package", "Version")
 package.dependencies <- function(pkg.cache.env, pkg, lib, dependencies = c("Depends", "Imports", "LinkingTo"), pl = as.data.frame(available.packages(), stringAsFactors=FALSE)) {
     if (!(pkg %in% rownames(pl))) {
-        log.message("Package", as.character(pkg), "not on CRAN\n", level=1)
+        log.message("Package ", as.character(pkg), " not on CRAN\n", level=1)
         return (NULL)
     }
     fields <- pl[pkg, dependencies]
@@ -680,9 +643,10 @@ package.dependencies <- function(pkg.cache.env, pkg, lib, dependencies = c("Depe
     non.ignored.deps[!(non.ignored.deps$Package %in% installed.pkgs.table$Package & non.ignored.deps$Version %in% installed.pkgs.table$Version),c("Package", "Version")]
 }
 
-# Computes the transitive dependencies of a package by ignoring installed packages and 'pkg.cache.get.ignored.packages()'.
-# The result is a data frame with columns named "Package" and "Version".
-# Every row represents a package by the name and its version.
+#' Computes the transitive dependencies of a package by ignoring installed packages and 'pkg.cache.get.ignored.packages()'.
+#' The result is a data frame with columns named "Package" and "Version".
+#' Every row represents a package by the name and its version.
+#' @param pkg Name of the package
 transitive.dependencies <- function(pkg.cache.env, pkg, lib, pl = as.data.frame(available.packages(), stringAsFactors=FALSE), deptype=c("Depends", "Imports", "LinkingTo"), suggests=FALSE) {
     deps <- data.frame(Package=character(0), Version=character(0))
     more <- pkg
@@ -784,11 +748,11 @@ pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.i
         # if we reach here, installation was a success
         0L
     }, error = function(e) {
-        log.message(e$message)
+        log.message("error: ", e$message)
         log.message(traceback())
         return (1L)
     }, warning = function(e) {
-        log.message(e$message)
+        log.message("error: ", e$message)
         return (1L)
     })
 }

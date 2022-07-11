@@ -32,13 +32,14 @@ In this file, we enumerate all the fastr-related environment variables
 ## Run-time environment variables
 - `FASTR_MRAN_MIRROR`
   - MRAN mirror used by FastR for installing packages.
-  - If this env var is set, the package installation works as if calling `install.packages(..., repos=Sys.getenv('FASTR_PKGS_CACHE_OPT'))`.
+  - If this env var is set, the package installation works as if
+    calling `install.packages(..., repos=c('MRAN' = Sys.getenv('FASTR_MRAN_MIRROR')))`.
 - `FASTR_REPOS`
   - name=value pairs for setting R repositories.
   - Will be used for something like `options(repos = ...)` in R.
   - Example: `FASTR_REPOS=file://home/pmarek/dev/fastr/com.oracle.truffle.r.test.native/packages/repo,CRAN=file://home/pmarek/minicran/2021-02-01`.
-  - Used by `mx pkgtest` and `mx r-pkgcache` commands.
-  - For more info run `mx pkgtest --help`.
+  - Used by `mx r-pkgtest` and `mx r-pkgcache` commands.
+  - For more info run `mx r-pkgtest --help`.
 - `FASTR_OPTION_<option>=<value>`
   - With this pattern, you can pass an option to FastR.
   - Equivalent to `$GRAALVM_HOME/bin/R --R.<option>=<value>`.

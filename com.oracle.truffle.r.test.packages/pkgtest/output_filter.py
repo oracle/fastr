@@ -23,6 +23,7 @@
 
 import re
 import logging
+from typing import List, Callable
 
 
 class ContentFilter:
@@ -33,7 +34,7 @@ class ContentFilter:
     remove_before = 0
     remove_after = 0
 
-    def __init__(self, pkg_pattern, action, args, remove_before=0, remove_after=0):
+    def __init__(self, pkg_pattern: str, action: str, args: List[str], remove_before=0, remove_after=0):
         self.pkg_pattern = pkg_pattern
         self.pkg_prog = re.compile(pkg_pattern)
         self.action = action
@@ -41,7 +42,7 @@ class ContentFilter:
         self.remove_before = remove_before
         self.remove_after = remove_after
 
-    def _apply_to_lines(self, content, action):
+    def _apply_to_lines(self, content: List[str], action: Callable[[str], str]) -> List[str]:
         if action is not None:
             idx = 0
             while idx < len(content):
@@ -55,7 +56,7 @@ class ContentFilter:
                 idx += 1
         return content
 
-    def apply(self, content):
+    def apply(self, content: List[str]) -> List[str]:
         filter_action = None
         if self.action == "r":
             filter_action = lambda l: l.replace(self.args[0], self.args[1])
@@ -67,23 +68,23 @@ class ContentFilter:
             filter_action = lambda l: "" if self.args[0] in l else l
         elif self.action == "s":
             class SubstituteAction:
-                def __init__(self, pattern, repl):
+                def __init__(self, pattern: str, repl: str):
                     self.compiled_regex = re.compile(pattern)
                     self.repl = repl
 
-                def __call__(self, l):
+                def __call__(self, l: str) -> str:
                     return re.sub(self.compiled_regex, self.repl, l)
 
             filter_action = SubstituteAction(self.args[0], self.args[1])
         return self._apply_to_lines(content, filter_action)
 
-    def applies_to_pkg(self, pkg_name):
+    def applies_to_pkg(self, pkg_name: str) -> bool:
         if pkg_name is None:
             return True
         else:
-            return self.pkg_prog.match(pkg_name)
+            return self.pkg_prog.match(pkg_name) is not None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         fmt_str = "{!s} => {!s}"
         fmt_args = [self.pkg_pattern, self.action]
         for arg in self.args:
@@ -96,9 +97,9 @@ class InvalidFilterException(Exception):
     pass
 
 
-def load_filter_file(file_path):
+def load_filter_file(file_path: str) -> List[ContentFilter]:
     from os.path import isfile
-    filters = []
+    filters: List[ContentFilter] = []
     if isfile(file_path):
         with open(file_path) as f:
             for linenr, line in enumerate(f.readlines()):
@@ -111,7 +112,7 @@ def load_filter_file(file_path):
     return filters
 
 
-def _select_filters(filters, pkg):
+def _select_filters(filters: List[ContentFilter], pkg: str) -> List[ContentFilter]:
     pkg_filters = []
     for f in filters:
         if f.applies_to_pkg(pkg):
@@ -119,14 +120,14 @@ def _select_filters(filters, pkg):
     return pkg_filters
 
 
-def _parse_filter(line):
+def _parse_filter(line: str) -> ContentFilter:
     arrow_idx = line.find("=>")
     if arrow_idx < 0:
         raise InvalidFilterException("cannot find separator '=>'")
     pkg_pattern = line[:arrow_idx].strip()
     action_str = line[arrow_idx + 2:].strip()
     action = action_str[0]
-    args = []
+    args: List[str] = []
     remove_before = 0
     remove_after = 0
     if action == "d" or action == "D":
@@ -156,5 +157,5 @@ def _parse_filter(line):
     return ContentFilter(pkg_pattern, action, args, remove_before, remove_after)
 
 
-def select_filters_for_package(filter_file, pkg):
+def select_filters_for_package(filter_file: str, pkg: str) -> List[ContentFilter]:
     return _select_filters(load_filter_file(filter_file), pkg)
