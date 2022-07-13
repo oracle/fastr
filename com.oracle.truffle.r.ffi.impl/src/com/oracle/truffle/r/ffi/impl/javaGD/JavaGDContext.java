@@ -172,9 +172,8 @@ public final class JavaGDContext {
         assert gdId < devices.size();
         int lastDevIdx = (int) deviceIndexes.pop();
         assert lastDevIdx == gdId;
-        GDInterface gd = devices.get(gdId);
+        GDInterface gd = devices.remove(gdId);
         assert gd != null;
-        devices.set(gdId, null);
         return gd;
     }
 

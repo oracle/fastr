@@ -71,6 +71,7 @@ SEXP L_initGrid(SEXP GridEvalEnv)
 SEXP L_killGrid() 
 {
     GEunregisterSystem(gridRegisterIndex);
+    gridRegisterIndex = -1;
     return R_NilValue;
 }
 

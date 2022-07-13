@@ -74,7 +74,7 @@ public class PackagePatching {
                     new Patch("Rf_KillAllDevices\\s*\\(\\s*\\)", ""),
                     // This patch was first introduced because compilation of testthat 3.0.1 failed
                     // on systems
-                    // with newer glibc, as described in
+                    // with newer glibc (for example glibc version on Ubuntu >= 22.04) , as described in
                     // https://github.com/r-lib/testthat/issues/1373.
                     // In newer glibc, SIGSTKSZ is no longer a constexpr, so it cannot be used in
                     // C++ in static array declaration.

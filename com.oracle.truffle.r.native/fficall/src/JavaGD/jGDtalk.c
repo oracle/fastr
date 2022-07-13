@@ -89,7 +89,8 @@ static void newJavaGD_Raster(unsigned int *raster, int w, int h,
 
 static R_GE_gcontext lastGC; /** last graphics context. the API send changes, not the entire context, so we cache it for comparison here */
 
-	
+int javaGDDeviceCounter = 0;
+
 #define checkGC(xd,gc) sendGC(xd,gc,0)
 
 /** check changes in GC and issue corresponding commands if necessary */
@@ -189,6 +190,7 @@ static void newJavaGD_Close(NewDevDesc *dd)
 //    if (mid) (*env)->CallVoidMethod(env, xd->talk, mid);
 //	chkX(env);
 	gdClose(xd->gdId);
+	javaGDDeviceCounter--;
 }
 
 static void newJavaGD_Deactivate(NewDevDesc *dd)
@@ -369,8 +371,6 @@ static void newJavaGD_NewPage(R_GE_gcontext *gc, NewDevDesc *dd)
     /* this is an exception - we send all GC attributes just after the NewPage command */
     sendAllGC(xd, gc);
 }
-
-int javaGDDeviceCounter = 0;
 
 Rboolean newJavaGD_Open(NewDevDesc *dd, newJavaGDDesc *xd, const char *dsp, double w, double h)
 {   
