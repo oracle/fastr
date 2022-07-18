@@ -108,7 +108,7 @@ public class DLL {
     public static class ContextStateImpl implements RContext.ContextState {
         private ArrayList<DLLInfo> list;
         private RContext context;
-        private static DLLInfo libRdllInfo;
+        private DLLInfo libRdllInfo;
 
         public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
@@ -121,10 +121,6 @@ public class DLL {
                 list = context.getParent().stateDLL.list;
             } else {
                 list = new ArrayList<>();
-                if (!context.isInitial()) {
-                    assert list.isEmpty();
-                    list.add(libRdllInfo);
-                }
             }
             return this;
         }
@@ -148,7 +144,7 @@ public class DLL {
             return kind == ContextKind.SHARE_PARENT_RW || kind == ContextKind.SHARE_ALL;
         }
 
-        public static DLLInfo getLibR() {
+        public DLLInfo getLibR() {
             return libRdllInfo;
         }
 
@@ -399,13 +395,13 @@ public class DLL {
             data[0] = name;
             data[1] = path;
             data[2] = RRuntime.asLogical(dynamicLookup);
-            data[3] = createExternalPtr(new SymbolHandle(new Long(System.identityHashCode(handle))), HANDLE_CLASS, handle);
+            data[3] = createExternalPtr(new SymbolHandle((long) System.identityHashCode(handle)), HANDLE_CLASS, handle);
             /*
              * GnuR sets the info member to an externalptr whose value is the C DllInfo structure
              * itself. We use the internal "externalObject" slot instead, and we use the "id" for
              * the "addr" slot.
              */
-            data[4] = createExternalPtr(new SymbolHandle(new Long(id)), INFO_REFERENCE_CLASS, this);
+            data[4] = createExternalPtr(new SymbolHandle((long) id), INFO_REFERENCE_CLASS, this);
             RList result = RDataFactory.createList(data, DLLInfo.NAMES);
             result.setClassAttr(RDataFactory.createStringVectorFromScalar(DLLINFO_CLASS));
             return result;
@@ -928,10 +924,6 @@ public class DLL {
             }
         }
         return null;
-    }
-
-    public static DLLInfo getRdllInfo() {
-        return ContextStateImpl.libRdllInfo;
     }
 
     /**

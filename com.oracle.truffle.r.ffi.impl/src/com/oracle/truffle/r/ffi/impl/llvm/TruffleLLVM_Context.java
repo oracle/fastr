@@ -93,22 +93,28 @@ public class TruffleLLVM_Context extends RFFIContext {
         context.stateDLL.addLibR(libR);
     }
 
+    /**
+     * For now, the LLVM context is only used in the mixed mode, where we first load NFI, NFI loads
+     * libR, which links with libRlapack and libRblas, therefore these native libraries are also
+     * loaded for us.
+     * <p>
+     * Note that tricky thing w.r.t. libRlapack/blas is that they depend on "xerbla_", which is
+     * defined in libR itself. The native loader can probably deal with this dependency cycle, which
+     * Sulong cannot at the moment.
+     * <p>
+     * We build the libR.sol on purpose without linking it to libRblas and libRlapack, so that
+     * Sulong is not trying to load these here.
+     * <p>
+     * Moreover, unlike to NFI, we have to load libR even in non-initial context, because Sulong
+     * creates CallTargets for the functions defined in libR, and these CallTargets cannot be
+     * invoked in a context in which they were not created, without explicit context sharing policy.
+     */
     @Override
     public ContextState initialize(RContext context) {
-        // For now, the LLVM context is only used in the mixed mode, where we first load NFI
-        // NFI loads libR, which links with libRlapack and libRblas, therefore these native
-        // libraries are also loaded for us.
-        // Note that tricky thing w.r.t. libRlapack/blas is that they depend on "xerbla_", which is
-        // defined in libR itself. The native loader can probably deal with this dependency cycle,
-        // while Sulong cannot at the moment.
-        // We build the libR.sol on purpose without liking it to libRblas and libRlapack, so that
-        // Sulong is not trying to load these here.
-        if (context.isInitial()) {
-            TruffleLLVM_DLL.dlOpen(context, LibPaths.getBuiltinLibPath(context, "f2c"));
-            String librffiPath = LibPaths.getBuiltinLibPath(context, "R");
-            DLLInfo libR = DLL.loadLibR(context, librffiPath, path -> TruffleLLVM_DLL.dlOpen(context, path));
-            addLibRToDLLContextState(context, libR);
-        }
+        TruffleLLVM_DLL.dlOpen(context, LibPaths.getBuiltinLibPath(context, "f2c"));
+        String librffiPath = LibPaths.getBuiltinLibPath(context, "R");
+        DLLInfo libR = DLL.loadLibR(context, librffiPath, path -> TruffleLLVM_DLL.dlOpen(context, path));
+        addLibRToDLLContextState(context, libR);
         callState.initialize(context);
         return this;
     }
@@ -168,7 +174,7 @@ public class TruffleLLVM_Context extends RFFIContext {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             Object lookupObject;
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
-                lookupObject = ((LLVM_Handle) DLL.getRdllInfo().handle).handle;
+                lookupObject = ((LLVM_Handle) ctx.stateDLL.getLibR().handle).handle;
             } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
                 DLLInfo dllInfo = DLL.findLibraryContainingSymbol(ctx, function.getCallName());
                 if (dllInfo == null) {

@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
-import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
@@ -91,7 +90,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
             try {
                 InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-                LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
+                LLVM_Handle rdllInfo = (LLVM_Handle) contextA.stateDLL.getLibR().handle;
                 doubleArrayType = findAndExecute(interop, rdllInfo.handle, "get_double_array_sulong_type");
                 intArrayType = findAndExecute(interop, rdllInfo.handle, "get_i32_array_sulong_type");
                 longArrayType = findAndExecute(interop, rdllInfo.handle, "get_i64_array_sulong_type");
@@ -127,7 +126,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
                 callbacks = (TruffleObject) context.getEnv().asGuestValue(callbacksArray);
 
                 InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-                LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
+                LLVM_Handle rdllInfo = (LLVM_Handle) context.stateDLL.getLibR().handle;
                 Object setClbkAddr = interop.readMember(rdllInfo.handle, "Rinternals_setCallbacksAddress");
                 SymbolHandle setClbkAddrSymbolHandle = new SymbolHandle(setClbkAddr);
                 setCallbacksAddress = setClbkAddrSymbolHandle.asTruffleObject();
@@ -158,7 +157,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
     public static void initVariables(RContext context) {
         // must have parsed the variables module in libR
         InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-        LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
+        LLVM_Handle rdllInfo = (LLVM_Handle) context.stateDLL.getLibR().handle;
         for (INIT_VAR_FUN initVarFun : INIT_VAR_FUN.values()) {
             try {
                 initVarFun.symbolHandle = new SymbolHandle(interop.readMember(rdllInfo.handle, initVarFun.funName));

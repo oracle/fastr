@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -70,8 +71,14 @@ public final class TruffleMixed_Context extends RFFIContext {
         llvmContext = new TruffleLLVM_Context(rffiContextState) {
             @Override
             protected void addLibRToDLLContextState(RContext context, DLLInfo libR) {
+                DLLRFFI.LibHandle nfiHandle = nfiContext.getRLibDLLInfo().handle;
+                // If context is not initial, it is probable that nfiHandle is not instanceof
+                // NFIHandle, so we have to fetch NFIHandle first.
+                if (nfiHandle instanceof TruffleMixed_DLL.MixedLLVM_Handle) {
+                    nfiHandle = ((TruffleMixed_DLL.MixedLLVM_Handle) nfiHandle).nfiLibHandle;
+                }
                 // TODO: making handle public, will be refactored
-                libR.handle = new TruffleMixed_DLL.MixedLLVM_Handle((LLVM_Handle) libR.handle, nfiContext.getRLibDLLInfo().handle);
+                libR.handle = new TruffleMixed_DLL.MixedLLVM_Handle((LLVM_Handle) libR.handle, nfiHandle);
                 super.addLibRToDLLContextState(context, libR);
             }
         };
