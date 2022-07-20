@@ -1,5 +1,10 @@
 # Building FastR from Source
 
+TL;DR for devs familiar with GraalVM build tools:
+
+* building locally from fastr directory: `mx r-install-deps && mx --dy /compiler build && mx --dy /compiler R`
+* building GraalVM with FastR: `FASTR_RELEASE=1 FASTR_NO_RECOMMENDED=1 FASTR_CAPTURE_DEPENDENCIES=" " mx --env ce-fastr build`
+
 Building FastR from source is supported on Mac OS X (El Capitan onwards), and various flavors of Linux.
 FastR uses a build tool called `mx` (cf `maven`) which can be downloaded from [here](http://github.com/graalvm/mx).
 `mx` manages software in _suites_, which are normally one-to-one with a `git` repository.
@@ -27,7 +32,7 @@ but it can be further configured by using the following environment variables:
 * `FASTR_NO_RECOMMENDED` set to any value turns off the recommended packages build and bundling with FastR. Only applicable if `FASTR_RELEASE` is set.
 * `FASTR_CAPTURE_DEPENDENCIES` if exported overrides the set of 3rd party libraries that are bundled with FastR, the value is space separated list of "base" names of the libraries, for example, use `gfortran`, for `libgfortran.so.5`. Libraries that can be bundled are: `libpcre2-8`, `libgfortran`, `libquadmath`, and `libgcc_s`. Only applicable if `FASTR_RELEASE` is set.
 
-Note for maintainers of packages for package managers like apt or yum: it is recommended to **not bundle** any 3rd party libraries with FastR, but instead use the dependency management mechanisms of your package manager. To achieve this, export `FASTR_BUNDLE_DEPENDENCIES` set to an empty value (and build FastR with `FASTR_RELEASE`).
+Note for maintainers of packages for package managers like apt or yum: it is recommended to **not bundle** any 3rd party libraries with FastR, but instead use the dependency management mechanisms of your package manager. To achieve this, export `FASTR_CAPTURE_DEPENDENCIES` set to " " (space) and build FastR with `FASTR_RELEASE`.
 
 ## Pre-Requisites
 
