@@ -453,7 +453,7 @@ def _fastr_gate_runner(args, tasks):
                 else:
                     mx.warn('File %s is empty, skipping cran_pkg_test' % list_file)
 
-def common_pkg_tests_args():
+def common_pkg_tests_args(graalvm_home: Optional[str] = None):
     if "FASTR_REPOS" in os.environ:
         repos_arg = os.environ["FASTR_REPOS"]
     else:
@@ -461,21 +461,21 @@ def common_pkg_tests_args():
         # FASTR cannot be transformed by the pkgtest script, because it may not know FastR repo home, just graalvm_home
         fastr_pkgs_repo = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages', 'repo')
         repos_arg = "SNAPSHOT,FASTR=file://" + fastr_pkgs_repo
-    graalvm_home = get_graalvm_home(fatalIfMissing=True)
-    return ["--graalvm-home", graalvm_home, "--gnur-home", gnur_path(), "--fastr-home", _fastr_suite.dir, "--repos", repos_arg]
+    _graalvm_home = graalvm_home if graalvm_home else get_graalvm_home(fatalIfMissing=True)
+    return ["--graalvm-home", _graalvm_home, "--gnur-home", gnur_path(), "--fastr-home", _fastr_suite.dir, "--repos", repos_arg]
 
-def cran_pkg_tests(list_file):
+def cran_pkg_tests(list_file, graalvm_home=None):
     cache_args = []
     cache = os.environ.get('FASTR_PKGS_CACHE_OPT')
     if cache is None:
         mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
     else:
         cache_args += ['--cache-pkgs', cache]
-    result = pkgtest(["--verbose"] + cache_args + common_pkg_tests_args() + ["--pkg-filelist", list_file])
+    result = pkgtest(["--verbose"] + cache_args + common_pkg_tests_args(graalvm_home) + ["--pkg-filelist", list_file])
     if result != 0:
         mx.abort("package test failed")
 
-def internal_pkg_tests():
+def internal_pkg_tests(graalvm_home: Optional[str] = None):
     if not mx.suite("compiler", fatalIfMissing=False) and not mx.suite("graal-enterprise", fatalIfMissing=False):
         mx.abort("internal_pkg_tests must only be run with compiler or graal-enterprise suites")
     list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages/pkg-filelist')
@@ -487,7 +487,7 @@ def internal_pkg_tests():
         list_file_gctorture = list_file + '.gctorture'
         if os.path.exists(list_file_gctorture):
             list_file = list_file_gctorture
-    result = pkgtest(["--verbose", "--pkg-filelist", list_file] + common_pkg_tests_args())
+    result = pkgtest(["--verbose", "--pkg-filelist", list_file] + common_pkg_tests_args(graalvm_home))
     if result != 0:
         mx.abort("internal package test failed")
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,11 +63,6 @@ abstract class ReplacementNode extends OperatorNode {
     ReplacementNode(SourceSection source, RSyntaxLookup operator, RSyntaxElement lhs) {
         super(source, operator);
         this.lhs = lhs;
-    }
-
-    @Override
-    public final Node deepCopy() {
-        return RContext.getASTBuilder().process(this).asRNode();
     }
 
     public static ReplacementNode create(SourceSection source, RSyntaxLookup operator, RSyntaxLookup variable, RSyntaxElement lhs, RNode rhs, List<RSyntaxCall> calls,
