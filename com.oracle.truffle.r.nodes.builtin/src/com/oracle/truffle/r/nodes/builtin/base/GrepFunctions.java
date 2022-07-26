@@ -1210,9 +1210,9 @@ public class GrepFunctions {
             if (fixed) {
                 int index;
                 if (ignoreCase) {
-                    index = toLowerCase(text).indexOf(toLowerCase(pattern));
+                    index = stringIndexOf(toLowerCase(text), toLowerCase(pattern));
                 } else {
-                    index = text.indexOf(pattern);
+                    index = stringIndexOf(text, pattern);
                 }
                 if (index != -1) {
                     result = new Info[]{new Info(index + 1, pattern.length(), null, null, null)};
@@ -1230,6 +1230,11 @@ public class GrepFunctions {
                 return result;
             }
             return new Info[]{new Info(-1, -1, null, null, null)};
+        }
+
+        @TruffleBoundary
+        private static int stringIndexOf(String text, String pattern) {
+            return text.indexOf(pattern);
         }
 
         @TruffleBoundary
