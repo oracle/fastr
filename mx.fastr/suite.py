@@ -99,6 +99,15 @@ suite = {
       "resource" : "true"
     },
 
+    "MATRIX" : {
+      "path" : "libdownloads/matrix.tar.gz",
+      "ext" : ".tar.gz",
+      "version" : "1.4-0",
+      "urls" : ["https://cran.r-project.org/src/contrib/Archive/Matrix/Matrix_{version}.tar.gz"],
+      "sha1" : "2745b86754e1becfae6cbea5e4715f87d3fe8464",
+      "resource" : "true"
+    },
+
     "XZ-1.9" : {
       "sha1" : "1ea4bec1a921180164852c65006d928617bd2caf",
       "maven" : {
@@ -418,6 +427,7 @@ suite = {
         "RPART",
         "CLUSTER",
         "CODETOOLS",
+        "MATRIX",
         "com.oracle.truffle.r.native",
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl",
