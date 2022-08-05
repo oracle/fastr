@@ -39,13 +39,28 @@ def edinclude(args):
     ed_graphicsengine(args[1])
     ed_rconfig(args[0])
 
-use_internals_section = '''#ifdef FASTR
+use_internals_section_and_glob_var_api = '''#ifdef FASTR
+typedef void * FASTR_GlobalVar_t;
+
+FASTR_GlobalVar_t FASTR_GlobalVarAlloc();
+void FASTR_GlobalVarInit(FASTR_GlobalVar_t id);
+void FASTR_GlobalVarSetSEXP(FASTR_GlobalVar_t id, SEXP value);
+SEXP FASTR_GlobalVarGetSEXP(FASTR_GlobalVar_t id);
+void FASTR_GlobalVarSetPtr(FASTR_GlobalVar_t id, void *value);
+void * FASTR_GlobalVarGetPtr(FASTR_GlobalVar_t id);
+void FASTR_GlobalVarSetInt(FASTR_GlobalVar_t id, int value);
+int FASTR_GlobalVarGetInt(FASTR_GlobalVar_t id);
+void FASTR_GlobalVarSetDouble(FASTR_GlobalVar_t id, double value);
+double FASTR_GlobalVarGetDouble(FASTR_GlobalVar_t id);
+void FASTR_GlobalVarSetBool(FASTR_GlobalVar_t id, Rboolean value);
+Rboolean FASTR_GlobalVarGetBool(FASTR_GlobalVar_t id);
+
 // packages defining USE_INTERNALS expect certain defs (e.g. isNull) to be there
 #ifdef USE_RINTERNALS
 #define USE_RINTERNALS_DEFS
 #endif
 #undef USE_RINTERNALS
-#else
+#else // FASTR
 '''
 
 sexp = '''#ifdef FASTR
@@ -87,7 +102,7 @@ def ed_r_internals(gnu_dir):
     with open('Rinternals.h', 'w') as f:
         for line in lines:
             if '== USE_RINTERNALS section' in line:
-                f.write(use_internals_section)
+                f.write(use_internals_section_and_glob_var_api)
                 f.write(line)
                 f.write('#endif\n')
             elif 'typedef struct SEXPREC *SEXP' in line:

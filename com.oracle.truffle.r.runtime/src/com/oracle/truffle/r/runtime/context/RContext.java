@@ -371,6 +371,7 @@ public final class RContext {
     public final GCTortureState gcTorture;
     public volatile EventLoopState eventLoopState;
     public final AltRepContext altRepContext;
+    public final GlobalNativeVarContext globalNativeVarContext;
 
     public final RFFIUpCallTargets rffiUpCallTargets;
 
@@ -490,6 +491,7 @@ public final class RContext {
 
         this.gcTorture = GCTortureState.newContextState();
         this.altRepContext = AltRepContext.newContextState();
+        this.globalNativeVarContext = GlobalNativeVarContext.newContextState(this);
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
 

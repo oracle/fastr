@@ -34,6 +34,7 @@ import com.oracle.truffle.r.test.generate.FastRSession;
 import java.util.HashMap;
 import java.util.Map;
 import org.graalvm.polyglot.Source;
+import org.junit.Test;
 
 public class RForeignObjectWrapperInteropTest extends AbstractInteropTest {
 
@@ -50,6 +51,11 @@ public class RForeignObjectWrapperInteropTest extends AbstractInteropTest {
     private RForeignObjectWrapper i;
     private RForeignObjectWrapper l;
     private RForeignObjectWrapper e;
+
+    @Test
+    public void dummyTest() {
+        // nop, just to force unit testing of this class
+    }
 
     @Override
     protected boolean shouldTestToNative(TruffleObject obj) {

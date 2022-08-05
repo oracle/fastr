@@ -71,6 +71,8 @@
 #define NO_FASTR_REDEFINE
 #include <rffiutils.h>
 
+typedef void * FASTR_GlobalVar_t;
+
 // these two functions are here just to handle casting void* to void function pointers...
 DL_FUNC R_ExternalPtrAddrFn(SEXP s) {
     return (DL_FUNC) R_ExternalPtrAddr(s);
@@ -119,6 +121,78 @@ CTXT FASTR_GlobalContext() {
 Rboolean FASTR_R_Interactive() {
     TRACE0();
     int result = (int) ((call_R_Interactive) callbacks[R_Interactive_x])();
+    checkExitCall();
+    return result;
+}
+
+FASTR_GlobalVar_t FASTR_GlobalVarAlloc() {
+    TRACE0();
+    FASTR_GlobalVar_t result = ((call_FASTR_GlobalVarAlloc) callbacks[FASTR_GlobalVarAlloc_x])();
+    checkExitCall();
+    return result;
+}
+
+void FASTR_GlobalVarInit(FASTR_GlobalVar_t id) {
+    TRACE1(id);
+    ((call_FASTR_GlobalVarInit) callbacks[FASTR_GlobalVarInit_x])(id);
+}
+
+void FASTR_GlobalVarSetSEXP(FASTR_GlobalVar_t id, SEXP value) {
+    TRACE2(id, value);
+    ((call_FASTR_GlobalVarSetSEXP) callbacks[FASTR_GlobalVarSetSEXP_x])(id, value);
+}
+
+SEXP FASTR_GlobalVarGetSEXP(FASTR_GlobalVar_t id) {
+    TRACE1(id);
+    SEXP result = ((call_FASTR_GlobalVarGetSEXP) callbacks[FASTR_GlobalVarGetSEXP_x])(id);
+    checkExitCall();
+    return result;
+}
+
+void FASTR_GlobalVarSetPtr(FASTR_GlobalVar_t id, void *value) {
+    TRACE2(id, value);
+    ((call_FASTR_GlobalVarSetPtr) callbacks[FASTR_GlobalVarSetPtr_x])(id, value);
+}
+
+void * FASTR_GlobalVarGetPtr(FASTR_GlobalVar_t id) {
+    TRACE1(id);
+    void *result = ((call_FASTR_GlobalVarGetPtr) callbacks[FASTR_GlobalVarGetPtr_x])(id);
+    checkExitCall();
+    return result;
+}
+
+void FASTR_GlobalVarSetInt(FASTR_GlobalVar_t id, int value) {
+    TRACE2(id, value);
+    ((call_FASTR_GlobalVarSetInt) callbacks[FASTR_GlobalVarSetInt_x])(id, value);
+}
+
+int FASTR_GlobalVarGetInt(FASTR_GlobalVar_t id) {
+    TRACE1(id);
+    int result = ((call_FASTR_GlobalVarGetInt) callbacks[FASTR_GlobalVarGetInt_x])(id);
+    checkExitCall();
+    return result;
+}
+
+void FASTR_GlobalVarSetDouble(FASTR_GlobalVar_t id, double value) {
+    TRACE2(id, value);
+    ((call_FASTR_GlobalVarSetDouble) callbacks[FASTR_GlobalVarSetDouble_x])(id, value);
+}
+
+double FASTR_GlobalVarGetDouble(FASTR_GlobalVar_t id) {
+    TRACE1(id);
+    double result = ((call_FASTR_GlobalVarGetDouble) callbacks[FASTR_GlobalVarGetDouble_x])(id);
+    checkExitCall();
+    return result;
+}
+
+void FASTR_GlobalVarSetBool(FASTR_GlobalVar_t id, Rboolean value) {
+    TRACE2(id, value);
+    ((call_FASTR_GlobalVarSetBool) callbacks[FASTR_GlobalVarSetBool_x])(id, value);
+}
+
+Rboolean FASTR_GlobalVarGetBool(FASTR_GlobalVar_t id) {
+    TRACE1(id);
+    Rboolean result = ((call_FASTR_GlobalVarGetBool) callbacks[FASTR_GlobalVarGetBool_x])(id);
     checkExitCall();
     return result;
 }

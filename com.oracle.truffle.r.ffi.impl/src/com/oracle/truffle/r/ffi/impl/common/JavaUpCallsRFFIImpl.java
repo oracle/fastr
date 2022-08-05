@@ -78,6 +78,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -2758,6 +2759,81 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object FASTR_DATAPTR(Object x) {
         throw implementedAsNode();
+    }
+
+    @Override
+    public Object FASTR_GlobalVarAlloc(RContext context) {
+        return context.globalNativeVarContext.allocGlobalVarDescr();
+    }
+
+    @Override
+    public void FASTR_GlobalVarInit(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.globalNativeVarContext.initGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetSEXP(Object globVarDescr, Object value, RContext context) {
+        FASTR_GlobalVarSetPtr(globVarDescr, value, context);
+    }
+
+    @Override
+    public Object FASTR_GlobalVarGetSEXP(Object globVarDescr, RContext context) {
+        return FASTR_GlobalVarGetPtr(globVarDescr, context);
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetPtr(Object globVarDescr, Object value, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.globalNativeVarContext.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+    }
+
+    @Override
+    public Object FASTR_GlobalVarGetPtr(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        return context.globalNativeVarContext.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetInt(Object globVarDescr, int value, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.globalNativeVarContext.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+    }
+
+    @Override
+    public int FASTR_GlobalVarGetInt(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        Object result = context.globalNativeVarContext.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        assert result instanceof Integer;
+        return (int) result;
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetDouble(Object globVarDescr, double value, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.globalNativeVarContext.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+    }
+
+    @Override
+    public double FASTR_GlobalVarGetDouble(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        Object result = context.globalNativeVarContext.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        assert result instanceof Double;
+        return (double) result;
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetBool(Object globVarDescr, boolean value, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.globalNativeVarContext.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+    }
+
+    @Override
+    public boolean FASTR_GlobalVarGetBool(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        Object result = context.globalNativeVarContext.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        assert result instanceof Boolean;
+        return (boolean) result;
     }
 
     @Override

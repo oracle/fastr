@@ -133,8 +133,6 @@ public abstract class FFIMaterializeNode extends Node {
     }
 
     static boolean isForeignObject(Object value) {
-        // in case somebody calls wrap for an already wrapped RBaseObject
-        assert value instanceof NativeDataAccess.NativeMirror : value.getClass().getSimpleName() + " has to be a NativeMirror";
         return RRuntime.isForeignObject(value);
     }
 

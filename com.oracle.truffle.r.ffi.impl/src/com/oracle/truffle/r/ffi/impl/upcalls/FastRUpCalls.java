@@ -30,7 +30,8 @@ import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
- * Up-calls specific to FastR used in FastR native code and not exported as part of any API.
+ * Up-calls specific to FastR used in FastR native code. Most of the functions are not exported in any API,
+ * except for the global var API ({@code FASTR_GlobalVar*}, which is exported in {@code Rinternals.h}.
  */
 public interface FastRUpCalls {
     // Checkstyle: stop method name check
@@ -61,4 +62,30 @@ public interface FastRUpCalls {
     @RFFICpointer
     @RFFIUpCallNode(FASTR_DATAPTRNode.class)
     Object FASTR_DATAPTR(Object x);
+
+    // Global Var API
+    Object FASTR_GlobalVarAlloc(@RFFIInject RContext context);
+
+    void FASTR_GlobalVarInit(Object globVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetSEXP(Object globVarDescr, Object value, @RFFIInject RContext context);
+
+    Object FASTR_GlobalVarGetSEXP(Object globVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetPtr(Object globVarDescr, @RFFICpointer Object value, @RFFIInject RContext context);
+
+    @RFFICpointer
+    Object FASTR_GlobalVarGetPtr(Object globVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetInt(Object globalVarDescr, int value, @RFFIInject RContext context);
+
+    int FASTR_GlobalVarGetInt(Object globalVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetDouble(Object globalVarDescr, double value, @RFFIInject RContext context);
+
+    double FASTR_GlobalVarGetDouble(Object globalVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetBool(Object globalVarDescr, boolean value, @RFFIInject RContext context);
+
+    boolean FASTR_GlobalVarGetBool(Object globalVarDescr, @RFFIInject RContext context);
 }
