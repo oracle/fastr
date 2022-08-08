@@ -38,7 +38,6 @@ import org.graalvm.polyglot.Context;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.ArityException;
@@ -156,8 +155,6 @@ public abstract class AbstractInteropTest {
         return null;
     }
 
-    // TODO: New version migration
-    @Ignore
     @Test
     public void testIsNull() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
@@ -165,8 +162,6 @@ public abstract class AbstractInteropTest {
         }
     }
 
-    // TODO: New version migration
-    @Ignore
     @Test
     public void testExecutable() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
@@ -192,8 +187,6 @@ public abstract class AbstractInteropTest {
         }
     }
 
-    // TODO: New version migration
-    @Ignore
     @Test
     public void testInstantiable() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
@@ -209,8 +202,6 @@ public abstract class AbstractInteropTest {
         }
     }
 
-    // TODO: New version migration
-    @Ignore
     @Test
     public void testNativePointer() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
@@ -232,8 +223,6 @@ public abstract class AbstractInteropTest {
         return o.getClass().getSimpleName() + " " + obj;
     }
 
-    // TODO: New version migration
-    @Ignore
     @Test
     public void testSize() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
@@ -255,8 +244,6 @@ public abstract class AbstractInteropTest {
         }
     }
 
-    // TODO: New version migration
-    @Ignore
     @Test
     public void testBoxed() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
@@ -338,8 +325,6 @@ public abstract class AbstractInteropTest {
         assertInteropException(() -> getInterop().readMember(obj, doesnotexist), readException(obj, doesnotexist));
     }
 
-    // TODO: New version migration
-    @Ignore
     @Test
     public void testCannotWrite() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
@@ -369,8 +354,6 @@ public abstract class AbstractInteropTest {
         }, writeException(obj, doesnotexist));
     }
 
-    // TODO: New version migration
-    @Ignore
     @Test
     public void testKeys() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
