@@ -337,8 +337,6 @@ typedef double Trans3d[4][4];
 
 /* The viewing transformation matrix. */
 
-static Trans3d VT;
-
 static void TransVector (Vector3d u, Trans3d T, Vector3d v)
 {
     double sum;
@@ -358,6 +356,7 @@ static void Accumulate (Trans3d T)
     double sum;
     int i, j, k;
 
+    double **VT = FASTR_GlobalVarGetPtr(fastr_glob_VT);
     for (i = 0; i < 4; i++) {
 	for (j = 0; j < 4; j++) {
 	    sum = 0;
@@ -369,6 +368,7 @@ static void Accumulate (Trans3d T)
     for (i = 0; i < 4; i++)
 	for (j = 0; j < 4; j++)
 	    VT[i][j] = U[i][j];
+    FASTR_GlobalVarSetPtr(fastr_glob_VT, VT);
 }
 
 static void SetToIdentity (Trans3d T)
@@ -454,23 +454,25 @@ static void Perspective (double d)
 
 
 /* Set up the light source */
-static double Light[4];
-static double Shade;
-static Rboolean DoLighting;
 
 static void SetUpLight(double theta, double phi)
 {
     double u[4];
     u[0] = 0; u[1] = -1; u[2] = 0; u[3] = 1;
-    SetToIdentity(VT);             /* Initialization */
+    double **VT = FASTR_GlobalVarGetPtr(fastr_glob_VT);
+    double *Light = FASTR_GlobalVarGetPtr(fastr_glob_Light);
+    SetToIdentity((double (*)[4]) VT);             /* Initialization */
     XRotate(-phi);                 /* colatitude rotation */
     ZRotate(theta);                /* azimuthal rotation */
-    TransVector(u, VT, Light);	   /* transform */
+    TransVector(u, (double (*)[4]) VT, Light);	   /* transform */
+    FASTR_GlobalVarSetPtr(fastr_glob_Light, Light);
 }
 
 static double FacetShade(double *u, double *v)
 {
     double nx, ny, nz, sum;
+    double *Light = FASTR_GlobalVarGetPtr(fastr_glob_Light);
+    double Shade = FASTR_GlobalVarGetDouble(fastr_glob_Shade);
     nx = u[1] * v[2] - u[2] * v[1];
     ny = u[2] * v[0] - u[0] * v[2];
     nz = u[0] * v[1] - u[1] * v[0];
@@ -497,6 +499,7 @@ static void DepthOrder(double *z, double *x, double *y, int nx, int ny,
     double d;
     nx1 = nx - 1;
     ny1 = ny - 1;
+    double **VT = FASTR_GlobalVarGetPtr(fastr_glob_VT);
     for (i = 0; i < nx1 * ny1; i++)
 	indx[i] = i;
     for (i = 0; i < nx1; i++)
@@ -513,7 +516,7 @@ static void DepthOrder(double *z, double *x, double *y, int nx, int ny,
 		    u[2] = 0;
 		    u[3] = 1;
 		    if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
-			TransVector(u, VT, v);
+			TransVector(u, (double (*)[4]) VT, v);
 			if (v[3] > d) d = v[3];
 		    }
 		}
@@ -535,6 +538,8 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
     int i, j, k, n, nx1, ny1, icol, nv;
     unsigned int newcol, r, g, b;
     pGEDevDesc dd;
+    double **VT = FASTR_GlobalVarGetPtr(fastr_glob_VT);
+    Rboolean DoLighting = FASTR_GlobalVarGetBool(fastr_glob_DoLighting);
     dd = GEcurrentDevice();
     nx1 = nx - 1;
     ny1 = ny - 1;
@@ -557,7 +562,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 	u[0] = x[i]; u[1] = y[j];
 	u[2] = z[i + j * nx]; u[3] = 1;
 	if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
-	    TransVector(u, VT, v);
+	    TransVector(u, (double (*)[4]) VT, v);
 	    xx[nv] = v[0] / v[3];
 	    yy[nv] = v[1] / v[3];
 	    nv++;
@@ -566,7 +571,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 	u[0] = x[i + 1]; u[1] = y[j];
 	u[2] = z[i + 1 + j * nx]; u[3] = 1;
 	if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
-	    TransVector(u, VT, v);
+	    TransVector(u, (double (*)[4]) VT, v);
 	    xx[nv] = v[0] / v[3];
 	    yy[nv] = v[1] / v[3];
 	    nv++;
@@ -575,7 +580,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 	u[0] = x[i + 1]; u[1] = y[j + 1];
 	u[2] = z[i + 1 + (j + 1) * nx]; u[3] = 1;
 	if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
-	    TransVector(u, VT, v);
+	    TransVector(u, (double (*)[4]) VT, v);
 	    xx[nv] = v[0] / v[3];
 	    yy[nv] = v[1] / v[3];
 	    nv++;
@@ -584,7 +589,7 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 	u[0] = x[i]; u[1] = y[j + 1];
 	u[2] = z[i + (j + 1) * nx]; u[3] = 1;
 	if (R_FINITE(u[0]) &&  R_FINITE(u[1]) && R_FINITE(u[2])) {
-	    TransVector(u, VT, v);
+	    TransVector(u, (double (*)[4]) VT, v);
 	    xx[nv] = v[0] / v[3];
 	    yy[nv] = v[1] / v[3];
 	    nv++;
@@ -614,6 +619,7 @@ static void PerspWindow(double *xlim, double *ylim, double *zlim, pGEDevDesc dd)
     double xmax, xmin, ymax, ymin, xx, yy;
     Vector3d u, v;
     int i, j, k;
+    double **VT = FASTR_GlobalVarGetPtr(fastr_glob_VT);
 
     xmax = xmin = ymax = ymin = 0;
     u[3] = 1;
@@ -623,7 +629,7 @@ static void PerspWindow(double *xlim, double *ylim, double *zlim, pGEDevDesc dd)
 	    u[1] = ylim[j];
 	    for (k = 0; k < 2; k++) {
 		u[2] = zlim[k];
-		TransVector(u, VT, v);
+		TransVector(u, (double (*)[4]) VT, v);
 		xx = v[0] / v[3];
 		yy = v[1] / v[3];
 		if (xx > xmax) xmax = xx;
@@ -709,6 +715,7 @@ static void PerspBox(int front, double *x, double *y, double *z,
     double d[3], e[3];
     int f, i, p0, p1, p2, p3, nearby;
     int ltysave = gpptr(dd)->lty;
+    double **VT = (double **)FASTR_GlobalVarGetPtr(fastr_glob_VT);
 
     gpptr(dd)->lty = front ? LTY_DOTTED : LTY_SOLID;
 
@@ -735,10 +742,10 @@ static void PerspBox(int front, double *x, double *y, double *z,
 	u3[2] = z[Vertex[p3][2]];
 	u3[3] = 1;
 
-	TransVector(u0, VT, v0);
-	TransVector(u1, VT, v1);
-	TransVector(u2, VT, v2);
-	TransVector(u3, VT, v3);
+	TransVector(u0, (double (*)[4]) VT, v0);
+	TransVector(u1, (double (*)[4]) VT, v1);
+	TransVector(u2, (double (*)[4]) VT, v2);
+	TransVector(u3, (double (*)[4]) VT, v3);
 
 	/* Visibility test. */
 	/* Determine whether the surface normal is toward the eye. */
@@ -825,6 +832,7 @@ static void PerspAxis(double *x, double *y, double *z,
     SEXP at, lab;
     double cexsave = gpptr(dd)->cex;
     int fontsave = gpptr(dd)->font;
+    double **VT = (double **)FASTR_GlobalVarGetPtr(fastr_glob_VT);
 
 
     switch (axisType) {
@@ -917,9 +925,9 @@ static void PerspAxis(double *x, double *y, double *z,
 	break;
     }
     u3[3] = 1;
-    TransVector(u1, VT, v1);
-    TransVector(u2, VT, v2);
-    TransVector(u3, VT, v3);
+    TransVector(u1, (double (*)[4]) VT, v1);
+    TransVector(u2, (double (*)[4]) VT, v2);
+    TransVector(u3, (double (*)[4]) VT, v3);
     /* Draw axis label */
     /* change in 2.5.0 to use cex.lab and font.lab */
     gpptr(dd)->cex = gpptr(dd)->cexbase * gpptr(dd)->cexlab;
@@ -970,9 +978,9 @@ static void PerspAxis(double *x, double *y, double *z,
 	    u3[1] = u2[1] + tickLength*(y[1]-y[0])*TickVector[axis][1];
 	    u3[2] = u2[2] + tickLength*(z[1]-z[0])*TickVector[axis][2];
 	    u3[3] = 1;
-	    TransVector(u1, VT, v1);
-	    TransVector(u2, VT, v2);
-	    TransVector(u3, VT, v3);
+	    TransVector(u1, (double (*)[4]) VT, v1);
+	    TransVector(u2, (double (*)[4]) VT, v2);
+	    TransVector(u3, (double (*)[4]) VT, v3);
 	    /* Draw tick line */
 	    GLine(v1[0]/v1[3], v1[1]/v1[3],
 		  v2[0]/v2[3], v2[1]/v2[3], USER, dd);
@@ -1007,6 +1015,7 @@ static void PerspAxes(double *x, double *y, double *z,
     int xpdsave;
     Vector3d u0, u1, u2, u3;
     Vector3d v0, v1, v2, v3;
+    double **VT = (double **) FASTR_GlobalVarGetPtr(fastr_glob_VT);
     u0[0] = x[0];
     u0[1] = y[0];
     u0[2] = z[0];
@@ -1023,10 +1032,10 @@ static void PerspAxes(double *x, double *y, double *z,
     u3[1] = y[1];
     u3[2] = z[0];
     u3[3] = 1;
-    TransVector(u0, VT, v0);
-    TransVector(u1, VT, v1);
-    TransVector(u2, VT, v2);
-    TransVector(u3, VT, v3);
+    TransVector(u0, (double (*)[4]) VT, v0);
+    TransVector(u1, (double (*)[4]) VT, v1);
+    TransVector(u2, (double (*)[4]) VT, v2);
+    TransVector(u3, (double (*)[4]) VT, v3);
 
     /* to fit in the axis labels */
     xpdsave = gpptr(dd)->xpd;
@@ -1076,6 +1085,7 @@ SEXP C_persp(SEXP args)
     int i, j, scale, ncol, dobox, doaxes, nTicks, tickType;
     char EdgeDone[12]; /* Which edges have been drawn previously */
     pGEDevDesc dd;
+    double **VT = (double **) FASTR_GlobalVarGetPtr(fastr_glob_VT);
 
     args = CDR(args);
     if (length(args) < 24)  /* 24 plus any inline par()s */
@@ -1125,7 +1135,8 @@ SEXP C_persp(SEXP args)
     border = CAR(args);		args = CDR(args);
     ltheta = asReal(CAR(args)); args = CDR(args);
     lphi   = asReal(CAR(args)); args = CDR(args);
-    Shade  = asReal(CAR(args)); args = CDR(args);
+    double Shade  = asReal(CAR(args)); args = CDR(args);
+    FASTR_GlobalVarSetDouble(fastr_glob_Shade, Shade);
     dobox  = asLogical(CAR(args)); args = CDR(args);
     doaxes = asLogical(CAR(args)); args = CDR(args);
     nTicks = asInteger(CAR(args)); args = CDR(args);
@@ -1133,6 +1144,7 @@ SEXP C_persp(SEXP args)
     xlab = CAR(args); args = CDR(args);
     ylab = CAR(args); args = CDR(args);
     zlab = CAR(args); args = CDR(args);
+    Rboolean DoLighting;
     if (!isString(xlab) || length(xlab) < 1)
 	error(_("'xlab' must be a character vector of length 1"));
     if (!isString(ylab) || length(ylab) < 1)
@@ -1145,6 +1157,7 @@ SEXP C_persp(SEXP args)
 	DoLighting = TRUE;
     else
 	DoLighting = FALSE;
+    FASTR_GlobalVarSetBool(fastr_glob_DoLighting, DoLighting);
 
     if (!scale) {
 	double s;
@@ -1178,6 +1191,7 @@ SEXP C_persp(SEXP args)
     ncol = LENGTH(col);
     if (ncol < 1) error(_("invalid '%s' specification"), "col");
     if(!R_OPAQUE(INTEGER(col)[0])) DoLighting = FALSE;
+    FASTR_GlobalVarSetBool(fastr_glob_DoLighting, DoLighting);
     PROTECT(border = FixupCol(border, gpptr(dd)->fg));
     if (length(border) < 1)
 	error(_("invalid '%s' specification"), "border");
@@ -1199,7 +1213,7 @@ SEXP C_persp(SEXP args)
 
     /* Specify the viewing transformation. */
 
-    SetToIdentity(VT);             /* Initialization */
+    SetToIdentity((double (*)[4]) VT);             /* Initialization */
     Translate(-xc, -yc, -zc);      /* center at the origin */
     Scale(1/xs, 1/ys, expand/zs);  /* scale extents to [-1,1] */
     XRotate(-90.0);                /* rotate x-y plane to horizontal */
@@ -1412,8 +1426,6 @@ double distFromEdge(double *xxx, double *yyy, int iii, pGEDevDesc dd) {
 		 fmin2(yyy[iii]-gpptr(dd)->usr[2], gpptr(dd)->usr[3]-yyy[iii]));
 }
 
-static SEGP *ctr_SegDB;
-
 static
 Rboolean useStart(double *xxx, double *yyy, int ns, pGEDevDesc dd) {
     if (distFromEdge(xxx, yyy, 0, dd) < distFromEdge(xxx, yyy, ns-1, dd))
@@ -1467,7 +1479,7 @@ static SEXP contour(SEXP x, int nx, SEXP y, int ny, SEXP z,
     /* This R-allocs ctr_SegDB :
      * contourLines() in ../../grDevices/src/stubs.c
      *    --> do_contourLines() --> GEcontourLines() in ../../../main/plot3d.c */
-    ctr_SegDB = contourLines(REAL(x), nx, REAL(y), ny, REAL(z), zc, atom);
+    SEGP *ctr_SegDB = contourLines(REAL(x), nx, REAL(y), ny, REAL(z), zc, atom);
 
     /* The segment database is now assembled. */
 
@@ -1983,7 +1995,7 @@ SEXP C_contour(SEXP args)
     /* memory after a sequence of displaylist replays */
 
     vmax0 = vmaxget();
-    ctr_SegDB = (SEGP*)R_alloc(nx*ny, sizeof(SEGP));
+    SEGP * ctr_SegDB = (SEGP*)R_alloc(nx*ny, sizeof(SEGP));
 
     for (i = 0; i < nx; i++)
 	for (j = 0; j < ny; j++)
