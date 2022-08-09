@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "05f6853ec39e69ccb0cfa420853530903f2cbf67",
+               "version" : "e369f02e58834ff1f7bf11647bbbdc755f353207",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "05f6853ec39e69ccb0cfa420853530903f2cbf67",
+               "version" : "e369f02e58834ff1f7bf11647bbbdc755f353207",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
