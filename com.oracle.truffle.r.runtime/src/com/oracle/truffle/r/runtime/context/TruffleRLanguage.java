@@ -162,6 +162,11 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
+    protected void finalizeContext(RContext context) {
+        context.finalizeContext();
+    }
+
+    @Override
     protected void disposeContext(RContext context) {
         activeContexts--;
         context.dispose();

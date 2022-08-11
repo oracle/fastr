@@ -635,15 +635,20 @@ public final class RContext {
         return new RContext(language, env, instrumenter, isInitial);
     }
 
+    public void finalizeContext() {
+        if (state.contains(State.INITIALIZED) && !embedded) {
+            // Engine deactive must be called from finalizeContext, because we need to call some
+            // native functions from there, and for that, we need the context not to be in the disposal.
+            engine.deactivate();
+        }
+    }
+
     /**
      * Destroy this context.
      */
     public synchronized void dispose() {
         if (!state.contains(State.DISPOSED)) {
             if (state.contains(State.INITIALIZED)) {
-                if (!embedded) {
-                    engine.deactivate();
-                }
                 for (ContextState contextState : contextStates()) {
                     contextState.beforeDispose(this);
                 }
