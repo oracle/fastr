@@ -99,12 +99,19 @@ FASTR_GlobalVar_t fastr_glob_VT = NULL;
 FASTR_GlobalVar_t fastr_glob_Light = NULL;
 FASTR_GlobalVar_t fastr_glob_Shade = NULL;
 FASTR_GlobalVar_t fastr_glob_DoLighting = NULL;
+// src/main/engine.c:
+extern FASTR_GlobalVar_t fastr_glob_registeredSystems;
+extern FASTR_GlobalVar_t fastr_glob_numGraphicsSystems;
+
+// Defined in main/engine.c
+void * fastr_alloc_registeredSystems();
 
 void attribute_visible
 R_init_graphics(DllInfo *dll)
 {
     // FastR globals:
     if (fastr_glob_dnd_rptr == NULL) {
+	// plot.c:
 	fastr_glob_dnd_rptr = FASTR_GlobalVarAlloc();
 	fastr_glob_dnd_lptr = FASTR_GlobalVarAlloc();
 	fastr_glob_dnd_hght = FASTR_GlobalVarAlloc();
@@ -116,6 +123,9 @@ R_init_graphics(DllInfo *dll)
 	fastr_glob_Light = FASTR_GlobalVarAlloc();
 	fastr_glob_Shade = FASTR_GlobalVarAlloc();
 	fastr_glob_DoLighting = FASTR_GlobalVarAlloc();
+	// src/main/engine.c:
+	fastr_glob_registeredSystems = FASTR_GlobalVarAlloc();
+	fastr_glob_numGraphicsSystems = FASTR_GlobalVarAlloc();
     }
     // plot.c:
     FASTR_GlobalVarInit(fastr_glob_dnd_rptr);
@@ -129,6 +139,15 @@ R_init_graphics(DllInfo *dll)
     FASTR_GlobalVarInit(fastr_glob_Light);
     FASTR_GlobalVarInit(fastr_glob_Shade);
     FASTR_GlobalVarInit(fastr_glob_DoLighting);
+    // src/main/engine.c:
+    // registeredSystems
+    FASTR_GlobalVarInit(fastr_glob_registeredSystems);
+    void *registeredSystems = fastr_alloc_registeredSystems();
+    FASTR_GlobalVarSetPtr(fastr_glob_registeredSystems, registeredSystems);
+    void *got_registeredSystems = FASTR_GlobalVarGetPtr(fastr_glob_registeredSystems);
+    // numGraphicsSystems
+    FASTR_GlobalVarInit(fastr_glob_numGraphicsSystems);
+    FASTR_GlobalVarSetInt(fastr_glob_numGraphicsSystems, 0);
 
     R_registerRoutines(dll, NULL, CallEntries, NULL, ExtEntries);
     R_useDynamicSymbols(dll, FALSE);

@@ -13,7 +13,7 @@ import org.graalvm.collections.EconomicMap;
 
 public class GlobalNativeVarContext implements RContext.ContextState {
     // TODO: Remove?
-    private static Collections.ArrayListObj<GlobalVarDescriptor> globalNativeVarDescriptors = new Collections.ArrayListObj<>(64);
+    private static final Collections.ArrayListObj<GlobalVarDescriptor> globalNativeVarDescriptors = new Collections.ArrayListObj<>(64);
 
     private final Collections.ArrayListObj<Object> globalNativeVars = new Collections.ArrayListObj<>();
     private final RContext context;
