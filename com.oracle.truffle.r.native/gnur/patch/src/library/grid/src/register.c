@@ -24,6 +24,9 @@
 #include <R_ext/Rdynload.h>
 #include "grid.h"
 
+FASTR_GlobalVar_t fastr_glob_gridRegisterIndex = NULL;
+FASTR_GlobalVar_t fastr_glob_R_gridEvalEnv = NULL;
+
 #define LCALLDEF(name, n)  {#name, (DL_FUNC) &L_##name, n}
 
 static const R_CallMethodDef callMethods[] = {
@@ -95,6 +98,16 @@ void attribute_visible R_init_grid(DllInfo *dll)
 {
     /* No .C, .Fortran, or .External routines => NULL
      */
+    if (fastr_glob_gridRegisterIndex == NULL) {
+	fastr_glob_gridRegisterIndex = FASTR_GlobalVarAlloc();
+	fastr_glob_R_gridEvalEnv = FASTR_GlobalVarAlloc();
+    }
+    FASTR_GlobalVarInit(fastr_glob_gridRegisterIndex);
+    int *gridRegisterIndex = malloc(sizeof(int));
+    *gridRegisterIndex = -1;
+    FASTR_GlobalVarSetPtr(fastr_glob_gridRegisterIndex, gridRegisterIndex);
+    FASTR_GlobalVarInit(fastr_glob_R_gridEvalEnv);
+
     R_registerRoutines(dll, NULL, callMethods, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
     R_forceSymbols(dll, FALSE);
