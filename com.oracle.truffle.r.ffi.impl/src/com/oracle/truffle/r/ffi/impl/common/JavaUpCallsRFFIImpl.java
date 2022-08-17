@@ -2763,13 +2763,19 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object FASTR_GlobalVarAlloc(RContext context) {
-        return context.globalNativeVarContext.allocGlobalVarDescr();
+        return context.stateglobalNativeVar.allocGlobalVarDescr();
     }
 
     @Override
     public void FASTR_GlobalVarInit(Object globVarDescr, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        context.globalNativeVarContext.initGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        context.stateglobalNativeVar.initGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+    }
+
+    @Override
+    public void FASTR_GlobalVarInitWithDtor(Object globVarDescr, Object destructorNativeFunc, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.stateglobalNativeVar.initGlobalVarWithDtor(((RForeignObjectWrapper) globVarDescr).getDelegate(), destructorNativeFunc, InteropLibrary.getUncached());
     }
 
     @Override
@@ -2785,25 +2791,25 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void FASTR_GlobalVarSetPtr(Object globVarDescr, Object value, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        context.globalNativeVarContext.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+        context.stateglobalNativeVar.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
     }
 
     @Override
     public Object FASTR_GlobalVarGetPtr(Object globVarDescr, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        return context.globalNativeVarContext.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        return context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
     }
 
     @Override
     public void FASTR_GlobalVarSetInt(Object globVarDescr, int value, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        context.globalNativeVarContext.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+        context.stateglobalNativeVar.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
     }
 
     @Override
     public int FASTR_GlobalVarGetInt(Object globVarDescr, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        Object result = context.globalNativeVarContext.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
         assert result instanceof Integer;
         return (int) result;
     }
@@ -2811,13 +2817,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void FASTR_GlobalVarSetDouble(Object globVarDescr, double value, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        context.globalNativeVarContext.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+        context.stateglobalNativeVar.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
     }
 
     @Override
     public double FASTR_GlobalVarGetDouble(Object globVarDescr, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        Object result = context.globalNativeVarContext.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
         assert result instanceof Double;
         return (double) result;
     }
@@ -2825,13 +2831,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void FASTR_GlobalVarSetBool(Object globVarDescr, boolean value, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        context.globalNativeVarContext.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+        context.stateglobalNativeVar.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
     }
 
     @Override
     public boolean FASTR_GlobalVarGetBool(Object globVarDescr, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        Object result = context.globalNativeVarContext.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
         assert result instanceof Boolean;
         return (boolean) result;
     }

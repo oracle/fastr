@@ -137,6 +137,11 @@ void FASTR_GlobalVarInit(FASTR_GlobalVar_t id) {
     ((call_FASTR_GlobalVarInit) callbacks[FASTR_GlobalVarInit_x])(id);
 }
 
+void FASTR_GlobalVarInitWithDtor(FASTR_GlobalVar_t id, void (*dtor)(FASTR_GlobalVar_t)) {
+    TRACE1(id);
+    ((call_FASTR_GlobalVarInitWithDtor) callbacks[FASTR_GlobalVarInitWithDtor_x])(id, dtor);
+}
+
 void FASTR_GlobalVarSetSEXP(FASTR_GlobalVar_t id, SEXP value) {
     TRACE2(id, value);
     ((call_FASTR_GlobalVarSetSEXP) callbacks[FASTR_GlobalVarSetSEXP_x])(id, value);

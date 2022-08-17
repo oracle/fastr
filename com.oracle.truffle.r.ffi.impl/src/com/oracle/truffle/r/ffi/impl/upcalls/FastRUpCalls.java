@@ -68,6 +68,8 @@ public interface FastRUpCalls {
 
     void FASTR_GlobalVarInit(Object globVarDescr, @RFFIInject RContext context);
 
+    void FASTR_GlobalVarInitWithDtor(Object globVarDescr, @RFFICpointer Object destructorNativeFunc, @RFFIInject RContext context);
+
     void FASTR_GlobalVarSetSEXP(Object globVarDescr, Object value, @RFFIInject RContext context);
 
     Object FASTR_GlobalVarGetSEXP(Object globVarDescr, @RFFIInject RContext context);

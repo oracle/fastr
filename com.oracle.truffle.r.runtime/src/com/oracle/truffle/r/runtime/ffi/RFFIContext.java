@@ -143,6 +143,20 @@ public abstract class RFFIContext extends RFFI {
     public abstract <C extends RFFIContext> C as(Class<C> rffiCtxClass);
 
     /**
+     * Calls a native function in slow-path. This method is a simpler alternative to
+     * {@link com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode} machinery.
+     * Use it once the native function is not known during FastR build, i.e., whenever you
+     * cannot use {@link NativeFunction}
+     * @param nativeFunc
+     * @param signature
+     * @param args
+     * @return
+     */
+    public Object callNativeFunction(Object nativeFunc, String signature, Object[] args) {
+        throw RInternalError.shouldNotReachHere("Implemented only for NFI and LLVM");
+    }
+
+    /**
      * @param context
      * @param canRunGc {@code true} if this upcall can cause a gc on GNU R, and therefore can clear
      */

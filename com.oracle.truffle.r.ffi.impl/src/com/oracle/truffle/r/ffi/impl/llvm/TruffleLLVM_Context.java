@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -35,10 +36,15 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
+import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -128,6 +134,29 @@ public class TruffleLLVM_Context extends RFFIContext {
         }
         CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere("No array type for " + arrayElem);
+    }
+
+    @Override
+    public Object callNativeFunction(Object nativeFunc, String signature, Object[] args) {
+        InteropLibrary interop = InteropLibrary.getUncached();
+        assert interop.isExecutable(nativeFunc);
+        Object before = beforeDowncall(null, Type.LLVM);
+        FFIWrap.FFIDownCallWrap ffiWrap = new FFIWrap.FFIDownCallWrap(args.length);
+        FFIMaterializeNode[] ffiMaterializeNodes = FFIMaterializeNode.create(args.length);
+        FFIToNativeMirrorNode[] ffiToNativeMirrorNodes = FFIToNativeMirrorNode.create(args.length);
+        FFIUnwrapNode ffiUnwrapNode = FFIUnwrapNode.create();
+        Object ret;
+        try {
+            Object[] wrappedArgs = ffiWrap.wrapAll(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
+            ret = interop.execute(nativeFunc, wrappedArgs);
+            ret = ffiUnwrapNode.execute(ret);
+        } catch(InteropException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        } finally {
+            ffiWrap.close();
+        }
+        afterDowncall(before, Type.LLVM, AfterDownCallProfiles.getUncached());
+        return ret;
     }
 
     @Override

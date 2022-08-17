@@ -246,6 +246,15 @@ public final class RContext {
         default void beforeDispose(RContext context) {
             // default empty implementation
         }
+
+        /**
+         * Called before context finalization ({@link com.oracle.truffle.api.TruffleLanguage#finalizeContext(Object)}).
+         * Note that context finalization happens before context disposal, and generally, it should be safe to
+         * call native functions in the context finalization.
+         */
+        default void beforeFinalize(RContext context) {
+            // default empty implementation
+        }
     }
 
     private final RStartParams startParameters;
@@ -371,7 +380,8 @@ public final class RContext {
     public final GCTortureState gcTorture;
     public volatile EventLoopState eventLoopState;
     public final AltRepContext altRepContext;
-    public final GlobalNativeVarContext globalNativeVarContext;
+
+    public final GlobalNativeVarContext stateglobalNativeVar;
 
     public final RFFIUpCallTargets rffiUpCallTargets;
 
@@ -398,7 +408,7 @@ public final class RContext {
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRLocale, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG,
                         stateRFFI,
-                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL};
+                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL, stateglobalNativeVar};
     }
 
     public static void setEmbedded() {
@@ -491,7 +501,7 @@ public final class RContext {
 
         this.gcTorture = GCTortureState.newContextState();
         this.altRepContext = AltRepContext.newContextState();
-        this.globalNativeVarContext = GlobalNativeVarContext.newContextState(this);
+        this.stateglobalNativeVar = GlobalNativeVarContext.newContextState(this);
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
 
@@ -636,10 +646,15 @@ public final class RContext {
     }
 
     public void finalizeContext() {
-        if (state.contains(State.INITIALIZED) && !embedded) {
+        if (state.contains(State.INITIALIZED)) {
             // Engine deactive must be called from finalizeContext, because we need to call some
             // native functions from there, and for that, we need the context not to be in the disposal.
-            engine.deactivate();
+            if (!embedded) {
+                engine.deactivate();
+            }
+            for (ContextState contextState : contextStates()) {
+                contextState.beforeFinalize(this);
+            }
         }
     }
 

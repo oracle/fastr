@@ -106,6 +106,11 @@ extern FASTR_GlobalVar_t fastr_glob_numGraphicsSystems;
 // Defined in main/engine.c
 void * fastr_alloc_registeredSystems();
 
+static void fastr_free_globvar_ptr(FASTR_GlobalVar_t glob_ptr) {
+    void *ptr = FASTR_GlobalVarGetPtr(glob_ptr);
+    free(ptr);
+}
+
 void attribute_visible
 R_init_graphics(DllInfo *dll)
 {
@@ -141,7 +146,7 @@ R_init_graphics(DllInfo *dll)
     FASTR_GlobalVarInit(fastr_glob_DoLighting);
     // src/main/engine.c:
     // registeredSystems
-    FASTR_GlobalVarInit(fastr_glob_registeredSystems);
+    FASTR_GlobalVarInitWithDtor(fastr_glob_registeredSystems, &fastr_free_globvar_ptr);
     void *registeredSystems = fastr_alloc_registeredSystems();
     FASTR_GlobalVarSetPtr(fastr_glob_registeredSystems, registeredSystems);
     void *got_registeredSystems = FASTR_GlobalVarGetPtr(fastr_glob_registeredSystems);

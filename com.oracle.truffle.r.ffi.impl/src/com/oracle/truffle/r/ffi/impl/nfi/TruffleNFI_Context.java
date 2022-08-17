@@ -60,6 +60,9 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
+import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -392,6 +395,32 @@ public class TruffleNFI_Context extends RFFIContext {
                 break;
         }
         super.beforeDispose(context);
+    }
+
+    @Override
+    public Object callNativeFunction(Object nativeFunc, String signature, Object[] args) {
+        InteropLibrary interop = InteropLibrary.getUncached();
+        assert interop.isPointer(nativeFunc);
+        Object parsedSignature = parseSignature(signature);
+        Object boundNativeFunc = SignatureLibrary.getUncached().bind(parsedSignature, nativeFunc);
+        assert interop.isExecutable(boundNativeFunc);
+        Object before = beforeDowncall(null, Type.NFI);
+        FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length);
+        FFIMaterializeNode[] ffiMaterializeNodes = FFIMaterializeNode.create(args.length);
+        FFIToNativeMirrorNode[] ffiToNativeMirrorNodes = FFIToNativeMirrorNode.create(args.length);
+        FFIUnwrapNode ffiUnwrapNode = FFIUnwrapNode.create();
+        Object ret;
+        try {
+            Object[] wrappedArgs = ffiWrap.wrapAll(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
+            ret = interop.execute(boundNativeFunc, wrappedArgs);
+            ret = ffiUnwrapNode.execute(ret);
+        } catch(InteropException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        } finally {
+            ffiWrap.close();
+        }
+        afterDowncall(before, Type.NFI, AfterDownCallProfiles.getUncached());
+        return ret;
     }
 
     @Override

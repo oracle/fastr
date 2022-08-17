@@ -93,6 +93,12 @@ static const R_CallMethodDef callMethods[] = {
     { NULL, NULL, 0 }
 };
 
+static void fastr_free_gridRegisterIndex(FASTR_GlobalVar_t grid_register_idx)
+{
+    void *gridRegisterIndex = FASTR_GlobalVarGetPtr(grid_register_idx);
+    free(gridRegisterIndex);
+}
+
 
 void attribute_visible R_init_grid(DllInfo *dll) 
 {
@@ -102,7 +108,7 @@ void attribute_visible R_init_grid(DllInfo *dll)
 	fastr_glob_gridRegisterIndex = FASTR_GlobalVarAlloc();
 	fastr_glob_R_gridEvalEnv = FASTR_GlobalVarAlloc();
     }
-    FASTR_GlobalVarInit(fastr_glob_gridRegisterIndex);
+    FASTR_GlobalVarInitWithDtor(fastr_glob_gridRegisterIndex, fastr_free_gridRegisterIndex);
     int *gridRegisterIndex = malloc(sizeof(int));
     *gridRegisterIndex = -1;
     FASTR_GlobalVarSetPtr(fastr_glob_gridRegisterIndex, gridRegisterIndex);

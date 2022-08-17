@@ -44,6 +44,7 @@ typedef void * FASTR_GlobalVar_t;
 
 FASTR_GlobalVar_t FASTR_GlobalVarAlloc();
 void FASTR_GlobalVarInit(FASTR_GlobalVar_t id);
+void FASTR_GlobalVarInitWithDtor(FASTR_GlobalVar_t id, void (*dtor)(FASTR_GlobalVar_t));
 void FASTR_GlobalVarSetSEXP(FASTR_GlobalVar_t id, SEXP value);
 SEXP FASTR_GlobalVarGetSEXP(FASTR_GlobalVar_t id);
 void FASTR_GlobalVarSetPtr(FASTR_GlobalVar_t id, void *value);

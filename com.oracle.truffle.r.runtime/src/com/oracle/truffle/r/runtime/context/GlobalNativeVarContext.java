@@ -16,6 +16,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
     private static final Collections.ArrayListObj<GlobalVarDescriptor> globalNativeVarDescriptors = new Collections.ArrayListObj<>(64);
 
     private final Collections.ArrayListObj<Object> globalNativeVars = new Collections.ArrayListObj<>();
+    private final Collections.ArrayListObj<Destructor> destructors = new Collections.ArrayListObj<>();
     private final RContext context;
 
     private GlobalNativeVarContext(RContext context) {
@@ -45,6 +46,11 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         setGlobVarIdxForContext(context, currGlobVarIdx, descr, interop);
     }
 
+    public void initGlobalVarWithDtor(Object descr, Object destructorNativeFunc, InteropLibrary interop) {
+        initGlobalVar(descr, interop);
+        destructors.add(new Destructor(descr, destructorNativeFunc));
+    }
+
     public void setGlobalVar(Object descr, Object value, InteropLibrary interop) {
         assert interop.hasHashEntries(descr);
         int globVarIdx = getGlobVarIdxForContext(context, descr, interop);
@@ -56,6 +62,19 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         int globVarIdx = getGlobVarIdxForContext(context, descr, interop);
         assert 0 <= globVarIdx && globVarIdx < globalNativeVars.size();
         return globalNativeVars.get(globVarIdx);
+    }
+
+    @Override
+    public void beforeFinalize(RContext context) {
+        callAllDestructors(context);
+    }
+
+    public void callAllDestructors(RContext context) {
+        for (int i = 0; i < destructors.size(); i++) {
+            var destructor = destructors.get(i);
+            Object ret = context.getRFFI().callNativeFunction(destructor.nativeFunc, Destructor.SIGNATURE, new Object[]{destructor.globalVarDescr});
+            assert InteropLibrary.getUncached().isNull(ret);
+        }
     }
 
     private static int getGlobVarIdxForContext(RContext context, Object descr, InteropLibrary interop) {
@@ -127,4 +146,19 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         }
     }
 
+    /**
+     * Represents a native function callback that is called during the context finalization.
+     * Needed for native array global variables for which there was heap memory allocated.
+     */
+    private static final class Destructor {
+        static final String SIGNATURE = "(pointer): void";
+
+        private final Object globalVarDescr;
+        private final Object nativeFunc;
+
+        private Destructor(Object globalVarDescr, Object nativeFunc) {
+            this.globalVarDescr = globalVarDescr;
+            this.nativeFunc = nativeFunc;
+        }
+    }
 }
