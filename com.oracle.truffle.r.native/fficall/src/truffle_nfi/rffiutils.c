@@ -48,7 +48,16 @@ static __thread int callErrorJmpBufStackIndex = 0;
 static __thread int exceptionFlag = 0;
 
 void exitCall() {
-    longjmp(*callErrorJmpBufStack[callErrorJmpBufStackIndex - 1], 1);
+    if (callErrorJmpBufStackIndex > 0 && peekJmpBuf() != NULL) {
+        jmp_buf *error_jmpbuf = peekJmpBuf();
+        if (error_jmpbuf == NULL) {
+            fatalError("exitCall: peekJmpBuf() should return non-null");
+        }
+        longjmp(*error_jmpbuf, 1);
+    }
+    // callErrorJmpBufStackIndex == 0 can happen when there is bad pairing of push/pop to errorjmpBufStack.
+    // We do not consider it a fatal error here, since there should already be a Java exception
+    // raised in the JVM, therefore, should be handled after this downcall returns.
 }
 
 void checkExitCall() {
