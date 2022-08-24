@@ -53,7 +53,7 @@ public final class RForeignObjectWrapper extends RBaseObject implements RForeign
 
     @Override
     public String toString() {
-        return RRuntime.NULL;
+        return "RForeignObjectWrapper{" + delegate.toString() + "}";
     }
 
     @Override

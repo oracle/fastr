@@ -150,7 +150,6 @@ public abstract class RFFIContext extends RFFI {
      * @param nativeFunc
      * @param signature
      * @param args
-     * @return
      */
     public Object callNativeFunction(Object nativeFunc, String signature, Object[] args) {
         throw RInternalError.shouldNotReachHere("Implemented only for NFI and LLVM");

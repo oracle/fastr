@@ -248,7 +248,7 @@ public final class RContext {
         }
 
         /**
-         * Called before context finalization ({@link com.oracle.truffle.api.TruffleLanguage#finalizeContext(Object)}).
+         * Called before context finalization ({@code com.oracle.truffle.api.TruffleLanguage#finalizeContext(Object)}).
          * Note that context finalization happens before context disposal, and generally, it should be safe to
          * call native functions in the context finalization.
          */
