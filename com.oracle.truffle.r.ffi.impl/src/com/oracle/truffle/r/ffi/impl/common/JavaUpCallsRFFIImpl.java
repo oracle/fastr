@@ -2775,7 +2775,15 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void FASTR_GlobalVarInitWithDtor(Object globVarDescr, Object destructorNativeFunc, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
-        context.stateglobalNativeVar.initGlobalVarWithDtor(((RForeignObjectWrapper) globVarDescr).getDelegate(), destructorNativeFunc, InteropLibrary.getUncached());
+        InteropLibrary interop = InteropLibrary.getUncached();
+        Type destrNativeFuncType;
+        if (!interop.isExecutable(destructorNativeFunc)) {
+            assert interop.isPointer(destructorNativeFunc);
+            destrNativeFuncType = Type.NFI;
+        } else {
+            destrNativeFuncType = Type.LLVM;
+        }
+        context.stateglobalNativeVar.initGlobalVarWithDtor(((RForeignObjectWrapper) globVarDescr).getDelegate(), destructorNativeFunc, destrNativeFuncType, interop);
     }
 
     @Override

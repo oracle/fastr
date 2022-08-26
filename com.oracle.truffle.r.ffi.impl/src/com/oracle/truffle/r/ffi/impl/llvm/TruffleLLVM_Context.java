@@ -41,9 +41,7 @@ import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
-import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
-import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNodeGen;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -137,24 +135,20 @@ public class TruffleLLVM_Context extends RFFIContext {
     }
 
     @Override
-    public Object callNativeFunction(Object nativeFunc, String signature, Object[] args) {
+    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args) {
+        assert nativeFuncType == Type.LLVM;
         InteropLibrary interop = InteropLibrary.getUncached();
         assert interop.isExecutable(nativeFunc);
         Object before = beforeDowncall(null, Type.LLVM);
         FFIWrap.FFIDownCallWrap ffiWrap = new FFIWrap.FFIDownCallWrap(args.length);
-        FFIMaterializeNode[] ffiMaterializeNodes = FFIMaterializeNode.create(args.length);
-        FFIToNativeMirrorNode[] ffiToNativeMirrorNodes = FFIToNativeMirrorNode.create(args.length);
-        FFIUnwrapNode ffiUnwrapNode = FFIUnwrapNode.create();
+        Object[] wrappedArgs = ffiWrap.wrapUncached(args);
         Object ret;
         try {
-            Object[] wrappedArgs = ffiWrap.wrapAll(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
             ret = interop.execute(nativeFunc, wrappedArgs);
-            ret = ffiUnwrapNode.execute(ret);
         } catch(InteropException e) {
             throw RInternalError.shouldNotReachHere(e);
-        } finally {
-            ffiWrap.close();
         }
+        ret = FFIUnwrapNodeGen.getUncached().execute(ret);
         afterDowncall(before, Type.LLVM, AfterDownCallProfiles.getUncached());
         return ret;
     }

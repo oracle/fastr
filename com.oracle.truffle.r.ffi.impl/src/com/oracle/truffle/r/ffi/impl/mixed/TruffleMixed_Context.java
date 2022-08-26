@@ -121,8 +121,15 @@ public final class TruffleMixed_Context extends RFFIContext {
      * Currently, calls the native function only via NFI.
      */
     @Override
-    public Object callNativeFunction(Object nativeFunc, String signature, Object[] args) {
-        return nfiContext.callNativeFunction(nativeFunc, signature, args);
+    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args) {
+        switch (nativeFuncType) {
+            case LLVM:
+                return llvmContext.callNativeFunction(nativeFunc, nativeFuncType, signature, args);
+            case NFI:
+                return nfiContext.callNativeFunction(nativeFunc, nativeFuncType, signature, args);
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
     }
 
     @Override

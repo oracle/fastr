@@ -94,6 +94,16 @@ public class FFIWrap {
             return FFIToNativeMirrorNode.getUncached().execute(materialized[0]);
         }
 
+        public Object[] wrapUncached(Object[] args) {
+            assert materialized.length == args.length;
+            Object[] wrappedArgs = new Object[args.length];
+            for (int i = 0; i < args.length; i++) {
+                materialized[i] = FFIMaterializeNode.getUncached().materialize(args[i]);
+                wrappedArgs[i] = FFIToNativeMirrorNode.getUncached().execute(materialized[i]);
+            }
+            return wrappedArgs;
+        }
+
         public Object[] wrapAll(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
             return wrapSome(args, ffiMateralizeNodes, ffiToNativeMirrorNodes, null);
         }
