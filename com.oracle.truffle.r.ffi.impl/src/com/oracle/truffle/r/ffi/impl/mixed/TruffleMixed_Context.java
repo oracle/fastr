@@ -117,6 +117,14 @@ public final class TruffleMixed_Context extends RFFIContext {
         return this;
     }
 
+    /**
+     * Currently, calls the native function only via NFI.
+     */
+    @Override
+    public Object callNativeFunction(Object nativeFunc, String signature, Object[] args) {
+        return nfiContext.callNativeFunction(nativeFunc, signature, args);
+    }
+
     @Override
     public void beforeDispose(RContext context) {
         nfiContext.beforeDispose(context);
