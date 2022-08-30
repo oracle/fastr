@@ -504,6 +504,20 @@ public final class Collections {
         public int[] toArray() {
             return Arrays.copyOf(data, size);
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            for (int i = 0; i < size; i++) {
+                sb.append(data[i]);
+                if (i != size - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("]");
+            return sb.toString();
+        }
     }
 
     @ExportLibrary(StackLibrary.class)

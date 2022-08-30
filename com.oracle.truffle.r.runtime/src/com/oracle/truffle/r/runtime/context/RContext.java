@@ -973,7 +973,7 @@ public final class RContext {
 
     @Override
     public String toString() {
-        return "context: " + id;
+        return "RContext: " + id;
     }
 
     /*

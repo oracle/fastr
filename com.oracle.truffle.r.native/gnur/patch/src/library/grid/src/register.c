@@ -93,10 +93,9 @@ static const R_CallMethodDef callMethods[] = {
     { NULL, NULL, 0 }
 };
 
-static void fastr_free_gridRegisterIndex(FASTR_GlobalVar_t grid_register_idx)
+static void fastr_free_gridRegisterIndex(void *grid_register_idx)
 {
-    void *gridRegisterIndex = FASTR_GlobalVarGetPtr(grid_register_idx);
-    free(gridRegisterIndex);
+    free(grid_register_idx);
 }
 
 

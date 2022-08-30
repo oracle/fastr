@@ -104,10 +104,37 @@ public class FFIWrap {
             return wrappedArgs;
         }
 
+        /**
+         * Materializes and wraps some (or all) arguments with {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror}.
+         * @param args Arguments to wrap
+         * @param whichArgToWrap If {@code whichArgToWrap[i] == true}, {@code args[i]} will be wrapped.
+         *                       If {@code whichArgToWrap} is null, all arguments are wrapped.
+         */
+        public Object[] wrapSomeUncached(Object[] args, boolean[] whichArgToWrap) {
+            assert materialized.length == args.length;
+            assert whichArgToWrap == null || whichArgToWrap.length == args.length;
+            Object[] wrappedArgs = new Object[args.length];
+            for (int i = 0; i < args.length; i++) {
+                if (whichArgToWrap == null || whichArgToWrap[i]) {
+                    materialized[i] = FFIMaterializeNode.getUncached().materialize(args[i]);
+                    wrappedArgs[i] = FFIToNativeMirrorNode.getUncached().execute(materialized[i]);
+                } else {
+                    wrappedArgs[i] = args[i];
+                }
+            }
+            return wrappedArgs;
+        }
+
         public Object[] wrapAll(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
             return wrapSome(args, ffiMateralizeNodes, ffiToNativeMirrorNodes, null);
         }
 
+        /**
+         * Materializes and wraps some (or all) arguments with {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror}.
+         * @param args Arguments to wrap
+         * @param whichArgToWrap If {@code whichArgToWrap[i] == true}, {@code args[i]} will be wrapped.
+         *                       If {@code whichArgToWrap} is null, all arguments are wrapped.
+         */
         @ExplodeLoop
         public Object[] wrapSome(Object[] args, FFIMaterializeNode[] ffiMaterializeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes, boolean[] whichArgToWrap) {
             assert ffiMaterializeNodes.length == ffiToNativeMirrorNodes.length;

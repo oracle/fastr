@@ -1,5 +1,7 @@
 package com.oracle.truffle.r.runtime.context;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -10,11 +12,15 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import org.graalvm.collections.EconomicMap;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
 
 public class GlobalNativeVarContext implements RContext.ContextState {
-    // TODO: Remove?
     private static final Collections.ArrayListObj<GlobalVarDescriptor> globalNativeVarDescriptors = new Collections.ArrayListObj<>(64);
 
     /**
@@ -45,7 +51,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
      * Allocates space for a new native global variable and assigns its index into the descriptor.
      */
     public void initGlobalVar(Object descr, InteropLibrary interop) {
-        assert interop.hasArrayElements(descr);
+        assert interop.hasHashEntries(descr);
         int currGlobVarIdx = globalNativeVars.size();
         globalNativeVars.add(null);
         setGlobVarIdxForContext(context, currGlobVarIdx, descr, interop);
@@ -57,7 +63,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
     }
 
     public void setGlobalVar(Object descr, Object value, InteropLibrary interop) {
-        assert interop.hasArrayElements(descr);
+        assert interop.hasHashEntries(descr);
         int globVarIdx = getGlobVarIdxForContext(context, descr, interop);
         assert 0 <= globVarIdx && globVarIdx < globalNativeVars.size();
         globalNativeVars.set(globVarIdx, value);
@@ -71,21 +77,55 @@ public class GlobalNativeVarContext implements RContext.ContextState {
 
     @Override
     public void beforeFinalize(RContext context) {
-        callAllDestructors(context);
+        callAllDestructors(context, InteropLibrary.getUncached());
     }
 
-    public void callAllDestructors(RContext context) {
+    /**
+     * Removes {@code context} from all teh global native variable descriptors.
+     * @param context Context used as the key for global native variable descriptors.
+     */
+    @Override
+    public void beforeDispose(RContext context) {
+        for (int i = 0; i < globalNativeVarDescriptors.size(); i++) {
+            GlobalVarDescriptor descriptor = globalNativeVarDescriptors.get(i);
+            // Some descriptors were created only for a particular context, so it is possible
+            // that some descriptors do not have any information about some contexts.
+            // Therefore, we have to check for `containsKey`.
+            if (descriptor.containsKey(context.getId())) {
+                try {
+                    descriptor.removeHashEntry(context.getId());
+                } catch (UnknownKeyException e) {
+                    throw RInternalError.shouldNotReachHere(e);
+                }
+            }
+        }
+    }
+
+    public void callAllDestructors(RContext context, InteropLibrary interop) {
+        // Do not wrap the argument to the native function.
+        boolean[] whichArgToWrap = {false};
         for (int i = 0; i < destructors.size(); i++) {
             var destructor = destructors.get(i);
-            Object ret = context.getRFFI().callNativeFunction(destructor.nativeFunc, destructor.nativeFuncType, Destructor.SIGNATURE, new Object[]{destructor.globalVarDescr});
-            assert InteropLibrary.getUncached().isNull(ret);
+            Object ptrForDestructor = getGlobalVar(destructor.globalVarDescr, interop);
+            interop.toNative(ptrForDestructor);
+            assert interop.isPointer(ptrForDestructor);
+            Object ptrForDestructorNative;
+            try {
+                ptrForDestructorNative = interop.asPointer(ptrForDestructor);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            Object ret = context.getRFFI().callNativeFunction(destructor.nativeFunc, destructor.nativeFuncType, Destructor.SIGNATURE,
+                    new Object[]{ptrForDestructorNative}, whichArgToWrap);
+            assert interop.isNull(ret);
         }
     }
 
     private static int getGlobVarIdxForContext(RContext context, Object descr, InteropLibrary interop) {
+        assert interop.hasHashEntries(descr);
         try {
-            return (int) interop.readArrayElement(descr, context.getId());
-        } catch (UnsupportedMessageException | ClassCastException | InvalidArrayIndexException e) {
+            return (int) interop.readHashValue(descr, context.getId());
+        } catch (UnsupportedMessageException | ClassCastException | UnknownKeyException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
     }
@@ -96,10 +136,10 @@ public class GlobalNativeVarContext implements RContext.ContextState {
      * @param descr Global var descriptor (represented by {@link GlobalVarDescriptor}).
      */
     private static void setGlobVarIdxForContext(RContext context, int idx, Object descr, InteropLibrary interop) {
-        assert interop.hasArrayElements(descr);
+        assert interop.hasHashEntries(descr);
         try {
-            interop.writeArrayElement(descr, context.getId(), idx);
-        } catch (UnsupportedMessageException | UnsupportedTypeException | InvalidArrayIndexException e) {
+            interop.writeHashEntry(descr, context.getId(), idx);
+        } catch (UnsupportedMessageException | UnsupportedTypeException | UnknownKeyException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
     }
@@ -109,56 +149,84 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         /**
          * contextIndexes[i] denotes an index to an array of global variables in i-th RContext.
          */
-        private final Collections.ArrayListInt contextIndexes = new Collections.ArrayListInt();
+        private final Map<Integer, Integer> contextIndexes = new HashMap<>();
 
         @ExportMessage
-        boolean hasArrayElements() {
+        boolean hasHashEntries() {
             return true;
         }
 
         @ExportMessage
-        long getArraySize() {
+        long getHashSize() {
             return contextIndexes.size();
         }
 
         @ExportMessage
-        boolean isArrayElementReadable(long index) {
-            return isIndexInBounds(index);
+        @CompilerDirectives.TruffleBoundary
+        boolean isHashEntryReadable(Object key) {
+            return containsKey(key);
         }
 
         @ExportMessage
-        public boolean isArrayElementModifiable(long index) {
-            return isIndexInBounds(index);
+        @CompilerDirectives.TruffleBoundary
+        Object readHashValue(Object key) {
+            return contextIndexes.get((Integer) key);
         }
 
         @ExportMessage
-        public boolean isArrayElementInsertable(long index) {
-            return isIndexInBounds(index);
+        @CompilerDirectives.TruffleBoundary
+        boolean isHashEntryModifiable(Object key) {
+            return containsKey(key);
         }
 
         @ExportMessage
-        void writeArrayElement(long index, Object value) throws UnsupportedTypeException, InvalidArrayIndexException {
-            if (!(value instanceof Integer)) {
-                throw UnsupportedTypeException.create(new Object[]{value});
+        boolean isHashEntryInsertable(Object key) {
+            return true;
+        }
+
+        @ExportMessage
+        @CompilerDirectives.TruffleBoundary
+        void writeHashEntry(Object key, Object value) {
+            contextIndexes.put(((Integer) key), (Integer) value);
+        }
+
+        @ExportMessage
+        @CompilerDirectives.TruffleBoundary
+        boolean isHashEntryRemovable(Object key) {
+            return containsKey(key);
+        }
+
+        @ExportMessage
+        @CompilerDirectives.TruffleBoundary
+        void removeHashEntry(Object key) throws UnknownKeyException {
+            Integer previousValue = contextIndexes.remove((Integer) key);
+            if (previousValue == null) {
+                throw UnknownKeyException.create(key);
             }
-            if (isIndexInBounds(index)) {
-                contextIndexes.set((int) index, (int) value);
-            } else {
-                throw InvalidArrayIndexException.create(index);
-            }
         }
 
         @ExportMessage
-        Object readArrayElement(long index) throws InvalidArrayIndexException {
-            if (isIndexInBounds(index)) {
-                return contextIndexes.get((int) index);
-            } else {
-                throw InvalidArrayIndexException.create(index);
-            }
+        Object getHashEntriesIterator() {
+            return null;
         }
 
-        private boolean isIndexInBounds(long index) {
-            return 0 <= index && index < contextIndexes.size();
+        private boolean containsKey(Object key) {
+            assert key instanceof Integer;
+            return contextIndexes.containsKey((Integer) key);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("GlobalVarDescriptor{");
+            contextIndexes.forEach((key, value) -> {
+                sb.append("RContext(").append(key).append("):").append(value).append(", ");
+            });
+            if (!contextIndexes.isEmpty()) {
+                sb.delete(sb.length() - 2, sb.length());
+            }
+            sb.append("}");
+            return sb.toString();
         }
     }
 
@@ -170,6 +238,10 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         static final String SIGNATURE = "(pointer): void";
 
         final Object globalVarDescr;
+        /**
+         * The signature of the native function is {@code void dtor(void *ptr)}, where {@code ptr} is the
+         * underlying pointer fetched via {@code FASTR_GlobalVarGetPtr}.
+         */
         final Object nativeFunc;
         final RFFIFactory.Type nativeFuncType;
 
@@ -177,6 +249,11 @@ public class GlobalNativeVarContext implements RContext.ContextState {
             this.globalVarDescr = globalVarDescr;
             this.nativeFunc = nativeFunc;
             this.nativeFuncType = nativeFuncType;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("Destructor{nativeFunc = %s (%s), descr = %s}", nativeFunc, nativeFuncType, globalVarDescr);
         }
     }
 }

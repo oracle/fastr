@@ -148,14 +148,16 @@ public abstract class RFFIContext extends RFFI {
      * Use it once the native function is not known during FastR build, i.e., whenever you
      * cannot use {@link NativeFunction}.
      *
-     * @param nativeFunc (Truffle) object representing the native function to be called.
+     * @param nativeFunc     (Truffle) object representing the native function to be called.
      * @param nativeFuncType Type of the native function - can be either {@code LLVM} or {@code NFI}.
-     * @param signature Signature of the function. Makes sense only for {@code NFI} function type.
-     * @param args Arguments passed to the native function, and processed with
-     *             {@link com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap}.
+     * @param signature      Signature of the function. Makes sense only for {@code NFI} function type.
+     * @param args           Arguments passed to the native function, potentially processed with
+     *                       {@link FFIWrap.FFIDownCallWrap}, based on {@code whichArgToWrap}.
+     * @param whichArgToWrap If {@code whichArgToWrap[i] == true}, then element at {@code args[i]} will
+     *                       be wrapped with {@link FFIWrap.FFIDownCallWrap}.
      * @return Return value directly from the native function, processed with {@link FFIUnwrapNode}.
      */
-    public Object callNativeFunction(Object nativeFunc, RFFIFactory.Type nativeFuncType, String signature, Object[] args) {
+    public Object callNativeFunction(Object nativeFunc, RFFIFactory.Type nativeFuncType, String signature, Object[] args, boolean[] whichArgToWrap) {
         throw RInternalError.shouldNotReachHere("Implemented only for NFI and LLVM");
     }
 

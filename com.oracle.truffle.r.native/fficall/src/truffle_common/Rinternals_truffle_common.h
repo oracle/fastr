@@ -137,7 +137,7 @@ void FASTR_GlobalVarInit(FASTR_GlobalVar_t id) {
     ((call_FASTR_GlobalVarInit) callbacks[FASTR_GlobalVarInit_x])(id);
 }
 
-void FASTR_GlobalVarInitWithDtor(FASTR_GlobalVar_t id, void (*dtor)(FASTR_GlobalVar_t)) {
+void FASTR_GlobalVarInitWithDtor(FASTR_GlobalVar_t id, void (*dtor)(void *)) {
     TRACE1(id);
     ((call_FASTR_GlobalVarInitWithDtor) callbacks[FASTR_GlobalVarInitWithDtor_x])(id, dtor);
 }
@@ -150,6 +150,7 @@ void FASTR_GlobalVarSetSEXP(FASTR_GlobalVar_t id, SEXP value) {
 SEXP FASTR_GlobalVarGetSEXP(FASTR_GlobalVar_t id) {
     TRACE1(id);
     SEXP result = ((call_FASTR_GlobalVarGetSEXP) callbacks[FASTR_GlobalVarGetSEXP_x])(id);
+    checkExitCall();
     return result;
 }
 
@@ -161,6 +162,7 @@ void FASTR_GlobalVarSetPtr(FASTR_GlobalVar_t id, void *value) {
 void * FASTR_GlobalVarGetPtr(FASTR_GlobalVar_t id) {
     TRACE1(id);
     void *result = ((call_FASTR_GlobalVarGetPtr) callbacks[FASTR_GlobalVarGetPtr_x])(id);
+    checkExitCall();
     return result;
 }
 
@@ -172,6 +174,7 @@ void FASTR_GlobalVarSetInt(FASTR_GlobalVar_t id, int value) {
 int FASTR_GlobalVarGetInt(FASTR_GlobalVar_t id) {
     TRACE1(id);
     int result = ((call_FASTR_GlobalVarGetInt) callbacks[FASTR_GlobalVarGetInt_x])(id);
+    checkExitCall();
     return result;
 }
 

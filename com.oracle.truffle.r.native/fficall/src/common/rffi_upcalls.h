@@ -454,7 +454,7 @@ typedef void * FASTR_GlobalVar_t;
 
 typedef FASTR_GlobalVar_t (*call_FASTR_GlobalVarAlloc)();
 typedef void (*call_FASTR_GlobalVarInit)(FASTR_GlobalVar_t descr);
-typedef void (*call_FASTR_GlobalVarInitWithDtor)(FASTR_GlobalVar_t descr, void (*dtor)(FASTR_GlobalVar_t));
+typedef void (*call_FASTR_GlobalVarInitWithDtor)(FASTR_GlobalVar_t descr, void (*dtor)(void *));
 typedef void (*call_FASTR_GlobalVarSetSEXP)(FASTR_GlobalVar_t descr, SEXP value);
 typedef SEXP (*call_FASTR_GlobalVarGetSEXP)(FASTR_GlobalVar_t descr);
 typedef void (*call_FASTR_GlobalVarSetPtr)(FASTR_GlobalVar_t descr, void *value);

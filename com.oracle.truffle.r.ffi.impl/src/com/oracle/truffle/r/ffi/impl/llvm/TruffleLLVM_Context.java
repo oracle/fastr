@@ -135,13 +135,13 @@ public class TruffleLLVM_Context extends RFFIContext {
     }
 
     @Override
-    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args) {
+    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args, boolean[] whichArgToWrap) {
         assert nativeFuncType == Type.LLVM;
         InteropLibrary interop = InteropLibrary.getUncached();
         assert interop.isExecutable(nativeFunc);
         Object before = beforeDowncall(null, Type.LLVM);
         FFIWrap.FFIDownCallWrap ffiWrap = new FFIWrap.FFIDownCallWrap(args.length);
-        Object[] wrappedArgs = ffiWrap.wrapUncached(args);
+        Object[] wrappedArgs = ffiWrap.wrapSomeUncached(args, whichArgToWrap);
         Object ret;
         try {
             ret = interop.execute(nativeFunc, wrappedArgs);

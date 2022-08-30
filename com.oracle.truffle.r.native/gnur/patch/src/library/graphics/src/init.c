@@ -106,9 +106,8 @@ extern FASTR_GlobalVar_t fastr_glob_numGraphicsSystems;
 // Defined in main/engine.c
 void * fastr_alloc_registeredSystems();
 
-static void fastr_free_globvar_ptr(FASTR_GlobalVar_t glob_ptr) {
-    void *ptr = FASTR_GlobalVarGetPtr(glob_ptr);
-    free(ptr);
+static void fastr_free_globvar_ptr(void *glob_ptr) {
+    free(glob_ptr);
 }
 
 void attribute_visible

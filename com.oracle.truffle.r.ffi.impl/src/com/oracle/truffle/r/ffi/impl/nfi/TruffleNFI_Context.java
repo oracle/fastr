@@ -397,7 +397,7 @@ public class TruffleNFI_Context extends RFFIContext {
 
     @Override
     @TruffleBoundary
-    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args) {
+    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args, boolean[] whichArgToWrap) {
         assert nativeFuncType == Type.NFI;
         InteropLibrary interop = InteropLibrary.getUncached();
         assert interop.isPointer(nativeFunc);
@@ -406,7 +406,7 @@ public class TruffleNFI_Context extends RFFIContext {
         assert interop.isExecutable(boundNativeFunc);
         Object before = beforeDowncall(null, Type.NFI);
         FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length);
-        Object[] wrappedArgs = ffiWrap.wrapUncached(args);
+        Object[] wrappedArgs = ffiWrap.wrapSomeUncached(args, whichArgToWrap);
         Object ret;
         try {
             ret = interop.execute(boundNativeFunc, wrappedArgs);
