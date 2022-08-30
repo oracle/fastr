@@ -145,7 +145,7 @@ public class TruffleLLVM_Context extends RFFIContext {
         Object ret;
         try {
             ret = interop.execute(nativeFunc, wrappedArgs);
-        } catch(InteropException e) {
+        } catch (InteropException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
         ret = FFIUnwrapNodeGen.getUncached().execute(ret);

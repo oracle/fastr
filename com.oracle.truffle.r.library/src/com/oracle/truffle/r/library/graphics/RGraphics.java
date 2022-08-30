@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.library.graphics;
 
-
 import static com.oracle.truffle.r.runtime.context.FastROptions.LoadPackagesNativeCode;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;

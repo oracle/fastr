@@ -248,8 +248,9 @@ public final class RContext {
         }
 
         /**
-         * Called before context finalization ({@code com.oracle.truffle.api.TruffleLanguage#finalizeContext(Object)}).
-         * Note that context finalization happens before context disposal, and generally, it should be safe to
+         * Called before context finalization
+         * ({@code com.oracle.truffle.api.TruffleLanguage#finalizeContext(Object)}). Note that
+         * context finalization happens before context disposal, and generally, it should be safe to
          * call native functions in the context finalization.
          */
         default void beforeFinalize(RContext context) {
@@ -648,7 +649,8 @@ public final class RContext {
     public void finalizeContext() {
         if (state.contains(State.INITIALIZED)) {
             // Engine deactive must be called from finalizeContext, because we need to call some
-            // native functions from there, and for that, we need the context not to be in the disposal.
+            // native functions from there, and for that, we need the context not to be in the
+            // disposal.
             if (!embedded) {
                 engine.deactivate();
             }

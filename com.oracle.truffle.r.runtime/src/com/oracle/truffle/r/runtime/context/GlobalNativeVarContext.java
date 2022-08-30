@@ -1,9 +1,7 @@
 package com.oracle.truffle.r.runtime.context;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownKeyException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -12,13 +10,10 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 public class GlobalNativeVarContext implements RContext.ContextState {
     private static final Collections.ArrayListObj<GlobalVarDescriptor> globalNativeVarDescriptors = new Collections.ArrayListObj<>(64);
@@ -41,6 +36,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
     /**
      * Allocates descriptor structure for native global var.
      */
+    @CompilerDirectives.TruffleBoundary
     public GlobalVarDescriptor allocGlobalVarDescr() {
         var descr = new GlobalVarDescriptor();
         globalNativeVarDescriptors.add(descr);
@@ -82,6 +78,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
 
     /**
      * Removes {@code context} from all teh global native variable descriptors.
+     * 
      * @param context Context used as the key for global native variable descriptors.
      */
     @Override
@@ -116,7 +113,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
                 throw RInternalError.shouldNotReachHere(e);
             }
             Object ret = context.getRFFI().callNativeFunction(destructor.nativeFunc, destructor.nativeFuncType, Destructor.SIGNATURE,
-                    new Object[]{ptrForDestructorNative}, whichArgToWrap);
+                            new Object[]{ptrForDestructorNative}, whichArgToWrap);
             assert interop.isNull(ret);
         }
     }
@@ -231,16 +228,16 @@ public class GlobalNativeVarContext implements RContext.ContextState {
     }
 
     /**
-     * Represents a native function callback that is called during the context finalization.
-     * Needed for native array global variables for which there was heap memory allocated.
+     * Represents a native function callback that is called during the context finalization. Needed
+     * for native array global variables for which there was heap memory allocated.
      */
     private static final class Destructor {
         static final String SIGNATURE = "(pointer): void";
 
         final Object globalVarDescr;
         /**
-         * The signature of the native function is {@code void dtor(void *ptr)}, where {@code ptr} is the
-         * underlying pointer fetched via {@code FASTR_GlobalVarGetPtr}.
+         * The signature of the native function is {@code void dtor(void *ptr)}, where {@code ptr}
+         * is the underlying pointer fetched via {@code FASTR_GlobalVarGetPtr}.
          */
         final Object nativeFunc;
         final RFFIFactory.Type nativeFuncType;

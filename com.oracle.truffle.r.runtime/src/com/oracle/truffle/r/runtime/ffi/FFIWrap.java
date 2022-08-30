@@ -105,10 +105,12 @@ public class FFIWrap {
         }
 
         /**
-         * Materializes and wraps some (or all) arguments with {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror}.
+         * Materializes and wraps some (or all) arguments with
+         * {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror}.
+         * 
          * @param args Arguments to wrap
-         * @param whichArgToWrap If {@code whichArgToWrap[i] == true}, {@code args[i]} will be wrapped.
-         *                       If {@code whichArgToWrap} is null, all arguments are wrapped.
+         * @param whichArgToWrap If {@code whichArgToWrap[i] == true}, {@code args[i]} will be
+         *            wrapped. If {@code whichArgToWrap} is null, all arguments are wrapped.
          */
         public Object[] wrapSomeUncached(Object[] args, boolean[] whichArgToWrap) {
             assert materialized.length == args.length;
@@ -130,10 +132,12 @@ public class FFIWrap {
         }
 
         /**
-         * Materializes and wraps some (or all) arguments with {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror}.
+         * Materializes and wraps some (or all) arguments with
+         * {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror}.
+         * 
          * @param args Arguments to wrap
-         * @param whichArgToWrap If {@code whichArgToWrap[i] == true}, {@code args[i]} will be wrapped.
-         *                       If {@code whichArgToWrap} is null, all arguments are wrapped.
+         * @param whichArgToWrap If {@code whichArgToWrap[i] == true}, {@code args[i]} will be
+         *            wrapped. If {@code whichArgToWrap} is null, all arguments are wrapped.
          */
         @ExplodeLoop
         public Object[] wrapSome(Object[] args, FFIMaterializeNode[] ffiMaterializeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes, boolean[] whichArgToWrap) {
