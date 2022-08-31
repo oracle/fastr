@@ -106,14 +106,8 @@ public class GlobalNativeVarContext implements RContext.ContextState {
             Object ptrForDestructor = getGlobalVar(destructor.globalVarDescr, interop);
             interop.toNative(ptrForDestructor);
             assert interop.isPointer(ptrForDestructor);
-            Object ptrForDestructorNative;
-            try {
-                ptrForDestructorNative = interop.asPointer(ptrForDestructor);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
             Object ret = context.getRFFI().callNativeFunction(destructor.nativeFunc, destructor.nativeFuncType, Destructor.SIGNATURE,
-                            new Object[]{ptrForDestructorNative}, whichArgToWrap);
+                            new Object[]{ptrForDestructor}, whichArgToWrap);
             assert interop.isNull(ret);
         }
     }
