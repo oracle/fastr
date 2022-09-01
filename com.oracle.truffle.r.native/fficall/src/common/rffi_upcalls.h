@@ -465,6 +465,7 @@ typedef void (*call_FASTR_GlobalVarSetDouble)(FASTR_GlobalVar_t descr, double va
 typedef double (*call_FASTR_GlobalVarGetDouble)(FASTR_GlobalVar_t descr);
 typedef void (*call_FASTR_GlobalVarSetBool)(FASTR_GlobalVar_t descr, Rboolean value);
 typedef Rboolean (*call_FASTR_GlobalVarGetBool)(FASTR_GlobalVar_t descr);
+typedef void (*call_FASTR_GlobalVarPrintDescrs)();
 // ==========================================================
 //                    ALTREP framework
 // ==========================================================

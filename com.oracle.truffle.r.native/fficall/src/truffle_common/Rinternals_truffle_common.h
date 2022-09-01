@@ -202,6 +202,10 @@ Rboolean FASTR_GlobalVarGetBool(FASTR_GlobalVar_t id) {
     return result;
 }
 
+void FASTR_GlobalVarPrintDescrs() {
+    ((call_FASTR_GlobalVarPrintDescrs) callbacks[FASTR_GlobalVarPrintDescrs_x])();
+}
+
 void MARK_NOT_MUTABLE(SEXP x) {
     // TODO: probably new upcall that does makeSharedPermanent(),    
     SET_NAMED(x, 2);

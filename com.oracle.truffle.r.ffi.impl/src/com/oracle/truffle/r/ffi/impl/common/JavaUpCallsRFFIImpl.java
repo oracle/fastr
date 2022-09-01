@@ -65,6 +65,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.GlobalNativeVarContext;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -2818,8 +2819,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public int FASTR_GlobalVarGetInt(Object globVarDescr, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
         Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
-        assert result instanceof Integer;
-        return (int) result;
+        if (!(result instanceof Integer)) {
+            throw RInternalError.shouldNotReachHere("FASTR_GlobalVarGetInt should return an integer, have you set integer via FASTR_GlobalVarSetInt before?");
+        } else {
+            return (int) result;
+        }
     }
 
     @Override
@@ -2832,8 +2836,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public double FASTR_GlobalVarGetDouble(Object globVarDescr, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
         Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
-        assert result instanceof Double;
-        return (double) result;
+        if (!(result instanceof Double)) {
+            throw RInternalError.shouldNotReachHere("FASTR_GlobalVarGetDouble should return double, have you set double via FASTR_GlobalVarSetDouble before?");
+        } else {
+            return (double) result;
+        }
     }
 
     @Override
@@ -2846,8 +2853,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public boolean FASTR_GlobalVarGetBool(Object globVarDescr, RContext context) {
         assert globVarDescr instanceof RForeignObjectWrapper;
         Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
-        assert result instanceof Boolean;
-        return (boolean) result;
+        if (!(result instanceof Boolean)) {
+            throw RInternalError.shouldNotReachHere("FASTR_GlobalVarGetBool should return bool, have you set bool via FASTR_GlobalVarSetBool before?");
+        } else {
+            return (boolean) result;
+        }
+    }
+
+    @Override
+    @TruffleBoundary
+    public void FASTR_GlobalVarPrintDescrs(RContext context) {
+        GlobalNativeVarContext.printAllDescriptors(context);
     }
 
     @Override

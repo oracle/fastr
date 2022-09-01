@@ -64,10 +64,25 @@ public interface FastRUpCalls {
     Object FASTR_DATAPTR(Object x);
 
     // Global Var API
+
+    /**
+     * Allocates a native global variable descriptor. Must be called at most once per DLL load.
+     */
     Object FASTR_GlobalVarAlloc(@RFFIInject RContext context);
 
+    /**
+     * Initializes the {@code globVarDescr} with the information about the current context.
+     * i.e. assign an index into the per-context array of global native variables.
+     * Must be called at most once for every context.
+     */
     void FASTR_GlobalVarInit(Object globVarDescr, @RFFIInject RContext context);
 
+    /**
+     * Same as {@link #FASTR_GlobalVarInit(Object, RContext)}, but also registers given destructor
+     * to be called later during the context finalization.
+     *
+     * @param destructorNativeFunc Native function that will be called before the context finalizes.
+     */
     void FASTR_GlobalVarInitWithDtor(Object globVarDescr, @RFFICpointer Object destructorNativeFunc, @RFFIInject RContext context);
 
     void FASTR_GlobalVarSetSEXP(Object globVarDescr, Object value, @RFFIInject RContext context);
@@ -90,4 +105,9 @@ public interface FastRUpCalls {
     void FASTR_GlobalVarSetBool(Object globalVarDescr, boolean value, @RFFIInject RContext context);
 
     boolean FASTR_GlobalVarGetBool(Object globalVarDescr, @RFFIInject RContext context);
+
+    /**
+     * Prints all descriptors for all contexts. For debugging purposes.
+     */
+    void FASTR_GlobalVarPrintDescrs(@RFFIInject RContext context);
 }

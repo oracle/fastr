@@ -10,13 +10,24 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class GlobalNativeVarContext implements RContext.ContextState {
-    private static final Collections.ArrayListObj<GlobalVarDescriptor> globalNativeVarDescriptors = new Collections.ArrayListObj<>(64);
+    /**
+     * We have to wrap {@link GlobalVarDescriptor descriptors} in {@link RForeignObjectWrapper} and
+     * {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror} in this class, because
+     * we expect all the descriptors to have static life cycle, whereas, usually, foreign object
+     * wrappers and native mirrors have a life cycle tied to the life cycle of a specific context.
+     *
+     * Note that the static life cycle of descriptors is expected, because the descriptors are
+     * allocated once per every DLL load.
+     */
+    private static final Collections.ArrayListObj<RForeignObjectWrapper> globalNativeVarDescriptors = new Collections.ArrayListObj<>(64);
 
     /**
      * RContext-specific array of global native variables.
@@ -34,13 +45,15 @@ public class GlobalNativeVarContext implements RContext.ContextState {
     }
 
     /**
-     * Allocates descriptor structure for native global var.
+     * Allocates descriptor structure for native global var, and wraps it in a foreign object
+     * wrapper, and assigns it a native mirror.
      */
     @CompilerDirectives.TruffleBoundary
-    public GlobalVarDescriptor allocGlobalVarDescr() {
-        var descr = new GlobalVarDescriptor();
-        globalNativeVarDescriptors.add(descr);
-        return descr;
+    public RForeignObjectWrapper allocGlobalVarDescr() {
+        var foreignWrapper = new RForeignObjectWrapper(new GlobalVarDescriptor());
+        NativeDataAccess.createNativeMirror(foreignWrapper);
+        globalNativeVarDescriptors.add(foreignWrapper);
+        return foreignWrapper;
     }
 
     /**
@@ -84,7 +97,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
     @Override
     public void beforeDispose(RContext context) {
         for (int i = 0; i < globalNativeVarDescriptors.size(); i++) {
-            GlobalVarDescriptor descriptor = globalNativeVarDescriptors.get(i);
+            GlobalVarDescriptor descriptor = getDesriptorAt(i);
             // Some descriptors were created only for a particular context, so it is possible
             // that some descriptors do not have any information about some contexts.
             // Therefore, we have to check for `containsKey`.
@@ -110,6 +123,28 @@ public class GlobalNativeVarContext implements RContext.ContextState {
                             new Object[]{ptrForDestructor}, whichArgToWrap);
             assert interop.isNull(ret);
         }
+    }
+
+    /**
+     * Method for debugging purposes.
+     */
+    public static void printAllDescriptors(RContext context) {
+        assert globalNativeVarDescriptors.size() == globalNativeVarDescriptors.size();
+        context.getConsole().println("All foreign wrappers for descriptors: [");
+        for (int i = 0; i < globalNativeVarDescriptors.size(); i++) {
+            var descrWrapper = globalNativeVarDescriptors.get(i);
+            context.getConsole().println(
+                String.format("  RForeignObjectWrapper{nativeMirror = %s, delegate = %s}, ",
+                    descrWrapper.getNativeMirror(), descrWrapper.getDelegate()));
+        }
+        context.getConsole().println("]");
+    }
+
+    private static GlobalVarDescriptor getDesriptorAt(int idx) {
+        RForeignObjectWrapper foreignWrapper = globalNativeVarDescriptors.get(idx);
+        assert foreignWrapper.getDelegate() instanceof GlobalVarDescriptor;
+        assert foreignWrapper.getNativeMirror() != null;
+        return (GlobalVarDescriptor) foreignWrapper.getDelegate();
     }
 
     private static int getGlobVarIdxForContext(RContext context, Object descr, InteropLibrary interop) {

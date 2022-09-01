@@ -55,6 +55,7 @@ void FASTR_GlobalVarSetDouble(FASTR_GlobalVar_t id, double value);
 double FASTR_GlobalVarGetDouble(FASTR_GlobalVar_t id);
 void FASTR_GlobalVarSetBool(FASTR_GlobalVar_t id, Rboolean value);
 Rboolean FASTR_GlobalVarGetBool(FASTR_GlobalVar_t id);
+void FASTR_GlobalVarPrintDescrs();
 
 // packages defining USE_INTERNALS expect certain defs (e.g. isNull) to be there
 #ifdef USE_RINTERNALS
