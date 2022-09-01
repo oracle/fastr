@@ -2764,7 +2764,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object FASTR_GlobalVarAlloc(RContext context) {
-        return context.stateglobalNativeVar.allocGlobalVarDescr();
+        return GlobalNativeVarContext.allocGlobalVarDescr();
     }
 
     @Override

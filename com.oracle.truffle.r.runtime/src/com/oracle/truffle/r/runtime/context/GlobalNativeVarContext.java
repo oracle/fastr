@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2022, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 3 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 3 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
 package com.oracle.truffle.r.runtime.context;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -17,12 +39,13 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GlobalNativeVarContext implements RContext.ContextState {
+public final class GlobalNativeVarContext implements RContext.ContextState {
     /**
      * We have to wrap {@link GlobalVarDescriptor descriptors} in {@link RForeignObjectWrapper} and
-     * {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror} in this class, because
-     * we expect all the descriptors to have static life cycle, whereas, usually, foreign object
-     * wrappers and native mirrors have a life cycle tied to the life cycle of a specific context.
+     * {@link com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror} in this class,
+     * because we expect all the descriptors to have static life cycle, whereas, usually, foreign
+     * object wrappers and native mirrors have a life cycle tied to the life cycle of a specific
+     * context.
      *
      * Note that the static life cycle of descriptors is expected, because the descriptors are
      * allocated once per every DLL load.
@@ -49,7 +72,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
      * wrapper, and assigns it a native mirror.
      */
     @CompilerDirectives.TruffleBoundary
-    public RForeignObjectWrapper allocGlobalVarDescr() {
+    public static RForeignObjectWrapper allocGlobalVarDescr() {
         var foreignWrapper = new RForeignObjectWrapper(new GlobalVarDescriptor());
         NativeDataAccess.createNativeMirror(foreignWrapper);
         globalNativeVarDescriptors.add(foreignWrapper);
@@ -85,25 +108,25 @@ public class GlobalNativeVarContext implements RContext.ContextState {
     }
 
     @Override
-    public void beforeFinalize(RContext context) {
-        callAllDestructors(context, InteropLibrary.getUncached());
+    public void beforeFinalize(RContext ctx) {
+        callAllDestructors(ctx, InteropLibrary.getUncached());
     }
 
     /**
      * Removes {@code context} from all teh global native variable descriptors.
      * 
-     * @param context Context used as the key for global native variable descriptors.
+     * @param ctx Context used as the key for global native variable descriptors.
      */
     @Override
-    public void beforeDispose(RContext context) {
+    public void beforeDispose(RContext ctx) {
         for (int i = 0; i < globalNativeVarDescriptors.size(); i++) {
             GlobalVarDescriptor descriptor = getDesriptorAt(i);
             // Some descriptors were created only for a particular context, so it is possible
             // that some descriptors do not have any information about some contexts.
             // Therefore, we have to check for `containsKey`.
-            if (descriptor.containsKey(context.getId())) {
+            if (descriptor.containsKey(ctx.getId())) {
                 try {
-                    descriptor.removeHashEntry(context.getId());
+                    descriptor.removeHashEntry(ctx.getId());
                 } catch (UnknownKeyException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
@@ -111,7 +134,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         }
     }
 
-    public void callAllDestructors(RContext context, InteropLibrary interop) {
+    public void callAllDestructors(RContext ctx, InteropLibrary interop) {
         // Do not wrap the argument to the native function.
         boolean[] whichArgToWrap = {false};
         for (int i = 0; i < destructors.size(); i++) {
@@ -119,7 +142,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
             Object ptrForDestructor = getGlobalVar(destructor.globalVarDescr, interop);
             interop.toNative(ptrForDestructor);
             assert interop.isPointer(ptrForDestructor);
-            Object ret = context.getRFFI().callNativeFunction(destructor.nativeFunc, destructor.nativeFuncType, Destructor.SIGNATURE,
+            Object ret = ctx.getRFFI().callNativeFunction(destructor.nativeFunc, destructor.nativeFuncType, Destructor.SIGNATURE,
                             new Object[]{ptrForDestructor}, whichArgToWrap);
             assert interop.isNull(ret);
         }
@@ -134,8 +157,8 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         for (int i = 0; i < globalNativeVarDescriptors.size(); i++) {
             var descrWrapper = globalNativeVarDescriptors.get(i);
             context.getConsole().println(
-                String.format("  RForeignObjectWrapper{nativeMirror = %s, delegate = %s}, ",
-                    descrWrapper.getNativeMirror(), descrWrapper.getDelegate()));
+                            String.format("  RForeignObjectWrapper{nativeMirror = %s, delegate = %s}, ",
+                                            descrWrapper.getNativeMirror(), descrWrapper.getDelegate()));
         }
         context.getConsole().println("]");
     }
@@ -178,6 +201,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         private final Map<Integer, Integer> contextIndexes = new HashMap<>();
 
         @ExportMessage
+        @SuppressWarnings("static-method")
         boolean hasHashEntries() {
             return true;
         }
@@ -196,7 +220,7 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         @ExportMessage
         @CompilerDirectives.TruffleBoundary
         Object readHashValue(Object key) {
-            return contextIndexes.get((Integer) key);
+            return contextIndexes.get(key);
         }
 
         @ExportMessage
@@ -206,14 +230,15 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         }
 
         @ExportMessage
-        boolean isHashEntryInsertable(Object key) {
+        @SuppressWarnings("static-method")
+        boolean isHashEntryInsertable(@SuppressWarnings("unused") Object key) {
             return true;
         }
 
         @ExportMessage
         @CompilerDirectives.TruffleBoundary
         void writeHashEntry(Object key, Object value) {
-            contextIndexes.put(((Integer) key), (Integer) value);
+            contextIndexes.put((Integer) key, (Integer) value);
         }
 
         @ExportMessage
@@ -225,20 +250,21 @@ public class GlobalNativeVarContext implements RContext.ContextState {
         @ExportMessage
         @CompilerDirectives.TruffleBoundary
         void removeHashEntry(Object key) throws UnknownKeyException {
-            Integer previousValue = contextIndexes.remove((Integer) key);
+            Integer previousValue = contextIndexes.remove(key);
             if (previousValue == null) {
                 throw UnknownKeyException.create(key);
             }
         }
 
         @ExportMessage
+        @SuppressWarnings("static-method")
         Object getHashEntriesIterator() {
             return null;
         }
 
         private boolean containsKey(Object key) {
             assert key instanceof Integer;
-            return contextIndexes.containsKey((Integer) key);
+            return contextIndexes.containsKey(key);
         }
 
         @Override

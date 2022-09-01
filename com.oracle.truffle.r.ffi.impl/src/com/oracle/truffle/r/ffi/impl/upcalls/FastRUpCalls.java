@@ -30,8 +30,9 @@ import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
- * Up-calls specific to FastR used in FastR native code. Most of the functions are not exported in any API,
- * except for the global var API ({@code FASTR_GlobalVar*}, which is exported in {@code Rinternals.h}.
+ * Up-calls specific to FastR used in FastR native code. Most of the functions are not exported in
+ * any API, except for the global var API ({@code FASTR_GlobalVar*}, which is exported in
+ * {@code Rinternals.h}.
  */
 public interface FastRUpCalls {
     // Checkstyle: stop method name check
@@ -71,9 +72,9 @@ public interface FastRUpCalls {
     Object FASTR_GlobalVarAlloc(@RFFIInject RContext context);
 
     /**
-     * Initializes the {@code globVarDescr} with the information about the current context.
-     * i.e. assign an index into the per-context array of global native variables.
-     * Must be called at most once for every context.
+     * Initializes the {@code globVarDescr} with the information about the current context. i.e.
+     * assign an index into the per-context array of global native variables. Must be called at most
+     * once for every context.
      */
     void FASTR_GlobalVarInit(Object globVarDescr, @RFFIInject RContext context);
 

@@ -253,6 +253,7 @@ public final class RContext {
          * context finalization happens before context disposal, and generally, it should be safe to
          * call native functions in the context finalization.
          */
+        @SuppressWarnings("unused")
         default void beforeFinalize(RContext context) {
             // default empty implementation
         }
