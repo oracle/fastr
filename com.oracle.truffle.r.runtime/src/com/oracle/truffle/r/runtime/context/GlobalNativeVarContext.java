@@ -207,6 +207,7 @@ public final class GlobalNativeVarContext implements RContext.ContextState {
         }
 
         @ExportMessage
+        @CompilerDirectives.TruffleBoundary
         long getHashSize() {
             return contextIndexes.size();
         }
