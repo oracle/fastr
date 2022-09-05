@@ -172,6 +172,11 @@ final class REngine implements Engine, Engine.Timings {
         initReplPrintSyntaxCallNode();
     }
 
+    @Override
+    public void deactivate() {
+        RGraphics.dispose(context);
+    }
+
     private void initializeNonShared() {
         suppressWarnings = true;
         MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame("base");

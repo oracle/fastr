@@ -1,3 +1,9 @@
+# 22.3.0
+* Implemented global native variable API, which allows the user to use some native package from two R contexts at the same time.
+  * The API consists of a bunch of upcalls, named with a prefix of `FASTR_GlobalVar`, e.g., `FASTR_GlobalVarAlloc`.
+  * The documentation is in `com.oracle.truffle.r.ffi.impl.upcalls.FastRUpCalls`.
+  * Currently, only `grid` and `graphics` builtin packages are refactored to use the global native variable API.
+
 # 22.2.0
 * `--R.DebugLLVMLibs` is no longer a stable option.
 * Implemented `SET_GROWABLE_BIT` and `IS_GROWABLE` C API functions.

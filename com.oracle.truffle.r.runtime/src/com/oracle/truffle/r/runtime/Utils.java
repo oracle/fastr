@@ -856,7 +856,7 @@ public final class Utils {
                     FrameDescriptor frameDescriptor = unwrapped.getFrameDescriptor();
                     for (Object identifier : FrameSlotChangeMonitor.getIdentifiers(frameDescriptor)) {
                         str.append("\n      ").append(identifier.toString()).append(" = ");
-                        Object value = FrameSlotChangeMonitor.getObject(unwrapped, identifier);
+                        Object value = FrameSlotChangeMonitor.getValue(unwrapped, FrameSlotChangeMonitor.getIndexOfIdentifier(frameDescriptor, identifier));
                         if (value instanceof MultiSlotData) {
                             value = ((MultiSlotData) value).get(RContext.getInstance().getMultiSlotInd());
                         }
@@ -876,7 +876,7 @@ public final class Utils {
                 }
             }
         } catch (Throwable t) {
-            str.append("<exception ").append(t.getMessage()).append(" ").append(t.getClass().getSimpleName()).append("<");
+            str.append("<exception ").append(t.getMessage()).append(" ").append(t.getClass().getSimpleName()).append(">");
         }
     }
 

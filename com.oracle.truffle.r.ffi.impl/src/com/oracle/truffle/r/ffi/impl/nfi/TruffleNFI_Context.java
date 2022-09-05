@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNodeGen;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -392,6 +393,29 @@ public class TruffleNFI_Context extends RFFIContext {
                 break;
         }
         super.beforeDispose(context);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args, boolean[] whichArgToWrap) {
+        assert nativeFuncType == Type.NFI;
+        InteropLibrary interop = InteropLibrary.getUncached();
+        assert interop.isPointer(nativeFunc);
+        Object parsedSignature = parseSignature(signature);
+        Object boundNativeFunc = SignatureLibrary.getUncached().bind(parsedSignature, nativeFunc);
+        assert interop.isExecutable(boundNativeFunc);
+        Object before = beforeDowncall(null, Type.NFI);
+        FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length);
+        Object[] wrappedArgs = ffiWrap.wrapSomeUncached(args, whichArgToWrap);
+        Object ret;
+        try {
+            ret = interop.execute(boundNativeFunc, wrappedArgs);
+        } catch (InteropException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+        ret = FFIUnwrapNodeGen.getUncached().execute(ret);
+        afterDowncall(before, Type.NFI, AfterDownCallProfiles.getUncached());
+        return ret;
     }
 
     @Override

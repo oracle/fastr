@@ -143,6 +143,34 @@ public abstract class RFFIContext extends RFFI {
     public abstract <C extends RFFIContext> C as(Class<C> rffiCtxClass);
 
     /**
+     * Calls a native function in slow-path. This method is a simpler alternative to
+     * {@link com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode} machinery. Use it
+     * once the native function is not known during FastR build, i.e., whenever you cannot use
+     * {@link NativeFunction}, e.g., when calling a native function that wass passed to the Java
+     * side as a pointer.
+     * <p>
+     * Note that unlike {@code DownCallNode} machinery, <b>it is not safe to use the native R API
+     * from the native function</b>, i.e., it is not safe to do any upcalls. This is because
+     * {@code DownCallNode} machinery uses trampolines that sets the longjump in case of errors from
+     * upcalls, whereas the native functions called by this method cannot use this trampoline
+     * mechanism, because these native functions are expected to be provided by the user, and
+     * therefore, we cannot modify their sources.
+     *
+     * @param nativeFunc (Truffle) object representing the native function to be called.
+     * @param nativeFuncType Type of the native function - can be either {@code LLVM} or
+     *            {@code NFI}.
+     * @param signature Signature of the function. Makes sense only for {@code NFI} function type.
+     * @param args Arguments passed to the native function, potentially processed with
+     *            {@link FFIWrap.FFIDownCallWrap}, based on {@code whichArgToWrap}.
+     * @param whichArgToWrap If {@code whichArgToWrap[i] == true}, then element at {@code args[i]}
+     *            will be wrapped with {@link FFIWrap.FFIDownCallWrap}.
+     * @return Return value directly from the native function, processed with {@link FFIUnwrapNode}.
+     */
+    public Object callNativeFunction(Object nativeFunc, RFFIFactory.Type nativeFuncType, String signature, Object[] args, boolean[] whichArgToWrap) {
+        throw RInternalError.shouldNotReachHere("Implemented only for NFI and LLVM");
+    }
+
+    /**
      * @param context
      * @param canRunGc {@code true} if this upcall can cause a gc on GNU R, and therefore can clear
      */

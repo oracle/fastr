@@ -278,6 +278,7 @@ int pureNullUnitArithmetic(SEXP unit, int index, pGEDevDesc dd);
 
 int pureNullUnit(SEXP unit, int index, pGEDevDesc dd) {
     int result;
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     if (isUnitArithmetic(unit)) 
 	result = pureNullUnitArithmetic(unit, index, dd);
     else if (isUnitList(unit)) {
@@ -453,6 +454,7 @@ double evaluateGrobUnit(double value, SEXP grob,
     SEXP unitx = R_NilValue, unity = R_NilValue;
     double result = 0.0;
     Rboolean protectedGrob = FALSE;
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     /*
      * We are just doing calculations, not drawing, so
      * we don't want anything recorded on the graphics engine DL

@@ -25,6 +25,26 @@
 #define _(String) (String)
 #endif
 
+// FastR globals:
+// plot.c: static int *dnd_rptr
+extern FASTR_GlobalVar_t fastr_glob_dnd_rptr;
+// plot.c: static int *dnd_lptr
+extern FASTR_GlobalVar_t fastr_glob_dnd_lptr;
+// plot.c: static double *dnd_hght
+extern FASTR_GlobalVar_t fastr_glob_dnd_hght;
+// plot.c: static double *dnd_xpos;
+extern FASTR_GlobalVar_t fastr_glob_dnd_xpos;
+// plot.c: static double dnd_hang;
+extern FASTR_GlobalVar_t fastr_glob_dnd_hang;
+// plot.c: static double dnd_offset;
+extern FASTR_GlobalVar_t fastr_glob_dnd_offset;
+// plot3d.c:
+extern FASTR_GlobalVar_t fastr_glob_VT;
+extern FASTR_GlobalVar_t fastr_glob_Light;
+extern FASTR_GlobalVar_t fastr_glob_Shade;
+extern FASTR_GlobalVar_t fastr_glob_DoLighting;
+
+
 SEXP C_contour(SEXP);
 SEXP C_contourDef(void);
 SEXP C_filledcontour(SEXP);

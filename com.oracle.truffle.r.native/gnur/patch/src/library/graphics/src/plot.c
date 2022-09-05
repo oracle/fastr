@@ -3383,12 +3383,6 @@ DO_STR_DIM(Width)
  * In contrast:  plot.dendrogram()   only calls R level graphics functions
  */
 
-static int *dnd_lptr;
-static int *dnd_rptr;
-static double *dnd_hght;
-static double *dnd_xpos;
-static double dnd_hang;
-static double dnd_offset;
 
 static void drawdend(int node, double *x, double *y, SEXP dnd_llabels,
 		     pGEDevDesc dd)
@@ -3403,9 +3397,14 @@ static void drawdend(int node, double *x, double *y, SEXP dnd_llabels,
     double xx[4], yy[4];
     int k;
 
+    double *dnd_hght = (double *) FASTR_GlobalVarGetPtr(fastr_glob_dnd_hght);
     *y = dnd_hght[node-1];
     /* left part  */
+    int *dnd_lptr = (int *) FASTR_GlobalVarGetPtr(fastr_glob_dnd_lptr);
     k = dnd_lptr[node-1];
+    double *dnd_xpos = (double *) FASTR_GlobalVarGetPtr(fastr_glob_dnd_xpos);
+    double dnd_hang = FASTR_GlobalVarGetDouble(fastr_glob_dnd_hang);
+    double dnd_offset = FASTR_GlobalVarGetDouble(fastr_glob_dnd_offset);
     if (k > 0) drawdend(k, &xl, &yl, dnd_llabels, dd);
     else {
 	xl = dnd_xpos[-k-1];
@@ -3417,6 +3416,7 @@ static void drawdend(int node, double *x, double *y, SEXP dnd_llabels,
 		  1.0, 0.3, 90.0, dd);
     }
     /* right part */
+    int *dnd_rptr = (int *) FASTR_GlobalVarGetPtr(fastr_glob_dnd_rptr);
     k = dnd_rptr[node-1];
     if (k > 0) drawdend(k, &xr, &yr, dnd_llabels, dd);
     else {
@@ -3460,25 +3460,30 @@ SEXP C_dend(SEXP args)
     /* merge */
     if (TYPEOF(CAR(args)) != INTSXP || length(CAR(args)) != 2*n)
 	goto badargs;
-    dnd_lptr = &(INTEGER(CAR(args))[0]);
-    dnd_rptr = &(INTEGER(CAR(args))[n]);
+    int *dnd_lptr = &(INTEGER(CAR(args))[0]);
+    FASTR_GlobalVarSetPtr(fastr_glob_dnd_lptr, (void *) dnd_lptr);
+    int *dnd_rptr = &(INTEGER(CAR(args))[n]);
+    FASTR_GlobalVarSetPtr(fastr_glob_dnd_rptr, (void *) dnd_rptr);
     args = CDR(args);
 
     /* height */
     if (TYPEOF(CAR(args)) != REALSXP || length(CAR(args)) != n)
 	goto badargs;
-    dnd_hght = REAL(CAR(args));
+    double *dnd_hght = REAL(CAR(args));
+    FASTR_GlobalVarSetPtr(fastr_glob_dnd_hght, (void *) dnd_hght);
     args = CDR(args);
 
     /* ord = order(x$order) */
     if (length(CAR(args)) != n+1)
 	goto badargs;
     PROTECT(xpos = coerceVector(CAR(args), REALSXP));
-    dnd_xpos = REAL(xpos);
+    double *dnd_xpos = REAL(xpos);
+    FASTR_GlobalVarSetPtr(fastr_glob_dnd_xpos, dnd_xpos);
     args = CDR(args);
 
     /* hang */
-    dnd_hang = asReal(CAR(args));
+    double dnd_hang = asReal(CAR(args));
+    FASTR_GlobalVarSetDouble(fastr_glob_dnd_hang, dnd_hang);
     if (!R_FINITE(dnd_hang))
 	goto badargs;
     dnd_hang = dnd_hang * (dnd_hght[n-1] - dnd_hght[0]);
@@ -3493,8 +3498,9 @@ SEXP C_dend(SEXP args)
     GSavePars(dd);
     ProcessInlinePars(args, dd);
     gpptr(dd)->cex = gpptr(dd)->cexbase * gpptr(dd)->cex;
-    dnd_offset = GConvertYUnits(GStrWidth("m", CE_ANY, INCHES, dd), INCHES,
+    double dnd_offset = GConvertYUnits(GStrWidth("m", CE_ANY, INCHES, dd), INCHES,
 				USER, dd);
+    FASTR_GlobalVarSetDouble(fastr_glob_dnd_offset, dnd_offset);
 
     /* override par("xpd") and force clipping to figure region
        NOTE: don't override to _reduce_ clipping region */
@@ -3540,7 +3546,8 @@ SEXP C_dendwindow(SEXP args)
     height = CAR(args);
 
     args = CDR(args);
-    dnd_hang = asReal(CAR(args));
+    double dnd_hang = asReal(CAR(args));
+    FASTR_GlobalVarSetDouble(fastr_glob_dnd_hang, dnd_hang);
     if (!R_FINITE(dnd_hang))
 	goto badargs;
 
@@ -3553,13 +3560,16 @@ SEXP C_dendwindow(SEXP args)
     GSavePars(dd);
     ProcessInlinePars(args, dd);
     gpptr(dd)->cex = gpptr(dd)->cexbase * gpptr(dd)->cex;
-    dnd_offset = GStrWidth("m", CE_ANY, INCHES, dd);
+    double dnd_offset = GStrWidth("m", CE_ANY, INCHES, dd);
+    FASTR_GlobalVarSetDouble(fastr_glob_dnd_offset, dnd_offset);
     vmax = vmaxget();
     /* n is the number of merges, so the points are labelled 1 ... n+1 */
     y =  (double*)R_alloc(n+1, sizeof(double));
     ll = (double*)R_alloc(n+1, sizeof(double));
-    dnd_lptr = &(INTEGER(merge)[0]);
-    dnd_rptr = &(INTEGER(merge)[n]);
+    int *dnd_lptr = &(INTEGER(merge)[0]);
+    FASTR_GlobalVarSetPtr(fastr_glob_dnd_lptr, (void *) dnd_lptr);
+    int *dnd_rptr = &(INTEGER(merge)[n]);
+    FASTR_GlobalVarSetPtr(fastr_glob_dnd_rptr, (void *) dnd_rptr);
     ymax = ymin = REAL(height)[0];
     for (i = 1; i < n; i++) {
 	m = REAL(height)[i];

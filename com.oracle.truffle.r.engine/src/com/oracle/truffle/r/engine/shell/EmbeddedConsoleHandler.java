@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -152,7 +152,7 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     }
 
     private OutputStream createOutputSteam(Supplier<CallTarget> writeCallTargetSupplier, OutputStream defaultStream) {
-        return new BufferedOutputStream(new EmbeddedConsoleOutputSteam(writeCallTargetSupplier, defaultStream), 128);
+        return new BufferedOutputStream(new EmbeddedConsoleOutputStream(writeCallTargetSupplier, defaultStream), 128);
     }
 
     private static boolean isOverridden(String name) {
@@ -160,11 +160,11 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
         return clbk.isOverridden();
     }
 
-    private final class EmbeddedConsoleOutputSteam extends OutputStream {
+    private final class EmbeddedConsoleOutputStream extends OutputStream {
         private final OutputStream delegate;
         private Supplier<CallTarget> writeCallTarget;
 
-        EmbeddedConsoleOutputSteam(Supplier<CallTarget> writeCallTarget, OutputStream delegate) {
+        EmbeddedConsoleOutputStream(Supplier<CallTarget> writeCallTarget, OutputStream delegate) {
             this.writeCallTarget = writeCallTarget;
             this.delegate = delegate;
         }

@@ -220,7 +220,6 @@ public final class NativeDataAccess {
          * will be freed when the Java object is collected.
          */
         NativeMirror(RBaseObject ownerVec, long address) {
-            assert !(ownerVec instanceof RForeignObjectWrapper);
             delegate = ownerVec;
             if (address != 0) {
                 this.nativeHandle = new NativeHandleWrapper(address, ownerVec);

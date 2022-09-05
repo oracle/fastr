@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -35,10 +36,13 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNodeGen;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -128,6 +132,25 @@ public class TruffleLLVM_Context extends RFFIContext {
         }
         CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere("No array type for " + arrayElem);
+    }
+
+    @Override
+    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args, boolean[] whichArgToWrap) {
+        assert nativeFuncType == Type.LLVM;
+        InteropLibrary interop = InteropLibrary.getUncached();
+        assert interop.isExecutable(nativeFunc);
+        Object before = beforeDowncall(null, Type.LLVM);
+        FFIWrap.FFIDownCallWrap ffiWrap = new FFIWrap.FFIDownCallWrap(args.length);
+        Object[] wrappedArgs = ffiWrap.wrapSomeUncached(args, whichArgToWrap);
+        Object ret;
+        try {
+            ret = interop.execute(nativeFunc, wrappedArgs);
+        } catch (InteropException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+        ret = FFIUnwrapNodeGen.getUncached().execute(ret);
+        afterDowncall(before, Type.LLVM, AfterDownCallProfiles.getUncached());
+        return ret;
     }
 
     @Override

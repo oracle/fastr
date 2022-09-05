@@ -118,6 +118,18 @@ public final class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
+    public Object callNativeFunction(Object nativeFunc, Type nativeFuncType, String signature, Object[] args, boolean[] whichArgToWrap) {
+        switch (nativeFuncType) {
+            case LLVM:
+                return llvmContext.callNativeFunction(nativeFunc, nativeFuncType, signature, args, whichArgToWrap);
+            case NFI:
+                return nfiContext.callNativeFunction(nativeFunc, nativeFuncType, signature, args, whichArgToWrap);
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Override
     public void beforeDispose(RContext context) {
         nfiContext.beforeDispose(context);
         llvmContext.beforeDispose(context);

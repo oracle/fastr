@@ -30,7 +30,9 @@ import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
- * Up-calls specific to FastR used in FastR native code and not exported as part of any API.
+ * Up-calls specific to FastR used in FastR native code. Most of the functions are not exported in
+ * any API, except for the global var API ({@code FASTR_GlobalVar*}, which is exported in
+ * {@code Rinternals.h}.
  */
 public interface FastRUpCalls {
     // Checkstyle: stop method name check
@@ -61,4 +63,52 @@ public interface FastRUpCalls {
     @RFFICpointer
     @RFFIUpCallNode(FASTR_DATAPTRNode.class)
     Object FASTR_DATAPTR(Object x);
+
+    // Global Var API
+
+    /**
+     * Allocates a native global variable descriptor. Must be called at most once per DLL load.
+     */
+    Object FASTR_GlobalVarAlloc(@RFFIInject RContext context);
+
+    /**
+     * Initializes the {@code globVarDescr} with the information about the current context. i.e.
+     * assign an index into the per-context array of global native variables. Must be called at most
+     * once for every context.
+     */
+    void FASTR_GlobalVarInit(Object globVarDescr, @RFFIInject RContext context);
+
+    /**
+     * Same as {@link #FASTR_GlobalVarInit(Object, RContext)}, but also registers given destructor
+     * to be called later during the context finalization.
+     *
+     * @param destructorNativeFunc Native function that will be called before the context finalizes.
+     */
+    void FASTR_GlobalVarInitWithDtor(Object globVarDescr, @RFFICpointer Object destructorNativeFunc, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetSEXP(Object globVarDescr, Object value, @RFFIInject RContext context);
+
+    Object FASTR_GlobalVarGetSEXP(Object globVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetPtr(Object globVarDescr, @RFFICpointer Object value, @RFFIInject RContext context);
+
+    @RFFICpointer
+    Object FASTR_GlobalVarGetPtr(Object globVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetInt(Object globalVarDescr, int value, @RFFIInject RContext context);
+
+    int FASTR_GlobalVarGetInt(Object globalVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetDouble(Object globalVarDescr, double value, @RFFIInject RContext context);
+
+    double FASTR_GlobalVarGetDouble(Object globalVarDescr, @RFFIInject RContext context);
+
+    void FASTR_GlobalVarSetBool(Object globalVarDescr, boolean value, @RFFIInject RContext context);
+
+    boolean FASTR_GlobalVarGetBool(Object globalVarDescr, @RFFIInject RContext context);
+
+    /**
+     * Prints all descriptors for all contexts. For debugging purposes.
+     */
+    void FASTR_GlobalVarPrintDescrs(@RFFIInject RContext context);
 }

@@ -246,6 +246,17 @@ public final class RContext {
         default void beforeDispose(RContext context) {
             // default empty implementation
         }
+
+        /**
+         * Called before context finalization
+         * ({@code com.oracle.truffle.api.TruffleLanguage#finalizeContext(Object)}). Note that
+         * context finalization happens before context disposal, and generally, it should be safe to
+         * call native functions in the context finalization.
+         */
+        @SuppressWarnings("unused")
+        default void beforeFinalize(RContext context) {
+            // default empty implementation
+        }
     }
 
     private final RStartParams startParameters;
@@ -372,6 +383,8 @@ public final class RContext {
     public volatile EventLoopState eventLoopState;
     public final AltRepContext altRepContext;
 
+    public final GlobalNativeVarContext stateglobalNativeVar;
+
     public final RFFIUpCallTargets rffiUpCallTargets;
 
     @CompilationFinal private RFFIContext stateRFFI;
@@ -380,7 +393,7 @@ public final class RContext {
     // concrete library.
     @CompilationFinal public Object gridContext = null;
     public final AtomicBoolean interruptResize = new AtomicBoolean(false);
-    public boolean internalGraphicsInitialized = false;
+    public boolean graphicsInitialized = false;
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
@@ -397,7 +410,7 @@ public final class RContext {
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRLocale, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG,
                         stateRFFI,
-                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL};
+                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL, stateglobalNativeVar};
     }
 
     public static void setEmbedded() {
@@ -490,6 +503,7 @@ public final class RContext {
 
         this.gcTorture = GCTortureState.newContextState();
         this.altRepContext = AltRepContext.newContextState();
+        this.stateglobalNativeVar = GlobalNativeVarContext.newContextState(this);
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
 
@@ -631,6 +645,20 @@ public final class RContext {
      */
     public static RContext create(TruffleRLanguage language, Env env, Instrumenter instrumenter, boolean isInitial) {
         return new RContext(language, env, instrumenter, isInitial);
+    }
+
+    public void finalizeContext() {
+        if (state.contains(State.INITIALIZED)) {
+            // Engine deactive must be called from finalizeContext, because we need to call some
+            // native functions from there, and for that, we need the context not to be in the
+            // disposal.
+            if (!embedded) {
+                engine.deactivate();
+            }
+            for (ContextState contextState : contextStates()) {
+                contextState.beforeFinalize(this);
+            }
+        }
     }
 
     /**
@@ -948,7 +976,7 @@ public final class RContext {
 
     @Override
     public String toString() {
-        return "context: " + id;
+        return "RContext: " + id;
     }
 
     /*
