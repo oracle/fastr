@@ -1,3 +1,7 @@
+# 23.0.0
+* Removed deprecated FastR grid.
+  * Removed `--R.UsetInternalGridGraphics` option.
+
 # 22.3.0
 * Implemented global native variable API, which allows the user to use some native package from two R contexts at the same time.
   * The API consists of a bunch of upcalls, named with a prefix of `FASTR_GlobalVar`, e.g., `FASTR_GlobalVarAlloc`.
