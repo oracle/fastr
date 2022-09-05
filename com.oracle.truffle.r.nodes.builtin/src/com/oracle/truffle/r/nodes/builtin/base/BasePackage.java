@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.r.library.fastrGrid.DoSetViewPortBuiltin;
 import com.oracle.truffle.r.library.utils.Download.CurlDownload;
 import com.oracle.truffle.r.library.utils.DownloadNodeGen.CurlDownloadNodeGen;
 import com.oracle.truffle.r.nodes.RRootNode;
@@ -893,13 +892,6 @@ public class BasePackage extends RBuiltinPackage {
         add(UpdateSubset.class, UpdateSubsetNodeGen::create, UpdateSubset::special);
         add(UpdateField.class, UpdateFieldNodeGen::create, UpdateField::createSpecial);
         add(WhileBuiltin.class, WhileBuiltinNodeGen::create);
-
-        // grid intrinsics
-        addGridIntrinsics();
-    }
-
-    private void addGridIntrinsics() {
-        add(DoSetViewPortBuiltin.class, DoSetViewPortBuiltin::create);
     }
 
     private void addBinaryArithmetic(Class<?> builtinClass, BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {

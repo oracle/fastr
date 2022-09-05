@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
  */
 public class RGraphics {
     public static void initialize(RContext context) {
-        if (!context.graphicsInitialized) {
+        if (!context.graphicsInitialized && context.getOption(LoadPackagesNativeCode)) {
             callVoidNativeFunction(context, "InitGraphics");
             context.graphicsInitialized = true;
         }
