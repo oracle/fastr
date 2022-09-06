@@ -29,7 +29,7 @@
 
 # A package that requires special processing before the library is built should
 # define LIB_PKG_PRE and for post processing define LIB_PKG_POST in its Makefile.
-# If a package-specfic clean is needed it should define CLEAN_PKG. PKG_INCLUDES can be
+# If a package-specific clean is needed it should define CLEAN_PKG. PKG_INCLUDES can be
 # used to define package-specific includes. XTRA_C_OBJECTS can be used to specify extra
 # object files. PKG_LIBS can specify additional libraries required by the package.
 # XTRA_C_OPTS and XTRA_F_OPTS can be used to specify additional C/Fortran compiler options.
