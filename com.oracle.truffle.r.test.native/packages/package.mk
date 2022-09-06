@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ TEMPLATE_FILE := ../Rutils/template.R
 
 all: $(RIN_R_FILES) $(PKG_TAR)
 
-$(PKG_TAR): $(PKG_FILES)
+$(PKG_TAR): $(PKG_FILES) $(RIN_R_FILES)
 	(cd $(REPO_DIR); TZDIR=/usr/share/zoneinfo/ $(GNUR_HOME_BINARY)/bin/R CMD build $(CURDIR)/$(PACKAGE))
 
 $(RIN_R_FILES): $(RIN_FILES)
