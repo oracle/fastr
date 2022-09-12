@@ -21,9 +21,14 @@ In this file, we enumerate all the fastr-related environment variables
   - A path to prebuilt recommended packages.
   - See [Caching recommended packages](building.md#Caching-recommended-packages).
 - `FASTR_CAPTURE_DEPENDENCIES`
-  - List of dependencies to be bundled with FastR, separated by comma.
+  - Space-separated list of dependencies to be bundled with FastR.
   - Used for release builds.
+  - For example: `export FASTR_CAPTURE_DEPENDENCIES="pcre2-8 gfortran quadmath gcc_s"`
   - See [Build modes](building.md#Build-modes).
+- `PKG_LDFLAGS_OVERRIDE`
+  - Where to find dependencies from `FASTR_CAPTURE_DEPENDENCIES`.
+  - For example: `export PKG_LDFLAGS_OVERRIDE="-L/lib/x86_64-linux-gnu -L/usr/lib/x86_64-linux-gnu/"`
+  - See [Build process](build-process.md#Release-build)
 
 ## Environment variables for development
 - `ECLIPSE_EXE`
@@ -32,13 +37,14 @@ In this file, we enumerate all the fastr-related environment variables
 ## Run-time environment variables
 - `FASTR_MRAN_MIRROR`
   - MRAN mirror used by FastR for installing packages.
-  - If this env var is set, the package installation works as if calling `install.packages(..., repos=Sys.getenv('FASTR_PKGS_CACHE_OPT'))`.
+  - If this env var is set, the package installation works as if
+    calling `install.packages(..., repos=c('MRAN' = Sys.getenv('FASTR_MRAN_MIRROR')))`.
 - `FASTR_REPOS`
   - name=value pairs for setting R repositories.
   - Will be used for something like `options(repos = ...)` in R.
   - Example: `FASTR_REPOS=file://home/pmarek/dev/fastr/com.oracle.truffle.r.test.native/packages/repo,CRAN=file://home/pmarek/minicran/2021-02-01`.
-  - Used by `mx pkgtest` and `mx r-pkgcache` commands.
-  - For more info run `mx pkgtest --help`.
+  - Used by `mx r-pkgtest` and `mx r-pkgcache` commands.
+  - For more info run `mx r-pkgtest --help`.
 - `FASTR_OPTION_<option>=<value>`
   - With this pattern, you can pass an option to FastR.
   - Equivalent to `$GRAALVM_HOME/bin/R --R.<option>=<value>`.

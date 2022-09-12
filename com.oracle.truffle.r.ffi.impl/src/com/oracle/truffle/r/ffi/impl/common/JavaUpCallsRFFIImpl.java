@@ -65,6 +65,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.GlobalNativeVarContext;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.Closure;
@@ -79,6 +80,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -2795,6 +2797,110 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object FASTR_DATAPTR(Object x) {
         throw implementedAsNode();
+    }
+
+    @Override
+    public Object FASTR_GlobalVarAlloc(RContext context) {
+        return GlobalNativeVarContext.allocGlobalVarDescr();
+    }
+
+    @Override
+    public void FASTR_GlobalVarInit(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.stateglobalNativeVar.initGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+    }
+
+    @Override
+    public void FASTR_GlobalVarInitWithDtor(Object globVarDescr, Object destructorNativeFunc, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        InteropLibrary interop = InteropLibrary.getUncached();
+        Type destrNativeFuncType;
+        if (!interop.isExecutable(destructorNativeFunc)) {
+            assert interop.isPointer(destructorNativeFunc);
+            destrNativeFuncType = Type.NFI;
+        } else {
+            destrNativeFuncType = Type.LLVM;
+        }
+        context.stateglobalNativeVar.initGlobalVarWithDtor(((RForeignObjectWrapper) globVarDescr).getDelegate(), destructorNativeFunc, destrNativeFuncType, interop);
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetSEXP(Object globVarDescr, Object value, RContext context) {
+        FASTR_GlobalVarSetPtr(globVarDescr, value, context);
+    }
+
+    @Override
+    public Object FASTR_GlobalVarGetSEXP(Object globVarDescr, RContext context) {
+        return FASTR_GlobalVarGetPtr(globVarDescr, context);
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetPtr(Object globVarDescr, Object value, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.stateglobalNativeVar.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+    }
+
+    @Override
+    public Object FASTR_GlobalVarGetPtr(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        return context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetInt(Object globVarDescr, int value, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.stateglobalNativeVar.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+    }
+
+    @Override
+    public int FASTR_GlobalVarGetInt(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        if (!(result instanceof Integer)) {
+            throw RInternalError.shouldNotReachHere("FASTR_GlobalVarGetInt should return an integer, have you set integer via FASTR_GlobalVarSetInt before?");
+        } else {
+            return (int) result;
+        }
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetDouble(Object globVarDescr, double value, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.stateglobalNativeVar.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+    }
+
+    @Override
+    public double FASTR_GlobalVarGetDouble(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        if (!(result instanceof Double)) {
+            throw RInternalError.shouldNotReachHere("FASTR_GlobalVarGetDouble should return double, have you set double via FASTR_GlobalVarSetDouble before?");
+        } else {
+            return (double) result;
+        }
+    }
+
+    @Override
+    public void FASTR_GlobalVarSetBool(Object globVarDescr, boolean value, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        context.stateglobalNativeVar.setGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), value, InteropLibrary.getUncached());
+    }
+
+    @Override
+    public boolean FASTR_GlobalVarGetBool(Object globVarDescr, RContext context) {
+        assert globVarDescr instanceof RForeignObjectWrapper;
+        Object result = context.stateglobalNativeVar.getGlobalVar(((RForeignObjectWrapper) globVarDescr).getDelegate(), InteropLibrary.getUncached());
+        if (!(result instanceof Boolean)) {
+            throw RInternalError.shouldNotReachHere("FASTR_GlobalVarGetBool should return bool, have you set bool via FASTR_GlobalVarSetBool before?");
+        } else {
+            return (boolean) result;
+        }
+    }
+
+    @Override
+    @TruffleBoundary
+    public void FASTR_GlobalVarPrintDescrs(RContext context) {
+        GlobalNativeVarContext.printAllDescriptors(context);
     }
 
     @Override

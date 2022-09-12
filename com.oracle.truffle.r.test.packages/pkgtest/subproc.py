@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -24,15 +24,17 @@
 import logging
 from threading import Thread
 from threading import Lock
+from typing import List, Tuple, Optional, Any, Dict, Callable
+
 import time, signal, errno, sys, os, subprocess
 
 from .util import abort
 
 ERROR_TIMEOUT = 0x700000000 # not 32 bits
-_currentSubprocesses = []
+_currentSubprocesses: List[Tuple[subprocess.Popen, List[str]]] = []
 
 
-def get_os():
+def get_os() -> str:
     """
     Get a canonical form of sys.platform.
     """
@@ -52,14 +54,14 @@ def get_os():
         abort(1, 'Unknown operating system ' + sys.platform)
 
 
-def _addSubprocess(p, args):
+def _addSubprocess(p: subprocess.Popen, args: List[str]) -> Tuple[subprocess.Popen, List[str]]:
     entry = (p, args)
     logging.debug('[{}: started subprocess {}: {}]'.format(os.getpid(), p.pid, args))
     _currentSubprocesses.append(entry)
     return entry
 
 
-def _removeSubprocess(entry):
+def _removeSubprocess(entry: Tuple[subprocess.Popen, List[str]]) -> None:
     if entry and entry in _currentSubprocesses:
         try:
             logging.debug('[{}: removing subprocess {}: {}]'.format(os.getpid(), entry[0], entry[1]))
@@ -68,7 +70,7 @@ def _removeSubprocess(entry):
             pass
 
 
-def waitOn(p):
+def waitOn(p: subprocess.Popen) -> int:
     if get_os() == 'windows':
         # on windows use a poll loop, otherwise signal does not get handled
         retcode = None
@@ -80,7 +82,7 @@ def waitOn(p):
     return retcode
 
 
-def _kill_process(pid, sig):
+def _kill_process(pid: int, sig: int) -> bool:
     """
     Sends the signal `sig` to the process identified by `pid`. If `pid` is a process group
     leader, then signal is sent to the process group id.
@@ -98,8 +100,8 @@ def _kill_process(pid, sig):
         return False
 
 
-def _waitWithTimeout(process, args, timeout, nonZeroIsFatal=True):
-    def _waitpid(pid):
+def _waitWithTimeout(process: subprocess.Popen, args: List[str], timeout: int, nonZeroIsFatal=True) -> int:
+    def _waitpid(pid: int) -> Tuple[int, int]:
         while True:
             try:
                 return os.waitpid(pid, os.WNOHANG)
@@ -136,7 +138,13 @@ def _waitWithTimeout(process, args, timeout, nonZeroIsFatal=True):
         time.sleep(delay)
 
 
-def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None, env=None, **kwargs):
+def pkgtest_run(args: List[str], nonZeroIsFatal=True,
+                out: Optional[Callable[[str], None]]=None,
+                err: Optional[Callable[[str], None]]=None,
+                cwd: Optional[str]=None,
+                timeout: Optional[int]=None,
+                env: Optional[Dict[str, str]]=None,
+                **kwargs) -> int:
     """
     Imported from MX.
     Run a command in a subprocess, wait for it to complete and return the exit status of the process.
@@ -158,11 +166,11 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
     else:
         msg = "Environment:\n"
         in_os = set(os.environ) - set(env)
-        if (len(in_os) > 0):
+        if len(in_os) > 0:
             msg = '  environment variables in OS environ but not in env:\n'
             msg += '\n'.join(['      ' + key + '=' + os.environ[key] for key in list(in_os)])
         in_env = set(env) - set(os.environ)
-        if (len(in_env) > 0):
+        if len(in_env) > 0:
             msg += '  environment variables in env but not in OS environ:\n'
             msg += '\n'.join(['      ' + key + '=' + env[key] for key in list(in_env)])
         logging.debug(msg)

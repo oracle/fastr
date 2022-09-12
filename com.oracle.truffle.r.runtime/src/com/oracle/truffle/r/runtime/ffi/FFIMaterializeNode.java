@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -133,8 +132,6 @@ public abstract class FFIMaterializeNode extends Node {
     }
 
     static boolean isForeignObject(Object value) {
-        // in case somebody calls wrap for an already wrapped RBaseObject
-        assert value instanceof NativeDataAccess.NativeMirror : value.getClass().getSimpleName() + " has to be a NativeMirror";
         return RRuntime.isForeignObject(value);
     }
 

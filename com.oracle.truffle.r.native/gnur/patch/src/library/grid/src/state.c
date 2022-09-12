@@ -21,8 +21,6 @@
 #include "grid.h"
 #include <string.h>
 
-int gridRegisterIndex;
-
 /* The gridSystemState (per device) consists of 
  * GSS_DEVSIZE 0 = current size of device
  * GSS_CURRLOC 1 = current location of grid "pen" 
@@ -60,6 +58,7 @@ void initDL(pGEDevDesc dd)
 {
     SEXP dl, dlindex;
     SEXP vp = gridStateElement(dd, GSS_VP);
+    int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
     SEXP gsd = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
     /* The top-level viewport goes at the start of the display list
      */
@@ -83,6 +82,7 @@ void initDL(pGEDevDesc dd)
 void initOtherState(pGEDevDesc dd)
 {
     SEXP currloc, prevloc, recording;
+    int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
     SEXP state = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
     currloc = VECTOR_ELT(state, GSS_CURRLOC);
     REAL(currloc)[0] = NA_REAL;
@@ -139,18 +139,21 @@ void fillGridSystemState(SEXP state, pGEDevDesc dd)
 
 SEXP gridStateElement(pGEDevDesc dd, int elementIndex)
 {
+    int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
     return VECTOR_ELT((SEXP) dd->gesd[gridRegisterIndex]->systemSpecific, 
 		      elementIndex);
 }
 
 void setGridStateElement(pGEDevDesc dd, int elementIndex, SEXP value)
 {
+    int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
     SET_VECTOR_ELT((SEXP) dd->gesd[gridRegisterIndex]->systemSpecific, 
 		   elementIndex, value);
 }
 
 static void deglobaliseState(SEXP state)
 {
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     int index = INTEGER(VECTOR_ELT(state, GSS_GLOBALINDEX))[0];
     SET_VECTOR_ELT(findVar(install(".GRID.STATE"), R_gridEvalEnv), 
 		   index, R_NilValue);
@@ -160,6 +163,7 @@ static int findStateSlot()
 {
     int i;
     int result = -1;
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     SEXP globalstate = findVar(install(".GRID.STATE"), R_gridEvalEnv);
     for (i = 0; i < length(globalstate); i++)
 	if (VECTOR_ELT(globalstate, i) == R_NilValue) {
@@ -175,6 +179,7 @@ static void globaliseState(SEXP state)
 {
     int index = findStateSlot();
     SEXP globalstate, indexsxp;
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     PROTECT(globalstate = findVar(install(".GRID.STATE"), R_gridEvalEnv));
     /* Record the index for deglobalisation
      */
@@ -194,6 +199,7 @@ SEXP gridCallback(GEevent task, pGEDevDesc dd, SEXP data) {
     SEXP gsd;
     SEXP devsize;
     R_GE_gcontext gc;
+    int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
     switch (task) {
     case GE_InitState:
 	/* Create the initial grid state for a device
@@ -286,6 +292,7 @@ SEXP gridCallback(GEevent task, pGEDevDesc dd, SEXP data) {
 		 */
 		SEXP fcall;
 		PROTECT(fcall = lang1(install("draw.all")));
+		SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
 		eval(fcall, R_gridEvalEnv); 
 		UNPROTECT(1);
 	    }

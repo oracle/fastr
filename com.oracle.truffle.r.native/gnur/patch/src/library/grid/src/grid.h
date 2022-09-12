@@ -34,6 +34,9 @@
 #define _(String) (String)
 #endif
 
+extern FASTR_GlobalVar_t fastr_glob_gridRegisterIndex;
+extern FASTR_GlobalVar_t fastr_glob_R_gridEvalEnv;
+
 /* All grid type names are prefixed with an "L" 
  * All grid global variable names are prefixed with an "L_" 
  */
@@ -240,13 +243,6 @@ typedef struct {
     double yscalemin;
     double yscalemax;
 } LViewportContext;
-
-/* Evaluation environment */
-#ifndef GRID_MAIN
-extern SEXP R_gridEvalEnv;
-#else
-SEXP R_gridEvalEnv;
-#endif
 
 
 /* Functions called by R code
@@ -603,9 +599,6 @@ SEXP gridStateElement(pGEDevDesc dd, int elementIndex);
 void setGridStateElement(pGEDevDesc dd, int elementIndex, SEXP value);
 
 SEXP gridCallback(GEevent task, pGEDevDesc dd, SEXP data);
-
-extern int gridRegisterIndex;
-
 
 /* From grid.c */
 SEXP doSetViewport(SEXP vp, 

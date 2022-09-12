@@ -52,6 +52,8 @@
 
 # ------
 iterators => D/Warning: closing unused connection 3
+# In GraalVM home, there is no 'COPYING' file.
+iterators => D+9/file.path(R.home(), 'COPYING')
 
 # ------
 # compare generates syntax error, GNUR unlike FastR provides some more details on the following 3 lines

@@ -448,6 +448,25 @@ typedef SEXP (*call_octsize)(SEXP size);
 typedef int (*call_R_nchar)(SEXP string, nchar_type type_, Rboolean allowNA, Rboolean keepNA, const char* msg_name);
 
 // ==========================================================
+//                    Global variables API
+// ==========================================================
+typedef void * FASTR_GlobalVar_t;
+
+typedef FASTR_GlobalVar_t (*call_FASTR_GlobalVarAlloc)();
+typedef void (*call_FASTR_GlobalVarInit)(FASTR_GlobalVar_t descr);
+typedef void (*call_FASTR_GlobalVarInitWithDtor)(FASTR_GlobalVar_t descr, void (*dtor)(void *));
+typedef void (*call_FASTR_GlobalVarSetSEXP)(FASTR_GlobalVar_t descr, SEXP value);
+typedef SEXP (*call_FASTR_GlobalVarGetSEXP)(FASTR_GlobalVar_t descr);
+typedef void (*call_FASTR_GlobalVarSetPtr)(FASTR_GlobalVar_t descr, void *value);
+typedef void * (*call_FASTR_GlobalVarGetPtr)(FASTR_GlobalVar_t descr);
+typedef void (*call_FASTR_GlobalVarSetInt)(FASTR_GlobalVar_t descr, int value);
+typedef int (*call_FASTR_GlobalVarGetInt)(FASTR_GlobalVar_t descr);
+typedef void (*call_FASTR_GlobalVarSetDouble)(FASTR_GlobalVar_t descr, double value);
+typedef double (*call_FASTR_GlobalVarGetDouble)(FASTR_GlobalVar_t descr);
+typedef void (*call_FASTR_GlobalVarSetBool)(FASTR_GlobalVar_t descr, Rboolean value);
+typedef Rboolean (*call_FASTR_GlobalVarGetBool)(FASTR_GlobalVar_t descr);
+typedef void (*call_FASTR_GlobalVarPrintDescrs)();
+// ==========================================================
 //                    ALTREP framework
 // ==========================================================
 

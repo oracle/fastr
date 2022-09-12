@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
-import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeArray;
 
 @GenerateUncached
@@ -40,11 +39,7 @@ public abstract class FFIToNativeMirrorNode extends Node {
 
     public abstract Object execute(Object value);
 
-    static boolean isRForeignObjectWrapper(Object x) {
-        return x instanceof RForeignObjectWrapper;
-    }
-
-    @Specialization(guards = "!isRForeignObjectWrapper(value)")
+    @Specialization
     protected static Object wrap(RBaseObject value,
                     @Cached("createBinaryProfile()") ConditionProfile hasMirror) {
         NativeDataAccess.NativeMirror mirror = value.getNativeMirror();

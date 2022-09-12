@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "3354d2f70983c0ae7327f6719bac4a02a55aa16a",
+               "version" : "6ffac7220dee9833f6472eb5b7d192382df14928",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "3354d2f70983c0ae7327f6719bac4a02a55aa16a",
+               "version" : "6ffac7220dee9833f6472eb5b7d192382df14928",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -445,7 +445,7 @@ suite = {
       "description" : "launcher for the GraalVM (at the moment used only when native image is installed)",
       "dependencies" : ["com.oracle.truffle.r.launcher"],
       "distDependencies" : [
-        "sdk:GRAAL_SDK"
+        "sdk:GRAAL_SDK",
       ],
       # FASTR and FASTR_LAUNCHER share one common helper class RCmdOptions
       # This could be refactored in the future

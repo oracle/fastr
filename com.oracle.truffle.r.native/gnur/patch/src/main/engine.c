@@ -53,9 +53,17 @@ void R_GE_checkVersionOrDie(int version)
  * Paul.
  */
 
-static int numGraphicsSystems = 0;
+FASTR_GlobalVar_t fastr_glob_registeredSystems = NULL;
+FASTR_GlobalVar_t fastr_glob_numGraphicsSystems = NULL;
 
-static GESystemDesc* registeredSystems[MAX_GRAPHICS_SYSTEMS];
+/*
+ * Called from R_init_graphics
+ */
+void * fastr_alloc_registeredSystems() {
+    GESystemDesc **registeredSystems = malloc(MAX_GRAPHICS_SYSTEMS * sizeof(GESystemDesc *));
+    bzero(registeredSystems, MAX_GRAPHICS_SYSTEMS * sizeof(GESystemDesc *));
+    return (void *) registeredSystems;
+}
 
 
 /****************************************************************
@@ -127,6 +135,7 @@ static void registerOne(pGEDevDesc dd, int systemNumber, GEcallback cb) {
  */
 void GEregisterWithDevice(pGEDevDesc dd) {
     int i;
+    GESystemDesc **registeredSystems = (GESystemDesc **) FASTR_GlobalVarGetPtr(fastr_glob_registeredSystems);
     for (i = 0; i < MAX_GRAPHICS_SYSTEMS; i++)
 	/* If a graphics system has unregistered, there might be
 	 * "holes" in the array of registeredSystems.
@@ -149,6 +158,8 @@ void GEregisterWithDevice(pGEDevDesc dd) {
 void GEregisterSystem(GEcallback cb, int *systemRegisterIndex) {
     int i, devNum;
     pGEDevDesc gdd;
+    int numGraphicsSystems = FASTR_GlobalVarGetInt(fastr_glob_numGraphicsSystems);
+    GESystemDesc **registeredSystems = (GESystemDesc **) FASTR_GlobalVarGetPtr(fastr_glob_registeredSystems);
     if (numGraphicsSystems + 1 == MAX_GRAPHICS_SYSTEMS)
 	error(_("too many graphics systems registered"));
     /* Set the system register index so that, if there are existing
@@ -182,6 +193,7 @@ void GEregisterSystem(GEcallback cb, int *systemRegisterIndex) {
 	error(_("unable to allocate memory (in GEregister)"));
     registeredSystems[*systemRegisterIndex]->callback = cb;
     numGraphicsSystems += 1;
+    FASTR_GlobalVarSetInt(fastr_glob_numGraphicsSystems, numGraphicsSystems);
 }
 
 /****************************************************************
@@ -193,6 +205,8 @@ void GEunregisterSystem(int registerIndex)
 {
     int i, devNum;
     pGEDevDesc gdd;
+    int numGraphicsSystems = FASTR_GlobalVarGetInt(fastr_glob_numGraphicsSystems);
+    GESystemDesc **registeredSystems = (GESystemDesc **) FASTR_GlobalVarGetPtr(fastr_glob_registeredSystems);
 
     /* safety check if called before Ginit() */
     if(registerIndex < 0) return;
@@ -227,6 +241,7 @@ void GEunregisterSystem(int registerIndex)
 	registeredSystems[registerIndex] = NULL;
     }
     numGraphicsSystems -= 1;
+    FASTR_GlobalVarSetInt(fastr_glob_numGraphicsSystems, numGraphicsSystems);
 }
 
 /****************************************************************
@@ -244,6 +259,7 @@ SEXP GEhandleEvent(GEevent event, pDevDesc dev, SEXP data)
 {
     int i;
     pGEDevDesc gdd = desc2GEDesc(dev);
+    GESystemDesc **registeredSystems = (GESystemDesc **) FASTR_GlobalVarGetPtr(fastr_glob_registeredSystems);
     for (i = 0; i < MAX_GRAPHICS_SYSTEMS; i++)
 	if (registeredSystems[i] != NULL)
 	    (registeredSystems[i]->callback)(event, gdd, data);
@@ -2987,6 +3003,7 @@ SEXP GEcreateSnapshot(pGEDevDesc dd)
      * and one spot each for the registered graphics systems
      * to put their graphics state
      */
+    int numGraphicsSystems = FASTR_GlobalVarGetInt(fastr_glob_numGraphicsSystems);
     PROTECT(snapshot = allocVector(VECSXP, 1 + numGraphicsSystems));
     /* The first element of the snapshot is the display list.
      */

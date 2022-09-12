@@ -106,7 +106,7 @@ Package installation and testing is partly handled by a R script `r/install.pack
 
 #### The install.packages.R script
 
-While normally run with FastR using the `mx installpkgs` wrapper, this script can be used standalone using `Rscript`, thereby allowing to to be used by GNU R also.
+While normally run with FastR using the `mx installpkgs` wrapper, this script can be used standalone using `Rscript`, thereby allowing to be used by GNU R also.
 The command has a rather daunting set of options but, for normal use, most of these do not need to be set.
 
 ##### Usage
@@ -189,10 +189,38 @@ Testing packages requires that they are first installed, so all of the above is 
     --no-install | -n: suppress installation phase (useful for --run-tests)
     --random count: install count packages randomly chosen from the candidate set
     --testdir dir: store test output in dir (defaults to "test").
-    --print-ok-installs: print the successfully installed packages
     --list-versions: for the candidate set of packages to install list the name and version in format: name,version,
     --run-tests: run packages tests on the successfully installed packages (not including dependents)
     --dump-preprocessed: dump the preprocessed output (see below)
+
+##### Debbuging the script
+To debug the script, the following snippet should be useful:
+```R
+executable <- "/home/pmarek/dev/R-4.0.3/bin/R"
+pkgpattern <- "testrffi"
+test_dir <- "/home/pmarek/tmp/test.fastr"
+test_executable <- "/home/pmarek/dev/fastr/bin/R"
+install_lib <- "/home/pmarek/fastr_libraries/R-4.0.3"
+Sys.setenv("R_LIBS_USER" = install_lib)
+commandArgs <- function(...) {
+  c(
+    executable, 
+    "--repos", "FASTR=file://.../com.oracle.truffle.r.test.native/packages/repo,CRAN=file://.../minicran/2021-02-01/",
+    "--no-install",
+    "--very-verbose",
+    "--dry-run",
+    "--run-tests",
+    "--cache-pkgs", "dir=/home/pmarek/fastr_pkgcache,sync=TRUE,vm=fastr",
+    "--test-mode", "system",
+    "--test-executable", test_executable,
+    "--testdir", test_dir,
+    "--pkg-pattern", pkgpattern
+  )
+}
+source("install.packages.R")
+debugonce(run)
+run()
+```
 
 #### Examples
 
@@ -226,7 +254,7 @@ Attempt to install the `Rcpp` package. N.B. The regular expression prevents the 
 
 The `mx pkgtest` command is a wrapper on `mx installpkgs` that forces the `--run-tests` option and also executes the same tests under GnuR and compares the results. The packages are installed into `lib.install.packages.fastr` and `lib.install.packages.gnur`, respectively and the test results are stored in `test.fastr` and `test.gnur`, respectively. The differences between the results, computed using `diff -r`,  are stored per package in the `test.diffs` directory. All these directories are cleaned and re-created at the start of the run.
 
-By default the local build of FastR and the internal GNU R that is built as part of the FastR build are used to run the tests. However, when `FASTR_GRAALVM` is set to the location of a `GraalVM` binary installation, that is used for FastR and the `gnur` suite must be installed and built as a sibling to `fastr`.
+By default the local build of FastR and the internal GNU R that is built as part of the FastR build are used to run the tests. However, when `GRAALVM_HOME` is set to the location of a `GraalVM` binary installation, that is used for FastR and the `gnur` suite must be installed and built as a sibling to `fastr`.
 
 #### Running/Debugging Tests Locally
 
