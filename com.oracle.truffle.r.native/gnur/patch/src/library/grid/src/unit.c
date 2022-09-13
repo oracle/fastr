@@ -48,6 +48,7 @@ int isNewUnit(SEXP unit) {
     return inherits(unit, "unit_v2");
 }
 SEXP upgradeUnit(SEXP unit) {
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     SEXP upgradeFn = PROTECT(findFun(install("upgradeUnit"), R_gridEvalEnv));
     SEXP R_fcall = PROTECT(lang2(upgradeFn, unit));
     SEXP unit2 = PROTECT(eval(R_fcall, R_gridEvalEnv));
@@ -196,6 +197,7 @@ double pureNullUnitValue(SEXP unit, int index)
 
 int pureNullUnit(SEXP unit, int index, pGEDevDesc dd) {
     int i, n, result, u = unitUnit(unit, index);
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     if (isArith(u)) {
         SEXP data = unitData(unit, index);
         n = unitLength(data);
@@ -343,6 +345,7 @@ double evaluateGrobUnit(double value, SEXP grob,
     SEXP R_fcall0, R_fcall1, R_fcall2x, R_fcall2y, R_fcall3;
     SEXP savedgpar, savedgrob, updatedgrob;
     SEXP unitx = R_NilValue, unity = R_NilValue;
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     double result = 0.0;
     Rboolean protectedGrob = FALSE;
     /*
@@ -1569,6 +1572,7 @@ SEXP validData(SEXP data, SEXP validUnits, int n) {
 	int nUnit = LENGTH(validUnits);
 	int *pValidUnits = INTEGER(validUnits);
 	int dataCopied = 0;
+	SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
 	
 	if (nData != 1 && nData < n) {
 		error(_("data must be either NULL, have length 1, or match the length of the final unit vector"));
