@@ -3,6 +3,8 @@
   * The API consists of a bunch of upcalls, named with a prefix of `FASTR_GlobalVar`, e.g., `FASTR_GlobalVarAlloc`.
   * The documentation is in `com.oracle.truffle.r.ffi.impl.upcalls.FastRUpCalls`.
   * Currently, only `grid` and `graphics` builtin packages are refactored to use the global native variable API.
+* Add partial support for `dplyr` 1.0.3
+  * Implement `SET_PRCODE`, `SET_PRENV` and `SET_PRVALUE` upcalls.
 
 # 22.2.0
 * `--R.DebugLLVMLibs` is no longer a stable option.
