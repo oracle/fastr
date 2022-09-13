@@ -92,19 +92,20 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         private Object doCheckEvaluate(VirtualFrame frame, Object obj, boolean visible) {
             CompilerAsserts.partialEvaluationConstant(visible);
             if (isPromiseProfile.profile(obj instanceof RPromise)) {
+                VirtualFrame frameForEvaluate = frame;
                 if (isFrameNullProfile.profile(frame == null)) {
                     REnvironment emptyEnv = RContext.getInstance(this).stateREnvironment.getEmptyDummy();
-                    frame = emptyEnv.getFrame();
+                    frameForEvaluate = emptyEnv.getFrame();
                 }
                 if (promiseHelper == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseHelper = insert(new PromiseHelperNode());
                 }
-                assert frame != null;
+                assert frameForEvaluate != null;
                 if (visible) {
-                    return promiseHelper.visibleEvaluate(frame, (RPromise) obj);
+                    return promiseHelper.visibleEvaluate(frameForEvaluate, (RPromise) obj);
                 } else {
-                    return promiseHelper.evaluate(frame, (RPromise) obj);
+                    return promiseHelper.evaluate(frameForEvaluate, (RPromise) obj);
                 }
             } else {
                 return obj;

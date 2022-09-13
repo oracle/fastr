@@ -310,6 +310,7 @@ public final class NativeDataAccess {
          * @return Byte array type.
          */
         @ExportMessage(library = NativeTypeLibrary.class)
+        @SuppressWarnings("static-method")
         public Object getNativeType(@CachedLibrary("this") NativeTypeLibrary nativeTypeLib) {
             RContext ctx = RContext.getInstance(nativeTypeLib);
             return ctx.getRFFI().getSulongArrayType((byte) 42);
