@@ -3,7 +3,7 @@
 set.seed(123)
 
 # FastR changed: demos <- c("Hershey", "Japanese", "lm.glm", "nlm", "plotmath")
-demos <- c()
+demos <- c("Hershey", "Japanese")
 
 for(nam in  demos) demo(nam, character.only = TRUE)
 
