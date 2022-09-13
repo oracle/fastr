@@ -357,7 +357,6 @@ void initGPar(pGEDevDesc dd)
     SEXP gpar, gparnames, class;
     SEXP gpfill, gpcol, gpgamma, gplty, gplwd, gpcex, gpfs, gplh, gpfont;
     SEXP gpfontfamily, gpalpha, gplineend, gplinejoin, gplinemitre, gplex;
-    int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
     SEXP gsd = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
     PROTECT(gpar = allocVector(VECSXP, 15));
     PROTECT(gparnames = allocVector(STRSXP, 15));

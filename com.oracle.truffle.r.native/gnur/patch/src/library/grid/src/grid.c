@@ -63,18 +63,14 @@ static Rboolean deviceChanged(double devWidthCM, double devHeightCM,
  */
 SEXP L_initGrid(SEXP GridEvalEnv) 
 {
-    int *gridRegisterIndex = (int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex);
-    SEXP R_gridEvalEnv = GridEvalEnv;
-    FASTR_GlobalVarSetSEXP(fastr_glob_R_gridEvalEnv, R_gridEvalEnv);
-    GEregisterSystem(gridCallback, gridRegisterIndex);
+    R_gridEvalEnv = GridEvalEnv;
+    GEregisterSystem(gridCallback, &gridRegisterIndex);
     return R_NilValue;
 }
 
 SEXP L_killGrid() 
 {
-    int *gridRegisterIndex = (int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex);
-    GEunregisterSystem(*gridRegisterIndex);
-    *gridRegisterIndex = -1;
+    GEunregisterSystem(gridRegisterIndex);
     return R_NilValue;
 }
 
@@ -93,7 +89,6 @@ void dirtyGridDevice(pGEDevDesc dd) {
 	SEXP gsd, griddev;
 	/* Record the fact that this device has now received grid output
 	 */
-	int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
 	gsd = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
 	PROTECT(griddev = allocVector(LGLSXP, 1));
 	LOGICAL(griddev)[0] = TRUE;
@@ -324,7 +319,6 @@ SEXP L_setviewport(SEXP invp, SEXP hasParent)
 {
     SEXP vp;
     SEXP pushedvp, fcall;
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     /* Get the current device 
      */
     pGEDevDesc dd = getDevice();
@@ -363,7 +357,6 @@ SEXP L_setviewport(SEXP invp, SEXP hasParent)
 static Rboolean noChildren(SEXP children) 
 {
     SEXP result, fcall;
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     PROTECT(fcall = lang2(install("no.children"),
 			  children));
     PROTECT(result = eval(fcall, R_gridEvalEnv)); 
@@ -374,7 +367,6 @@ static Rboolean noChildren(SEXP children)
 static Rboolean childExists(SEXP name, SEXP children) 
 {
     SEXP result, fcall;
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     PROTECT(fcall = lang3(install("child.exists"),
 			  name, children));
     PROTECT(result = eval(fcall, R_gridEvalEnv)); 
@@ -385,7 +377,6 @@ static Rboolean childExists(SEXP name, SEXP children)
 static SEXP childList(SEXP children) 
 {
     SEXP result, fcall;
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     PROTECT(fcall = lang2(install("child.list"),
 			  children));
     PROTECT(result = eval(fcall, R_gridEvalEnv)); 
@@ -541,7 +532,6 @@ SEXP L_downviewport(SEXP name, SEXP strict)
 static Rboolean pathMatch(SEXP path, SEXP pathsofar, SEXP strict) 
 {
     SEXP result, fcall;
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     PROTECT(fcall = lang4(install("pathMatch"),
 			  path, pathsofar, strict));
     PROTECT(result = eval(fcall, R_gridEvalEnv)); 
@@ -552,7 +542,6 @@ static Rboolean pathMatch(SEXP path, SEXP pathsofar, SEXP strict)
 static SEXP growPath(SEXP pathsofar, SEXP name) 
 {
     SEXP result, fcall;
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     if (isNull(pathsofar))
 	result = name;
     else {
@@ -740,7 +729,6 @@ SEXP L_unsetviewport(SEXP n)
 	SET_TAG(t, install("envir")); 
 	t = CDR(t);
 	SET_TAG(t, install("inherits")); 
-	SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
 	eval(fcall, R_gridEvalEnv); 
 	UNPROTECT(2); /* false, fcall */
     }
@@ -1151,8 +1139,7 @@ SEXP L_convert(SEXP x, SEXP whatfrom,
          * In these cases do NOT transform thru INCHES 
          * (to avoid divide-by-zero, but still do something useful)
          */
-        relConvert = (!isUnitArithmetic(x) && !isUnitList(x) &&
-                      (unitUnit(x, i) == L_NATIVE || unitUnit(x, i) == L_NPC) &&
+        relConvert = ((unitUnit(x, i) == L_NATIVE || unitUnit(x, i) == L_NPC) &&
                       (TOunit == L_NATIVE || TOunit == L_NPC) &&
                       ((FROMaxis == TOaxis) ||
                        (FROMaxis == 0 && TOaxis == 2) ||
@@ -1660,7 +1647,6 @@ static void hullEdge(double *x, double *y, int n,
     SEXP xin, yin, chullFn, R_fcall, hull;    
     int adjust = 0;
     double *xkeep, *ykeep;
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     vmax = vmaxget();
     /* Remove any NA's because chull() can't cope with them */
     xkeep = (double *) R_alloc(n, sizeof(double));

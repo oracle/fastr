@@ -370,8 +370,6 @@ void initVP(pGEDevDesc dd)
     SEXP vpfnname, vpfn, vp;
     SEXP xscale, yscale;
     SEXP currentgp = gridStateElement(dd, GSS_GPAR);
-    int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     SEXP gsd = (SEXP) dd->gesd[gridRegisterIndex]->systemSpecific;
     PROTECT(vpfnname = findFun(install("grid.top.level.vp"), R_gridEvalEnv));
     PROTECT(vpfn = lang1(vpfnname));
