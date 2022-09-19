@@ -78,11 +78,11 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     // Checkstyle: stop method name check
 
     @Override
+    @TruffleBoundary
     public Object Rf_mkCharLenCE(Object obj, int len, int encoding) {
         if (obj instanceof RObjectDataPtr) {
             RBaseObject vector = ((RObjectDataPtr) obj).getVector();
             if (vector instanceof RAbstractContainer) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
                 Object vectorData = ((RAbstractContainer) vector).getData();
                 byte[] byteArray = VectorDataLibrary.getFactory().getUncached().getReadonlyRawData(vectorData);
                 assert byteArray[byteArray.length - 1] == '\0' : "Cannot make CHARSXP from bytes not terminated by \0";
