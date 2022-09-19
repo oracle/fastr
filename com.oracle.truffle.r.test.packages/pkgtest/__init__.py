@@ -872,7 +872,23 @@ def _is_runit_result(lines: List[str]) -> bool:
 
 def _parse_testthat_result(lines: List[str]) -> Tuple[int, int, int]:
     '''
-    OK: 2 SKIPPED: 0 FAILED: 0
+    Tries to parse results of testthat package of some known versions.
+    Returns tuple of (ok_count, skipped_count, failed_count)
+    '''
+    if any((True for line in lines if 'testthat results' in line)):
+        return _parse_old_testthat_result(lines)
+    testthat_pattern = re.compile(r".*\[\s+FAIL\s+(?P<fail_count>\d+)\s+\|\s+WARN\s+(?P<warn_count>\d+)\s+\|\s+SKIP\s+(?P<skip_count>\d+)\s+\|\s+PASS\s+(?P<pass_count>\d+)\s+\]")
+    for line in lines:
+        match = testthat_pattern.match(line)
+        if match:
+            return (int(match.group("pass_count")), int(match.group("skip_count")), int(match.group("fail_count")))
+    raise TestFrameworkResultException("Wrong format of testthat (version >= 3.0.1) results")
+
+
+def _parse_old_testthat_result(lines: List[str]) -> Tuple[int, int, int]:
+    '''
+    Parses result of testthat version lower than 3.0.1.
+    Returns tuple of (ok_count, skipped_count, failed_count)
     '''
 
     def _testthat_parse_part(part: str) -> int:
