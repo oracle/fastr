@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,6 +68,8 @@ extern SEXP nestedCall2(SEXP v);
 extern SEXP r_home(void);
 
 extern SEXP mkStringFromChar(void);
+
+extern SEXP mkStringFromRaw();
 
 extern SEXP mkStringFromBytes(void);
 
@@ -182,3 +184,7 @@ extern SEXP testInstallTrChar(SEXP strvec, SEXP env);
 extern SEXP test_RfMatch(SEXP x, SEXP y);
 
 extern SEXP test_mkCharDoesNotCollect();
+
+extern SEXP test_setRRawVector();
+
+extern SEXP test_setRRawVector2();

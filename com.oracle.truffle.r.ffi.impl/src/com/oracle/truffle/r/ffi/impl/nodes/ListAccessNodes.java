@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -146,8 +146,8 @@ public final class ListAccessNodes {
 
         @Fallback
         @TruffleBoundary
-        protected Object cdr(Object obj) {
-            throw RInternalError.unimplemented("CDR only works on pair lists, language objects, and argument lists, type given: " + Utils.getTypeName(obj));
+        protected Object cdr(@SuppressWarnings("unused") Object obj) {
+            return RNull.instance;
         }
 
         public static CDRNode create() {

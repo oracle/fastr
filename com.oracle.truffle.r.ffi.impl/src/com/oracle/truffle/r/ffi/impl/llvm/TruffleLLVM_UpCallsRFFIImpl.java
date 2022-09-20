@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
@@ -75,11 +78,19 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     // Checkstyle: stop method name check
 
     @Override
+    @TruffleBoundary
     public Object Rf_mkCharLenCE(Object obj, int len, int encoding) {
         if (obj instanceof RObjectDataPtr) {
-            Object wrappedCharSXP = ((RObjectDataPtr) obj).getVector();
-            assert wrappedCharSXP instanceof CharSXPWrapper;
-            return wrappedCharSXP;
+            RBaseObject vector = ((RObjectDataPtr) obj).getVector();
+            if (vector instanceof RAbstractContainer) {
+                Object vectorData = ((RAbstractContainer) vector).getData();
+                byte[] byteArray = VectorDataLibrary.getFactory().getUncached().getReadonlyRawData(vectorData);
+                assert byteArray[byteArray.length - 1] == '\0' : "Cannot make CHARSXP from bytes not terminated by \0";
+                return CharSXPWrapper.create(new String(byteArray, 0, byteArray.length - 1));
+            } else {
+                assert vector instanceof CharSXPWrapper;
+                return vector;
+            }
         } else if (obj instanceof NativeCharArray) {
             byte[] bytes = ((NativeCharArray) obj).getValue();
             return super.Rf_mkCharLenCE(bytes, bytes.length, encoding);

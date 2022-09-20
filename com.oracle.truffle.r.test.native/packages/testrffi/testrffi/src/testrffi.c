@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,7 +154,7 @@ SEXP invoke_TYPEOF(SEXP x) {
 }
 
 SEXP invoke_error(SEXP msg) {
-	error(R_CHAR(STRING_ELT(msg, 0)));
+	error(CHAR(STRING_ELT(msg, 0)));
 }
 
 // returns a
@@ -291,7 +291,7 @@ SEXP r_home(void) {
 }
 
 SEXP char_length(SEXP x) {
-	const char *cx = R_CHAR(STRING_ELT(x, 0));
+	const char *cx = CHAR(STRING_ELT(x, 0));
 	int count  = 0;
 	while (*cx++ != 0) {
 		count++;
@@ -337,6 +337,19 @@ SEXP shareListElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
 
 SEXP mkStringFromChar(void) {
 	return mkString("hello");
+}
+
+/**
+ * Make string from buffer into RAWSXP vector. This pattern is used e.g. by vctrs package.
+ * Run both with NFI and LLVM backends.
+ */
+SEXP mkStringFromRaw() {
+    SEXP buff_holder = PROTECT(allocVector(RAWSXP, 2));
+    char *buff = (char *) RAW(buff_holder);
+    buff[0] = 'X';
+    buff[1] = '\0';
+    UNPROTECT(1);
+    return Rf_mkString(buff);
 }
 
 SEXP mkStringFromBytes(void) {
@@ -398,7 +411,7 @@ SEXP release_object(SEXP x) {
 SEXP findvar(SEXP x, SEXP env) {
 	SEXP v = Rf_findVar(x, env);
 	if (v == R_UnboundValue) {
-		Rf_error("'%s' not found", R_CHAR(PRINTNAME(x)));
+		Rf_error("'%s' not found", CHAR(PRINTNAME(x)));
 	} else {
 		return v;
 	}
@@ -469,7 +482,7 @@ SEXP test_isNAString(SEXP vec) {
 }
 
 SEXP test_getBytes(SEXP vec) {
-    const char* bytes = R_CHAR(STRING_ELT(vec, 0));
+    const char* bytes = CHAR(STRING_ELT(vec, 0));
     SEXP result;
     PROTECT(result = allocVector(RAWSXP, Rf_length(STRING_ELT(vec, 0))));
     unsigned char* resData = RAW(result);
@@ -636,17 +649,6 @@ static size_t testrfficonn_write(const void * message, size_t size, size_t nitem
         fflush(stdout);
         return size * nitems;
     }
-}
-
-static size_t testrfficonn_read(void *buffer, size_t size, size_t niterms, Rconnection conn) {
-    if (conn != customConn) {
-        printNow("ERROR: read function did not receive expected argument\n");
-        return 0;
-    } else if (size * niterms > 0) {
-        ((char *)buffer)[0] = 'Q';
-        return 1;
-    }
-    return 0;
 }
 
 SEXP test_createNativeConnection() {
@@ -1098,7 +1100,7 @@ SEXP get_dataptr(SEXP vec) {
 
 void benchRf_isNull(int* n) {
 	for (int i = 0; i < *n; i++) {
-		Rf_isNull(R_NilValue);
+		(void) isNull(R_NilValue);
 	}
 }
 
@@ -1164,6 +1166,7 @@ void testTrace2() {
 
 SEXP testTrace() {
   testTrace2();
+  return R_NilValue;
 }
 
 SEXP testdiv(SEXP n) {
@@ -1205,4 +1208,36 @@ SEXP test_mkCharDoesNotCollect() {
 
     UNPROTECT(2);
     return list2(string_one, string_two);
+}
+
+/**
+ * Casts data of a RAWSXP vector into (char *) and (unsigned char *) and sets some data via
+ * these pointers. In gnur, RAWSXP vectors consist of Rbyte (which is defined as unsigned char)
+ * elements.
+ * Remember to run this test both with NFI and LLVM backends.
+ */
+SEXP test_setRRawVector() {
+    SEXP raw_vec = PROTECT(allocVector(RAWSXP, 3));
+    char *data = (char *) RAW(raw_vec);
+    data[0] = 10;
+    data[1] = 20;
+    data[2] = 30;
+    UNPROTECT(1);
+    return raw_vec;
+}
+
+struct S {
+    SEXP self;
+};
+
+/**
+ * This function uses another pattern that is used by vctrs package - RAWSXP vector is used as a
+ * backing store for a C struct.
+ */
+SEXP test_setRRawVector2() {
+    SEXP raw_vec = PROTECT(allocVector(RAWSXP, sizeof(struct S)));
+    struct S *s = (struct S *) RAW(raw_vec);
+    s->self = raw_vec; // This is where LLVM used to fail.
+    UNPROTECT(1);
+    return raw_vec;
 }

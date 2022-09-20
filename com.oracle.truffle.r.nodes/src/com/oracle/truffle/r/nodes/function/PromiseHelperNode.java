@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -70,6 +71,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         @Child private PromiseHelperNode promiseHelper;
 
         private final ConditionProfile isPromiseProfile = ConditionProfile.createCountingProfile();
+        private final ConditionProfile isFrameNullProfile = ConditionProfile.createBinaryProfile();
 
         /**
          * Check promise evaluation and update visibility.
@@ -77,28 +79,37 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
          * @return If obj is an {@link RPromise}, it is evaluated and its result returned
          */
         public Object checkVisibleEvaluate(VirtualFrame frame, Object obj) {
-            if (isPromiseProfile.profile(obj instanceof RPromise)) {
-                if (promiseHelper == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    promiseHelper = insert(new PromiseHelperNode());
-                }
-                return promiseHelper.visibleEvaluate(frame, (RPromise) obj);
-            }
-            return obj;
+            return doCheckEvaluate(frame, obj, true);
         }
 
         /**
          * @return If obj is an {@link RPromise}, it is evaluated and its result returned
          */
         public Object checkEvaluate(VirtualFrame frame, Object obj) {
+            return doCheckEvaluate(frame, obj, false);
+        }
+
+        private Object doCheckEvaluate(VirtualFrame frame, Object obj, boolean visible) {
+            CompilerAsserts.partialEvaluationConstant(visible);
             if (isPromiseProfile.profile(obj instanceof RPromise)) {
+                VirtualFrame frameForEvaluate = frame;
+                if (isFrameNullProfile.profile(frame == null)) {
+                    REnvironment emptyEnv = RContext.getInstance(this).stateREnvironment.getEmptyDummy();
+                    frameForEvaluate = emptyEnv.getFrame();
+                }
                 if (promiseHelper == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseHelper = insert(new PromiseHelperNode());
                 }
-                return promiseHelper.evaluate(frame, (RPromise) obj);
+                assert frameForEvaluate != null;
+                if (visible) {
+                    return promiseHelper.visibleEvaluate(frameForEvaluate, (RPromise) obj);
+                } else {
+                    return promiseHelper.evaluate(frameForEvaluate, (RPromise) obj);
+                }
+            } else {
+                return obj;
             }
-            return obj;
         }
     }
 
@@ -166,7 +177,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
      *
      * @param frame The current {@link VirtualFrame}
      * @param promise The {@link RPromise} to evaluate
-     * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
+     * @return Evaluates the given {@link RPromise} in the given frame using the inline cache
      */
     public Object evaluate(VirtualFrame frame, RPromise promise) {
         return evaluateImpl(frame, promise, false);
@@ -178,13 +189,14 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
      *
      * @param frame The current {@link VirtualFrame}
      * @param promise The {@link RPromise} to evaluate
-     * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
+     * @return Evaluates the given {@link RPromise} in the given frame using the inline cache
      */
     public Object visibleEvaluate(VirtualFrame frame, RPromise promise) {
         return evaluateImpl(frame, promise, true);
     }
 
     private Object evaluateImpl(VirtualFrame frame, RPromise promise, boolean visibleExec) {
+        assert frame != null;
         Object value = promise.getRawValue();
         if (isEvaluatedProfile.profile(value != null)) {
             return value;

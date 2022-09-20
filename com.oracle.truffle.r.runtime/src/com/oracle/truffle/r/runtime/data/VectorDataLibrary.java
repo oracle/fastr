@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1767,11 +1767,15 @@ public abstract class VectorDataLibrary extends Library {
                 // return true;
                 // }
                 return true;
+            } else if (o1 instanceof RRaw) {
+                return o2 instanceof RRaw || o2 instanceof Byte;
             }
+
             if (o1.equals(o2)) {
                 return true;
+            } else {
+                return false;
             }
-            return false;
         }
 
         @Override

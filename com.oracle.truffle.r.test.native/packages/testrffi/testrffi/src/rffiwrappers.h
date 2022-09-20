@@ -304,6 +304,12 @@ SEXP api_R_SetExternalPtrTag(SEXP x, SEXP tag);
 
 SEXP api_R_SetExternalPtrProtected(SEXP x, SEXP prot);
 
+SEXP api_SET_PRCODE(SEXP promise, SEXP code);
+
+SEXP api_SET_PRENV(SEXP promise, SEXP env);
+
+SEXP api_SET_PRVALUE(SEXP promise, SEXP value);
+
 SEXP api_PRSEEN(SEXP x);
 
 SEXP api_PRENV(SEXP x);

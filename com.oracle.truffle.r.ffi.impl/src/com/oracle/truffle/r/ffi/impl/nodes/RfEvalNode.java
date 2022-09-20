@@ -122,8 +122,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         if (isEvaluatedProfile.profile(value != null)) {
             return value;
         }
-
-        return handlePromise(expr, env);
+        return handlePromise(expr, getEnv(env, RContext.getInstance(this)));
     }
 
     @TruffleBoundary

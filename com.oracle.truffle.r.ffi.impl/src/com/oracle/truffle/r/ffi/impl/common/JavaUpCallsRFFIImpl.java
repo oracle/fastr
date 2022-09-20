@@ -68,6 +68,7 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.GlobalNativeVarContext;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -89,6 +90,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -127,6 +129,7 @@ import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -295,13 +298,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             Object value = env.get(nameKey);
             if (value != null) {
                 if (value instanceof RPromise) {
-                    RPromise promise = (RPromise) value;
-                    // The calling site in native code should not get a promise with a null frame
-                    // that could be an issue when PRENV is then called on the promise. The only
-                    // exception is EagerPromise for which there is special handling in PRENV
-                    // reconstructing the original frame via EagetPromise.materialize().
-                    assert promise instanceof EagerPromise || promise.getFrame() != null;
-                    return promise;
+                    return value;
                 }
                 if (value instanceof RArgsValuesAndNames) {
                     RArgsValuesAndNames argsValsNames = (RArgsValuesAndNames) value;
@@ -467,9 +464,18 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 return RDataFactory.createPairList(1, type);
             case CLOSXP:
                 return RDataFactory.createFunction("<unknown-from-Rf_allocSExp>", "RFFI", null, null, REnvironment.globalEnv().getFrame());
+            case PROMSXP:
+                return RDataFactory.createPromise(PromiseState.Default, createEmptyClosure(), null);
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
+    }
+
+    @TruffleBoundary
+    private static Closure createEmptyClosure() {
+        RCodeBuilder<RSyntaxNode> codeBuilder = RContext.getASTBuilder();
+        RSyntaxNode nullConstant = codeBuilder.constant(RSyntaxNode.INTERNAL, RUnboundValue.instance);
+        return Closure.createPromiseClosure(nullConstant.asRNode());
     }
 
     @TruffleBoundary
@@ -1770,6 +1776,37 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         REnvironment env = RDataFactory.createNewEnv(REnvironment.UNNAMED, true, ((RIntVector) initialSize).getDataAt(0));
         RArguments.initializeEnclosingFrame(env.getFrame(), guaranteeInstanceOf(parent, REnvironment.class).getFrame());
         return env;
+    }
+
+    @Override
+    @TruffleBoundary
+    public void SET_PRCODE(Object prom, Object code) {
+        RPromise promise = RFFIUtils.guaranteeInstanceOf(prom, RPromise.class);
+        Closure closure = Closure.createPromiseClosure(RASTUtils.createNodeForValue(code));
+        promise.setClosure(closure);
+    }
+
+    @Override
+    @TruffleBoundary
+    public void SET_PRENV(Object prom, Object env) {
+        RPromise promise = RFFIUtils.guaranteeInstanceOf(prom, RPromise.class);
+        REnvironment environment = RFFIUtils.guaranteeInstanceOf(env, REnvironment.class);
+        MaterializedFrame frame = environment.getFrame();
+        promise.setFrame(frame);
+    }
+
+    @Override
+    @TruffleBoundary
+    public void SET_PRVALUE(Object prom, Object value) {
+        RPromise promise = RFFIUtils.guaranteeInstanceOf(prom, RPromise.class);
+        if (promise.isEvaluated()) {
+            promise.resetValue();
+        }
+        // Setting R_UnboundValue as a promise value from native is the same as setting null as
+        // value to RPromise.
+        if (!(value instanceof RUnboundValue)) {
+            promise.setValue(value);
+        }
     }
 
     @Override

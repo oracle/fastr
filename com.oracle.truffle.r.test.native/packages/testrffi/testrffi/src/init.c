@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 #include <R_ext/Rdynload.h>
 #include "testrffi.h"
 #include "serialization.h"
+#include "promises.h"
 #include "charsxps.h"
 #include "rapi_helpers.h"
 #include "rffiwrappers.h"
@@ -134,6 +135,9 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(charsxp_revert_via_elt, 1),
         CALLDEF(charsxp_revert_via_dataptr, 1),
         CALLDEF(charsxp_tests, 0),
+        CALLDEF(promises_create_promise, 2),
+        CALLDEF(promises_put_into_env, 2),
+        CALLDEF(promises_tests, 0),
         #include "init_api.h"
         {NULL, NULL, 0}
 };

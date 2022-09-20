@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.dsl.Cached;
@@ -133,12 +132,12 @@ public class RPromise extends RBaseObject {
      * @see #getFrame()
      * @see EagerPromise#materialize()
      */
-    @CompilationFinal protected MaterializedFrame execFrame;
+    protected MaterializedFrame execFrame;
 
     /**
      * May not be <code>null</code>.
      */
-    private final Closure closure;
+    private Closure closure;
 
     /**
      * When {@code null} the promise has not been evaluated.
@@ -328,6 +327,10 @@ public class RPromise extends RBaseObject {
         return closure;
     }
 
+    public final void setClosure(Closure closure) {
+        this.closure = closure;
+    }
+
     public final RBaseNode getRep() {
         return closure.getExpr();
     }
@@ -411,6 +414,10 @@ public class RPromise extends RBaseObject {
      */
     public final MaterializedFrame getFrame() {
         return execFrame;
+    }
+
+    public final void setFrame(MaterializedFrame frame) {
+        this.execFrame = frame;
     }
 
     /**
