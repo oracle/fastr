@@ -53,7 +53,7 @@ SEXP Rinternals_invoke(int index) {
 
 static char *ensure_truffle_chararray_n(const char *x, long n) {
 	if (polyglot_is_value(x)) {
-		return x;
+		return (char *) x;
 	} else {
 		return ((call_bytesToNativeCharArray) callbacks[bytesToNativeCharArray_x])(polyglot_from_string_n(x, n, "ascii"));
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 #include <Rinternals.h>
 #include "rffi_upcalls.h"
+
+extern void * unimplemented(const char *func_name);
 
 double Rf_dnorm(double a, double b, double c, int d) {
     return ((call_Rf_dnorm) callbacks[Rf_dnorm4_x])(a, b, c, d);

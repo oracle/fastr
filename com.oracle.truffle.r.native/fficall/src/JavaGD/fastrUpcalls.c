@@ -28,6 +28,7 @@
 #include "../common/rffi_upcalls.h"
 
 extern void *ensure_string(const char *x);
+extern int checkExitCall();
 
 void gdcSetColor(int gdId, int cc) {
 	((call_gdcSetColor) callbacks[gdcSetColor_x])(gdId, cc);

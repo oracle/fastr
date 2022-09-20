@@ -535,7 +535,7 @@ static void newJavaGD_Size(double *left, double *right,  double *bottom, double 
 
 char *symbol2utf8(const char *c0) {
 	// TODO: implement symbol encoding to unicode translation
-	return c0;
+	return (char *) c0;
 }
 
 static constxt char *convertToUTF8(constxt char *str, R_GE_gcontext *gc)

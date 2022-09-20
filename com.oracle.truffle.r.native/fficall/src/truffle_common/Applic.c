@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1999--2014  The R Core Team.
- *  Copyright (c) 2018, 2019, Oracle and/or its affiliates
+ *  Copyright (c) 2018, 2022, Oracle and/or its affiliates
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,12 @@
 #include <rffiutils.h>
 #include <Defn.h>
 #include <R_ext/Applic.h>
+#include <R_ext/Random.h>
+
+// Defined in GNU-R lbfgsb.c
+extern void setulb(int n, int m, double *x, double *l, double *u, int *nbd,
+	    double *f, double *g, double factr, double *pgtol,
+	    double *wa, int * iwa, char *task, int iprint, int *isave);
 
 void Rdqags(integr_fn f, void *ex, double *a, double *b,
 	    double *epsabs, double *epsrel,
@@ -35,6 +41,10 @@ void Rdqagi(integr_fn f, void *ex, double *bound, int *inf,
 	    int *limit, int *lenw, int *last,
 	    int *iwork, double *work) {
 	unimplemented("Rdqagi");
+}
+
+void genptry(int n, double *p, double *ptry, double scale, void *ex) {
+    unimplemented("genptry");
 }
 
 static double * vect(int n) {

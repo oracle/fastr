@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -123,6 +123,7 @@ int PrintDefaults(void)
     R_print.width = GetOptionWidth();
     R_print.useSource = 0; // FastR: modified from USESOURCE;
     R_print.cutoff = GetOptionCutoff();
+    return 0;
 }
 
 void F77_NAME(xerbla)(const char *srname, int *info)

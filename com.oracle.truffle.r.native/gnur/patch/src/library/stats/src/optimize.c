@@ -40,6 +40,8 @@
 #define _(String) (String)
 #endif
 
+extern void PrintDefaults();
+
 
 /* Formerly in src/appl/fmim.c */
 
