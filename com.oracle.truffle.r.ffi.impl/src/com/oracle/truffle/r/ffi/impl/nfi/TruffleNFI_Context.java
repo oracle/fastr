@@ -59,7 +59,6 @@ import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNodeGen;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
@@ -342,15 +341,8 @@ public class TruffleNFI_Context extends RFFIContext {
         acquireLock();
         try {
             String librffiPath = LibPaths.getBuiltinLibPath(context, "R");
-            if (context.isInitial()) {
-                rlibDLLInfo = DLL.loadLibR(context, librffiPath, path -> TruffleNFI_DLL.dlOpen(context, path, false, false));
-                addLibRToDLLContextState(context, rlibDLLInfo);
-            } else {
-                rlibDLLInfo = DLL.ContextStateImpl.getLibR();
-                // force initialization of NFI
-                // TODO: still necessary? Maybe even buggy, what if it is mixed context?
-                DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);
-            }
+            rlibDLLInfo = DLL.loadLibR(context, librffiPath, path -> TruffleNFI_DLL.dlOpen(context, path, false, false));
+            addLibRToDLLContextState(context, rlibDLLInfo);
             switch (context.getKind()) {
                 case SHARE_NOTHING:
                 case SHARE_ALL:
