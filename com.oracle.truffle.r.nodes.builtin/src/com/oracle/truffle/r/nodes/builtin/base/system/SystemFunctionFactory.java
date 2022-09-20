@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public abstract class SystemFunctionFactory {
     static {
         String className = System.getProperty("fastr.systemfunction.factory.class", "com.oracle.truffle.r.nodes.builtin.base.system.ProcessSystemFunctionFactory");
         try {
-            theInstance = (SystemFunctionFactory) Class.forName(className).newInstance();
+            theInstance = (SystemFunctionFactory) Class.forName(className).getDeclaredConstructor().newInstance();
         } catch (Exception ex) {
             // CheckStyle: stop system..print check
             RSuicide.rSuicide("Failed to instantiate class: " + className);

@@ -96,7 +96,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     static {
         try {
-            access = (TruffleRLanguageAccess) Class.forName(ACCESS_CLASS).newInstance();
+            access = (TruffleRLanguageAccess) Class.forName(ACCESS_CLASS).getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw RSuicide.rSuicide("Failed to instantiate class: " + ACCESS_CLASS + ": " + e);
         }

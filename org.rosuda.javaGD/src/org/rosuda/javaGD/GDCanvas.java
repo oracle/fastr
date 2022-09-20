@@ -131,10 +131,11 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
     public void mouseClicked(MouseEvent e) {
         if (lsCallback != null) {
             double[] pos = null;
-            if ((e.getModifiers() & InputEvent.BUTTON1_MASK) > 0 && (e.getModifiers() & (InputEvent.BUTTON2_MASK | InputEvent.BUTTON3_MASK)) == 0) { // B1
-                                                                                                                                                     // =
-                                                                                                                                                     // return
-                                                                                                                                                     // position
+            if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) > 0 &&
+                    (e.getModifiersEx() & (InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK)) == 0) { // B1
+                                                                                                                 // =
+                                                                                                                 // return
+                                                                                                                 // position
                 pos = new double[2];
                 pos[0] = e.getX();
                 pos[1] = e.getY();

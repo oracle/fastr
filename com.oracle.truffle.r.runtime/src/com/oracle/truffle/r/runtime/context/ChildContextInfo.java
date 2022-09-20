@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,12 +92,8 @@ public final class ChildContextInfo {
     }
 
     public TruffleContext createTruffleContext() {
-        this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config(CONFIG_KEY, this).build();
-        return this.truffleContext;
-    }
-
-    public TruffleContext createVM(@SuppressWarnings("unused") ChildContextInfo childContextInfo) {
-        this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config(CONFIG_KEY, this).build();
+        TruffleContext.Builder contextBuilder = RContext.getInstance().getEnv().newInnerContextBuilder();
+        this.truffleContext = contextBuilder.initializeCreatorContext(true).inheritAllAccess(true).config(CONFIG_KEY, this).build();
         return this.truffleContext;
     }
 
