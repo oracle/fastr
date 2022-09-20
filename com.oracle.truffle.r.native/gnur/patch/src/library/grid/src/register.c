@@ -90,6 +90,15 @@ static const R_CallMethodDef callMethods[] = {
     LCALLDEF(xsplinePoints, 8),
     LCALLDEF(stringMetric, 1),
     {"validUnits", (DL_FUNC) &validUnits, 1},
+    {"constructUnits", (DL_FUNC) &constructUnits, 3},
+    {"asUnit", (DL_FUNC) &asUnit, 1},
+    {"conformingUnits", (DL_FUNC) &conformingUnits, 1},
+    {"matchUnit", (DL_FUNC) &matchUnit, 2},
+    {"addUnits", (DL_FUNC) &addUnits, 2},
+    {"multUnits", (DL_FUNC) &multUnits, 2},
+    {"flipUnits", (DL_FUNC) &flipUnits, 1},
+    {"absoluteUnits", (DL_FUNC) &absoluteUnits, 1},
+    {"summaryUnits", (DL_FUNC) &summaryUnits, 2},
     { NULL, NULL, 0 }
 };
 
@@ -99,10 +108,9 @@ static void fastr_free_gridRegisterIndex(void *grid_register_idx)
 }
 
 
+
 void attribute_visible R_init_grid(DllInfo *dll) 
 {
-    /* No .C, .Fortran, or .External routines => NULL
-     */
     if (fastr_glob_gridRegisterIndex == NULL) {
 	fastr_glob_gridRegisterIndex = FASTR_GlobalVarAlloc();
 	fastr_glob_R_gridEvalEnv = FASTR_GlobalVarAlloc();
@@ -113,6 +121,8 @@ void attribute_visible R_init_grid(DllInfo *dll)
     FASTR_GlobalVarSetPtr(fastr_glob_gridRegisterIndex, gridRegisterIndex);
     FASTR_GlobalVarInit(fastr_glob_R_gridEvalEnv);
 
+    /* No .C, .Fortran, or .External routines => NULL
+     */
     R_registerRoutines(dll, NULL, callMethods, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
     R_forceSymbols(dll, FALSE);

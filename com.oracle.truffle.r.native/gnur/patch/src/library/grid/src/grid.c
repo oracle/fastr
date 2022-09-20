@@ -741,7 +741,7 @@ SEXP L_unsetviewport(SEXP n)
 	t = CDR(t);
 	SET_TAG(t, install("inherits")); 
 	SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
-	eval(fcall, R_gridEvalEnv); 
+	eval(fcall, R_gridEvalEnv);
 	UNPROTECT(2); /* false, fcall */
     }
     /* Get the current device size 
@@ -1151,8 +1151,7 @@ SEXP L_convert(SEXP x, SEXP whatfrom,
          * In these cases do NOT transform thru INCHES 
          * (to avoid divide-by-zero, but still do something useful)
          */
-        relConvert = (!isUnitArithmetic(x) && !isUnitList(x) &&
-                      (unitUnit(x, i) == L_NATIVE || unitUnit(x, i) == L_NPC) &&
+        relConvert = ((unitUnit(x, i) == L_NATIVE || unitUnit(x, i) == L_NPC) &&
                       (TOunit == L_NATIVE || TOunit == L_NPC) &&
                       ((FROMaxis == TOaxis) ||
                        (FROMaxis == 0 && TOaxis == 2) ||

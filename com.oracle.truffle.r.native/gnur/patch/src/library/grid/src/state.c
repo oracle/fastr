@@ -21,7 +21,7 @@
 #include "grid.h"
 #include <string.h>
 
-/* The gridSystemState (per device) consists of 
+/* The gridSystemState (per device) consists of
  * GSS_DEVSIZE 0 = current size of device
  * GSS_CURRLOC 1 = current location of grid "pen" 
  * GSS_DL 2 = grid display list
@@ -147,15 +147,15 @@ SEXP gridStateElement(pGEDevDesc dd, int elementIndex)
 void setGridStateElement(pGEDevDesc dd, int elementIndex, SEXP value)
 {
     int gridRegisterIndex = *((int *) FASTR_GlobalVarGetPtr(fastr_glob_gridRegisterIndex));
-    SET_VECTOR_ELT((SEXP) dd->gesd[gridRegisterIndex]->systemSpecific, 
+    SET_VECTOR_ELT((SEXP) dd->gesd[gridRegisterIndex]->systemSpecific,
 		   elementIndex, value);
 }
 
 static void deglobaliseState(SEXP state)
 {
-    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
     int index = INTEGER(VECTOR_ELT(state, GSS_GLOBALINDEX))[0];
-    SET_VECTOR_ELT(findVar(install(".GRID.STATE"), R_gridEvalEnv), 
+    SEXP R_gridEvalEnv = FASTR_GlobalVarGetSEXP(fastr_glob_R_gridEvalEnv);
+    SET_VECTOR_ELT(findVar(install(".GRID.STATE"), R_gridEvalEnv),
 		   index, R_NilValue);
 }
 

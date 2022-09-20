@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -36,7 +35,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getClassFromCacheNodeGen;
@@ -464,12 +462,6 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         public final RExternalBuiltinNode lookupBuiltin(String name) {
             assert name != null;
-            if (getRContext().getOption(UseInternalGridGraphics)) {
-                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(getRContext(), name);
-                if (gridExternal != null) {
-                    return gridExternal;
-                }
-            }
             switch (name) {
                 // methods
                 case "R_initMethodDispatch":
@@ -827,12 +819,6 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public final RExternalBuiltinNode lookupBuiltin(String name) {
-            if (getRContext().getOption(UseInternalGridGraphics)) {
-                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal(name);
-                if (gridExternal != null) {
-                    return gridExternal;
-                }
-            }
             switch (name) {
                 case "compcases":
                     return new CompleteCases();
@@ -938,12 +924,6 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public final RExternalBuiltinNode lookupBuiltin(String name) {
-            if (getRContext().getOption(UseInternalGridGraphics)) {
-                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal2(name);
-                if (gridExternal != null) {
-                    return gridExternal;
-                }
-            }
             switch (name) {
                 // tools
                 case "writetable":
@@ -1048,11 +1028,7 @@ public class CallAndExternalFunctions {
 
         @Override
         public final RExternalBuiltinNode lookupBuiltin(String name) {
-            if (getRContext().getOption(UseInternalGridGraphics)) {
-                return FastRGridExternalLookup.lookupDotCallGraphics(name);
-            } else {
-                return null;
-            }
+            return null;
         }
     }
 }

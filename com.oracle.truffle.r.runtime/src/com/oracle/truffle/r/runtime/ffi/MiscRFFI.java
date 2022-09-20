@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
-
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 
@@ -165,11 +163,11 @@ public final class MiscRFFI {
     }
 
     public AbstractBeforeGraphicsOpNode createBeforeGraphicsOpNode() {
-        return RContext.getInstance().getOption(UseInternalGridGraphics) ? new DummyBeforeGraphicsOpNode(downCallNodeFactory) : new DefaultBeforeGraphicsOpNode(downCallNodeFactory);
+        return new DefaultBeforeGraphicsOpNode(downCallNodeFactory);
     }
 
     public AbstractAfterGraphicsOpNode createAfterGraphicsOpNode() {
-        return RContext.getInstance().getOption(UseInternalGridGraphics) ? new DummyAfterGraphicsOpNode(downCallNodeFactory) : new DefaultAfterGraphicsOpNode(downCallNodeFactory);
+        return new DefaultAfterGraphicsOpNode(downCallNodeFactory);
     }
 
     public JavaGDResizeCallNode createJavaGDResizeCallNode() {

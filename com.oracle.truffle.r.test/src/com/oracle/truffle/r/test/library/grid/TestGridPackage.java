@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,6 @@ public class TestGridPackage extends TestBase {
     }
 
     private void run(String testCode) {
-        // TODO: GR-30199
-        // Custom grid package patches make this test give different output on GNUR vs FastR
-        assertEval(Ignored.NewRVersionMigration, String.format("{ library(grid); %s }", testCode));
+        assertEval(String.format("{ library(grid); %s }", testCode));
     }
 }
