@@ -62,6 +62,7 @@ public interface Engine {
     class ParseException extends AbstractTruffleException {
         private static final long serialVersionUID = 1L;
 
+        @SuppressWarnings("serial")
         private final Source source;
         private final String token;
         private final String substring;

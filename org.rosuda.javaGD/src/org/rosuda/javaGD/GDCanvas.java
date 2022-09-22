@@ -43,14 +43,17 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
 
     public static boolean forceAntiAliasing = true;
 
+    @SuppressWarnings("serial")
     GDState gs;
 
+    @SuppressWarnings("serial")
     Refresher r;
 
     Dimension lastSize;
 
     public int devNr = -1;
 
+    @SuppressWarnings("serial")
     private final Consumer<Integer> resizer;
 
     public GDCanvas(double w, double h, Consumer<Integer> resizer) {
@@ -115,7 +118,7 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
         listChanged = true;
     }
 
-    LocatorSync lsCallback = null;
+    @SuppressWarnings("serial") LocatorSync lsCallback = null;
 
     @Override
     public synchronized boolean prepareLocator(LocatorSync ls) {
