@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -109,8 +110,13 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
                     newStop = length;
                 }
             }
-            return x.substring(newStart - 1, newStop);
+            return substring(x, newStart - 1, newStop);
         }
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private static String substring(String string, int beginIndex, int endIndex) {
+        return string.substring(beginIndex, endIndex);
     }
 
     // protected static boolean rangeOk(String x, int start, int stop) {

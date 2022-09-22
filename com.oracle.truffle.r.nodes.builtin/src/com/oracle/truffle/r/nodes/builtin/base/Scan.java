@@ -302,9 +302,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
             } else {
                 GetQuotedItemsResult res = getQuotedItems(data, maxItems, str[0]);
                 String[] items = res.items;
-                if (blSkip && items.length == 0) {
-                    continue;
-                } else {
+                if (!blSkip || items.length != 0) {
                     if (res.pos < str[0].length()) {
                         RStringVector remainder = RDataFactory.createStringVectorFromScalar(str[0].substring(res.pos));
                         data.con.pushBack(remainder, true);

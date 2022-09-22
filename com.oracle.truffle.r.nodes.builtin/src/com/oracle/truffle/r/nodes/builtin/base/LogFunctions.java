@@ -270,6 +270,7 @@ public class LogFunctions {
 
         private static final class ShowWarningException extends ControlFlowException {
             private static final long serialVersionUID = -5922014313815330744L;
+            @SuppressWarnings("serial")
             final RBaseNode context;
             final RError.Message message;
             final double result;

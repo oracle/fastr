@@ -30,6 +30,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.Set;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -170,7 +171,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
             if (!template.endsWith("XXXXXX")) {
                 throw new IllegalArgumentException("template must end with XXXXXX");
             }
-            String templatePrefix = template.substring(0, template.length() - 6);
+            String templatePrefix = substring(template, 0, template.length() - 6);
             TruffleFile dir = null;
             int counter = 0;
             boolean done = false;
@@ -191,6 +192,11 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
             byte[] resultBytes = dir.toString().getBytes();
             System.arraycopy(resultBytes, 0, templateBytes.getValue(), 0, Math.min(resultBytes.length, templateBytes.getValue().length));
             return 1;
+        }
+
+        @CompilerDirectives.TruffleBoundary
+        private static String substring(String string, int beginIndex, int endIndex) {
+            return string.substring(beginIndex, endIndex);
         }
     }
 

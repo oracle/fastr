@@ -270,11 +270,12 @@ public abstract class Paste extends RBuiltinNode.Arg4 {
         int pos = 0;
         for (int j = 0; j < length; j++) {
             if (j != 0) {
-                sep.getChars(0, sep.length(), chars, pos);
+                getChars(sep, 0, sep.length(), chars, pos);
+
                 pos += sep.length();
             }
             String element = converted[j][index % converted[j].length];
-            element.getChars(0, element.length(), chars, pos);
+            getChars(element, 0, element.length(), chars, pos);
             pos += element.length();
         }
         assert pos == stringLength;
@@ -290,15 +291,20 @@ public abstract class Paste extends RBuiltinNode.Arg4 {
         int pos = 0;
         for (int i = 0; i < value.length; i++) {
             if (i > 0) {
-                collapseString.getChars(0, collapseString.length(), chars, pos);
+                getChars(collapseString, 0, collapseString.length(), chars, pos);
                 pos += collapseString.length();
             }
             String element = value[i];
-            element.getChars(0, element.length(), chars, pos);
+            getChars(element, 0, element.length(), chars, pos);
             pos += element.length();
         }
         assert pos == stringLength;
         return Utils.newString(chars);
+    }
+
+    @TruffleBoundary
+    private static void getChars(String source, int srcBegin, int srcEnd, char[] dest, int destBegin) {
+        source.getChars(srcBegin, srcEnd, dest, destBegin);
     }
 
     private void ensureAsCharacterFuncNodes() {
