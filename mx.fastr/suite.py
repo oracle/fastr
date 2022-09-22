@@ -69,6 +69,7 @@ suite = {
     },
 
     # A recommended package "rpart" with a fixed version rather than taken from GNU-R.
+    # rpart 4.1-15
     "RPART" : {
       "path" : "libdownloads/rpart.tar.gz",
       "ext" : ".tar.gz",

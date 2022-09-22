@@ -43,18 +43,15 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
 
     public static boolean forceAntiAliasing = true;
 
-    @SuppressWarnings("serial")
-    GDState gs;
+    @SuppressWarnings("serial") GDState gs;
 
-    @SuppressWarnings("serial")
-    Refresher r;
+    @SuppressWarnings("serial") Refresher r;
 
     Dimension lastSize;
 
     public int devNr = -1;
 
-    @SuppressWarnings("serial")
-    private final Consumer<Integer> resizer;
+    @SuppressWarnings("serial") private final Consumer<Integer> resizer;
 
     public GDCanvas(double w, double h, Consumer<Integer> resizer) {
         this((int) w, (int) h, resizer);
@@ -135,10 +132,10 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
         if (lsCallback != null) {
             double[] pos = null;
             if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) > 0 &&
-                    (e.getModifiersEx() & (InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK)) == 0) { // B1
-                                                                                                                 // =
-                                                                                                                 // return
-                                                                                                                 // position
+                            (e.getModifiersEx() & (InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK)) == 0) { // B1
+                                                                                                                         // =
+                                                                                                                         // return
+                                                                                                                         // position
                 pos = new double[2];
                 pos[0] = e.getX();
                 pos[1] = e.getY();

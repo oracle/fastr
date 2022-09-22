@@ -108,10 +108,10 @@ public class JGDPanel extends JPanel implements GDContainer, MouseListener {
         if (lsCallback != null) {
             double[] pos = null;
             if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) > 0 &&
-                    (e.getModifiersEx() & (InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK)) == 0) { // B1
-                                                                                                                 // =
-                                                                                                                 // return
-                                                                                                                 // position
+                            (e.getModifiersEx() & (InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK)) == 0) { // B1
+                                                                                                                         // =
+                                                                                                                         // return
+                                                                                                                         // position
                 pos = new double[2];
                 pos[0] = e.getX();
                 pos[1] = e.getY();
