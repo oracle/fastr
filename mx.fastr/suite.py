@@ -89,6 +89,16 @@ suite = {
       "resource" : "true"
     },
 
+    # A recommended package "codetools" with a fixed version rather than taken from GNU-R.
+    "CODETOOLS" : {
+      "path" : "libdownloads/codetools.tar.gz",
+      "ext" : ".tar.gz",
+      "version" : "0.2-18",
+      "urls" : ["https://cran.r-project.org/src/contrib/codetools_{version}.tar.gz"],
+      "sha1" : "fa0fe4d67316ff49776e5bef1ba56c9334633e71",
+      "resource" : "true"
+    },
+
     "XZ-1.9" : {
       "sha1" : "1ea4bec1a921180164852c65006d928617bd2caf",
       "maven" : {
@@ -407,6 +417,7 @@ suite = {
       "dependencies" : [
         "RPART",
         "CLUSTER",
+        "CODETOOLS",
         "com.oracle.truffle.r.native",
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl",
