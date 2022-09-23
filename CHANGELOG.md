@@ -1,6 +1,8 @@
 # 23.0.0
 * Removed deprecated FastR grid.
   * Removed `--R.UsetInternalGridGraphics` option.
+* Updated `Matrix` recommended package to 1.4-0
+* Updated `codetools` recommended package to 0.2-18
 
 # 22.3.0
 * Implemented global native variable API, which allows the user to use some native package from two R contexts at the same time.
