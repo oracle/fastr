@@ -97,6 +97,8 @@ output.txt
 output.cfg
 .cfg
 **/nbproject/**
+**/.vscode/**
+**/.mypy_cache/**
 
 **/build.xml
 /scratch/
