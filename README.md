@@ -42,9 +42,6 @@ it can stumble on those. If this happens please submit an issue on GitHub.
 To provide better stability, FastR uses by default a [fixed snapshot](https://github.com/oracle/fastr/blob/master/com.oracle.truffle.r.native/Makefile#L37) of CRAN (via [MRAN](https://mran.microsoft.com/)). Function `install.packages` therefore does not install the latest versions. This can be overridden by
 passing `repos` argument to `install.packages` pointing to CRAN.
 
-FastR supports R graphics via custom implementation of the grid package. Packages based on grid, like lattice and ggplot2, can therefore work in FastR.
-There is an experimental support for the base `graphics` and `grDevices` packages (`--R.UseInternalGridGraphics=false`).
-
 FastR provides its own replacements for `rJava` and `data.table` packages,
 which can be installed with `install.fastr.packages(c("rJava", "data.table"))`.
 
