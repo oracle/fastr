@@ -676,7 +676,7 @@ SEXP Rf_shallow_duplicate(SEXP x) {
 
 SEXP Rf_duplicated(SEXP x, Rboolean from_last) {
     TRACE0();
-    SEXP result = (R_xlen_t) ((call_Rf_duplicated) callbacks[Rf_duplicated_x])(x, from_last);
+    SEXP result = ((call_Rf_duplicated) callbacks[Rf_duplicated_x])(x, from_last);
     checkExitCall();
     return result;
 }
@@ -1404,7 +1404,7 @@ const char * R_CHAR(SEXP x) {
     TRACE0();
     SEXP result = ((call_R_CHAR) callbacks[R_CHAR_x])(x);
     checkExitCall();
-    return result;
+    return (const char *) result;
 }
 
 SEXP STRING_ELT(SEXP x, R_xlen_t i) {
@@ -1436,7 +1436,7 @@ SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v) {
 
 SEXP *STRING_PTR(SEXP x) {
     TRACE0();
-    return FASTR_DATAPTR(x);
+    return (SEXP *) FASTR_DATAPTR(x);
 }
 
 SEXP Rf_asChar(SEXP x) {
@@ -1619,6 +1619,7 @@ void R_RestoreHashCount(SEXP rho) {
 Rboolean R_IsPackageEnv(SEXP rho) {
     TRACE0();
     unimplemented("R_IsPackageEnv");
+    return FALSE;
 }
 
 SEXP R_PackageEnvName(SEXP rho) {
@@ -1633,7 +1634,8 @@ SEXP R_FindPackageEnv(SEXP info) {
 
 Rboolean R_IsNamespaceEnv(SEXP rho) {
     TRACE0();
-    return (Rboolean) unimplemented("R_IsNamespaceEnv");
+    unimplemented("R_IsNamespaceEnv");
+    return FALSE;
 }
 
 SEXP R_FindNamespace(SEXP info) {
@@ -1656,6 +1658,7 @@ void R_LockEnvironment(SEXP env, Rboolean bindings) {
 Rboolean R_EnvironmentIsLocked(SEXP env) {
     TRACE0();
     unimplemented("");
+    return FALSE;
 }
 
 void R_LockBinding(SEXP sym, SEXP env) {
@@ -1691,7 +1694,8 @@ Rboolean R_BindingIsActive(SEXP sym, SEXP env) {
 
 Rboolean R_HasFancyBindings(SEXP rho) {
     TRACE0();
-    return (Rboolean) unimplemented("R_HasFancyBindings");
+    unimplemented("R_HasFancyBindings");
+    return FALSE;
 }
 
 Rboolean Rf_isS4(SEXP x) {
@@ -1735,6 +1739,13 @@ double R_strtod(const char *c, char **end) {
     unimplemented("R_strtod");
     return 0;
 }*/
+
+int FASTR_getSerializeVersion() {
+    TRACE0();
+    int result = ((call_FASTR_getSerializeVersion) callbacks[FASTR_getSerializeVersion_x])();
+    checkExitCall();
+    return result;
+}
 
 void R_InitOutPStream(R_outpstream_t stream, R_pstream_data_t data, R_pstream_format_t type, int version,
 		 void (*outchar)(R_outpstream_t, int), void (*outbytes)(R_outpstream_t, void *, int),
@@ -2002,13 +2013,6 @@ int FASTR_getConnectionChar(SEXP conn) {
     return result;
 }
 
-int FASTR_getSerializeVersion() {
-    TRACE0();
-    int result = ((call_FASTR_getSerializeVersion) callbacks[FASTR_getSerializeVersion_x])();
-    checkExitCall();
-    return result;
-}
-
 SEXPTYPE Rf_str2type(const char *s) {
     TRACE0();
     SEXPTYPE result = ((call_Rf_str2type) callbacks[Rf_str2type_x])(s);
@@ -2125,12 +2129,13 @@ DL_FUNC R_GetCCallable(const char *package, const char *name) {
     TRACE0();
     SEXP result = ((call_getCCallable) callbacks[getCCallable_x])(ensure_string(package), ensure_string(name));
     checkExitCall();
-    return result;
+    return (DL_FUNC) result;
 }
 
 DL_FUNC R_FindSymbol(char const *name, char const *pkg, R_RegisteredNativeSymbol *symbol) {
     TRACE0();
-    return unimplemented("R_FindSymbol");
+    unimplemented("R_FindSymbol");
+    return NULL;
 }
 
 int R_nchar(SEXP string, nchar_type type_, Rboolean allowNA, Rboolean keepNA, const char* msg_name) {
@@ -2192,7 +2197,7 @@ int REAL_NO_NA(SEXP x);
 int STRING_IS_SORTED(SEXP x);
 int STRING_NO_NA(SEXP x);
 
-#define ALTREP_UNIMPLEMENTED { UNIMPLEMENTED; }
+#define ALTREP_UNIMPLEMENTED { return UNIMPLEMENTED; }
 
 SEXP ALTREP_CLASS(SEXP x) ALTREP_UNIMPLEMENTED
 // TODO: Remove IS_SCALAR?

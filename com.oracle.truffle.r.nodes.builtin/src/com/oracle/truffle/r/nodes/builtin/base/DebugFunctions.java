@@ -140,6 +140,7 @@ public class DebugFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object setBreakpoint(String fileLine, @SuppressWarnings("unused") RMissing lineNr, boolean clear) {
 
             int hashIdx = fileLine.lastIndexOf('#');

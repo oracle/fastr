@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -302,9 +302,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
             } else {
                 GetQuotedItemsResult res = getQuotedItems(data, maxItems, str[0]);
                 String[] items = res.items;
-                if (blSkip && items.length == 0) {
-                    continue;
-                } else {
+                if (!blSkip || items.length != 0) {
                     if (res.pos < str[0].length()) {
                         RStringVector remainder = RDataFactory.createStringVectorFromScalar(str[0].substring(res.pos));
                         data.con.pushBack(remainder, true);

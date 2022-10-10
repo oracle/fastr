@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,7 +145,7 @@ int call_pcre2_get_capture_names(void (*set_capture_name_cb)(const char *name, i
         // ovector begins with match, capture groups are after that.
         int capture_idx = ovector_idx - 1;
         uint8_t *name = tabptr + 2;
-        set_capture_name_cb((const char *)ensure_string(name), capture_idx);
+        set_capture_name_cb((const char *)ensure_string((const char *) name), capture_idx);
         tabptr += name_entry_size;
     }
     return names_count;

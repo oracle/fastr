@@ -324,7 +324,12 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
     private static int getVariadicIndex(RSymbol sym) {
         String x = sym.getName();
-        return Integer.parseInt(x.substring(2, x.length())) - 1;
+        return Integer.parseInt(substring(x, 2)) - 1;
+    }
+
+    @TruffleBoundary
+    private static String substring(String string, int beginIndex) {
+        return string.substring(beginIndex);
     }
 
     @Fallback

@@ -23,6 +23,7 @@
 # include <config.h>
 #endif
 
+#include <string.h>
 #include <Defn.h>
 #include <float.h>  /* for DBL_MAX */
 #include <Graphics.h>
@@ -30,6 +31,9 @@
 #include <Rmath.h>  // Rexp10, fmin2, fmax2, imax2
 
 #include "graphics.h"
+
+extern void PrintDefaults();
+extern void R_FlushConsole();
 
 static R_INLINE void TypeCheck(SEXP s, SEXPTYPE type)
 {

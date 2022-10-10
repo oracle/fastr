@@ -77,6 +77,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(r_home, 0),
         CALLDEF(mkStringFromChar, 0),
         CALLDEF(mkStringFromBytes, 0),
+        CALLDEF(mkStringFromRaw, 0),
         CALLDEF(null, 0),
         CALLDEF(iterate_iarray, 1),
         CALLDEF(iterate_iptr, 1),

@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "6ffac7220dee9833f6472eb5b7d192382df14928",
+               "version" : "1169237a62022208c027f3f1a1d861305ff4dcc1",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "6ffac7220dee9833f6472eb5b7d192382df14928",
+               "version" : "1169237a62022208c027f3f1a1d861305ff4dcc1",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -69,6 +69,7 @@ suite = {
     },
 
     # A recommended package "rpart" with a fixed version rather than taken from GNU-R.
+    # rpart 4.1-15
     "RPART" : {
       "path" : "libdownloads/rpart.tar.gz",
       "ext" : ".tar.gz",
@@ -85,6 +86,25 @@ suite = {
       "version" : "2.1.2",
       "urls" : ["https://cran.r-project.org/src/contrib/Archive/cluster/cluster_{version}.tar.gz"],
       "sha1" : "47763fa44d11e0f2c2feafade3e331c05eda30d1",
+      "resource" : "true"
+    },
+
+    # A recommended package "codetools" with a fixed version rather than taken from GNU-R.
+    "CODETOOLS" : {
+      "path" : "libdownloads/codetools.tar.gz",
+      "ext" : ".tar.gz",
+      "version" : "0.2-18",
+      "urls" : ["https://cran.r-project.org/src/contrib/codetools_{version}.tar.gz"],
+      "sha1" : "fa0fe4d67316ff49776e5bef1ba56c9334633e71",
+      "resource" : "true"
+    },
+
+    "MATRIX" : {
+      "path" : "libdownloads/matrix.tar.gz",
+      "ext" : ".tar.gz",
+      "version" : "1.4-0",
+      "urls" : ["https://cran.r-project.org/src/contrib/Archive/Matrix/Matrix_{version}.tar.gz"],
+      "sha1" : "2745b86754e1becfae6cbea5e4715f87d3fe8464",
       "resource" : "true"
     },
 
@@ -406,6 +426,8 @@ suite = {
       "dependencies" : [
         "RPART",
         "CLUSTER",
+        "CODETOOLS",
+        "MATRIX",
         "com.oracle.truffle.r.native",
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl",

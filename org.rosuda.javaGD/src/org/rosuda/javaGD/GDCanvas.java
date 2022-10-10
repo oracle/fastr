@@ -43,15 +43,15 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
 
     public static boolean forceAntiAliasing = true;
 
-    GDState gs;
+    @SuppressWarnings("serial") GDState gs;
 
-    Refresher r;
+    @SuppressWarnings("serial") Refresher r;
 
     Dimension lastSize;
 
     public int devNr = -1;
 
-    private final Consumer<Integer> resizer;
+    @SuppressWarnings("serial") private final Consumer<Integer> resizer;
 
     public GDCanvas(double w, double h, Consumer<Integer> resizer) {
         this((int) w, (int) h, resizer);
@@ -115,7 +115,7 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
         listChanged = true;
     }
 
-    LocatorSync lsCallback = null;
+    @SuppressWarnings("serial") LocatorSync lsCallback = null;
 
     @Override
     public synchronized boolean prepareLocator(LocatorSync ls) {
@@ -131,10 +131,11 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
     public void mouseClicked(MouseEvent e) {
         if (lsCallback != null) {
             double[] pos = null;
-            if ((e.getModifiers() & InputEvent.BUTTON1_MASK) > 0 && (e.getModifiers() & (InputEvent.BUTTON2_MASK | InputEvent.BUTTON3_MASK)) == 0) { // B1
-                                                                                                                                                     // =
-                                                                                                                                                     // return
-                                                                                                                                                     // position
+            if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) > 0 &&
+                            (e.getModifiersEx() & (InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK)) == 0) { // B1
+                                                                                                                         // =
+                                                                                                                         // return
+                                                                                                                         // position
                 pos = new double[2];
                 pos[0] = e.getX();
                 pos[1] = e.getY();

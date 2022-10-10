@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -338,7 +338,7 @@ void rembedded_write_err_console(char *cbuf, int len) {
 char* rembedded_read_console(const char* prompt) {
     unsigned char* cbuf = malloc(sizeof(char) * 1024);
     int n = (*ptr_R_ReadConsole)(prompt, cbuf, 1024, 0);
-    return cbuf;
+    return (char *) cbuf;
 }
 
 // -----------------------------------------------------------------------------------------------

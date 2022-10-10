@@ -69,9 +69,11 @@ endif # FASTR_RELEASE
 GNUR_RECOMMENDED_PKGNAMES_TS = $(GNUR_RECOMMENDED_PKGNAMES:=.ts)
 
 # Recommended packages that are used by fastr in a specific version, i.e., taken from other sources than GNUR_RECOMMENDED_BINARY
-PKGS_WITH_CUSTOM_VERSION := cluster rpart
+PKGS_WITH_CUSTOM_VERSION := cluster rpart codetools
 RPART_TAR := $(FASTR_R_HOME)/libdownloads/rpart.tar.gz
 CLUSTER_TAR := $(FASTR_R_HOME)/libdownloads/cluster.tar.gz
+CODETOOLS_TAR := $(FASTR_R_HOME)/libdownloads/codetools.tar.gz
+MATRIX_TAR := $(FASTR_R_HOME)/libdownloads/matrix.tar.gz
 
 GNUR_RECOMMENDED_TAR_DIR = $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended/
 # We do not copy all the recommended packages from gnur's directory. Instead, there are some
@@ -81,7 +83,7 @@ $(foreach pkg, \
 	$(filter-out $(PKGS_WITH_CUSTOM_VERSION),$(GNUR_RECOMMENDED_PKGNAMES)), \
 	$(GNUR_RECOMMENDED_TAR_DIR)/$(pkg)*.tar.gz \
 )
-ALL_RECOMMENDED_TARS := $(GNUR_RECOMMENDED_TARS) $(RPART_TAR) $(CLUSTER_TAR)
+ALL_RECOMMENDED_TARS := $(GNUR_RECOMMENDED_TARS) $(RPART_TAR) $(CLUSTER_TAR) $(MATRIX_TAR)
 
 ## need to allow parallel installs
 INSTALL_OPTS = --pkglock --data-compress=xz --no-staged-install
@@ -135,6 +137,16 @@ rpart.ts: $(RPART_TAR)
 	@echo Finished installing recommended package `basename $<`
 
 cluster.ts: $(CLUSTER_TAR)
+	@echo Installing recommended package `basename $<`
+	@_R_CHECK_INSTALL_DEPENDS_=no FASTR_USE_F2C=true $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
+	@echo Finished installing recommended package `basename $<`
+
+codetools.ts: $(CODETOOLS_TAR)
+	@echo Installing recommended package `basename $<`
+	@_R_CHECK_INSTALL_DEPENDS_=no FASTR_USE_F2C=true $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
+	@echo Finished installing recommended package `basename $<`
+
+Matrix.ts: $(MATRIX_TAR)
 	@echo Installing recommended package `basename $<`
 	@_R_CHECK_INSTALL_DEPENDS_=no FASTR_USE_F2C=true $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
 	@echo Finished installing recommended package `basename $<`

@@ -142,7 +142,7 @@ extern Rboolean gdOpen(int gdId, const char*, double, double);
 SEXP api_gdOpen(SEXP name, SEXP w, SEXP h) {
 	const char *nm = CHAR(STRING_ELT(name, 0));
 	gdId = javaGDDeviceCounter++;
-	return gdOpen(gdId, nm, REAL(w)[0], REAL(h)[0]);
+	return ScalarLogical(gdOpen(gdId, nm, REAL(w)[0], REAL(h)[0]));
 }
 
 extern void gdClose(int gdId);
@@ -223,7 +223,7 @@ SEXP api_gdText(SEXP x, SEXP y, SEXP str, SEXP rot, SEXP hadj) {
 extern void gdRaster(int gdId, unsigned int *img, int img_w, int img_h, double x, double y, double w, double h, double rot, Rboolean interpolate);
 
 SEXP api_gdRaster(SEXP img, SEXP img_w, SEXP img_h, SEXP x, SEXP y, SEXP w, SEXP h, SEXP rot, SEXP interpolate) {
-	gdRaster(gdId, INTEGER(img), INTEGER(img_w)[0], INTEGER(img_h)[0], REAL(x)[0], REAL(y)[0], REAL(w)[0], REAL(h)[0], REAL(rot)[0], INTEGER(interpolate)[0]);
+	gdRaster(gdId, (unsigned int *) INTEGER(img), INTEGER(img_w)[0], INTEGER(img_h)[0], REAL(x)[0], REAL(y)[0], REAL(w)[0], REAL(h)[0], REAL(rot)[0], INTEGER(interpolate)[0]);
     return R_NilValue;
 }
 

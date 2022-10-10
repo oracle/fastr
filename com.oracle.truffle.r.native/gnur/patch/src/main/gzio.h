@@ -37,6 +37,8 @@
 
 #include "zlib.h"
 
+extern void warning(const char *, ...);
+
 #ifdef Win32
 # define OS_CODE  0x06
 #else

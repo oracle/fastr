@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -182,10 +182,6 @@ void R_GE_VText(double x, double y, const char * const s, cetype_t enc,
 double R_GE_VStrWidth(const char *s, cetype_t enc, const pGEcontext gc, pGEDevDesc dd) {
     unimplemented("R_GE_VStrWidth");	    		
     return 0;
-}
-
-void genptry(int n, double *p, double *ptry, double scale, void *ex) {
-    unimplemented("genptry");	    		
 }
 
 double EXP(double x) {
