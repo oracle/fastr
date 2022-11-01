@@ -25,7 +25,7 @@ The R language home directory, which will be further referenced as `$R_HOME`, is
 
 ## Prerequisites
 
-GraalVM's R runtime requires [zlib](https://zlib.net/) and the [OpenMP runtime library](https://www.openmprtl.org/).
+GraalVM's R runtime requires [zlib](https://zlib.net/) and the [OpenMP runtime library](https://www.openmp.org).
 Zlib is default part of MacOS and most modern Linux distributions.
 The following commands should install the OpenMP runtime library:
 

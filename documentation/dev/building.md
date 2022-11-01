@@ -238,7 +238,7 @@ mx eclipseinit
 
 We would like to grow the FastR open-source community to provide a free R implementation atop the Truffle/Graal stack.
 We encourage contributions, and invite interested developers to join in.
-Prospective contributors need to sign the [Oracle Contributor Agreement (OCA)](http://www.oracle.com/technetwork/community/oca-486395.html).
+Prospective contributors need to sign the [Oracle Contributor Agreement (OCA)](https://oca.opensource.oracle.com/).
 The access point for contributions, issues and questions about FastR is the [GitHub repository](https://github.com/oracle/fastr).
 
 ## Troubleshooting
