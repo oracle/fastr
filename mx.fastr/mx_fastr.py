@@ -831,14 +831,23 @@ def _pkgtest_args(args):
     else:
         import mx_sdk_vm_impl
         graalvm_home = mx_sdk_vm_impl.graalvm_home(fatalIfMissing=False)
+    mx.logv("Using graalvm_home=" + graalvm_home)
     pkgtest_args = []
     pkgtest_args += ["--fastr-home"]
     pkgtest_args += [_fastr_suite.dir]
-    pkgtest_args += ["--gnur-home"]
-    pkgtest_args += [_gnur_path()]
+    gnur_path = _gnur_path()
     if graalvm_home:
+        # In GRAALVM mode, FastR may not be built so we may need to use the gnur suite.
+        # If explicit GNUR_HOME_BINARY is given, we just use that, though.
+        if 'GNUR_HOME_BINARY' not in os.environ:
+            _gnur_suite = mx.suite('gnur')
+            gnur_path = join(_gnur_suite.dir, 'gnur', _gnur_suite.extensions.r_version())
         pkgtest_args += ["--graalvm-home"]
         pkgtest_args += [graalvm_home]
+
+    mx.logv("Using gnur_path=" + gnur_path)
+    pkgtest_args += ["--gnur-home"]
+    pkgtest_args += [gnur_path]
     full_args = pkgtest_args + list(args)
     return full_args
 
