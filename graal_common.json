@@ -1,6 +1,6 @@
 {
   "README": "This file contains definitions that are useful for the hocon and jsonnet CI files of multiple repositories.",
-  "mx_version": "6.9.4",
+  "mx_version": "6.11.4",
   "jdks": {
     "openjdk11": {
       "name": "jpg-jdk",
@@ -237,6 +237,7 @@
       },
       "windows": {
         "packages": {
+          "msvc_source": "==14.0",
           "pip:cmake": "==3.18.4"
         }
       }
