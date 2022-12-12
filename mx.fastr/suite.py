@@ -85,7 +85,7 @@ suite = {
       "ext" : ".tar.gz",
       "version" : "2.1.2",
       "urls" : ["https://cran.r-project.org/src/contrib/Archive/cluster/cluster_{version}.tar.gz"],
-      "sha1" : "47763fa44d11e0f2c2feafade3e331c05eda30d1",
+      "digest" : "sha512:54f4e4768106035ba0566254393bc392af66cdf9309d117a57d18ee29b93207740d38eac2a4c4db761db65a7300abdbcd2a5915a115d5b81e7f523dd7d583301",
       "resource" : "true"
     },
 
@@ -109,7 +109,7 @@ suite = {
     },
 
     "XZ-1.9" : {
-      "sha1" : "1ea4bec1a921180164852c65006d928617bd2caf",
+      "digest" : "sha512:a4362db234d4e83683e90f5baf90c82107450cc4404acab96e3fab14b8a3d4588a19722171d32f27d18463682a6994cad9af0b1065c954e3a77ea7bdcf586bac",
       "maven" : {
         "groupId" : "org.tukaani",
         "artifactId" : "xz",
@@ -118,7 +118,7 @@ suite = {
     },
 
     "BATIK-ALL-1.14" : {
-      "sha1" : "a8d228e4ae2c21efb833fdfcdfe5446fa672974a",
+      "digest" : "sha512:6e91f6696e25146109e87ae762b5c0c5c1416680b5c4528bc49a4051497056171b7643d27cbf2e59f2da70fff869409390e17e41dc8adac7c1fd0208aa3115fc",
       "maven" : {
         "groupId" : "org.apache.xmlgraphics",
         "artifactId" : "batik-all",
