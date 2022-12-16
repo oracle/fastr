@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,16 @@
     jmp_buf error_jmpbuf;           \
     pushJmpBuf(&error_jmpbuf);      \
     SEXP result = R_NilValue;       \
+    if (!setjmp(error_jmpbuf)) {    \
+        result = call;              \
+    }                               \
+    popJmpBuf();                    \
+    return result;
+
+#define DO_CALL_INT(call)           \
+    jmp_buf error_jmpbuf;           \
+    pushJmpBuf(&error_jmpbuf);      \
+    int result = 0;                 \
     if (!setjmp(error_jmpbuf)) {    \
         result = call;              \
     }                               \
