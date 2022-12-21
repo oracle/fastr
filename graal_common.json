@@ -1,6 +1,6 @@
 {
   "README": "This file contains definitions that are useful for the hocon and jsonnet CI files of multiple repositories.",
-  "mx_version": "6.12.7",
+  "mx_version": "6.14.4",
   "jdks": {
     "openjdk11": {
       "name": "jpg-jdk",
@@ -52,32 +52,32 @@
     },
     "labsjdk-ce-17": {
       "name": "labsjdk",
-      "version": "ce-17.0.6+2-jvmci-23.0-b02",
+      "version": "ce-17.0.6+2-jvmci-23.0-b04",
       "platformspecific": true
     },
     "labsjdk-ce-17Debug": {
       "name": "labsjdk",
-      "version": "ce-17.0.6+2-jvmci-23.0-b02-debug",
+      "version": "ce-17.0.6+2-jvmci-23.0-b04-debug",
       "platformspecific": true
     },
     "labsjdk-ce-17-llvm": {
       "name": "labsjdk",
-      "version": "ce-17.0.6+2-jvmci-23.0-b02-sulong",
+      "version": "ce-17.0.6+2-jvmci-23.0-b04-sulong",
       "platformspecific": true
     },
     "labsjdk-ee-17": {
       "name": "labsjdk",
-      "version": "ee-17.0.6+4-jvmci-23.0-b02",
+      "version": "ee-17.0.6+7-jvmci-23.0-b04",
       "platformspecific": true
     },
     "labsjdk-ee-17Debug": {
       "name": "labsjdk",
-      "version": "ee-17.0.6+4-jvmci-23.0-b02-debug",
+      "version": "ee-17.0.6+7-jvmci-23.0-b04-debug",
       "platformspecific": true
     },
     "labsjdk-ee-17-llvm": {
       "name": "labsjdk",
-      "version": "ee-17.0.6+4-jvmci-23.0-b02-sulong",
+      "version": "ee-17.0.6+7-jvmci-23.0-b04-sulong",
       "platformspecific": true
     },
     "oraclejdk19": {
@@ -92,38 +92,38 @@
     },
     "labsjdk-ce-19": {
       "name": "labsjdk",
-      "version": "ce-19.0.1+10-jvmci-23.0-b02",
+      "version": "ce-19.0.1+10-jvmci-23.0-b04",
       "platformspecific": true
     },
     "labsjdk-ce-19Debug": {
       "name": "labsjdk",
-      "version": "ce-19.0.1+10-jvmci-23.0-b02-debug",
+      "version": "ce-19.0.1+10-jvmci-23.0-b04-debug",
       "platformspecific": true
     },
     "labsjdk-ce-19-llvm": {
       "name": "labsjdk",
-      "version": "ce-19.0.1+10-jvmci-23.0-b02-sulong",
+      "version": "ce-19.0.1+10-jvmci-23.0-b04-sulong",
       "platformspecific": true
     },
     "labsjdk-ee-19": {
       "name": "labsjdk",
-      "version": "ee-19.0.2+3-jvmci-23.0-b02",
+      "version": "ee-19.0.2+6-jvmci-23.0-b04",
       "platformspecific": true
     },
     "labsjdk-ee-19Debug": {
       "name": "labsjdk",
-      "version": "ee-19.0.2+3-jvmci-23.0-b02-debug",
+      "version": "ee-19.0.2+6-jvmci-23.0-b04-debug",
       "platformspecific": true
     },
     "labsjdk-ee-19-llvm": {
       "name": "labsjdk",
-      "version": "ee-19.0.2+3-jvmci-23.0-b02-sulong",
+      "version": "ee-19.0.2+6-jvmci-23.0-b04-sulong",
       "platformspecific": true
     },
     "oraclejdk20": {
       "name": "jpg-jdk",
       "version": "20",
-      "build_id": "22",
+      "build_id": "24",
       "release": true,
       "platformspecific": true,
       "extrabundles": [
@@ -132,17 +132,17 @@
     },
     "labsjdk-ce-20": {
       "name": "labsjdk",
-      "version": "ce-20+24-jvmci-23.0-b02",
+      "version": "ce-20+25-jvmci-23.0-b04",
       "platformspecific": true
     },
     "labsjdk-ce-20Debug": {
       "name": "labsjdk",
-      "version": "ce-20+24-jvmci-23.0-b02-debug",
+      "version": "ce-20+25-jvmci-23.0-b04-debug",
       "platformspecific": true
     },
     "labsjdk-ce-20-llvm": {
       "name": "labsjdk",
-      "version": "ce-20+24-jvmci-23.0-b02-sulong",
+      "version": "ce-20+25-jvmci-23.0-b04-sulong",
       "platformspecific": true
     }
   },
@@ -163,6 +163,11 @@
         "devkit:VS2022-17.1.0+1": "==0"
       }
     },
+    "windows-jdk20": {
+      "packages": {
+        "devkit:VS2022-17.1.0+1": "==0"
+      }
+    },
     "linux-jdk11": {
       "packages": {
         "devkit:gcc7.3.0-OEL6.4+1": "==1"
@@ -174,6 +179,11 @@
       }
     },
     "linux-jdk19": {
+      "packages": {
+        "devkit:gcc11.2.0-OL6.4+1": "==0"
+      }
+    },
+    "linux-jdk20": {
       "packages": {
         "devkit:gcc11.2.0-OL6.4+1": "==0"
       }
