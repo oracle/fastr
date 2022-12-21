@@ -193,5 +193,5 @@ SEXP R_UnwindProtect(SEXP (*fun)(void *data), void *data,
 }
 
 int call_base_dispatchHandlers() {
-    DO_CALL(dispatchHandlers());
+    DO_CALL_INT(dispatchHandlers());
 }
