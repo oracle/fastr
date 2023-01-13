@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.tck;
 
+import static org.graalvm.polyglot.tck.TypeDescriptor.OBJECT;
 import static org.graalvm.polyglot.tck.TypeDescriptor.array;
 import static org.graalvm.polyglot.tck.TypeDescriptor.intersection;
 
@@ -113,7 +114,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         vals.add(createValueConstructor(context, "1.42", intersection(TypeDescriptor.NUMBER, array(TypeDescriptor.NUMBER))));
         vals.add(createValueConstructor(context, "FALSE", intersection(TypeDescriptor.BOOLEAN, array(TypeDescriptor.BOOLEAN))));
         vals.add(createValueConstructor(context, "'TEST'", intersection(TypeDescriptor.STRING, array(TypeDescriptor.STRING))));
-        vals.add(createValueConstructor(context, "1+1i", intersection(TypeDescriptor.OBJECT, array(TypeDescriptor.OBJECT))));
+        vals.add(createValueConstructor(context, "1+1i", intersection(OBJECT, array(OBJECT))));
 
         // TODO NULL, raw, s4, env, list, empty, ...
         vals.add(createValueConstructor(context, "NULL", TypeDescriptor.NULL));
@@ -148,43 +149,47 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         TypeDescriptor[] declaredParameterTypes = new TypeDescriptor[]{numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull};
 
         // +
-        ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
+        ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        new NonPrimitiveNumberParameterThrows(true,
+                                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
         // -
-        ops.add(createBinaryOperator(context, "-", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
+        ops.add(createBinaryOperator(context, "-", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        new NonPrimitiveNumberParameterThrows(true,
+                                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
         // *
-        ops.add(createBinaryOperator(context, "*", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
+        ops.add(createBinaryOperator(context, "*", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        new NonPrimitiveNumberParameterThrows(true,
+                                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
         // /
-        ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
+        ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        new NonPrimitiveNumberParameterThrows(true,
+                                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
 
         acceptedParameterTypes = new TypeDescriptor[]{TypeDescriptor.ANY, TypeDescriptor.ANY};
         // <
         ops.add(createBinaryOperator(context, "<", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
+                        new NonPrimitiveNumberParameterThrows(RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build())));
         // >
         ops.add(createBinaryOperator(context, ">", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
+                        new NonPrimitiveNumberParameterThrows(RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build())));
         // <=
         ops.add(createBinaryOperator(context, "<=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
+                        new NonPrimitiveNumberParameterThrows(RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build())));
         // >=
         ops.add(createBinaryOperator(context, ">=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
+                        new NonPrimitiveNumberParameterThrows(RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build())));
         // ==
         ops.add(createBinaryOperator(context, "==", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
+                        new NonPrimitiveNumberParameterThrows(RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build())));
         // !=
         ops.add(createBinaryOperator(context, "!=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build()));
+                        new NonPrimitiveNumberParameterThrows(RResultVerifier.newBuilder(acceptedParameterTypes).primitiveAndArrayMismatchCheck().compareParametersCheck().build())));
         // // TODO &, |, &&, ||
 
         // !
         ops.add(createPrefixOperator(context, "!", boolOrArrBool, numOrBoolOrArray,
-                        RResultVerifier.newBuilder(new TypeDescriptor[]{numOrBoolOrNullOrArrNumBool},
-                                        new TypeDescriptor[]{numOrBoolOrArray}).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()));
+                        new NonPrimitiveNumberParameterThrows(RResultVerifier.newBuilder(new TypeDescriptor[]{numOrBoolOrNullOrArrNumBool},
+                                        new TypeDescriptor[]{numOrBoolOrArray}).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
 
         // TODO unary +, -, ...
 
@@ -204,13 +209,14 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         // if
         String ifStatement = "if ({1}) '{'\n{0}<-TRUE\n'}' else '{'\n{0}<-FALSE\n'}'";
         res.add(createStatement(context, "if", ifStatement,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, new TypeDescriptor[]{numOrBoolOrArray}).primitiveAndArrayMismatchCheck().emptyArrayCheck().build(),
+                        new NonPrimitiveNumberParameterThrows(
+                                        RResultVerifier.newBuilder(acceptedParameterTypes, new TypeDescriptor[]{numOrBoolOrArray}).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()),
                         TypeDescriptor.BOOLEAN, numOrBoolOrArray));
 
         // while
         String whileStatement = "while ({1})'{'\nbreak\n'}'";
         res.add(createStatement(context, "while", whileStatement,
-                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build(),
+                        new NonPrimitiveNumberParameterThrows(RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build()),
                         TypeDescriptor.NULL, numOrBoolOrArray));
 
         // for
@@ -426,6 +432,61 @@ public final class RTCKLanguageProvider implements LanguageProvider {
                 }
             }
             delegate.accept(snippetRun);
+        }
+    }
+
+    private static class NonPrimitiveNumberParameterThrows implements ResultVerifier {
+
+        private final boolean stringOrObjectParameterForbidden;
+        private final ResultVerifier next;
+
+        NonPrimitiveNumberParameterThrows(ResultVerifier next) {
+            this(false, next);
+        }
+
+        NonPrimitiveNumberParameterThrows(boolean stringOrObjectParameterForbidden, ResultVerifier next) {
+            this.next = next != null ? next : ResultVerifier.getDefaultResultVerifier();
+            this.stringOrObjectParameterForbidden = stringOrObjectParameterForbidden;
+        }
+
+        @Override
+        public void accept(ResultVerifier.SnippetRun snippetRun) throws PolyglotException {
+            boolean stringOrObjectParameter = false;
+            boolean nonPrimitiveNumberParameter = false;
+            boolean nonPrimitiveNumberParameterWrappedInArray = false;
+            boolean numberOrBooleanParameters = true;
+            boolean numberOrBooleanOrStringParameters = true;
+            for (Value actualParameter : snippetRun.getParameters()) {
+                Value parameterToCheck = actualParameter;
+                if (actualParameter.hasArrayElements() && actualParameter.getArraySize() > 0) {
+                    parameterToCheck = actualParameter.getArrayElement(0);
+                }
+                if (!parameterToCheck.isBoolean() && !parameterToCheck.isNumber()) {
+                    numberOrBooleanParameters = false;
+                    if (!parameterToCheck.isString()) {
+                        numberOrBooleanOrStringParameters = false;
+                    }
+                }
+                if (parameterToCheck.isNumber() && !parameterToCheck.fitsInLong() && !parameterToCheck.fitsInDouble()) {
+                    nonPrimitiveNumberParameter = true;
+                    if (actualParameter != parameterToCheck) {
+                        nonPrimitiveNumberParameterWrappedInArray = true;
+                    }
+                }
+                if (parameterToCheck.isString() || (!parameterToCheck.isNumber() && !parameterToCheck.isBoolean() && !parameterToCheck.isString() && !parameterToCheck.isNull() &&
+                                !(parameterToCheck.hasMember("re") && parameterToCheck.hasMember("im")))) {
+                    stringOrObjectParameter = true;
+                }
+            }
+            if ((numberOrBooleanParameters && nonPrimitiveNumberParameter) ||
+                            (numberOrBooleanOrStringParameters && !numberOrBooleanParameters && nonPrimitiveNumberParameter && !nonPrimitiveNumberParameterWrappedInArray) ||
+                            (stringOrObjectParameter && stringOrObjectParameterForbidden)) {
+                if (snippetRun.getException() == null) {
+                    throw new AssertionError("TypeError expected but no error has been thrown.");
+                } // else exception expected => ignore
+            } else {
+                next.accept(snippetRun); // no exception expected
+            }
         }
     }
 
