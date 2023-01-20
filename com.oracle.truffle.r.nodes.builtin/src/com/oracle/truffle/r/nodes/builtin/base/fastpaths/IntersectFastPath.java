@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -159,7 +158,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
         return RDataFactory.createIntVector(result, xLib.isComplete(x.getData()) | yLib.isComplete(y.getData()));
     }
 
-    @Specialization(limit = "1", guards = {"xLib.getLength(x.getData()) > 0", "yLib.getLength(y.getData()) > 0", "getLimit1Guard()"})
+    @Specialization(replaces = "intersectMaybeSorted", limit = "1", guards = {"xLib.getLength(x.getData()) > 0", "yLib.getLength(y.getData()) > 0", "getLimit1Guard()"})
     protected RIntVector intersect(RIntVector x, RIntVector y,
                     @CachedLibrary(value = "x.getData()") VectorDataLibrary xLib,
                     @CachedLibrary(value = "y.getData()") VectorDataLibrary yLib,
@@ -236,7 +235,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
         Arrays.sort(temp);
     }
 
-    @Fallback
+    @Specialization(replaces = "intersect")
     protected Object fallback(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
         return null;
     }
