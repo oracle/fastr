@@ -89,17 +89,32 @@
     },
     "labsjdk-ce-20": {
       "name": "labsjdk",
-      "version": "ce-20+26-jvmci-23.0-b05",
+      "version": "ce-20+30-jvmci-23.0-b06",
       "platformspecific": true
     },
     "labsjdk-ce-20Debug": {
       "name": "labsjdk",
-      "version": "ce-20+26-jvmci-23.0-b05-debug",
+      "version": "ce-20+30-jvmci-23.0-b06-debug",
       "platformspecific": true
     },
     "labsjdk-ce-20-llvm": {
       "name": "labsjdk",
-      "version": "ce-20+26-jvmci-23.0-b05-sulong",
+      "version": "ce-20+30-jvmci-23.0-b06-sulong",
+      "platformspecific": true
+    },
+    "labsjdk-ee-20": {
+      "name": "labsjdk",
+      "version": "ee-20.0.1+2-jvmci-23.0-b06",
+      "platformspecific": true
+    },
+    "labsjdk-ee-20Debug": {
+      "name": "labsjdk",
+      "version": "ee-20.0.1+2-jvmci-23.0-b06-debug",
+      "platformspecific": true
+    },
+    "labsjdk-ee-20-llvm": {
+      "name": "labsjdk",
+      "version": "ee-20.0.1+2-jvmci-23.0-b06-sulong",
       "platformspecific": true
     }
   },
@@ -138,7 +153,8 @@
   },
   "catch_files": [
     "Graal diagnostic output saved in '(?P<filename>[^']+)'",
-    "Dumping debug output to '(?P<filename>[^']+)'"
+    "Dumping debug output to '(?P<filename>[^']+)'",
+    " (?P<filename>.+/svm_err_b_\\d+T\\d+\\.\\d+_pid\\d+\\.md)"
   ],
   "deps": {
     "common": {
