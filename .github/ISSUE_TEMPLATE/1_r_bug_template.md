@@ -16,7 +16,7 @@ The latest development build available at https://github.com/graalvm/graalvm-ce-
 
 * If FastR produced `fastr_errors_pid{xyz}.log` or `fastr_errors.log`, attach them to the issue.
 * GraalVM version or git revisions of FastR and GraalVM repositories if built from source.
-  * Use `$JAVA_HOME_HOME/bin/R --vm.version` and include the full output.
+  * Use `$JAVA_HOME/bin/R --vm.version` and include the full output.
   * Alternatively, attach file `$JAVA_HOME_HOME/release`.
 * Output of R built-in function `sessionInfo()`.
   * The output contains a list loaded R packages and the order in which they were loaded.
