@@ -19,7 +19,7 @@ The measurements were [reproduced independently](https://web.archive.org/web/201
 See the documentation on the GraalVM website on how to [get GraalVM](https://www.graalvm.org/docs/getting-started/) and [install and use FastR](https://www.graalvm.org/reference-manual/r/).
 
 ```
-$ $GRAALVM/bin/R
+$GRAALVM/bin/R
 Type 'q()' to quit R.
 > print("Hello R!")
 [1] "Hello R!"
