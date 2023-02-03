@@ -18,8 +18,8 @@ The latest development build available at https://github.com/graalvm/graalvm-ce-
 * If you were installing the package from sources, include the sources or a link to them.
 * If FastR produced `fastr_errors_pid{xyz}.log` or `fastr_errors.log`, attach them to the issue.
 * GraalVM version or git revisions of FastR and GraalVM repositories if built from source.
-  * Use `$GRAALVM_HOME/bin/R --vm.version` and include the full output.
-  * Alternatively, attach file `$GRAALVM_HOME/release`.
+  * Use `$JAVA_HOME_HOME/bin/R --vm.version` and include the full output.
+  * Alternatively, attach file `$JAVA_HOME_HOME/release`.
 * Output of R built-in function `sessionInfo()`.
   * The output contains a list loaded R packages and the order in which they were loaded.
   * If possible, call this function immediately after the issue appears,
@@ -47,7 +47,7 @@ which may fail due to incompatibility bug in R code execution. Please try the su
 *libs*
 
   This is when the compilation of package's native sources (C/C++ and Fotran) takes place. 
-The configuration of compilers and other required tools, e.g., `ar`, is stored in `$GRAALVM_HOME/jre/languages/R/etc/Makeconf`. 
+The configuration of compilers and other required tools, e.g., `ar`, is stored in `$JAVA_HOME_HOME/jre/languages/R/etc/Makeconf`. 
 By default, FastR is configured to use the GraalVM LLVM Toolchain for C/C++ and F2C for Fotran 
 (the transpiled C is compiled with the GraalVM LLVM Toolchain). 
 You can switch to `gcc` by calling `fastr.setToolchain('native')`. 

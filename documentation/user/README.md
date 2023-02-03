@@ -61,7 +61,7 @@ the full path to it in `$R_HOME/etc/Makeconf`, the `FC` variable.
 
 ### Search Paths for Packages
 The default R library location is within the GraalVM installation directory.
-In order to allow installation of additional packages for users who do not have write access to the GraalVM installation directory, edit the `R_LIBS_USER` variable in the `$GRAALVM_HOME/etc/Renviron` file.
+In order to allow installation of additional packages for users who do not have write access to the GraalVM installation directory, edit the `R_LIBS_USER` variable in the `$JAVA_HOME_HOME/etc/Renviron` file.
 
 ## Running R
 

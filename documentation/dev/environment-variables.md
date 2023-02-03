@@ -47,7 +47,7 @@ In this file, we enumerate all the fastr-related environment variables
   - For more info run `mx r-pkgtest --help`.
 - `FASTR_OPTION_<option>=<value>`
   - With this pattern, you can pass an option to FastR.
-  - Equivalent to `$GRAALVM_HOME/bin/R --R.<option>=<value>`.
+  - Equivalent to `$JAVA_HOME_HOME/bin/R --R.<option>=<value>`.
   - E.g. `FASTR_OPTION_PrintErrorStacktracesToFile=true`.
   - See `com.oracle.truffle.r.runtime.context.FastROptions`.
 - `FASTR_PKGS_CACHE_OPT`
