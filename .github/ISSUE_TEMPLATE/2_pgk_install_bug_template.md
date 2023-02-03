@@ -47,7 +47,7 @@ which may fail due to incompatibility bug in R code execution. Please try the su
 *libs*
 
   This is when the compilation of package's native sources (C/C++ and Fotran) takes place. 
-The configuration of compilers and other required tools, e.g., `ar`, is stored in `$JAVA_HOME_HOME/jre/languages/R/etc/Makeconf`. 
+The configuration of compilers and other required tools, e.g., `ar`, is stored in `$JAVA_HOME/jre/languages/R/etc/Makeconf`. 
 By default, FastR is configured to use the GraalVM LLVM Toolchain for C/C++ and F2C for Fotran 
 (the transpiled C is compiled with the GraalVM LLVM Toolchain). 
 You can switch to `gcc` by calling `fastr.setToolchain('native')`. 
