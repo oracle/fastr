@@ -19,7 +19,7 @@ The R language runtime is not provided by default, and can be added to GraalVM w
 gu install r
 ```
 
-After this step, the `R` and `Rscript` launchers will become available in the `GRAALVM_HOME/bin` directory.
+After this step, the `R` and `Rscript` launchers will become available in the `JAVA_HOME/bin` directory.
 
 The R language home directory, which will be further referenced as `$R_HOME`, is located in `languages/R`.
 
@@ -61,7 +61,7 @@ the full path to it in `$R_HOME/etc/Makeconf`, the `FC` variable.
 
 ### Search Paths for Packages
 The default R library location is within the GraalVM installation directory.
-In order to allow installation of additional packages for users who do not have write access to the GraalVM installation directory, edit the `R_LIBS_USER` variable in the `$JAVA_HOME_HOME/etc/Renviron` file.
+In order to allow installation of additional packages for users who do not have write access to the GraalVM installation directory, edit the `R_LIBS_USER` variable in the `$JAVA_HOME/etc/Renviron` file.
 
 ## Running R
 
