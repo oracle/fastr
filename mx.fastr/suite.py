@@ -94,7 +94,7 @@ suite = {
       "path" : "libdownloads/codetools.tar.gz",
       "ext" : ".tar.gz",
       "version" : "0.2-18",
-      "urls" : ["https://cran.r-project.org/src/contrib/codetools_{version}.tar.gz"],
+      "urls" : ["https://cran.r-project.org/src/contrib/Archive/codetools/codetools_{version}.tar.gz"],
       "sha1" : "fa0fe4d67316ff49776e5bef1ba56c9334633e71",
       "resource" : "true"
     },
