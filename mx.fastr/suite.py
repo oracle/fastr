@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "43db4c7a306141fa04487b3cd735c9cacab45560",
+               "version" : "15807fb796282bbc975bf82cb80b95d6c5f178ef",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "43db4c7a306141fa04487b3cd735c9cacab45560",
+               "version" : "15807fb796282bbc975bf82cb80b95d6c5f178ef",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -94,7 +94,7 @@ suite = {
       "path" : "libdownloads/codetools.tar.gz",
       "ext" : ".tar.gz",
       "version" : "0.2-18",
-      "urls" : ["https://cran.r-project.org/src/contrib/codetools_{version}.tar.gz"],
+      "urls" : ["https://cran.r-project.org/src/contrib/Archive/codetools/codetools_{version}.tar.gz"],
       "sha1" : "fa0fe4d67316ff49776e5bef1ba56c9334633e71",
       "resource" : "true"
     },
