@@ -222,9 +222,15 @@
           "cmake": "==3.22.2"
         }
       },
-      "linux": {},
-      "darwin_amd64": {},
-      "darwin_aarch64": {},
+      "linux": {
+        "packages": {}
+      },
+      "darwin_amd64": {
+        "packages": {}
+      },
+      "darwin_aarch64": {
+        "packages": {}
+      },
       "windows": {
         "packages": {
           "msvc_source": "==14.0"
