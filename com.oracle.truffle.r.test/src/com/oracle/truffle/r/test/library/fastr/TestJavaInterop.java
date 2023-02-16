@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -738,7 +738,7 @@ public class TestJavaInterop extends TestBase {
 
         testConvertObjectArray("as.vector");
 
-        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$longArrayMinMax)", "cat('[1] -9.223372e+18  2.000000e+00  9.223372e+18\n')");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$longArrayMinMax)", "cat('[1] -9.223372e+18  2.000000e+00  2.147484e+09\n')");
 
         assertEvalFastR(Ignored.ImplementationError, "as.vector(new(java.type('java.lang.Integer[]'), 1))", "integer()");
 
@@ -2116,7 +2116,7 @@ public class TestJavaInterop extends TestBase {
         public static char fieldStaticChar = 'a';
         public static short fieldStaticShort = Short.MAX_VALUE;
         public static int fieldStaticInteger = Integer.MAX_VALUE;
-        public static long fieldStaticLong = Long.MAX_VALUE;
+        public static long fieldStaticLong = (((long) Integer.MAX_VALUE) << 4L) + 1;
         public static double fieldStaticDouble = Double.MAX_VALUE;
         public static float fieldStaticFloat = Float.MAX_VALUE;
 
@@ -2202,7 +2202,7 @@ public class TestJavaInterop extends TestBase {
         public Element[] arrayObject = new Element[]{new Element("a"), new Element("b"), new Element("c"), null};
 
         public TestClass() {
-            this(true, Byte.MAX_VALUE, 'a', Double.MAX_VALUE, 1.1f, Integer.MAX_VALUE, Long.MAX_VALUE, Short.MAX_VALUE, "a string");
+            this(true, Byte.MAX_VALUE, 'a', Double.MAX_VALUE, 1.1f, Integer.MAX_VALUE, Integer.MAX_VALUE + 1L, Short.MAX_VALUE, "a string");
         }
 
         public TestClass(boolean bo, byte bt, char c, double d, float f, int i, long l, short sh, String st) {
@@ -2606,7 +2606,7 @@ public class TestJavaInterop extends TestBase {
         public int[][][][] integerArray2x3x4x5 = new int[2][3][4][5];
 
         public long[] longArray = {1L, 2L, 3L};
-        public long[] longArrayMinMax = {Long.MIN_VALUE, 2L, Long.MAX_VALUE};
+        public long[] longArrayMinMax = {Long.MIN_VALUE, 2L, ((long) Integer.MAX_VALUE) + 1};
         public long[][] longArray2 = {{1L, 2L, 3L}, {1L, 2L, 3L}};
         public long[][][] longArray3 = {{{1L, 2L, 3L}, {1L, 2L, 3L}}, {{1L, 2L, 3L}, {1L, 2L, 3L}}};
         public long[][] longArray2NotSquare = new long[][]{{1, 2, 3}, {4, 5, 6, 7}};
