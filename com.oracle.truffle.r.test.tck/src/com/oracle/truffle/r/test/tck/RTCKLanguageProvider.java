@@ -426,12 +426,28 @@ public final class RTCKLanguageProvider implements LanguageProvider {
 
         @Override
         public void accept(SnippetRun snippetRun) throws PolyglotException {
+            // We ignore objects that FastR automatically unboxes to an R vector on the boundary,
+            // but they happen to have some more extra traits that the TCK would than check
+            // on the result and fail
             for (Value p : snippetRun.getParameters()) {
-                if (p.isNull() || (p.isString() && p.hasMembers())) {
+                if (isUnboxable(p) && hasExtraTrait(p)) {
                     return;
                 }
             }
             delegate.accept(snippetRun);
+        }
+
+        public static boolean hasExtraTrait(Value value) {
+            return value.hasMembers() || value.hasIterator() || value.canExecute() || value.hasArrayElements() ||
+                            value.hasHashEntries() || value.hasBufferElements() || value.isMetaObject() ||
+                            value.isDate() || value.isDuration() || value.isException() || value.isInstant() ||
+                            value.isNativePointer() || value.isProxyObject() || value.isTime() || value.isTimeZone();
+        }
+
+        public static boolean isUnboxable(Value value) {
+            return value.isBoolean() || value.isString() || value.fitsInByte() || value.fitsInShort() ||
+                            value.fitsInInt() || value.fitsInLong() || value.fitsInFloat() || value.fitsInDouble() ||
+                            value.isNull();
         }
     }
 
