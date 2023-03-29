@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, 2021, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,8 @@ CPICFLAGS = -fpic
 CPPFLAGS =
 CXX = "$(LABS_TOOLCHAIN_CXX)"
 CXXCPP = $(CXX) -E
-CXXFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+# Default to C++14. This was the default in LLVM 15, but starting with 16, LLVM defaults to C++17, which breaks Rcpp.
+CXXFLAGS = -std=gnu++14 -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CXXPICFLAGS = -fpic
 CXX98 = "$(LABS_TOOLCHAIN_CXX)"
 CXX98FLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)

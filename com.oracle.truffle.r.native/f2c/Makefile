@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2023, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ ifeq ($(wildcard ../../libdownloads/f2c/src),)
 endif 
 	# make f2c
 	# TODO: use -fPIC only on linux in libf2c.makefile
-	$(MAKE) -f makefile.u -C ../../libdownloads/f2c/src/f2c CC=$(LABS_LLVM_CC)
+	$(MAKE) -f makefile.u -C ../../libdownloads/f2c/src/f2c CC=$(LABS_LLVM_CC) CFLAGS="-O -Wno-error=implicit-function-declaration"
 	mkdir -p ../../bin
 	cp ../../libdownloads/f2c/src/f2c/f2c ../../bin
 	mkdir -p ../../f2c/
