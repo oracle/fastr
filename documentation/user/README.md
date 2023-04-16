@@ -23,6 +23,8 @@ After this step, the `R` and `Rscript` launchers will become available in the `J
 
 The R language home directory, which will be further referenced as `$R_HOME`, is located in `languages/R`.
 
+Note: Please have in mind that FastR is not available for ARM64 processors yet.
+
 ## Prerequisites
 
 GraalVM's R runtime requires [zlib](https://zlib.net/) and the [OpenMP runtime library](https://www.openmp.org).
@@ -58,6 +60,7 @@ brew install gcc
 
 Note: If the `gfortran` executable is not on your system path, you will need to configure
 the full path to it in `$R_HOME/etc/Makeconf`, the `FC` variable.
+
 
 ### Search Paths for Packages
 The default R library location is within the GraalVM installation directory.
