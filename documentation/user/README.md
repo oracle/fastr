@@ -61,7 +61,6 @@ brew install gcc
 Note: If the `gfortran` executable is not on your system path, you will need to configure
 the full path to it in `$R_HOME/etc/Makeconf`, the `FC` variable.
 
-
 ### Search Paths for Packages
 The default R library location is within the GraalVM installation directory.
 In order to allow installation of additional packages for users who do not have write access to the GraalVM installation directory, edit the `R_LIBS_USER` variable in the `$JAVA_HOME/etc/Renviron` file.
