@@ -10,7 +10,7 @@ GraalVM provides a GNU-compatible R runtime to run R programs directly or in the
 It can run R code at [unparalleled performance](Performance.md), and seamlessly [integrates with the GraalVM ecosystem](#graalvm-integration).
 The project name behind GraalVM's R runtime development is [FastR](https://github.com/oracle/fastr).
 
->Note: The GraalVM R runtime is currently considered experimental, and not available for Windows AMD64 and macOS AArch64 (Apple Silicon).
+>Note: The GraalVM R runtime is currently considered experimental, and not available for Windows AMD64 and macOS AArch64 (Apple Silicon). You can refer to the [features support matrix](https://www.graalvm.org/latest/docs/introduction/#features-support) in the official GraalVM documentation.
 
 ## Installing R
 
@@ -22,8 +22,6 @@ gu install r
 After this step, the `R` and `Rscript` launchers will become available in the `JAVA_HOME/bin` directory.
 
 The R language home directory, which will be further referenced as `$R_HOME`, is located in `languages/R`.
-
-Note: Please have in mind that FastR is not available for ARM64 processors yet.
 
 ## Prerequisites
 
