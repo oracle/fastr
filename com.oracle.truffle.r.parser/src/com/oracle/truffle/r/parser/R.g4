@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -523,6 +523,8 @@ n_one  : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); }
          )+ | EOF | SEMICOLON n_;
 n_multi  : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); }
             | SEMICOLON)+ | EOF;
+n_multi_no_eof  : (NEWLINE | COMMENT { checkFileDelim((CommonToken)last()); }
+            | SEMICOLON)+;
 
 expr_wo_assign [FunctionScope functionScope] returns [RSyntaxNode v]
     : w=while_expr[functionScope]                                      { $v = $w.v; }
@@ -541,7 +543,7 @@ sequence [FunctionScope functionScope] returns [RSyntaxNode v]
     : op=LBRACE{tok();} n_multi?
       (
         e=expr_or_assign[functionScope]           { stmts.add(RCodeBuilder.argument($e.v)); }
-        ( n_multi e=expr_or_assign[functionScope] { stmts.add(RCodeBuilder.argument($e.v)); } )*
+        ( n_multi_no_eof e=expr_or_assign[functionScope] { stmts.add(RCodeBuilder.argument($e.v)); } )*
         n_multi?
       )?
       RBRACE{tok();}
