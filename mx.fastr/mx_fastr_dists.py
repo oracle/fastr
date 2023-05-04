@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2022, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2023, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -183,6 +183,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                     "dependency": "FASTR_GRAALVM_RELEASE",
                     "path": "bin/fastr_jars/*",
                     "exclude": [
+                        "bin/fastr_jars/antlr4.jar",
                         "bin/fastr_jars/fastr.jar",
                         "bin/fastr_jars/truffle*",
                         "bin/fastr_jars/graal-sdk*",
