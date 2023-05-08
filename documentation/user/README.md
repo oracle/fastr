@@ -10,7 +10,7 @@ GraalVM provides a GNU-compatible R runtime to run R programs directly or in the
 It can run R code at [unparalleled performance](Performance.md), and seamlessly [integrates with the GraalVM ecosystem](#graalvm-integration).
 The project name behind GraalVM's R runtime development is [FastR](https://github.com/oracle/fastr).
 
->Note: The GraalVM R runtime is currently considered experimental, and not available for Windows AMD64 and macOS AArch64 (Apple Silicon).
+>Note: The GraalVM R runtime is currently considered experimental, and not available for Windows AMD64 and macOS AArch64 (Apple Silicon). You can refer to the [features support matrix](https://www.graalvm.org/latest/docs/introduction/#features-support) in the official GraalVM documentation.
 
 ## Installing R
 
