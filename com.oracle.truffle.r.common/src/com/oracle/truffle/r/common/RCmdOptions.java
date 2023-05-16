@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,14 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.launcher;
+package com.oracle.truffle.r.common;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
-
-import com.oracle.truffle.r.launcher.RMain.PrintHelp;
-import com.oracle.truffle.r.launcher.RMain.PrintVersion;
 
 /**
  * (Abstract) definition of the standard R command line options. The setting of the values from the
@@ -88,7 +85,7 @@ public final class RCmdOptions {
         EITHER {
             @Override
             public String usage() {
-                throw RMain.fatal("can't call usage() on Client.EITHER");
+                throw fatal("can't call usage() on Client.EITHER");
             }
 
             @Override
@@ -195,6 +192,14 @@ public final class RCmdOptions {
 
         RCmdOption(RCmdOptionType type, boolean implemented, String name, Object defaultValue, String help) {
             this(type, Client.EITHER, implemented, null, name, defaultValue, help);
+        }
+
+        public String shortName() {
+            return shortName;
+        }
+
+        public String plainName() {
+            return plainName;
         }
 
         private String getHelpName() {
@@ -473,7 +478,7 @@ public final class RCmdOptions {
         this.arguments = arguments;
     }
 
-    static void printHelp(Client client) {
+    public static void printHelp(Client client) {
         System.out.println(client.usage());
         System.out.println("Options:");
         for (RCmdOption option : RCmdOption.values()) {
@@ -541,5 +546,11 @@ public final class RCmdOptions {
             }
         }
         return adjArgs.toArray(new String[adjArgs.size()]);
+    }
+
+    public static RuntimeException fatal(String message, Object... args) {
+        System.out.println("FATAL: " + String.format(message, args));
+        System.exit(-1);
+        return new RuntimeException();
     }
 }

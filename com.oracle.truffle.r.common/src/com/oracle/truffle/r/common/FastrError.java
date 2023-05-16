@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.common;
 
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+public final class FastrError {
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.common.RVersionNumber;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+    private FastrError() {
+    }
 
-@RBuiltin(name = "internalsID", kind = INTERNAL, parameterNames = {}, behavior = PURE)
-public abstract class InternalsID extends RBuiltinNode.Arg0 {
-    // private static final RStringVector UID = RDataFactory.createStringVectorFromScalar();
+    // CheckStyle: stop system..print check
+    public static RuntimeException fatal(String message, Object... args) {
+        System.out.println("FATAL: " + String.format(message, args));
+        System.exit(-1);
+        return new RuntimeException();
+    }
 
-    @Specialization
-    protected String internalsID() {
-        return RVersionNumber.INTERNALS_UID;
+    public static RuntimeException fatal(Throwable t, String message, Object... args) {
+        t.printStackTrace();
+        System.out.println("FATAL: " + String.format(message, args));
+        System.exit(-1);
+        return null;
     }
 }

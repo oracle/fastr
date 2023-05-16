@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,8 +79,9 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.launcher.RCmdOptions;
-import com.oracle.truffle.r.launcher.RStartParams;
+import com.oracle.truffle.r.common.SuppressFBWarnings;
+import com.oracle.truffle.r.common.RCmdOptions;
+import com.oracle.truffle.r.common.RStartParams;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -97,7 +98,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.ReturnException;
-import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;

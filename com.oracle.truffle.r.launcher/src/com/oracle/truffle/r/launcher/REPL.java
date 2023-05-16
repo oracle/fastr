@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
+import com.oracle.truffle.r.common.FastrError;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
@@ -44,12 +45,6 @@ import org.graalvm.shadowed.org.jline.reader.UserInterruptException;
  * @see #readEvalPrint(Context, ConsoleHandler, File, REngineExecutor)
  */
 public class REPL {
-    /**
-     * The standard R script escapes spaces to "~+~" in "-e" and "-f" commands.
-     */
-    static String unescapeSpace(String input) {
-        return input.replace("~+~", " ");
-    }
 
     public static final String CANCEL_QUITTING_MEMBER_NAME = "FastR_error_cancelQuitting";
     public static final String ERROR_PRINTED_MEMBER_NAME = "FastR_error_printed";
@@ -153,7 +148,7 @@ public class REPL {
                                 context.eval(src);
                             }
                         } catch (InterruptedException ex) {
-                            throw RMain.fatal("Unexpected interrup error");
+                            throw FastrError.fatal("Unexpected interrup error");
                         } catch (PolyglotException e) {
                             if (e.isIncompleteSource()) {
                                 if (continuePrompt == null) {
@@ -195,7 +190,7 @@ public class REPL {
                                 continue;
                             }
                         }
-                        throw RMain.fatal(e, "error while calling quit");
+                        throw FastrError.fatal(e, "error while calling quit");
                     }
                 } catch (UserInterruptException e) {
                     // interrupted by ctrl-c
@@ -448,7 +443,7 @@ public class REPL {
                     if (cause instanceof RuntimeException) {
                         throw (RuntimeException) cause;
                     }
-                    throw RMain.fatal(ex, "Unexpected error " + cause.getMessage());
+                    throw FastrError.fatal(ex, "Unexpected error " + cause.getMessage());
                 }
             } else {
                 return run.call();
@@ -459,9 +454,9 @@ public class REPL {
             } else if (checkTopLevelJump && isJumpToTopLevel(executor, e)) {
                 throw e;
             }
-            throw RMain.fatal(e, "Unexpected error " + e.getMessage());
+            throw FastrError.fatal(e, "Unexpected error " + e.getMessage());
         } catch (Exception e) {
-            throw RMain.fatal(e, "Unexpected error " + e.getMessage());
+            throw FastrError.fatal(e, "Unexpected error " + e.getMessage());
         }
     }
 }

@@ -128,6 +128,21 @@ suite = {
   },
 
   "projects" : {
+
+    "com.oracle.truffle.r.common" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "sdk:GRAAL_SDK",
+      ],
+      "requires" : [
+        "java.management",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "17+",
+      "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
+    },
+
     "com.oracle.truffle.r.parser" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
@@ -201,6 +216,7 @@ suite = {
       "dependencies" : [
         "mx:JUNIT",
         "truffle:TRUFFLE_TCK",
+        "com.oracle.truffle.r.launcher",
         "com.oracle.truffle.r.engine",
       ],
       "requires" : [
@@ -279,7 +295,7 @@ suite = {
     "com.oracle.truffle.r.runtime" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.launcher",
+        "com.oracle.truffle.r.common",
         "truffle:TRUFFLE_API",
         "sulong:SULONG_API",
         "XZ-1.9",
@@ -304,15 +320,13 @@ suite = {
     "com.oracle.truffle.r.launcher" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
+        "com.oracle.truffle.r.common",
         "sdk:GRAAL_SDK",
         "sdk:LAUNCHER_COMMON",
         "sdk:JLINE3",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "17+",
-      "requires" : [
-        "java.management"
-      ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
     },
@@ -431,7 +445,7 @@ suite = {
         "com.oracle.truffle.r.native",
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl",
-        "com.oracle.truffle.r.launcher"
+        "com.oracle.truffle.r.common",
       ],
       "max_jobs" : "8",
       "native" : True,
@@ -463,22 +477,29 @@ suite = {
       "overlaps": ["FASTR"],
     },
 
+    "FASTR_COMMON" : {
+      "description" : "common utilities shared by fastr and fastr-launcher",
+      "dependencies" : ["com.oracle.truffle.r.common"],
+      "distDependencies" : [
+        "sdk:GRAAL_SDK",
+      ],
+    },
+
     "FASTR_LAUNCHER" : {
       "description" : "launcher for the GraalVM (at the moment used only when native image is installed)",
       "dependencies" : ["com.oracle.truffle.r.launcher"],
       "distDependencies" : [
+        "FASTR_COMMON",
         "sdk:GRAAL_SDK",
       ],
-      # FASTR and FASTR_LAUNCHER share one common helper class RCmdOptions
-      # This could be refactored in the future
-      "overlaps": ["FASTR"],
+      # TODO: The LAUNCHER_COMMON is not on graalvm system classpath, is must be embedded od the LAUNCHER_COMMON must be put on classpath by the launcher script?
+      "overlaps": ["sdk:LAUNCHER_COMMON"],
     },
 
     "FASTR" : {
       "description" : "class files for compiling against FastR in a separate suite",
       "dependencies" : [
         "com.oracle.truffle.r.engine",
-        "com.oracle.truffle.r.launcher",
         "com.oracle.truffle.r.ffi.impl"
       ],
       "mainClass" : "com.oracle.truffle.r.launcher.RCommand",
@@ -489,13 +510,12 @@ suite = {
         "XZ-1.9",
       ],
       "distDependencies" : [
+        "FASTR_COMMON",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_API",
       ],
-      # TODO: is this intentional that we embed things from LAUNCHER_COMMON?
-      "overlaps": ["sdk:LAUNCHER_COMMON"],
     },
 
     "FASTR_UNIT_TESTS" : {
@@ -507,6 +527,7 @@ suite = {
       "exclude": ["mx:HAMCREST", "mx:JUNIT"],
       "distDependencies" : [
         "FASTR",
+        "FASTR_LAUNCHER",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_TCK",
       ],

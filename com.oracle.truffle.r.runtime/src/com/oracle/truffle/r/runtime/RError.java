@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.launcher.REPL.ERROR_PRINTED_MEMBER_NAME;
 import static com.oracle.truffle.r.runtime.RLogger.LOGGER_PERFORMANCE_WARNINGS;
 import static com.oracle.truffle.r.runtime.context.FastROptions.PerformanceWarnings;
 
@@ -69,6 +68,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @SuppressWarnings("serial")
 @ExportLibrary(InteropLibrary.class)
 public final class RError extends AbstractTruffleException {
+
+    private static final String ERROR_PRINTED_MEMBER_NAME = "FastR_error_printed";
 
     private final String verboseStackTrace;
 

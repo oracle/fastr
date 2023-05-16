@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,12 +32,15 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.oracle.truffle.r.common.FastrError;
+import com.oracle.truffle.r.common.RCmdOptions;
+import com.oracle.truffle.r.common.RStartParams;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.graalvm.polyglot.proxy.ProxyObject;
 
-import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.common.RCmdOptions.RCmdOption;
 
 /**
  * The interface to a source of input/output for the context, which may have different
@@ -63,21 +66,21 @@ public abstract class ConsoleHandler {
                 File file = fileArgument.startsWith("~") ? new File(System.getProperty("user.home") + fileArgument.substring(1)) : new File(fileArgument);
                 lines = Files.readAllLines(file.toPath());
             } catch (MalformedInputException e) {
-                throw RMain.fatal("cannot open file '%s': Invalid byte sequence for given charset", fileArgument);
+                throw FastrError.fatal("cannot open file '%s': Invalid byte sequence for given charset", fileArgument);
             } catch (IOException e) {
-                throw RMain.fatal("cannot open file '%s': No such file or directory", fileArgument);
+                throw FastrError.fatal("cannot open file '%s': No such file or directory", fileArgument);
             }
             return new StringConsoleHandler(lines, outStream);
         } else if (options.getStringList(RCmdOption.EXPR) != null) {
             List<String> exprs = options.getStringList(RCmdOption.EXPR);
             for (int i = 0; i < exprs.size(); i++) {
-                exprs.set(i, REPL.unescapeSpace(exprs.get(i)));
+                exprs.set(i, RStartParams.unescapeSpace(exprs.get(i)));
             }
             return new StringConsoleHandler(exprs, outStream);
         } else {
             boolean isInteractive = options.getBoolean(RCmdOption.INTERACTIVE);
             if (!isInteractive && rsp.askForSave()) {
-                throw RMain.fatal("you must specify '--save', '--no-save' or '--vanilla'");
+                throw FastrError.fatal("you must specify '--save', '--no-save' or '--vanilla'");
             }
             boolean useReadLine = isInteractive && !rsp.noReadline();
             if (useDelegatingWrapper != null) {

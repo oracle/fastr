@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.launcher.StartupTiming;
+import com.oracle.truffle.r.common.StartupTiming;
 import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;

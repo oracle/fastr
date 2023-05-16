@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.common.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.ffi.util.ResourcesCleaner.Releasable;
 
 import sun.misc.Unsafe;

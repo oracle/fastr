@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,10 +26,10 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.common.SuppressFBWarnings;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection.ReadLineWarning;

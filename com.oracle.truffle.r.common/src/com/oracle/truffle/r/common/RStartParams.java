@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.launcher;
+package com.oracle.truffle.r.common;
 
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.EXPR;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.FILE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.INTERACTIVE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_ECHO;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_ENVIRON;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_INIT_FILE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_READLINE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_RESTORE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_RESTORE_DATA;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_SAVE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.NO_SITE_FILE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.QUIET;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.RESTORE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.SAVE;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.SILENT;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.VANILLA;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.VERBOSE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.EXPR;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.FILE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.INTERACTIVE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.NO_ECHO;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.NO_ENVIRON;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.NO_INIT_FILE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.NO_READLINE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.NO_RESTORE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.NO_RESTORE_DATA;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.NO_SAVE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.NO_SITE_FILE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.QUIET;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.RESTORE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.SAVE;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.SILENT;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.VANILLA;
+import static com.oracle.truffle.r.common.RCmdOptions.RCmdOption.VERBOSE;
 
 import java.util.List;
 
@@ -97,7 +97,7 @@ public class RStartParams {
         List<String> expressions = options.getStringList(EXPR);
         if (file != null) {
             if (expressions != null) {
-                throw RMain.fatal("cannot use -e with -f or --file");
+                throw FastrError.fatal("cannot use -e with -f or --file");
             }
             this.askForSave = false;
             this.save = false;
@@ -105,7 +105,7 @@ public class RStartParams {
                 // means stdin, but still implies NO_SAVE
                 file = null;
             } else {
-                file = REPL.unescapeSpace(file);
+                file = unescapeSpace(file);
             }
             this.interactive = false;
         } else if (expressions != null) {
@@ -199,5 +199,13 @@ public class RStartParams {
 
     public String getFileArgument() {
         return fileArgument;
+    }
+
+
+    /**
+     * The standard R script escapes spaces to "~+~" in "-e" and "-f" commands.
+     */
+    public static String unescapeSpace(String input) {
+        return input.replace("~+~", " ");
     }
 }

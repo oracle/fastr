@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.nodes.BlockNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.launcher.RMain;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -388,20 +387,22 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public Object rcommandMain(RContext context, String[] args, String[] env, boolean intern, int timeoutSecs) {
-        IORedirect redirect = handleIORedirect(context, args, intern);
-        assert env == null : "re-enable env arguments";
-        int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
-        return redirect.getInternResult(result);
+        throw new UnsupportedOperationException("Not supported");
+//        IORedirect redirect = handleIORedirect(context, args, intern);
+//        assert env == null : "re-enable env arguments";
+//        int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
+//        return redirect.getInternResult(result);
     }
 
     @Override
     public Object rscriptMain(RContext context, String[] args, String[] env, boolean intern, int timeoutSecs) {
-        IORedirect redirect = handleIORedirect(context, args, intern);
-        // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
-        // nested context
-        assert env == null : "re-enable env arguments";
-        int result = RMain.runRscript(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
-        return redirect.getInternResult(result);
+        throw new UnsupportedOperationException("Not supported");
+//        IORedirect redirect = handleIORedirect(context, args, intern);
+//        // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
+//        // nested context
+//        assert env == null : "re-enable env arguments";
+//        int result = RMain.runRscript(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
+//        return redirect.getInternResult(result);
     }
 
     private static final class IORedirect {
