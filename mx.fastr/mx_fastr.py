@@ -96,7 +96,7 @@ def create_cmdline(args, command, extraVmArgs=None, jdk=None):
     '''
     if not jdk:
         jdk = get_default_jdk()
-    dists = ['FASTR']
+    dists = ['FASTR', 'FASTR_LAUNCHER', 'FASTR_COMMON']
     if mx.suite("sulong", fatalIfMissing=False):
         dists.append('SULONG_NATIVE')
 
