@@ -141,7 +141,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     return mx.run_java(all_args, jdk=jdk, **kwargs)
 
 def r_classpath(args):
-    print(mx.classpath('FASTR', jdk=mx.get_jdk()) + ":" + mx.classpath('SULONG_NATIVE', jdk=mx.get_jdk()))  # pylint: disable=superfluous-parens
+    print(mx.classpath(['FASTR', 'FASTR_LAUNCHER', 'SULONG_NATIVE'], jdk=mx.get_jdk()))  # pylint: disable=superfluous-parens
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''

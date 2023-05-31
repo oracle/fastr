@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.conn.RFileTypeDetector;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.RScope;
@@ -205,6 +206,21 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     protected CallTarget parse(ParsingRequest request) throws Exception {
         CompilerAsserts.neverPartOfCompilation();
         Source source = request.getSource();
+        if (!source.isInteractive() && source.isInternal() && source.getName().equals("<embedded>") &&//
+                        source.getCharacters().toString().equals("init-embedded")) {
+            // This special source is used by REmbedded, class from the launcher used for JNI driven
+            // implementation of GNU-R's C embedding interface
+            return new RootNode(this) {
+                @TruffleBoundary
+                @Override
+                public Object execute(VirtualFrame frame) {
+                    RContext ctx = RContext.getInstance();
+                    ctx.completeEmbeddedInitialization();
+                    ctx.getRFFI().initializeEmbedded(ctx);
+                    return RNull.instance;
+                }
+            }.getCallTarget();
+        }
         try {
             if (request.getArgumentNames().size() == 0) {
                 return RContext.getEngine().parseToCallTarget(source, null);

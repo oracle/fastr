@@ -79,9 +79,9 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.common.SuppressFBWarnings;
 import com.oracle.truffle.r.common.RCmdOptions;
 import com.oracle.truffle.r.common.RStartParams;
+import com.oracle.truffle.r.common.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -413,10 +413,6 @@ public final class RContext {
                         stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL, stateglobalNativeVar};
     }
 
-    public static void setEmbedded() {
-        embedded = true;
-    }
-
     /**
      * Returns {@code true} if this context is run in native embedding compatible with GNU-R
      * scenario. Note: this is not java embedding via GraalSDK.
@@ -434,6 +430,7 @@ public final class RContext {
      */
     private RContext(TruffleRLanguage language, Env env, Instrumenter instrumenter, boolean isInitial) {
         this.language = language;
+        embedded = FastROptions.IsNativeEmbeddedMode.getValue(env.getOptions());
         String[] args;
         if (env.getApplicationArguments().length == 0) {
             args = new String[]{"R", "--vanilla", "--no-echo", "--silent", "--no-restore"};

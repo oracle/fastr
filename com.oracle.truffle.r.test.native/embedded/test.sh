@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,7 @@ $dir/../../bin/execRextras/Rclasspath
 
 echo "Testing 'main' embedding example..."
 (cd $dir/bin; ./main -Dpolyglot.engine.WarnInterpreterOnly=false -Dtruffle.nfi.library=$NFI_LIB --vanilla < $dir/src/main.input > $dir/main.actual.output 2>&1)
+# (cd $dir/bin; ./main -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8000 -Dpolyglot.engine.WarnInterpreterOnly=false -Dtruffle.nfi.library=$NFI_LIB --vanilla < $dir/src/main.input > $dir/main.actual.output 2>&1)
 if ! diff -q $dir/main.actual.output $dir/src/main.expected.output > /dev/null 2>&1; then
     echo "'main' embedding test failed"
     echo "for details see $dir/main.actual.output $dir/src/main.expected.output"

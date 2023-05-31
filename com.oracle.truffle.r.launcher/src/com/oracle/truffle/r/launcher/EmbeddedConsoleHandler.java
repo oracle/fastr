@@ -21,20 +21,17 @@
  * questions.
  */
 package com.oracle.truffle.r.launcher;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Value;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
+
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 /**
  * In embedded mode the console functions as defined in {@code Rinterface.h} can be overridden. This
@@ -56,6 +53,7 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     private Value readLine;
     private Value write;
     private Value writeErr;
+    private Value isRInterfaceOverriddenFun;
 
     @Override
     public void setContext(Context context) {
@@ -148,11 +146,11 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
         return new BufferedOutputStream(new EmbeddedConsoleOutputStream(writeCallTargetSupplier, defaultStream), 128);
     }
 
-    private static boolean isOverridden(String name) {
-        // TODO: add a internal function to check isOverridden
-        return false;
-//        RInterfaceCallbacks clbk = RInterfaceCallbacks.valueOf(name);
-//        return clbk.isOverridden();
+    private boolean isOverridden(String name) {
+        if (isRInterfaceOverriddenFun == null) {
+            isRInterfaceOverriddenFun = context.getBindings("R").getMember(".fastr.rinterface.callback.is.overridden");
+        }
+        return isRInterfaceOverriddenFun.execute(name).asBoolean();
     }
 
     private final class EmbeddedConsoleOutputStream extends OutputStream {
@@ -205,36 +203,21 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
 
     private Value getReadLine() {
         if (readLine == null) {
-            // TODO: function to return readNode call target as a Value
-            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-            Function<String, String> f = (s) -> {
-                try {
-                    System.out.print(s);
-                    System.out.flush();
-                    return in.readLine();
-                } catch (IOException ioe) {
-                    throw new RuntimeException(ioe);
-                }
-            };
-            readLine = context.asValue(f);
+            readLine = context.eval("R", ".fastr.rinterface.read.console");
         }
         return readLine;
     }
 
     private Value getWrite() {
         if (write == null) {
-            // TODO: function to return write console call target as a Value
-            Consumer<String> c = System.out::println;
-            write = context.asValue(c);
+            write = context.eval("R", ".fastr.rinterface.write.console");
         }
         return write;
     }
 
     private Value getWriteErr() {
         if (writeErr == null) {
-            // TODO: function to return write console call target as a Value
-            Consumer<String> c = System.err::println;
-            writeErr = context.asValue(c);
+            writeErr = context.eval("R", ".fastr.rinterface.write.err.console");
         }
         return writeErr;
     }

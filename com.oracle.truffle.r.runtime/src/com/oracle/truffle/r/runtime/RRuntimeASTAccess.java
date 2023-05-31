@@ -168,22 +168,7 @@ public interface RRuntimeASTAccess {
 
     boolean isDebugged(RFunction func);
 
-    /*
-     * Support for R/RScript sessions ("processes") in an isolated RContext, see
-     * .fastr.context.r/rscript. The args are everything you might legally enter into a
-     * shell,including I/O redirection. The result is an integer status code if "intern==false",
-     * otherwise it is a character vector of the output, with a 'status' attribute containing the
-     * status code. The env arguments are an optional settings of environment variables of the form
-     * X=Y.
-     */
-
-    Object rcommandMain(RContext contexrt, String[] args, String[] env, boolean intern, int timeoutSecs);
-
-    Object rscriptMain(RContext contexrt, String[] args, String[] env, boolean intern, int timeoutSecs);
-
     String encodeDouble(double x);
-
-    String encodeDouble(double x, int digits);
 
     String encodeComplex(RComplex x);
 
