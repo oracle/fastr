@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,10 @@
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -41,12 +39,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.launcher.RCmdOptions.Client;
+import com.oracle.truffle.r.common.RCmdOptions.Client;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RChannel;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
@@ -368,81 +365,6 @@ public class FastRContext {
             }
             return RDataFactory.createList(results);
         }
-    }
-
-    @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern", "timeout"}, behavior = COMPLEX)
-    public abstract static class R extends RBuiltinNode.Arg4 {
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE, 0};
-        }
-
-        static {
-            Casts casts = new Casts(R.class);
-            casts.arg("args").allowMissing().mustBe(stringValue());
-            casts.arg("env").allowMissing().mustBe(stringValue());
-            casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
-            casts.arg("timeout").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(0));
-        }
-
-        public abstract Object execute(VirtualFrame frame, RStringVector args, RStringVector env, boolean intern, int timeoutSecs);
-
-        @Specialization
-        @TruffleBoundary
-        protected Object r(RStringVector args, RStringVector env, boolean intern, int timeoutSecs) {
-            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(getRContext(), prependCommand(args, "R"), env.materialize().getDataCopy(), intern, timeoutSecs);
-            return rc;
-        }
-
-        @Specialization
-        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs) {
-            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern, timeoutSecs);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected Object r(@SuppressWarnings("unused") RMissing args, RStringVector env, boolean intern, int timeoutSecs) {
-            return r(RDataFactory.createEmptyStringVector(), env, intern, timeoutSecs);
-        }
-    }
-
-    @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern", "timeout"}, behavior = COMPLEX)
-    public abstract static class Rscript extends RBuiltinNode.Arg4 {
-
-        public abstract Object execute(RStringVector args, RStringVector env, boolean intern, int timeoutSecs);
-
-        @Override
-        public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE, 0};
-        }
-
-        static {
-            Casts casts = new Casts(Rscript.class);
-            casts.arg("args").mustBe(stringValue(), RError.Message.GENERIC, "usage: /path/to/Rscript [--options] [-e expr [-e expr2 ...] | file] [args]").asStringVector();
-            casts.arg("env").allowMissing().mustBe(stringValue());
-            casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
-            casts.arg("timeout").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(0));
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected Object rscript(RStringVector args, RStringVector env, boolean intern, int timeoutSecs) {
-            return RContext.getRRuntimeASTAccess().rscriptMain(getRContext(), prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern, timeoutSecs);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected Object rscript(RStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs) {
-            return rscript(args, RDataFactory.createEmptyStringVector(), intern, timeoutSecs);
-        }
-    }
-
-    private static String[] prependCommand(RStringVector argsVec, String command) {
-        String[] argsVecArgs = argsVec.materialize().getDataCopy();
-        String[] result = new String[argsVecArgs.length + 1];
-        result[0] = command;
-        System.arraycopy(argsVecArgs, 0, result, 1, argsVecArgs.length);
-        return result;
     }
 
     private static ChildContextInfo createContextInfo(RContext.ContextKind contextKind) {

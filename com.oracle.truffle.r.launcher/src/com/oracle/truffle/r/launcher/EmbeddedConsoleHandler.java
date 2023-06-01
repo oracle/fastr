@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.shell;
+package com.oracle.truffle.r.launcher;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -31,17 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 import org.graalvm.polyglot.Context;
-
-import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.launcher.ConsoleHandler;
-import com.oracle.truffle.r.launcher.DelegatingConsoleHandler;
-import com.oracle.truffle.r.runtime.RInterfaceCallbacks;
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.ReadConsoleNode;
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteConsoleBaseNode;
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteConsoleNode;
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteErrConsoleNode;
+import org.graalvm.polyglot.Value;
 
 /**
  * In embedded mode the console functions as defined in {@code Rinterface.h} can be overridden. This
@@ -60,9 +50,10 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     private ConsoleHandler delegate;
     private int currentLine;
 
-    private CallTarget readLineCallTarget;
-    private CallTarget writeCallTarget;
-    private CallTarget writeErrCallTarget;
+    private Value readLine;
+    private Value write;
+    private Value writeErr;
+    private Value isRInterfaceOverriddenFun;
 
     @Override
     public void setContext(Context context) {
@@ -78,7 +69,7 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     @Override
     public String readLine() {
         try (ContextClose ignored = inContext()) {
-            String l = isOverridden("R_ReadConsole") ? (String) getReadLineCallTarget().call("TODO prompt>") : getDelegate().readLine();
+            String l = isOverridden("R_ReadConsole") ? getReadLine().execute("TODO prompt>").asString() : getDelegate().readLine();
             currentLine++;
             return l;
         }
@@ -144,27 +135,29 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     }
 
     public OutputStream createStdOutputStream(OutputStream defaultValue) {
-        return createOutputSteam(this::getWriteCallTarget, defaultValue);
+        return createOutputSteam(this::getWrite, defaultValue);
     }
 
     public OutputStream createErrOutputStream(OutputStream defaultValue) {
-        return createOutputSteam(this::getWriteErrCallTarget, defaultValue);
+        return createOutputSteam(this::getWriteErr, defaultValue);
     }
 
-    private OutputStream createOutputSteam(Supplier<CallTarget> writeCallTargetSupplier, OutputStream defaultStream) {
+    private OutputStream createOutputSteam(Supplier<Value> writeCallTargetSupplier, OutputStream defaultStream) {
         return new BufferedOutputStream(new EmbeddedConsoleOutputStream(writeCallTargetSupplier, defaultStream), 128);
     }
 
-    private static boolean isOverridden(String name) {
-        RInterfaceCallbacks clbk = RInterfaceCallbacks.valueOf(name);
-        return clbk.isOverridden();
+    private boolean isOverridden(String name) {
+        if (isRInterfaceOverriddenFun == null) {
+            isRInterfaceOverriddenFun = context.getBindings("R").getMember(".fastr.rinterface.callback.is.overridden");
+        }
+        return isRInterfaceOverriddenFun.execute(name).asBoolean();
     }
 
     private final class EmbeddedConsoleOutputStream extends OutputStream {
         private final OutputStream delegate;
-        private Supplier<CallTarget> writeCallTarget;
+        private Supplier<Value> writeCallTarget;
 
-        EmbeddedConsoleOutputStream(Supplier<CallTarget> writeCallTarget, OutputStream delegate) {
+        EmbeddedConsoleOutputStream(Supplier<Value> writeCallTarget, OutputStream delegate) {
             this.writeCallTarget = writeCallTarget;
             this.delegate = delegate;
         }
@@ -178,7 +171,7 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
                     delegate.write(b, off, len);
                 } else {
                     String str = StandardCharsets.US_ASCII.decode(ByteBuffer.wrap(b, off, len)).toString();
-                    writeCallTarget.get().call(str);
+                    writeCallTarget.get().execute(str);
                 }
             }
         }
@@ -208,51 +201,25 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
         }
     }
 
-    private CallTarget getReadLineCallTarget() {
-        if (readLineCallTarget == null) {
-            readLineCallTarget = new RootNode(null) {
-                @Child private ReadConsoleNode readConsoleNode = ReadConsoleNode.create();
-
-                @Override
-                public Object execute(VirtualFrame frame) {
-                    return readConsoleNode.execute((String) frame.getArguments()[0]);
-                }
-            }.getCallTarget();
+    private Value getReadLine() {
+        if (readLine == null) {
+            readLine = context.eval("R", ".fastr.rinterface.read.console");
         }
-        return readLineCallTarget;
+        return readLine;
     }
 
-    private CallTarget getWriteCallTarget() {
-        if (writeCallTarget == null) {
-            writeCallTarget = createWriteCallTarget(WriteConsoleNode.create());
+    private Value getWrite() {
+        if (write == null) {
+            write = context.eval("R", ".fastr.rinterface.write.console");
         }
-        return writeCallTarget;
+        return write;
     }
 
-    private CallTarget getWriteErrCallTarget() {
-        if (writeErrCallTarget == null) {
-            writeErrCallTarget = createWriteCallTarget(WriteErrConsoleNode.create());
+    private Value getWriteErr() {
+        if (writeErr == null) {
+            writeErr = context.eval("R", ".fastr.rinterface.write.err.console");
         }
-        return writeErrCallTarget;
-    }
-
-    private static CallTarget createWriteCallTarget(WriteConsoleBaseNode writeConsoleNode) {
-        return new WriteOutBaseRootNode(writeConsoleNode).getCallTarget();
-    }
-
-    private static final class WriteOutBaseRootNode extends RootNode {
-        @Child private WriteConsoleBaseNode writeNode;
-
-        WriteOutBaseRootNode(WriteConsoleBaseNode writeNode) {
-            super(null);
-            this.writeNode = writeNode;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            writeNode.execute((String) frame.getArguments()[0]);
-            return null;
-        }
+        return writeErr;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.shell;
+package com.oracle.truffle.r.launcher;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,15 +29,9 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Source;
 
-import com.oracle.truffle.r.launcher.ConsoleHandler;
-import com.oracle.truffle.r.launcher.RCmdOptions;
-import com.oracle.truffle.r.launcher.REPL;
-import com.oracle.truffle.r.launcher.RStartParams;
-import com.oracle.truffle.r.runtime.RSource.Internal;
-import com.oracle.truffle.r.runtime.RSuicide;
-import com.oracle.truffle.r.runtime.SuppressFBWarnings;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.common.RCmdOptions;
+import com.oracle.truffle.r.common.RStartParams;
+import com.oracle.truffle.r.common.SuppressFBWarnings;
 
 /**
  * Support for embedding FastR in a C/C++ application according to {@code Rembedded.h}. The
@@ -58,6 +52,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * {@code Rf_initialize_R} invokes {@link #initializeR(String[],boolean)}, which creates new
  * polyglot {@link Context}. The call to {@code R_SetParams} adjusts the values stored in the
  * {@link RStartParams} object.
+ *
+ * Note that this relies upon reading the class-path from $R_HOME/bin/execRextras/Rclasspath and for
+ * the time being, this file is available only in in-source dev build of FastR (where it delegates
+ * to MX).
  */
 public class REmbedded {
 
@@ -72,27 +70,34 @@ public class REmbedded {
      */
     @SuppressFBWarnings(value = "LI_LAZY_INIT_UPDATE_STATIC", justification = "one-time initialization")
     private static void initializeR(String[] args, boolean initMainLoop) {
-        assert context == null;
-        RContext.setEmbedded();
-        RCmdOptions options = RCmdOptions.parseArguments(args, false);
+        try {
+            assert context == null;
+            RCmdOptions options = RCmdOptions.parseArguments(args, false);
 
-        EmbeddedConsoleHandler embeddedConsoleHandler = new EmbeddedConsoleHandler();
+            EmbeddedConsoleHandler embeddedConsoleHandler = new EmbeddedConsoleHandler();
 
-        consoleHandler = ConsoleHandler.createConsoleHandler(options, embeddedConsoleHandler, System.in, System.out);
-        InputStream input = consoleHandler.createInputStream();
-        boolean useEmbedded = consoleHandler == embeddedConsoleHandler;
-        OutputStream stdOut = useEmbedded ? embeddedConsoleHandler.createStdOutputStream(System.out) : System.out;
-        OutputStream stdErr = useEmbedded ? embeddedConsoleHandler.createErrOutputStream(System.err) : System.err;
-        context = Context.newBuilder("R", "llvm").allowAllAccess(true).arguments("R", options.getArguments()).in(input).out(stdOut).err(stdErr).build();
-        consoleHandler.setContext(context);
-        context.eval(INIT);
+            consoleHandler = ConsoleHandler.createConsoleHandler(options, embeddedConsoleHandler, System.in, System.out);
+            InputStream input = consoleHandler.createInputStream();
+            boolean useEmbedded = consoleHandler == embeddedConsoleHandler;
+            OutputStream stdOut = useEmbedded ? embeddedConsoleHandler.createStdOutputStream(System.out) : System.out;
+            OutputStream stdErr = useEmbedded ? embeddedConsoleHandler.createErrOutputStream(System.err) : System.err;
+            context = Context.newBuilder("R", "llvm").//
+                            allowAllAccess(true).//
+                            option("R.IsNativeEmbeddedMode", "true").//
+                            arguments("R", options.getArguments()).//
+                            in(input).out(stdOut).err(stdErr).//
+                            build();
+            consoleHandler.setContext(context);
+            context.initialize("R");
 
-        if (initMainLoop) {
-            context.enter();
-            RContext ctx = RContext.getInstance();
-            ctx.completeEmbeddedInitialization();
-            ctx.getRFFI().initializeEmbedded(ctx);
-            // stay in the context TODO should we?
+            if (initMainLoop) {
+                context.enter();
+                initializeEmbedded();
+                // stay in the context TODO should we?
+            }
+        } catch (Throwable ex) {
+            System.err.println("Unexpected internal error: ");
+            ex.printStackTrace(System.err);
         }
     }
 
@@ -106,7 +111,8 @@ public class REmbedded {
     private static void setParams(boolean quietA, boolean noEchoA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
                     boolean loadInitFileA, boolean debugInitFileA, int restoreActionA, int saveActionA, boolean noRenvironA) {
         context.enter();
-        RStartParams params = RContext.getInstance().getStartParams();
+        // Todo: params = RContext.getInstance().getStartParams();
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[0], true), true);
         params.setParams(quietA, noEchoA, interactiveA, verboseA, loadSiteFileA, loadInitFileA, debugInitFileA, restoreActionA, saveActionA, noRenvironA);
         context.leave();
     }
@@ -114,16 +120,16 @@ public class REmbedded {
     /**
      * N.B. This expression cannot contain any R functions, e.g. "invisible", because at the time it
      * is evaluated the R builtins have not been installed, see {@link #initializeR}. The
-     * suppression of printing is handled a a special case based on {@link Internal#INIT_EMBEDDED}.
+     * suppression of printing is handled as a special case based on {@code Internal#INIT_EMBEDDED}.
      */
-    private static final Source INIT = Source.newBuilder("R", "1", "<embedded>").buildLiteral();
+    private static final Source INIT = Source.newBuilder("R", "init-embedded", "<embedded>").internal(true).interactive(false).buildLiteral();
 
     // TODO: to be invoked from native
     @SuppressWarnings("unused")
     private static void endRmainloop(int status) {
         context.leave();
         context.close();
-        Utils.systemExit(status);
+        System.exit(status);
     }
 
     /**
@@ -131,14 +137,21 @@ public class REmbedded {
      * native code after {@link #initializeR} returned.
      */
     private static void runRmainloop() {
-        context.enter();
-        RContext ctx = RContext.getInstance();
-        ctx.completeEmbeddedInitialization();
-        ctx.getRFFI().initializeEmbedded(ctx);
-        int status = REPL.readEvalPrint(context, consoleHandler, null);
-        context.leave();
-        context.close();
-        Utils.systemExit(status);
+        try {
+            context.enter();
+            initializeEmbedded();
+            int status = REPL.readEvalPrint(context, consoleHandler, null);
+            context.leave();
+            context.close();
+            System.exit(status);
+        } catch (Throwable ex) {
+            System.err.println("Unexpected internal error: ");
+            ex.printStackTrace(System.err);
+        }
+    }
+
+    private static void initializeEmbedded() {
+        context.eval(INIT);
     }
 
     /**
@@ -159,7 +172,8 @@ public class REmbedded {
      */
     @SuppressWarnings("unused")
     private static void R_Suicide(String msg) {
-        RSuicide.rSuicideDefault(msg);
+        // TODO: real implementation of R_Suicide would have to long jump to the end of the current
+        // downcall, or if not in a downcall, then cleanup and close the R Context
     }
 
 }

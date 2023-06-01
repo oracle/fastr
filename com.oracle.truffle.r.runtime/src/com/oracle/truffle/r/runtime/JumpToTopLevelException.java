@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.launcher.REPL.CANCEL_QUITTING_MEMBER_NAME;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -37,6 +35,8 @@ import com.oracle.truffle.api.library.ExportMessage;
  */
 @ExportLibrary(InteropLibrary.class)
 public final class JumpToTopLevelException extends AbstractTruffleException {
+
+    private static final String CANCEL_QUITTING_MEMBER_NAME = "FastR_error_cancelQuitting";
 
     private static final long serialVersionUID = 1L;
 

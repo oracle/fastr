@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.test;
 
 import java.nio.file.FileSystems;
 
-import com.oracle.truffle.r.launcher.RVersionNumber;
+import com.oracle.truffle.r.common.RVersionNumber;
 import com.oracle.truffle.r.runtime.REnvVars;
 
 public class Utils {

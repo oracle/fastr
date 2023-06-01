@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -144,6 +144,9 @@ public class FastROptions {
     public static final OptionKey<Boolean> TraceCallsToFile = new OptionKey<>(false);
     @Option(category = OptionCategory.INTERNAL, deprecated = true, deprecationMessage = "Deprecated since rc12", help = "Trace all native function calls (performed via .Call, .External, etc.)") //
     public static final OptionKey<Boolean> TraceNativeCalls = new OptionKey<>(false);
+
+    @Option(category = OptionCategory.INTERNAL, help = "Internal option used by the experimental C embedding interface") //
+    public static final OptionKey<Boolean> IsNativeEmbeddedMode = new OptionKey<>(false);
 
     /**
      * The presence of the <code>NATIVE_DATA_INSPECTOR</code> variable in the environment activates

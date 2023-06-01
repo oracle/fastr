@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.oracle.truffle.r.common.PrintHelp;
+import com.oracle.truffle.r.common.PrintVersion;
+import com.oracle.truffle.r.common.RCmdOptions;
+import com.oracle.truffle.r.common.StartupTiming;
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
@@ -39,8 +43,8 @@ import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
-import com.oracle.truffle.r.launcher.RCmdOptions.Client;
-import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.common.RCmdOptions.Client;
+import com.oracle.truffle.r.common.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.launcher.REPL.REngineExecutor;
 
 /**
@@ -239,11 +243,11 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     @Override
     protected void collectArguments(Set<String> opts) {
         for (RCmdOption option : RCmdOption.values()) {
-            if (option.shortName != null) {
-                opts.add(option.shortName);
+            if (option.shortName() != null) {
+                opts.add(option.shortName());
             }
-            if (option.plainName != null) {
-                opts.add(option.plainName);
+            if (option.plainName() != null) {
+                opts.add(option.plainName());
             }
         }
     }
@@ -299,35 +303,5 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             System.out.println("[launcher] Exiting with code: " + result);
         }
         return result;
-    }
-
-    // CheckStyle: stop system..print check
-    public static RuntimeException fatal(String message, Object... args) {
-        System.out.println("FATAL: " + String.format(message, args));
-        System.exit(-1);
-        return new RuntimeException();
-    }
-
-    public static RuntimeException fatal(Throwable t, String message, Object... args) {
-        t.printStackTrace();
-        System.out.println("FATAL: " + String.format(message, args));
-        System.exit(-1);
-        return null;
-    }
-
-    @SuppressWarnings("serial")
-    static class PrintHelp extends RuntimeException {
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-            return this;
-        }
-    }
-
-    @SuppressWarnings("serial")
-    static class PrintVersion extends RuntimeException {
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-            return this;
-        }
     }
 }

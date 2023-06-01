@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2022, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -244,7 +244,7 @@ static int initializeFastR(int argc, char *argv[], int setupRmainloop) {
     }
 
     rInterfaceCallbacksClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RInterfaceCallbacks", vm_cp);
-    rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/REmbedded", vm_cp);
+    rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/launcher/REmbedded", vm_cp);
     jclass stringClass = checkFindClass(jniEnv, "java/lang/String", vm_cp);
     jmethodID initializeMethod = checkGetMethodID(jniEnv, rembeddedClass, "initializeR", "([Ljava/lang/String;Z)V", 1);
     jobjectArray argsArray = (*jniEnv)->NewObjectArray(jniEnv, argc, stringClass, NULL);
@@ -543,7 +543,7 @@ static int process_vmargs(int argc, char *argv[], char *vmargv[], char *uargv[])
     int ucount = 0;
     for (int i = 0; i < argc; i++) {
         char *arg = argv[i];
-        if ((arg[0] == '-' && arg[1] == 'X') || (arg[0] == '-' && arg[1] == 'D')) {
+        if ((arg[0] == '-' && arg[1] == 'X') || (arg[0] == '-' && arg[1] == 'D') || strncmp(arg, "-agent", 6) == 0) {
             vmargv[vcount++] = arg;
         } else {
             uargv[ucount++] = arg;

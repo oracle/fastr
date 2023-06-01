@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import org.rosuda.javaGD.GDInterface;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.r.ffi.impl.javaGD.FileOutputContainer.SaveImageException;
-import com.oracle.truffle.r.launcher.RVersionNumber;
+import com.oracle.truffle.r.common.RVersionNumber;
 
 public class LoggingGD extends GDInterface {
     private static final boolean logReturns = false;

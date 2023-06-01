@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,8 +85,12 @@ int main(int argc, char **argv) {
     ptr_R_ReadConsole = &testR_ReadConsole;
     ptr_R_WriteConsole = &testR_WriteConsole;
     printf("Running R with Rf_mainloop...\n");
+    fflush(stdout);
     Rf_mainloop();
+    fflush(stdout);
     printf("Closing R with Rf_endEmbeddedR...\n");
+    fflush(stdout);
     Rf_endEmbeddedR(0);
+    fflush(stdout);
     printf("Done");
 }

@@ -4,7 +4,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2023, Oracle and/or its affiliates
  *
  * based on AS 91 (C) 1979 Royal Statistical Society
  *  and  on AS 111 (C) 1977 Royal Statistical Society
@@ -48,10 +48,10 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.common.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
 import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;

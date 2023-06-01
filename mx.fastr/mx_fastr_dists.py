@@ -212,7 +212,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     license_files=['LICENSE_FASTR'],
     third_party_license_files=['3rd_party_licenses_fastr.txt'],
     dependencies=['Truffle', 'LLVM Runtime Native', 'LLVM.org toolchain'],
-    truffle_jars=['fastr:FASTR'],
+    truffle_jars=['fastr:FASTR_COMMON', 'fastr:FASTR'],
     support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
     provided_executables=[
         'bin/Rscript',

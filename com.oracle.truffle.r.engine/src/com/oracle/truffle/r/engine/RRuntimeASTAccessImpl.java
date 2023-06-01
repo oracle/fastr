@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,12 +26,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.RError.Message.LENGTH_ZERO_DIM_INVALID;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
@@ -43,7 +37,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.nodes.BlockNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.launcher.RMain;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -387,130 +380,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object rcommandMain(RContext context, String[] args, String[] env, boolean intern, int timeoutSecs) {
-        IORedirect redirect = handleIORedirect(context, args, intern);
-        assert env == null : "re-enable env arguments";
-        int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
-        return redirect.getInternResult(result);
-    }
-
-    @Override
-    public Object rscriptMain(RContext context, String[] args, String[] env, boolean intern, int timeoutSecs) {
-        IORedirect redirect = handleIORedirect(context, args, intern);
-        // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
-        // nested context
-        assert env == null : "re-enable env arguments";
-        int result = RMain.runRscript(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
-        return redirect.getInternResult(result);
-    }
-
-    private static final class IORedirect {
-        private final InputStream in;
-        private final OutputStream err;
-        private final OutputStream out;
-        private final String[] args;
-        private final boolean intern;
-
-        private IORedirect(InputStream in, OutputStream out, OutputStream err, String[] args, boolean intern) {
-            this.in = in;
-            this.out = out;
-            this.err = err;
-            this.args = args;
-            this.intern = intern;
-        }
-
-        private Object getInternResult(int result) {
-            if (intern) {
-                ByteArrayOutputStream bos = (ByteArrayOutputStream) out;
-                String s = new String(bos.toByteArray());
-                RStringVector sresult;
-                if (s.length() == 0) {
-                    sresult = RDataFactory.createEmptyStringVector();
-                } else {
-                    String[] lines = s.split("\n");
-                    sresult = RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
-                }
-                if (result != 0) {
-                    setResultAttr(result, sresult);
-                }
-                return sresult;
-            } else {
-                return result;
-            }
-        }
-
-        @TruffleBoundary
-        private static void setResultAttr(int status, RStringVector sresult) {
-            sresult.setAttr("status", RDataFactory.createIntVectorFromScalar(status));
-        }
-    }
-
-    private static IORedirect handleIORedirect(RContext context, String[] args, boolean intern) {
-        /*
-         * This code is primarily intended to handle the "system" .Internal so the possible I/O
-         * redirects are taken from the system/system2 R code. N.B. stdout redirection is never set
-         * if "intern == true. Both input and output can be redirected to /dev/null.
-         */
-        InputStream in = System.in;
-        OutputStream out = System.out;
-        OutputStream err = System.err;
-        ArrayList<String> newArgsList = new ArrayList<>();
-        int i = 0;
-        while (i < args.length) {
-            String arg = args[i];
-            if (arg.equals("<")) {
-                String file;
-                if (i < args.length - 1) {
-                    file = Utils.unShQuote(args[i + 1]);
-                } else {
-                    throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
-                }
-                try {
-                    in = context.getSafeTruffleFile(file).newInputStream();
-                } catch (IOException ex) {
-                    throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, file);
-                }
-                arg = null;
-                i++;
-            } else if (arg.startsWith("2>")) {
-                if (arg.equals("2>&1")) {
-                    // happens anyway
-                } else {
-                    assert !intern;
-                    throw RError.nyi(RError.NO_CALLER, "stderr redirect");
-                }
-                arg = null;
-            } else if (arg.startsWith(">")) {
-                assert !intern;
-                throw RError.nyi(RError.NO_CALLER, "stdout redirect");
-            }
-            if (arg != null) {
-                newArgsList.add(arg);
-            }
-            i++;
-        }
-        String[] newArgs;
-        if (newArgsList.size() == args.length) {
-            newArgs = args;
-        } else {
-            newArgs = new String[newArgsList.size()];
-            newArgsList.toArray(newArgs);
-        }
-        // to implement intern, we create a ByteArryOutputStream to capture the output
-        if (intern) {
-            out = new ByteArrayOutputStream();
-        }
-        return new IORedirect(in, out, err, newArgs, intern);
-    }
-
-    @Override
     public String encodeDouble(double x) {
         return DoubleVectorPrinter.encodeReal(x);
-    }
-
-    @Override
-    public String encodeDouble(double x, int digits) {
-        return DoubleVectorPrinter.encodeReal(x, digits);
     }
 
     @Override

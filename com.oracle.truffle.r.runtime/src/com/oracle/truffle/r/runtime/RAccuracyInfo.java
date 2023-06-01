@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
  * https://www.R-project.org/Licenses/
  */
 package com.oracle.truffle.r.runtime;
+
+import com.oracle.truffle.r.common.SuppressFBWarnings;
 
 // Transcribed from GnuR src/main/platform.c
 
