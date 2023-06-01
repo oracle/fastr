@@ -201,7 +201,6 @@ public class RStartParams {
         return fileArgument;
     }
 
-
     /**
      * The standard R script escapes spaces to "~+~" in "-e" and "-f" commands.
      */

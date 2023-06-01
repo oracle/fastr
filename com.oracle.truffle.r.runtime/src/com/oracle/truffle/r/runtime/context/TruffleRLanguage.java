@@ -206,8 +206,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     protected CallTarget parse(ParsingRequest request) throws Exception {
         CompilerAsserts.neverPartOfCompilation();
         Source source = request.getSource();
-        if (!source.isInteractive() && source.isInternal() && source.getName().equals("<embedded>") &&//
-                        source.getCharacters().toString().equals("init-embedded")) {
+        if (!source.isInteractive() && source.isInternal() && source.getName().equals("<embedded>") && source.getCharacters().toString().equals("init-embedded")) {
             // This special source is used by REmbedded, class from the launcher used for JNI driven
             // implementation of GNU-R's C embedding interface
             return new RootNode(this) {
