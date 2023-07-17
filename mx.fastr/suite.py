@@ -115,6 +115,7 @@ suite = {
         "artifactId" : "xz",
         "version" : "1.9",
       },
+      "moduleName": "org.tukaani.xz",
     },
 
     "BATIK-ALL-1.14" : {
@@ -478,6 +479,12 @@ suite = {
     },
 
     "FASTR_COMMON" : {
+      "moduleInfo" : {
+          "name" : "com.oracle.truffle.r.common",
+          "exports" : [
+              "com.oracle.truffle.r.common to com.oracle.truffle.r.engine",
+          ],
+      },
       "description" : "common utilities shared by fastr and fastr-launcher",
       "dependencies" : ["com.oracle.truffle.r.common"],
       "distDependencies" : [
@@ -497,6 +504,15 @@ suite = {
     },
 
     "FASTR" : {
+      "moduleInfo" : {
+          "name" : "org.graalvm.r",
+      },
+      "requires": [
+          "java.base",
+          "java.logging",
+          "java.management",
+          "jdk.unsupported",
+      ],
       "description" : "class files for compiling against FastR in a separate suite",
       "dependencies" : [
         "com.oracle.truffle.r.engine",
@@ -508,6 +524,7 @@ suite = {
         "truffle:ANTLR4",
         "GNUR",
         "XZ-1.9",
+        "BATIK-ALL-1.14",
       ],
       "distDependencies" : [
         "FASTR_COMMON",
