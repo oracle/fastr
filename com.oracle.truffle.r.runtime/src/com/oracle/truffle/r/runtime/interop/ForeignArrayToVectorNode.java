@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
+import static com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode.isForeignArray;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -38,10 +44,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import static com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode.isForeignArray;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Copies the foreign array elements into an atomic vector.<br>
@@ -89,6 +92,11 @@ public abstract class ForeignArrayToVectorNode extends RBaseNode {
     RAbstractVector toVector(TruffleObject obj, boolean recursive, RType type, int[] dims, boolean dropDimensions) {
         List<Object> res = execute(obj, recursive, null);
         assert type != RType.List;
+        return toVector0(res, type, dims, dropDimensions);
+    }
+
+    @TruffleBoundary
+    private static RAbstractVector toVector0(List<Object> res, RType type, int[] dims, boolean dropDimensions) {
         return ConvertForeignObjectNode.asAbstractVector(res.toArray(new Object[res.size()]), dims, type, dropDimensions);
     }
 
