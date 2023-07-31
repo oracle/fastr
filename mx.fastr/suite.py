@@ -500,9 +500,11 @@ suite = {
       "distDependencies" : [
         "FASTR_COMMON",
         "sdk:GRAAL_SDK",
+        "sdk:LAUNCHER_COMMON",
       ],
-      # TODO: The LAUNCHER_COMMON is not on graalvm system classpath, is must be embedded od the LAUNCHER_COMMON must be put on classpath by the launcher script?
-      "overlaps": ["sdk:LAUNCHER_COMMON"],
+      "exclude" : [
+        "sdk:JLINE3",
+      ],
     },
 
     "FASTR" : {
