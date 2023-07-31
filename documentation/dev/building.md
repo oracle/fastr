@@ -3,7 +3,7 @@
 TL;DR for devs familiar with GraalVM build tools:
 
 * building locally from fastr directory: `mx r-install-deps && mx --dy /compiler build && mx --dy /compiler R`
-* building GraalVM with FastR: `FASTR_RELEASE=1 FASTR_NO_RECOMMENDED=1 FASTR_CAPTURE_DEPENDENCIES=" " mx --env ce-fastr build`
+* building GraalVM with FastR: `FASTR_RELEASE=true FASTR_NO_RECOMMENDED=true FASTR_CAPTURE_DEPENDENCIES=" " mx --env ce-fastr build`
 
 Building FastR from source is supported on Mac OS X (El Capitan onwards), and various flavors of Linux.
 FastR uses a build tool called `mx` (cf `maven`) which can be downloaded from [here](http://github.com/graalvm/mx).
