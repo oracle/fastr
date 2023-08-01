@@ -177,6 +177,7 @@ suite = {
         "java.logging",
         "jdk.unsupported", # sun.misc.Unsafe
       ],
+      "forceJavac": "true",
     },
 
     "com.oracle.truffle.r.nodes.builtin" : {
@@ -198,6 +199,7 @@ suite = {
       "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
+      "forceJavac": "true",
     },
 
     "com.oracle.truffle.r.nodes.test" : {
