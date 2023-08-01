@@ -484,7 +484,7 @@ suite = {
       "moduleInfo" : {
           "name" : "com.oracle.truffle.r.common",
           "exports" : [
-              "com.oracle.truffle.r.common to com.oracle.truffle.r.engine",
+              "com.oracle.truffle.r.common to org.graalvm.r",
           ],
       },
       "description" : "common utilities shared by fastr and fastr-launcher",
