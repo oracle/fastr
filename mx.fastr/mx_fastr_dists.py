@@ -181,13 +181,17 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                 {
                     "source_type": "extracted-dependency",
                     "dependency": "FASTR_GRAALVM_RELEASE",
-                    "path": "bin/fastr_jars/*",
-                    "exclude": [
-                        "bin/fastr_jars/antlr4.jar",
-                        "bin/fastr_jars/fastr.jar",
-                        "bin/fastr_jars/truffle*",
-                        "bin/fastr_jars/graal-sdk*",
-                    ],
+                    "path": "bin/fastr_jars/fastr*.jar",
+                },
+                {
+                    "source_type": "extracted-dependency",
+                    "dependency": "FASTR_GRAALVM_RELEASE",
+                    "path": "bin/fastr_jars/xz*.jar",
+                },
+                {
+                    "source_type": "extracted-dependency",
+                    "dependency": "FASTR_GRAALVM_RELEASE",
+                    "path": "bin/fastr_jars/batik-all*.jar",
                 },
                 "dependency:fastr:FASTR_LAUNCHER",
             ],

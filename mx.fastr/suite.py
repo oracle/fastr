@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "29455f058397f4bbde30da20d50347aae5c1dc8b",
+               "version" : "f0f46b2161b7d1538f8f5b0f7cd188b5a2cf3f49",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "29455f058397f4bbde30da20d50347aae5c1dc8b",
+               "version" : "f0f46b2161b7d1538f8f5b0f7cd188b5a2cf3f49",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -177,6 +177,7 @@ suite = {
         "java.logging",
         "jdk.unsupported", # sun.misc.Unsafe
       ],
+      "forceJavac": "true",
     },
 
     "com.oracle.truffle.r.nodes.builtin" : {
@@ -198,6 +199,7 @@ suite = {
       "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
+      "forceJavac": "true",
     },
 
     "com.oracle.truffle.r.nodes.test" : {
@@ -482,7 +484,7 @@ suite = {
       "moduleInfo" : {
           "name" : "com.oracle.truffle.r.common",
           "exports" : [
-              "com.oracle.truffle.r.common to com.oracle.truffle.r.engine",
+              "com.oracle.truffle.r.common to org.graalvm.r",
           ],
       },
       "description" : "common utilities shared by fastr and fastr-launcher",
@@ -498,9 +500,11 @@ suite = {
       "distDependencies" : [
         "FASTR_COMMON",
         "sdk:GRAAL_SDK",
+        "sdk:LAUNCHER_COMMON",
       ],
-      # TODO: The LAUNCHER_COMMON is not on graalvm system classpath, is must be embedded od the LAUNCHER_COMMON must be put on classpath by the launcher script?
-      "overlaps": ["sdk:LAUNCHER_COMMON"],
+      "exclude" : [
+        "sdk:JLINE3",
+      ],
     },
 
     "FASTR" : {
