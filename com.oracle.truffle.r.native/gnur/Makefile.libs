@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -61,10 +61,10 @@ all: $(FASTR_LIB_DIR) $(BLAS_TARGET) $(LAPACK_TARGET) rcopylib.done
 $(FASTR_LIB_DIR):
 	mkdir -p $(FASTR_LIB_DIR)
 
-$(BLAS_TARGET): $(GNUR_HOME_BINARY)/lib/libRblas$(DYLIB_EXT)
+$(BLAS_TARGET): $(BLAS_SOURCE)
 	cp $(BLAS_SOURCE) $(BLAS_TARGET)
 
-$(LAPACK_TARGET): $(GNUR_HOME_BINARY)/lib/libRlapack$(DYLIB_EXT)
+$(LAPACK_TARGET): $(LAPACK_SOURCE)
 	cp $(LAPACK_SOURCE) $(LAPACK_TARGET)
 ifeq ($(OS_NAME),Darwin)
 # libRblas depends on libgfortran, libquadmath
