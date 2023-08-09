@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2022, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2023, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -750,24 +750,17 @@ public class LaFunctions {
                 // This is somewhat odd, but Matrix relies on dropping NULL dimnames
                 if ((aDn != null && aDn.getDataAt(1) != RNull.instance) || (binDn != null && binDn.getDataAt(1) != RNull.instance)) {
                     // rownames(ans) = colnames(A), colnames(ans) = colnames(Bin)
-                    if (aDn != null || binDn != null) {
-                        Object[] bDnData = new Object[2];
-                        bDnData[0] = aDn == null ? RNull.instance : aDn.getDataAt(1);
-                        bDnData[1] = binDn == null ? RNull.instance : binDn.getDataAt(1);
-                        setBDimNamesNode.setDimNames(b, RDataFactory.createList(bDnData));
-                    }
+                    Object[] bDnData = new Object[2];
+                    bDnData[0] = aDn == null ? RNull.instance : aDn.getDataAt(1);
+                    bDnData[1] = binDn == null ? RNull.instance : binDn.getDataAt(1);
+                    setBDimNamesNode.setDimNames(b, RDataFactory.createList(bDnData));
                 }
             } else {
                 p = 1;
                 if (bin.getLength() != n) {
                     throw error(Message.MUST_BE_SQUARE_COMPATIBLE, "b", bin.getLength(), p, "a", n, n);
                 }
-                if (bin.getLength() == n) {
-                    bData = (double[]) bin.materialize().getDataNonShared();
-                } else {
-                    bData = new double[n];
-                    System.arraycopy(bin.materialize().getReadonlyData(), 0, bData, 0, n * p);
-                }
+                bData = (double[]) bin.materialize().getDataNonShared();
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
                 if (aDn != null && aDn.getDataAt(1) != RNull.instance) {
                     setNamesNode.setNames(b, (RStringVector) RRuntime.asAbstractVector(aDn.getDataAt(1)));

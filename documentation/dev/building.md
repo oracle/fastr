@@ -77,6 +77,11 @@ you can bypass the build of GNU-R from sources, however, FastR still downloads G
 
 You can find the home directory of your system GNU-R by executing `R -e 'R.home()'`.
 
+Some systems do not include `$GNUR_HOME_BINARY/lib/libRblas.so/dylib`, but FastR assumes existence of that library
+in that location. In such case `R -e 'sessionInfo()'` can tell you path to the blas library that your system
+GNU-R is using. Export `BLAS_SOURCE=/path/to/the/blas/library/blas.so` to override where FastR searches
+for it.
+
 It is strongly recommended to use the same GNU-R version (major and minor) and in case you want to run tests that
 compare output of FastR with GNU-R then also the same path version. You can find out version of an R engine by
 executing `R --version`. This information is also encoded in `com.oracle.truffle.r.native/Makefile`
