@@ -51,6 +51,7 @@ public class JGDPanel extends JPanel implements GDContainer, MouseListener {
         this((int) w, (int) h, resizer);
     }
 
+    @SuppressWarnings("this-escape")
     public JGDPanel(int w, int h, Consumer<Integer> resizer) {
         super(true);
         setOpaque(true);

@@ -95,6 +95,7 @@ public final class InstrumentationState implements RContext.ContextState {
     public abstract static class RprofState implements CleanupHandler {
         private PrintStream out;
 
+        @SuppressWarnings("this-escape")
         protected RprofState() {
             RCleanUp.registerCleanupHandler(this);
         }

@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 /**
  * Basic support classes and methods for the connection implementations.
  */
+@SuppressWarnings("this-escape")
 public class ConnectionSupport {
 
     /**
@@ -256,7 +257,7 @@ public class ConnectionSupport {
      * {@link AbstractOpenMode#Read}, {@link #modeString} could be "r" or "rt".
      *
      */
-    public static class OpenMode {
+    public static final class OpenMode {
         public final AbstractOpenMode abstractOpenMode;
         /**
          * When {@link #abstractOpenMode} is {@code Lazy}, this is used to store the default open

@@ -77,7 +77,7 @@ public class NativeConnections {
         return nativeCallInfo;
     }
 
-    public static class NativeRConnection extends BaseRConnection {
+    public static final class NativeRConnection extends BaseRConnection {
         private final String customConClass;
         private final String description;
         private final RExternalPtr addr;

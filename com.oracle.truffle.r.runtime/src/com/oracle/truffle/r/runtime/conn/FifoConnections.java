@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 
 public class FifoConnections {
 
-    public static class FifoRConnection extends BaseRConnection {
+    public static final class FifoRConnection extends BaseRConnection {
 
         private final String path;
 

@@ -190,7 +190,7 @@ public class StdConnections {
         }
     }
 
-    private static class StdinConnection extends StdConnection {
+    private static final class StdinConnection extends StdConnection {
 
         private final ConsoleIO console;
 
@@ -261,7 +261,7 @@ public class StdConnections {
         }
     }
 
-    private static class StdoutConnection extends StdoutputAdapter {
+    private static final class StdoutConnection extends StdoutputAdapter {
 
         StdoutConnection(ConsoleIO console) throws IOException {
             super(1, console);
@@ -347,7 +347,7 @@ public class StdConnections {
         }
     }
 
-    private static class StderrConnection extends StdoutputAdapter {
+    private static final class StderrConnection extends StdoutputAdapter {
         RConnection diversion;
 
         StderrConnection(ConsoleIO console) throws IOException {

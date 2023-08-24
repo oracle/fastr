@@ -36,6 +36,7 @@ public abstract class Detector<T> {
 
     protected final Collection<Detector<?>> children = new LinkedList<>();
 
+    @SuppressWarnings("this-escape")
     public Detector(Detector<?> parent) {
         this.parent = parent;
         if (parent != null) {

@@ -51,7 +51,7 @@ public class PipeConnections {
         return p;
     }
 
-    public static class PipeRConnection extends BaseRConnection {
+    public static final class PipeRConnection extends BaseRConnection {
 
         private final String command;
 

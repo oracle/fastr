@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
  */
 public class ChannelConnections {
 
-    public static class ChannelRConnection extends BaseRConnection {
+    public static final class ChannelRConnection extends BaseRConnection {
 
         private final String description;
         private final ByteChannel channel;

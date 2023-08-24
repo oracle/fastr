@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 /**
  * A thread for performing an evaluation (used by {@code .fastr} builtins).
  */
-public class EvalThread extends Thread {
+public final class EvalThread extends Thread {
 
     private final Source source;
     private final ChildContextInfo info;

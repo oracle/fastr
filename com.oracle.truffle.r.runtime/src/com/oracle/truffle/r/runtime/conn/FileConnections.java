@@ -22,15 +22,21 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZ;
@@ -44,23 +50,18 @@ import com.oracle.truffle.r.runtime.RCompression.Type;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
-import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedInputRConnection;
 import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedOutputRConnection;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import java.nio.channels.SeekableByteChannel;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 public class FileConnections {
 
     /**
      * Base class for all modes of file connections.
      */
-    public static class FileRConnection extends BasePathRConnection {
+    public static final class FileRConnection extends BasePathRConnection {
         private final boolean raw;
         private final boolean internal;
         private Type cType = RCompression.Type.NONE;
@@ -143,7 +144,7 @@ public class FileConnections {
      * gzip, bzip, lzma and uncompressed files, and this has to be implemented by reading the first
      * few bytes of the file and detecting the type of the file.
      */
-    public static class CompressedRConnection extends BasePathRConnection {
+    public static final class CompressedRConnection extends BasePathRConnection {
         private final RCompression.Type cType;
         @SuppressWarnings("unused") private final int compression; // TODO
 

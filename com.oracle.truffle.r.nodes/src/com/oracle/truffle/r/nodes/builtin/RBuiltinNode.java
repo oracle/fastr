@@ -123,6 +123,7 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
     @Children private final CastNode[] argumentCasts;
     @CompilationFinal(dimensions = 1) private final Class<?>[] argumentClasses;
 
+    @SuppressWarnings("this-escape")
     protected RBuiltinNode(int argCount) {
         argumentCasts = getCasts();
         argumentClasses = new Class<?>[argCount];
