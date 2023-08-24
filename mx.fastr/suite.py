@@ -501,8 +501,6 @@ suite = {
         "FASTR_COMMON",
         "sdk:GRAAL_SDK",
         "sdk:LAUNCHER_COMMON",
-      ],
-      "exclude" : [
         "sdk:JLINE3",
       ],
     },
@@ -524,7 +522,6 @@ suite = {
       ],
       "mainClass" : "com.oracle.truffle.r.launcher.RCommand",
       "exclude" : [
-        "sdk:JLINE3",
         "truffle:ANTLR4",
         "GNUR",
         "XZ-1.9",
@@ -536,6 +533,7 @@ suite = {
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_API",
+        "sdk:JLINE3",
       ],
     },
 
