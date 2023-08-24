@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public abstract class RFFIRootNode<T extends NodeInterface> extends RootNode {
     @Child protected T rffiNode;
 
+    @SuppressWarnings("this-escape")
     protected RFFIRootNode(T baseRFFINode) {
         super(RContext.getInstance().getLanguage());
         this.rffiNode = baseRFFINode;

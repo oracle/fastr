@@ -910,7 +910,7 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
-public class BasePackage extends RBuiltinPackage {
+public final class BasePackage extends RBuiltinPackage {
 
     public BasePackage(RContext context) {
         super(context, "base");

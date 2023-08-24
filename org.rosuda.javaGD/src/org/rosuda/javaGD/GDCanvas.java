@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.Vector;
 import java.util.function.Consumer;
 
-public class GDCanvas extends Canvas implements GDContainer, MouseListener {
+public final class GDCanvas extends Canvas implements GDContainer, MouseListener {
     private static final long serialVersionUID = 1L;
 
     Vector<GDObject> l;

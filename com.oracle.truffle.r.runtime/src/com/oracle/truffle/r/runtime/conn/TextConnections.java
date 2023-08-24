@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
-import com.oracle.truffle.r.runtime.RCompression;
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -30,10 +31,10 @@ import java.nio.channels.ByteChannel;
 import java.util.ArrayList;
 import java.util.EnumSet;
 
+import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
-import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -91,7 +92,7 @@ public class TextConnections {
         }
     }
 
-    public static class TextRConnection extends BaseRConnection {
+    public static final class TextRConnection extends BaseRConnection {
         protected String description;
         private final RStringVector object;
         protected REnvironment env;
@@ -408,7 +409,7 @@ public class TextConnections {
     /**
      * Strictly implementation-internal connection that is used to support the external debugger.
      */
-    public static class InternalStringWriteConnection extends BaseRConnection {
+    public static final class InternalStringWriteConnection extends BaseRConnection {
         private StringBuilder sb = new StringBuilder();
 
         public InternalStringWriteConnection() throws IOException {
