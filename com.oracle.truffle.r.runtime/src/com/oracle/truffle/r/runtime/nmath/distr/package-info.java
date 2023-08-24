@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,10 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/**
- * Support for implementing certain upcalls as Truffle nodes.
- */
+
 @SuppressPackageWarnings({"truffle-inlining", "truffle-sharing", "truffle-neverdefault", "truffle-limit", "truffle-guard", "deprecated"})
-package com.oracle.truffle.r.ffi.impl.nodes;
+package com.oracle.truffle.r.runtime.nmath.distr;
 
 import com.oracle.truffle.api.dsl.SuppressPackageWarnings;
