@@ -128,4 +128,7 @@
  * The above-mentioned nodes always return a non-null instance, even if an attributable instance has
  * no attributes.
  */
+@SuppressPackageWarnings({"truffle-inlining", "truffle-sharing", "truffle-neverdefault", "truffle-limit", "truffle-guard", "deprecated"})
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
+
+import com.oracle.truffle.api.dsl.SuppressPackageWarnings;
