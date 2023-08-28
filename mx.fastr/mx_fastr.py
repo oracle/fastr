@@ -295,6 +295,7 @@ def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
 def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''
     Runs pure Java program that simulates the embedding scenario doing the same up-calls as embedded would call.
+    Note: the GNU-R embedding is deprecated and not tested anymore.
     '''
     run_r(args, 'rembed')
 
@@ -304,7 +305,7 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
     The tests should be compiled by mx build before they can be run.
     Each test (native application) is run and its output compared to the expected output
     file located next to the source file.
-    Since November 2021, this test is ignored on Darwin.
+    Note: the GNU-R embedding is deprecated and not tested anymore.
     '''
     if platform.system().lower() == 'darwin':
         return 0
@@ -404,11 +405,6 @@ def _fastr_gate_runner(args, tasks):
         if t:
             os.environ['TZ'] = 'GMT'
             mx_unittest.unittest(_gate_noapps_unit_tests())
-
-    with mx_gate.Task('Rembedded', tasks, tags=[FastRGateTags.basic_tests]) as t:
-        if t:
-            if rembedtest([]) != 0:
-                t.abort("Rembedded tests failed")
 
     # ----------------------------------
     # Package tests:

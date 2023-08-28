@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "f0f46b2161b7d1538f8f5b0f7cd188b5a2cf3f49",
+               "version" : "ce7e2791bb11eee493e6c332efe73f589e289e5f",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "f0f46b2161b7d1538f8f5b0f7cd188b5a2cf3f49",
+               "version" : "ce7e2791bb11eee493e6c332efe73f589e289e5f",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -501,8 +501,6 @@ suite = {
         "FASTR_COMMON",
         "sdk:GRAAL_SDK",
         "sdk:LAUNCHER_COMMON",
-      ],
-      "exclude" : [
         "sdk:JLINE3",
       ],
     },
@@ -524,7 +522,6 @@ suite = {
       ],
       "mainClass" : "com.oracle.truffle.r.launcher.RCommand",
       "exclude" : [
-        "sdk:JLINE3",
         "truffle:ANTLR4",
         "GNUR",
         "XZ-1.9",
@@ -536,6 +533,7 @@ suite = {
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_API",
+        "sdk:JLINE3",
       ],
     },
 

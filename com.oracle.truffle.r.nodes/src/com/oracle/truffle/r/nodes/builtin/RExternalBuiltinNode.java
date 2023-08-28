@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,13 @@ package com.oracle.truffle.r.nodes.builtin;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.builtin.RBuiltinBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 @TypeSystemReference(RTypes.class)
 public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements NodeWithArgumentCasts {
@@ -49,6 +49,7 @@ public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements N
 
     @Children private final CastNode[] argumentCasts;
 
+    @SuppressWarnings("this-escape")
     public RExternalBuiltinNode() {
         this.argumentCasts = getCasts();
     }
