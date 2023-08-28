@@ -106,11 +106,11 @@ public class StdConnections {
     }
 
     public static boolean pushDivertOut(RConnection conn, boolean closeOnExit) {
-        return getContextState().stdout.pushDivert(conn, closeOnExit);
+        return StdoutConnection.pushDivert(conn, closeOnExit);
     }
 
     public static void popDivertOut() throws IOException {
-        getContextState().stdout.popDivert();
+        StdoutConnection.popDivert();
     }
 
     public static void divertErr(RConnection conn) {
@@ -118,7 +118,7 @@ public class StdConnections {
     }
 
     public static int stdoutDiversions() {
-        return getContextState().stdout.numDiversions();
+        return StdoutConnection.numDiversions();
     }
 
     public static int stderrDiversion() {
@@ -267,7 +267,7 @@ public class StdConnections {
             super(1, console);
         }
 
-        int numDiversions() {
+        static int numDiversions() {
             return getContextState().top + 1;
         }
 
@@ -324,7 +324,7 @@ public class StdConnections {
             }
         }
 
-        boolean pushDivert(RConnection conn, boolean closeOnExit) {
+        static boolean pushDivert(RConnection conn, boolean closeOnExit) {
             ContextStateImpl state = getContextState();
             if (state.top < state.diversions.length - 1) {
                 state.top++;
@@ -335,7 +335,7 @@ public class StdConnections {
             return true;
         }
 
-        void popDivert() throws IOException {
+        static void popDivert() throws IOException {
             ContextStateImpl state = getContextState();
             if (state.top >= 0) {
                 int ctop = state.top;
