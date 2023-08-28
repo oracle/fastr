@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,11 +106,11 @@ public class StdConnections {
     }
 
     public static boolean pushDivertOut(RConnection conn, boolean closeOnExit) {
-        return getContextState().stdout.pushDivert(conn, closeOnExit);
+        return StdoutConnection.pushDivert(conn, closeOnExit);
     }
 
     public static void popDivertOut() throws IOException {
-        getContextState().stdout.popDivert();
+        StdoutConnection.popDivert();
     }
 
     public static void divertErr(RConnection conn) {
@@ -118,7 +118,7 @@ public class StdConnections {
     }
 
     public static int stdoutDiversions() {
-        return getContextState().stdout.numDiversions();
+        return StdoutConnection.numDiversions();
     }
 
     public static int stderrDiversion() {
@@ -190,7 +190,7 @@ public class StdConnections {
         }
     }
 
-    private static class StdinConnection extends StdConnection {
+    private static final class StdinConnection extends StdConnection {
 
         private final ConsoleIO console;
 
@@ -261,13 +261,13 @@ public class StdConnections {
         }
     }
 
-    private static class StdoutConnection extends StdoutputAdapter {
+    private static final class StdoutConnection extends StdoutputAdapter {
 
         StdoutConnection(ConsoleIO console) throws IOException {
             super(1, console);
         }
 
-        int numDiversions() {
+        static int numDiversions() {
             return getContextState().top + 1;
         }
 
@@ -324,7 +324,7 @@ public class StdConnections {
             }
         }
 
-        boolean pushDivert(RConnection conn, boolean closeOnExit) {
+        static boolean pushDivert(RConnection conn, boolean closeOnExit) {
             ContextStateImpl state = getContextState();
             if (state.top < state.diversions.length - 1) {
                 state.top++;
@@ -335,7 +335,7 @@ public class StdConnections {
             return true;
         }
 
-        void popDivert() throws IOException {
+        static void popDivert() throws IOException {
             ContextStateImpl state = getContextState();
             if (state.top >= 0) {
                 int ctop = state.top;
@@ -347,7 +347,7 @@ public class StdConnections {
         }
     }
 
-    private static class StderrConnection extends StdoutputAdapter {
+    private static final class StderrConnection extends StdoutputAdapter {
         RConnection diversion;
 
         StderrConnection(ConsoleIO console) throws IOException {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,31 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.Channels;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.zip.GZIPOutputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
-import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
-import java.util.zip.GZIPOutputStream;
 
 public class SocketConnections {
     /**
@@ -54,7 +55,7 @@ public class SocketConnections {
      * While binary operations, e.g. {@code writeBin} are only legal on binary connections, text
      * operations are legal on text and binary connections.
      */
-    public static class RSocketConnection extends BaseRConnection {
+    public static final class RSocketConnection extends BaseRConnection {
         protected final boolean server;
         protected final String host;
         protected final int port;

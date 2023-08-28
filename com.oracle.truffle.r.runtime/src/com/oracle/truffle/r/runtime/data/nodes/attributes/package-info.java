@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -128,4 +128,7 @@
  * The above-mentioned nodes always return a non-null instance, even if an attributable instance has
  * no attributes.
  */
+@SuppressPackageWarnings({"truffle-inlining", "truffle-sharing", "truffle-neverdefault", "truffle-limit", "truffle-guard", "deprecated"})
 package com.oracle.truffle.r.runtime.data.nodes.attributes;
+
+import com.oracle.truffle.api.dsl.SuppressPackageWarnings;
