@@ -51,10 +51,9 @@ was passed as an mx global option.
 
 _fastr_suite = mx.suite('fastr')
 
-_command_class_dict = {'r': ["com.oracle.truffle.r.launcher.RMain", "R"],
-                       'rscript': ["com.oracle.truffle.r.launcher.RMain", "Rscript"],
-                        'rrepl': ["com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient"],
-                        'rembed': ["com.oracle.truffle.r.engine.shell.REmbedded"],
+_command_class_dict = {'r': ["--module", "org.graalvm.r.launcher/com.oracle.truffle.r.launcher.RMain", "R"],
+                       'rscript': ["--module", "org.graalvm.r.launcher/com.oracle.truffle.r.launcher.RMain", "Rscript"],
+                        'rembed': ["--module", "org.graalvm.r.launcher/com.oracle.truffle.r.engine.shell.REmbedded"],
                     }
 
 GRAAL_OPTIONS = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3',
@@ -245,7 +244,7 @@ def setUnitTestEnvironment(args):
 
 def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
     '''
-    Common function for running either R, Rscript (or rrepl).
+    Common function for running either R, Rscript.
     args are a list of strings that came after 'command' on the command line
     '''
     parser = parser if parser is not None else ArgumentParser(prog='mx ' + command)
@@ -287,10 +286,6 @@ def rshell(args):
 def rscript(args, parser=None, **kwargs):
     '''run Rscript'''
     return run_r(args, 'rscript', parser=parser, **kwargs)
-
-def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
-    '''run R repl'''
-    run_r(args, 'rrepl')
 
 def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''
@@ -1151,7 +1146,6 @@ _commands = {
     'rutnoapps' : [ut_noapps, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
-    'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],
     'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
