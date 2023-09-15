@@ -405,6 +405,9 @@ def _fastr_gate_runner(args, tasks):
         if t:
             os.environ['TZ'] = 'GMT'
             mx_unittest.unittest(_gate_noapps_unit_tests())
+            # We need to run TCK separately, because it runs on class-path, and we need to pass the JVM option,
+            # see also GR-48568
+            mx_unittest.unittest(['-Dpolyglotimpl.DisableClassPathIsolation=true', 'com.oracle.truffle.tck.tests'])
 
     # ----------------------------------
     # Package tests:
@@ -523,6 +526,24 @@ def _unittest_config_participant(config):
     vmArgs = ['-Dfastr.test.native=' + d.path] + vmArgs
     return (vmArgs, mainClass, mainClassArgs)
 
+class FastRMxUnittestConfig(mx_unittest.MxUnittestConfig):
+    # We use global state, which influences what this unit-test config is going to do
+    # The global state can be adjusted before a test run to achieve a different tests configuration
+    useResources = True # Whether to use resources, or language home of filesystem
+    # Possible future extensions: useSulong = True
+
+    def apply(self, config):
+        (vmArgs, mainClass, mainClassArgs) = config
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.truffle/com.oracle.truffle.api.impl=ALL-UNNAMED'])  # for Truffle
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.r/*=ALL-UNNAMED'])  # for FastR internals
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.r.launcher/*=ALL-UNNAMED'])  # for FastR internals
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.r.common/*=ALL-UNNAMED'])  # for FastR internals
+        vmArgs.extend(['-Dfastr.test.native=' + mx.distribution('FASTR_UNIT_TESTS_NATIVE').path])
+        return (vmArgs, mainClass, mainClassArgs)
+
+
+mx_unittest.register_unittest_config(FastRMxUnittestConfig('fastr-tests'))
+
 def ut_simple(args):
     setUnitTestEnvironment(args)
     return mx_unittest.unittest(args + _simple_unit_tests())
@@ -557,10 +578,8 @@ def _simple_generated_unit_tests():
     return list(map(_test_subpackage, ['engine.shell', 'engine.interop', 'library.base', 'library.grid', 'library.fastrGrid', 'library.methods', 'library.parallel', 'library.stats', 'library.tools', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rffi', 'rng', 'runtime.data', 'S4']))  # pylint: disable=line-too-long
 
 def _simple_unit_tests():
-    # com.oracle.truffle.tck.tests - truffle language inter-operability tck in com.oracle.truffle.r.test.tck/
-    # com.oracle.truffle.r.test.tck - other tck tests in com.oracle.truffle.r.test/ e.g. FastRDebugTest
     # return _simple_generated_unit_tests() + ['com.oracle.truffle.r.nodes.castsTests', 'com.oracle.truffle.tck.tests', 'com.oracle.truffle.r.test.tck']
-    return _simple_generated_unit_tests() + ['com.oracle.truffle.tck.tests', 'com.oracle.truffle.r.test.tck']
+    return _simple_generated_unit_tests()
 
 def _nodes_unit_tests():
     return ['com.oracle.truffle.r.nodes.test', 'com.oracle.truffle.r.nodes.access.vector']

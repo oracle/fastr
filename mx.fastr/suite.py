@@ -482,11 +482,13 @@ suite = {
 
     "FASTR_COMMON" : {
       "moduleInfo" : {
-          "name" : "com.oracle.truffle.r.common",
+          "name" : "org.graalvm.r.common",
           "exports" : [
               "com.oracle.truffle.r.common to org.graalvm.r",
+            "com.oracle.truffle.r.common to org.graalvm.r.launcher",
           ],
       },
+      "useModulePath": True,
       "description" : "common utilities shared by fastr and fastr-launcher",
       "dependencies" : ["com.oracle.truffle.r.common"],
       "distDependencies" : [
@@ -495,6 +497,10 @@ suite = {
     },
 
     "FASTR_LAUNCHER" : {
+      "moduleInfo" : {
+        "name" : "org.graalvm.r.launcher",
+      },
+      "useModulePath": True,
       "description" : "launcher for the GraalVM (at the moment used only when native image is installed)",
       "dependencies" : ["com.oracle.truffle.r.launcher"],
       "distDependencies" : [
@@ -509,6 +515,7 @@ suite = {
       "moduleInfo" : {
           "name" : "org.graalvm.r",
       },
+      "useModulePath": True,
       "requires": [
           "java.base",
           "java.logging",
@@ -531,7 +538,7 @@ suite = {
         "FASTR_COMMON",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",
-        "truffle:TRUFFLE_NFI_NATIVE",
+        "truffle:TRUFFLE_NFI_LIBFFI",
         "sulong:SULONG_API",
         "sdk:JLINE3",
       ],
@@ -547,11 +554,11 @@ suite = {
       "distDependencies" : [
         "FASTR",
         "FASTR_LAUNCHER",
+        "sulong:SULONG_NATIVE",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_TCK",
       ],
-
-
+      "unittestConfig": "fastr-tests",
     },
 
     "FASTR_UNIT_TESTS_NATIVE" : {
