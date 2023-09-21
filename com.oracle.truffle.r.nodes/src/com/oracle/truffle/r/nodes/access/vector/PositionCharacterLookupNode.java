@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-final class PositionCharacterLookupNode extends RBaseNode {
+public final class PositionCharacterLookupNode extends RBaseNode {
 
     private final ElementAccessMode mode;
     private final int numPositions;
@@ -46,7 +46,7 @@ final class PositionCharacterLookupNode extends RBaseNode {
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
-    PositionCharacterLookupNode(ElementAccessMode mode, int numPositions, int positionIndex, boolean useNAForNotFound, boolean exact) {
+    public PositionCharacterLookupNode(ElementAccessMode mode, int numPositions, int positionIndex, boolean useNAForNotFound, boolean exact) {
         this.numPositions = numPositions;
         this.positionIndex = positionIndex;
         this.searchNode = SearchFirstStringNode.createNode(exact, useNAForNotFound);
