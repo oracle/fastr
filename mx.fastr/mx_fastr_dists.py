@@ -186,11 +186,6 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                 {
                     "source_type": "extracted-dependency",
                     "dependency": "FASTR_GRAALVM_RELEASE",
-                    "path": "bin/fastr_jars/xz*.jar",
-                },
-                {
-                    "source_type": "extracted-dependency",
-                    "dependency": "FASTR_GRAALVM_RELEASE",
                     "path": "bin/fastr_jars/batik-all*.jar",
                 },
                 "dependency:fastr:FASTR_LAUNCHER",
@@ -215,7 +210,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     short_name='R',
     license_files=['LICENSE_FASTR'],
     third_party_license_files=['3rd_party_licenses_fastr.txt'],
-    dependencies=['Truffle', 'LLVM Runtime Native', 'LLVM.org toolchain'],
+    dependencies=['Truffle', 'LLVM Runtime Native', 'LLVM.org toolchain', 'XZ'],
     truffle_jars=['fastr:FASTR_COMMON', 'fastr:FASTR'],
     support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
     provided_executables=[
