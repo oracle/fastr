@@ -313,6 +313,7 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
 class FastRGateTags:
     unit_tests = 'unit_tests'
     very_slow_asserts = 'very_slow_asserts'
+    default_runtime = 'default_runtime' # turns-off Truffle interpreter check for gate unittests
     basic_tests = 'basic_tests'
     internal_pkgs_test = 'internal_pkgs_test' # runs pkgtest on internal packages in com.oracle.truffle.r.test.native/packages
     # cran_pkgs_testX runs pkgtest on selected CRAN packages listed in file com.oracle.truffle.r.test.packages/gatedX
@@ -355,6 +356,11 @@ def _fastr_gate_runner(args, tasks):
         if t:
             os.environ['FASTR_TEST_VERY_SLOW_ASSERTS'] = 'true'
 
+    default_jvm_args = []
+    with mx_gate.Task('DefaultRuntime', tasks, tags=[FastRGateTags.default_runtime]) as t:
+        if t:
+            default_jvm_args.append('-Dpolyglot.engine.WarnInterpreterOnly=false')
+
     '''
     The specific additional gates tasks provided by FastR.
     '''
@@ -391,7 +397,7 @@ def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks, tags=[mx_gate.Tags.style]) as t:
         if t:
             os.environ['TZ'] = 'GMT'
-            mx_unittest.unittest(['-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected=true'] + _gate_unit_tests())
+            mx_unittest.unittest(['-Dpolyglot.engine.WarnInterpreterOnly=false', '-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected=true'] + _gate_unit_tests())
 
     # ----------------------------------
     # Basic tests:
@@ -399,10 +405,10 @@ def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('UnitTests', tasks, tags=[FastRGateTags.basic_tests, FastRGateTags.unit_tests]) as t:
         if t:
             os.environ['TZ'] = 'GMT'
-            mx_unittest.unittest(_gate_noapps_unit_tests())
+            mx_unittest.unittest(default_jvm_args + _gate_noapps_unit_tests())
             # We need to run TCK separately, because it runs on class-path, and we need to pass the JVM option,
             # see also GR-48568
-            mx_unittest.unittest(['-Dpolyglotimpl.DisableClassPathIsolation=true', 'com.oracle.truffle.tck.tests'])
+            mx_unittest.unittest(default_jvm_args + ['-Dpolyglotimpl.DisableClassPathIsolation=true', 'com.oracle.truffle.tck.tests'])
 
     # ----------------------------------
     # Package tests:
