@@ -9,7 +9,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Sulong
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "63eaafa332f7b713ac3a2f552036297f1e45559a",
+               "version" : "6150942cc3727564d1dcf307a81d59b98a90c09d",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -20,7 +20,7 @@ suite = {
                "subdir" : True,
                # The version must be the same as the version of Truffle
                # TRUFFLE REVISION (note: this is a marker for script that can update this)
-               "version" : "63eaafa332f7b713ac3a2f552036297f1e45559a",
+               "version" : "6150942cc3727564d1dcf307a81d59b98a90c09d",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -106,16 +106,6 @@ suite = {
       "urls" : ["https://cran.r-project.org/src/contrib/Archive/Matrix/Matrix_{version}.tar.gz"],
       "sha1" : "2745b86754e1becfae6cbea5e4715f87d3fe8464",
       "resource" : "true"
-    },
-
-    "XZ-1.9" : {
-      "digest" : "sha512:a4362db234d4e83683e90f5baf90c82107450cc4404acab96e3fab14b8a3d4588a19722171d32f27d18463682a6994cad9af0b1065c954e3a77ea7bdcf586bac",
-      "maven" : {
-        "groupId" : "org.tukaani",
-        "artifactId" : "xz",
-        "version" : "1.9",
-      },
-      "moduleName": "org.tukaani.xz",
     },
 
     "BATIK-ALL-1.14" : {
@@ -301,7 +291,7 @@ suite = {
         "com.oracle.truffle.r.common",
         "truffle:TRUFFLE_API",
         "sulong:SULONG_API",
-        "XZ-1.9",
+        "truffle:TRUFFLE_XZ",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "checkstyleVersion": "8.8",
@@ -482,11 +472,13 @@ suite = {
 
     "FASTR_COMMON" : {
       "moduleInfo" : {
-          "name" : "com.oracle.truffle.r.common",
+          "name" : "org.graalvm.r.common",
           "exports" : [
               "com.oracle.truffle.r.common to org.graalvm.r",
+            "com.oracle.truffle.r.common to org.graalvm.r.launcher",
           ],
       },
+      "useModulePath": True,
       "description" : "common utilities shared by fastr and fastr-launcher",
       "dependencies" : ["com.oracle.truffle.r.common"],
       "distDependencies" : [
@@ -495,6 +487,10 @@ suite = {
     },
 
     "FASTR_LAUNCHER" : {
+      "moduleInfo" : {
+        "name" : "org.graalvm.r.launcher",
+      },
+      "useModulePath": True,
       "description" : "launcher for the GraalVM (at the moment used only when native image is installed)",
       "dependencies" : ["com.oracle.truffle.r.launcher"],
       "distDependencies" : [
@@ -509,6 +505,7 @@ suite = {
       "moduleInfo" : {
           "name" : "org.graalvm.r",
       },
+      "useModulePath": True,
       "requires": [
           "java.base",
           "java.logging",
@@ -524,14 +521,14 @@ suite = {
       "exclude" : [
         "truffle:ANTLR4",
         "GNUR",
-        "XZ-1.9",
         "BATIK-ALL-1.14",
       ],
       "distDependencies" : [
         "FASTR_COMMON",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",
-        "truffle:TRUFFLE_NFI_NATIVE",
+        "truffle:TRUFFLE_NFI_LIBFFI",
+        "truffle:TRUFFLE_XZ",
         "sulong:SULONG_API",
         "sdk:JLINE3",
       ],
@@ -547,11 +544,11 @@ suite = {
       "distDependencies" : [
         "FASTR",
         "FASTR_LAUNCHER",
+        "sulong:SULONG_NATIVE",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_TCK",
       ],
-
-
+      "unittestConfig": "fastr-tests",
     },
 
     "FASTR_UNIT_TESTS_NATIVE" : {

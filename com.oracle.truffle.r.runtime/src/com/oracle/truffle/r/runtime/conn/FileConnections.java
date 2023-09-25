@@ -38,10 +38,10 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.tukaani.xz.LZMA2Options;
-import org.tukaani.xz.XZ;
-import org.tukaani.xz.XZInputStream;
-import org.tukaani.xz.XZOutputStream;
+import org.graalvm.shadowed.org.tukaani.xz.LZMA2Options;
+import org.graalvm.shadowed.org.tukaani.xz.XZ;
+import org.graalvm.shadowed.org.tukaani.xz.XZInputStream;
+import org.graalvm.shadowed.org.tukaani.xz.XZOutputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;

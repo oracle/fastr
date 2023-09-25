@@ -56,8 +56,8 @@ import com.oracle.truffle.api.debug.SuspendedCallback;
 import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.r.common.RCmdOptions;
 import com.oracle.truffle.r.common.RCmdOptions.Client;
-import com.oracle.truffle.r.launcher.REPL;
 import com.oracle.truffle.r.common.RStartParams;
+import com.oracle.truffle.r.launcher.REPL;
 import com.oracle.truffle.r.launcher.StringConsoleHandler;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
@@ -150,10 +150,12 @@ public final class FastRSession implements RSession {
         try {
             sharedContext = (SharedFastRContext) createVanillaContext(true);
         } finally {
-            try {
-                System.out.print(sharedContext.getOutput().toString("UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+            if (sharedContext != null) {
+                try {
+                    System.out.print(sharedContext.getOutput().toString("UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

@@ -51,10 +51,9 @@ was passed as an mx global option.
 
 _fastr_suite = mx.suite('fastr')
 
-_command_class_dict = {'r': ["com.oracle.truffle.r.launcher.RMain", "R"],
-                       'rscript': ["com.oracle.truffle.r.launcher.RMain", "Rscript"],
-                        'rrepl': ["com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient"],
-                        'rembed': ["com.oracle.truffle.r.engine.shell.REmbedded"],
+_command_class_dict = {'r': ["--module", "org.graalvm.r.launcher/com.oracle.truffle.r.launcher.RMain", "R"],
+                       'rscript': ["--module", "org.graalvm.r.launcher/com.oracle.truffle.r.launcher.RMain", "Rscript"],
+                        'rembed': ["--module", "org.graalvm.r.launcher/com.oracle.truffle.r.engine.shell.REmbedded"],
                     }
 
 GRAAL_OPTIONS = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3',
@@ -245,7 +244,7 @@ def setUnitTestEnvironment(args):
 
 def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
     '''
-    Common function for running either R, Rscript (or rrepl).
+    Common function for running either R, Rscript.
     args are a list of strings that came after 'command' on the command line
     '''
     parser = parser if parser is not None else ArgumentParser(prog='mx ' + command)
@@ -288,10 +287,6 @@ def rscript(args, parser=None, **kwargs):
     '''run Rscript'''
     return run_r(args, 'rscript', parser=parser, **kwargs)
 
-def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
-    '''run R repl'''
-    run_r(args, 'rrepl')
-
 def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
     '''
     Runs pure Java program that simulates the embedding scenario doing the same up-calls as embedded would call.
@@ -318,6 +313,7 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
 class FastRGateTags:
     unit_tests = 'unit_tests'
     very_slow_asserts = 'very_slow_asserts'
+    default_runtime = 'default_runtime' # turns-off Truffle interpreter check for gate unittests
     basic_tests = 'basic_tests'
     internal_pkgs_test = 'internal_pkgs_test' # runs pkgtest on internal packages in com.oracle.truffle.r.test.native/packages
     # cran_pkgs_testX runs pkgtest on selected CRAN packages listed in file com.oracle.truffle.r.test.packages/gatedX
@@ -360,6 +356,11 @@ def _fastr_gate_runner(args, tasks):
         if t:
             os.environ['FASTR_TEST_VERY_SLOW_ASSERTS'] = 'true'
 
+    default_jvm_args = []
+    with mx_gate.Task('DefaultRuntime', tasks, tags=[FastRGateTags.default_runtime]) as t:
+        if t:
+            default_jvm_args.append('-Dpolyglot.engine.WarnInterpreterOnly=false')
+
     '''
     The specific additional gates tasks provided by FastR.
     '''
@@ -396,7 +397,7 @@ def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks, tags=[mx_gate.Tags.style]) as t:
         if t:
             os.environ['TZ'] = 'GMT'
-            mx_unittest.unittest(['-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected=true'] + _gate_unit_tests())
+            mx_unittest.unittest(['-Dpolyglot.engine.WarnInterpreterOnly=false', '-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected=true'] + _gate_unit_tests())
 
     # ----------------------------------
     # Basic tests:
@@ -404,7 +405,10 @@ def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('UnitTests', tasks, tags=[FastRGateTags.basic_tests, FastRGateTags.unit_tests]) as t:
         if t:
             os.environ['TZ'] = 'GMT'
-            mx_unittest.unittest(_gate_noapps_unit_tests())
+            mx_unittest.unittest(default_jvm_args + _gate_noapps_unit_tests())
+            # We need to run TCK separately, because it runs on class-path, and we need to pass the JVM option,
+            # see also GR-48568
+            mx_unittest.unittest(default_jvm_args + ['-Dpolyglotimpl.DisableClassPathIsolation=true', 'com.oracle.truffle.tck.tests'])
 
     # ----------------------------------
     # Package tests:
@@ -523,6 +527,24 @@ def _unittest_config_participant(config):
     vmArgs = ['-Dfastr.test.native=' + d.path] + vmArgs
     return (vmArgs, mainClass, mainClassArgs)
 
+class FastRMxUnittestConfig(mx_unittest.MxUnittestConfig):
+    # We use global state, which influences what this unit-test config is going to do
+    # The global state can be adjusted before a test run to achieve a different tests configuration
+    useResources = True # Whether to use resources, or language home of filesystem
+    # Possible future extensions: useSulong = True
+
+    def apply(self, config):
+        (vmArgs, mainClass, mainClassArgs) = config
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.truffle/com.oracle.truffle.api.impl=ALL-UNNAMED'])  # for Truffle
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.r/*=ALL-UNNAMED'])  # for FastR internals
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.r.launcher/*=ALL-UNNAMED'])  # for FastR internals
+        mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.r.common/*=ALL-UNNAMED'])  # for FastR internals
+        vmArgs.extend(['-Dfastr.test.native=' + mx.distribution('FASTR_UNIT_TESTS_NATIVE').path])
+        return (vmArgs, mainClass, mainClassArgs)
+
+
+mx_unittest.register_unittest_config(FastRMxUnittestConfig('fastr-tests'))
+
 def ut_simple(args):
     setUnitTestEnvironment(args)
     return mx_unittest.unittest(args + _simple_unit_tests())
@@ -557,10 +579,8 @@ def _simple_generated_unit_tests():
     return list(map(_test_subpackage, ['engine.shell', 'engine.interop', 'library.base', 'library.grid', 'library.fastrGrid', 'library.methods', 'library.parallel', 'library.stats', 'library.tools', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rffi', 'rng', 'runtime.data', 'S4']))  # pylint: disable=line-too-long
 
 def _simple_unit_tests():
-    # com.oracle.truffle.tck.tests - truffle language inter-operability tck in com.oracle.truffle.r.test.tck/
-    # com.oracle.truffle.r.test.tck - other tck tests in com.oracle.truffle.r.test/ e.g. FastRDebugTest
     # return _simple_generated_unit_tests() + ['com.oracle.truffle.r.nodes.castsTests', 'com.oracle.truffle.tck.tests', 'com.oracle.truffle.r.test.tck']
-    return _simple_generated_unit_tests() + ['com.oracle.truffle.tck.tests', 'com.oracle.truffle.r.test.tck']
+    return _simple_generated_unit_tests()
 
 def _nodes_unit_tests():
     return ['com.oracle.truffle.r.nodes.test', 'com.oracle.truffle.r.nodes.access.vector']
@@ -1132,7 +1152,6 @@ _commands = {
     'rutnoapps' : [ut_noapps, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
-    'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],
     'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.TruffleFile;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,8 +32,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 
-import org.tukaani.xz.LZMA2InputStream;
+import org.graalvm.shadowed.org.tukaani.xz.LZMA2InputStream;
 
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 

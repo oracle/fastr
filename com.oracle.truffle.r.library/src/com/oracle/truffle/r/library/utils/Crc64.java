@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
 
     @TruffleBoundary
     private static byte[] crc64(byte[] bytes) {
-        org.tukaani.xz.check.CRC64 crc = new org.tukaani.xz.check.CRC64();
+        org.graalvm.shadowed.org.tukaani.xz.check.CRC64 crc = new org.graalvm.shadowed.org.tukaani.xz.check.CRC64();
         crc.update(bytes);
         return crc.finish();
     }
