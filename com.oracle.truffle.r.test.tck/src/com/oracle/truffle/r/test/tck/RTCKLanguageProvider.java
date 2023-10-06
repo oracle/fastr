@@ -148,22 +148,16 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         TypeDescriptor[] acceptedParameterTypes = new TypeDescriptor[]{numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool};
         TypeDescriptor[] declaredParameterTypes = new TypeDescriptor[]{numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull};
 
+        var binaryOpsVerifier = new NonPrimitiveNumberParameterThrows(true,
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).ignoreBigInts().primitiveAndArrayMismatchCheck().emptyArrayCheck().build());
         // +
-        ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        new NonPrimitiveNumberParameterThrows(true,
-                                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
+        ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY, binaryOpsVerifier));
         // -
-        ops.add(createBinaryOperator(context, "-", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        new NonPrimitiveNumberParameterThrows(true,
-                                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
+        ops.add(createBinaryOperator(context, "-", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY, binaryOpsVerifier));
         // *
-        ops.add(createBinaryOperator(context, "*", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        new NonPrimitiveNumberParameterThrows(true,
-                                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
+        ops.add(createBinaryOperator(context, "*", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY, binaryOpsVerifier));
         // /
-        ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        new NonPrimitiveNumberParameterThrows(true,
-                                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).primitiveAndArrayMismatchCheck().emptyArrayCheck().build())));
+        ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, TypeDescriptor.ANY, TypeDescriptor.ANY, binaryOpsVerifier));
 
         acceptedParameterTypes = new TypeDescriptor[]{TypeDescriptor.ANY, TypeDescriptor.ANY};
         // <
@@ -642,6 +636,34 @@ public final class RTCKLanguageProvider implements LanguageProvider {
 
                     private boolean checkPrimitive(Value arg, Function<Value, Boolean> fitsIn) {
                         return fitsIn.apply(arg) && arg.hasArrayElements() && (arg.getArraySize() != 1 || !fitsIn.apply(arg.getArrayElement(0)));
+                    }
+                };
+                return this;
+            }
+
+            /**
+             * Ignores the result if the snippet contains pure big integers, i.e., numbers larger
+             * than max long.
+             */
+            Builder ignoreBigInts() {
+                chain = new BiFunction<>() {
+                    private final BiFunction<Boolean, SnippetRun, Void> next = chain;
+
+                    @Override
+                    public Void apply(Boolean valid, SnippetRun sr) {
+                        if (valid && sr.getException() != null && hasBigInt(sr.getParameters())) {
+                            return null;
+                        }
+                        return next.apply(valid, sr);
+                    }
+
+                    private boolean hasBigInt(List<? extends Value> args) {
+                        for (Value arg : args) {
+                            if (arg.fitsInBigInteger() && !arg.fitsInLong()) {
+                                return true;
+                            }
+                        }
+                        return false;
                     }
                 };
                 return this;
