@@ -570,6 +570,7 @@ suite = {
       ],
       "distDependencies" : [
         "sdk:POLYGLOT_TCK",
+        "FASTR",
       ],
       "maven" : False
     },
