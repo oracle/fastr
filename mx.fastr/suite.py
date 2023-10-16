@@ -534,6 +534,16 @@ suite = {
       ],
     },
 
+    "FASTR_COMMUNITY" : {
+      "type" : "pom",
+      "runtimeDependencies" : [
+        "fastr:FASTR_COMMON",
+        "fastr:FASTR",
+      ],
+      "description" : "FastR support distribution for the GraalVM",
+      "maven" : False,
+    },
+
     "FASTR_UNIT_TESTS" : {
       "description" : "unit tests",
       "dependencies" : [
