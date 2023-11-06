@@ -1,3 +1,8 @@
+# 24.0.0
+* Migrated the CRAN snapshot, used by default by `install.packages`, to https://packagemanager.posit.co/cran/2021-02-01
+  * The MRAN snapshot used previously was shut down
+  * The snapshot contents should not change
+
 # 23.0.0
 * Removed deprecated FastR grid.
   * Removed `--R.UsetInternalGridGraphics` option.

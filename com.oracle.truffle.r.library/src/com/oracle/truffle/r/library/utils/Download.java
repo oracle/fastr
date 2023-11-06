@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2017, 2022, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2023, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,6 +53,10 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 public abstract class Download extends RExternalBuiltinNode.Arg6 {
 
     private static final int BUFFER_SIZE = 8192;
+    /**
+     * Http 1.1 temporary redirect status code. Not available in Java's HttpURLConnection
+     */
+    private static final int HTTP_1_1_MOVED_TEMP = 307;
 
     static {
         Casts casts = new Casts(Download.class);
@@ -80,7 +84,9 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
                     httpCon.setInstanceFollowRedirects(false);
                     httpCon.connect();
                     int response = httpCon.getResponseCode();
-                    if (response == HttpURLConnection.HTTP_MOVED_PERM || response == HttpURLConnection.HTTP_MOVED_TEMP) {
+                    if (response == HttpURLConnection.HTTP_MOVED_PERM ||
+                                    response == HTTP_1_1_MOVED_TEMP ||
+                                    response == HttpURLConnection.HTTP_MOVED_TEMP) {
                         urlStr = httpCon.getHeaderField("Location");
                     } else {
                         break;
