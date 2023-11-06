@@ -52,8 +52,8 @@
 .* => D/WARNING: Unable to create a system terminal, creating a dumb terminal
 .* => D/org.graalvm.shadowed.org.jline.utils.Log
 
-# weird additional output in testrffi:
-testrffi => D/tools:::.SHLIB()
+# weird additional output in testrffi just after the JLine logging output
+testrffi => d/tools:::.SHLIB()
 
 # for individual packages:
 
