@@ -48,6 +48,13 @@
 .* => D/Warning messages:
 .* => D+0-1/Invalid source reference
 
+# ignore warning from JLine:
+.* => D/WARNING: Unable to create a system terminal, creating a dumb terminal
+.* => D/org.graalvm.shadowed.org.jline.utils.Log
+
+# weird additional output in testrffi:
+testrffi => D/tools:::.SHLIB()
+
 # for individual packages:
 
 # ------
