@@ -1,5 +1,5 @@
 ---
-layout: docs-experimental
+layout: fastr-docs
 toc_group: fastr
 link_title: GraalVM R Runtime
 permalink: /reference-manual/r/
