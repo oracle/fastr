@@ -43,6 +43,9 @@ $(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
 	sed -i -e 's/-O2//' platform.mk.temp
 	# the undefined option is not compatible with LLVM bundling
 	sed -i -e 's/-undefined dynamic_lookup//' platform.mk.temp
+	# ld64.lld does not insert an empty .text section by default, which will confuse install_name_tool then
+	sed -i -e 's/-Wl,-headerpad_max_install_names/-Wl,-headerpad_max_install_names,-add_empty_section,__TEXT,__text/' platform.mk.temp
+	sed -i -e 's/ -headerpad_max_install_names/ -headerpad_max_install_names -add_empty_section __TEXT __text/' platform.mk.temp
 	# This overrides the Fortran compiler with our f2c tool and CC with LABS_LLVM_CC
 	ed platform.mk.temp <edLLVM
 
