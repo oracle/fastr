@@ -32,15 +32,15 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.function.Supplier;
 
-import com.oracle.truffle.r.common.FastrError;
-import com.oracle.truffle.r.common.RCmdOptions;
-import com.oracle.truffle.r.common.RStartParams;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.graalvm.polyglot.proxy.ProxyObject;
 
+import com.oracle.truffle.r.common.FastrError;
+import com.oracle.truffle.r.common.RCmdOptions;
 import com.oracle.truffle.r.common.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.common.RStartParams;
 
 /**
  * The interface to a source of input/output for the context, which may have different
@@ -48,7 +48,8 @@ import com.oracle.truffle.r.common.RCmdOptions.RCmdOption;
  */
 public abstract class ConsoleHandler {
 
-    public static ConsoleHandler createConsoleHandler(RCmdOptions options, DelegatingConsoleHandler useDelegatingWrapper, InputStream inStream, OutputStream outStream) {
+    public static ConsoleHandler createConsoleHandler(RCmdOptions options, DelegatingConsoleHandler useDelegatingWrapper, InputStream inStream, OutputStream outStream,
+                    boolean allowJLineConsoleHandler) {
         /*
          * Whether the input is from stdin, a file (-f), or an expression on the command line (-e)
          * it goes through the console. N.B. -f and -e can't be used together and this is already
@@ -82,7 +83,7 @@ public abstract class ConsoleHandler {
             if (!isInteractive && rsp.askForSave()) {
                 throw FastrError.fatal("you must specify '--save', '--no-save' or '--vanilla'");
             }
-            boolean useReadLine = isInteractive && !rsp.noReadline();
+            boolean useReadLine = isInteractive && !rsp.noReadline() && allowJLineConsoleHandler;
             if (useDelegatingWrapper != null) {
                 /*
                  * If we are in embedded mode, the creation of ConsoleReader and the ConsoleHandler
