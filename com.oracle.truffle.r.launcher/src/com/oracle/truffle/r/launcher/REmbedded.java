@@ -76,7 +76,7 @@ public class REmbedded {
 
             EmbeddedConsoleHandler embeddedConsoleHandler = new EmbeddedConsoleHandler();
 
-            consoleHandler = ConsoleHandler.createConsoleHandler(options, embeddedConsoleHandler, System.in, System.out);
+            consoleHandler = ConsoleHandler.createConsoleHandler(options, embeddedConsoleHandler, System.in, System.out, RMain.isTTYAccessor());
             InputStream input = consoleHandler.createInputStream();
             boolean useEmbedded = consoleHandler == embeddedConsoleHandler;
             OutputStream stdOut = useEmbedded ? embeddedConsoleHandler.createStdOutputStream(System.out) : System.out;

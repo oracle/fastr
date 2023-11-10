@@ -32,10 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.oracle.truffle.r.common.PrintHelp;
-import com.oracle.truffle.r.common.PrintVersion;
-import com.oracle.truffle.r.common.RCmdOptions;
-import com.oracle.truffle.r.common.StartupTiming;
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
@@ -43,8 +39,12 @@ import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
+import com.oracle.truffle.r.common.PrintHelp;
+import com.oracle.truffle.r.common.PrintVersion;
+import com.oracle.truffle.r.common.RCmdOptions;
 import com.oracle.truffle.r.common.RCmdOptions.Client;
 import com.oracle.truffle.r.common.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.common.StartupTiming;
 import com.oracle.truffle.r.launcher.REPL.REngineExecutor;
 
 /**
@@ -161,7 +161,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             // validateArguments did not set the value
             return;
         }
-        this.consoleHandler = ConsoleHandler.createConsoleHandler(options, null, inStream, outStream);
+        this.consoleHandler = ConsoleHandler.createConsoleHandler(options, null, inStream, outStream, isTTY());
         Builder contextBuilder = contextBuilderIn;
 
         boolean isLLVMBackEnd = false;
@@ -200,6 +200,10 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
                 System.exit(exitCode);
             }
         }
+    }
+
+    static boolean isTTYAccessor() {
+        return AbstractLanguageLauncher.isTTY();
     }
 
     protected int execute() {
