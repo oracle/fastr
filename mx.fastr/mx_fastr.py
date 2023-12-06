@@ -408,7 +408,7 @@ def _fastr_gate_runner(args, tasks):
             mx_unittest.unittest(default_jvm_args + _gate_noapps_unit_tests())
             # We need to run TCK separately, because it runs on class-path, and we need to pass the JVM option,
             # see also GR-48568
-            mx_unittest.unittest(default_jvm_args + ['-Dpolyglotimpl.DisableClassPathIsolation=true', 'com.oracle.truffle.tck.tests'])
+            mx.command_function('tck')(default_jvm_args + ['-Dorg.graalvm.language.R.home=' + _fastr_suite.dir])
 
     # ----------------------------------
     # Package tests:
@@ -520,13 +520,6 @@ def rgate(args):
     '''
     mx_gate.gate(args)
 
-def _unittest_config_participant(config):
-    vmArgs, mainClass, mainClassArgs = config
-    # need to pass location of FASTR_UNIT_TESTS_NATIVE
-    d = mx.distribution('FASTR_UNIT_TESTS_NATIVE')
-    vmArgs = ['-Dfastr.test.native=' + d.path] + vmArgs
-    return (vmArgs, mainClass, mainClassArgs)
-
 class FastRMxUnittestConfig(mx_unittest.MxUnittestConfig):
     # We use global state, which influences what this unit-test config is going to do
     # The global state can be adjusted before a test run to achieve a different tests configuration
@@ -540,6 +533,7 @@ class FastRMxUnittestConfig(mx_unittest.MxUnittestConfig):
         mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.r.launcher/*=ALL-UNNAMED'])  # for FastR internals
         mainClassArgs.extend(['-JUnitOpenPackages', 'org.graalvm.r.common/*=ALL-UNNAMED'])  # for FastR internals
         vmArgs.extend(['-Dfastr.test.native=' + mx.distribution('FASTR_UNIT_TESTS_NATIVE').path])
+        vmArgs.extend(['-Dorg.graalvm.language.R.home=' + _fastr_suite.dir])
         return (vmArgs, mainClass, mainClassArgs)
 
 
@@ -1133,8 +1127,6 @@ def generate_parser(args=None, out=None):
 
 mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
 
-
-mx_unittest.add_config_participant(_unittest_config_participant)
 
 _commands = {
     'r-install-deps' : [mx_fastr_install_deps.install_dependencies, '[options]'],
