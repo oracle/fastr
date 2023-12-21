@@ -178,24 +178,13 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                         "bin/exec/R",
                     ],
                 },
-                {
-                    "source_type": "extracted-dependency",
-                    "dependency": "FASTR_GRAALVM_RELEASE",
-                    "path": "bin/fastr_jars/fastr*.jar",
-                },
-                {
-                    "source_type": "extracted-dependency",
-                    "dependency": "FASTR_GRAALVM_RELEASE",
-                    "path": "bin/fastr_jars/batik-all*.jar",
-                },
-                "dependency:fastr:FASTR_LAUNCHER",
             ],
             "LICENSE_FASTR" : "file:LICENSE",
             "3rd_party_licenses_fastr.txt" : "file:3rd_party_licenses.txt",
             "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/README.md",
             "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_launcher",
             "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_launcher",
-            "native-image.properties": "file:mx.fastr/native-image.properties",
+            # TODO: move to fastr.jar: "native-image.properties": "file:mx.fastr/native-image.properties",
         },
         path=None,
         platformDependent=True,
@@ -211,22 +200,25 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     license_files=['LICENSE_FASTR'],
     third_party_license_files=['3rd_party_licenses_fastr.txt'],
     dependencies=['Truffle', 'LLVM Runtime Native', 'LLVM.org toolchain', 'XZ'],
-    truffle_jars=['fastr:FASTR_COMMON', 'fastr:FASTR'],
+    truffle_jars=['fastr:FASTR_COMMON', 'fastr:FASTR', 'fastr:BATIK-ALL-1.14'],
     support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
     provided_executables=[
         'bin/Rscript',
         'bin/R',
     ],
-    launcher_configs=[
-        mx_sdk.LanguageLauncherConfig(
-            destination='bin/RMain',
+    standalone_dependencies={
+        'LLVM Runtime Core': ('lib/sulong', []),
+        'LLVM Runtime Native': ('lib/sulong', []),
+        'LLVM.org toolchain': ('lib/llvm-toolchain', []),
+    },
+    library_configs=[
+        mx_sdk.LanguageLibraryConfig(
+            launchers=['bin/<exe:RMain>'],
             jar_distributions=['fastr:FASTR_LAUNCHER'],
             main_class='com.oracle.truffle.r.launcher.RMain',
             build_args=[],
             language='R',
-            is_main_launcher=False,
-            default_symlinks=False,
-        )
+        ),
     ],
     stability="experimental",
     post_install_msg="NOTES:\n---------------\n" +

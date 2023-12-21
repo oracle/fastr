@@ -489,6 +489,9 @@ suite = {
     "FASTR_LAUNCHER" : {
       "moduleInfo" : {
         "name" : "org.graalvm.r.launcher",
+        "exports" : [
+          "com.oracle.truffle.r.launcher to org.graalvm.launcher"
+        ]
       },
       "useModulePath": True,
       "description" : "launcher for the GraalVM (at the moment used only when native image is installed)",
