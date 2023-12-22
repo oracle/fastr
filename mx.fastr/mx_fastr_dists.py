@@ -184,7 +184,8 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
             "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/README.md",
             "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_launcher",
             "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_launcher",
-            # TODO: move to fastr.jar: "native-image.properties": "file:mx.fastr/native-image.properties",
+            # TODO: move relevant parts of native-image.properties to fastr.jar META-INF and do not deploy this file:
+            "native-image.properties": "file:mx.fastr/native-image.properties",
         },
         path=None,
         platformDependent=True,
