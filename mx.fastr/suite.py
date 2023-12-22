@@ -507,14 +507,17 @@ suite = {
     "FASTR" : {
       "moduleInfo" : {
           "name" : "org.graalvm.r",
+          "requires": [
+            "java.base",
+            "java.logging",
+            "java.management",
+            "jdk.unsupported",
+            "jdk.xml.dom",
+            "java.desktop",
+            "batik.all",
+          ],
       },
       "useModulePath": True,
-      "requires": [
-          "java.base",
-          "java.logging",
-          "java.management",
-          "jdk.unsupported",
-      ],
       "description" : "class files for compiling against FastR in a separate suite",
       "dependencies" : [
         "com.oracle.truffle.r.engine",
