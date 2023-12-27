@@ -108,11 +108,74 @@ suite = {
       "resource" : "true"
     },
 
-    "BATIK-ALL-1.14" : {
-      "digest" : "sha512:6e91f6696e25146109e87ae762b5c0c5c1416680b5c4528bc49a4051497056171b7643d27cbf2e59f2da70fff869409390e17e41dc8adac7c1fd0208aa3115fc",
+    "BATIK-SVGGEN-1.14" : {
+      "digest" : "sha512:40c87d3d25182ecd2490890100f70a4cd53523fda59438d2df9229f55d04f9c0f45757142a214b37b701290e23468df4061d00daa5cbcb533f95cca36cec4343",
       "maven" : {
         "groupId" : "org.apache.xmlgraphics",
-        "artifactId" : "batik-all",
+        "artifactId" : "batik-svggen",
+        "version" : "1.14",
+      },
+    },
+
+    "BATIK-DOM-1.14" : {
+      "digest" : "sha512:923ecb2e19576180dd212681416414f6d546d22df8af34ce88e493f6f45b2c4267d812531bba7304df36690c334f87db1eba63c08314f131114fb2ae0ad7aa16",
+      "maven" : {
+        "groupId" : "org.apache.xmlgraphics",
+        "artifactId" : "batik-dom",
+        "version" : "1.14",
+      },
+    },
+
+    "BATIK-AWT-UTIL-1.14" : {
+      "digest" : "sha512:ca51d78991c2e10e602f7223a61507ea2dcdc7e62f266f803aecd63de6f7819e565ce9ad36adbe54ce733962a60b2708b3cdba0c583cacb9cd38d3db7762f32f",
+      "maven" : {
+        "groupId" : "org.apache.xmlgraphics",
+        "artifactId" : "batik-awt-util",
+        "version" : "1.14",
+      },
+    },
+
+    "BATIK-UTIL-1.14" : {
+      "digest" : "sha512:6dca37c52f954c677ca003e6f7c7c43a553d73883d936a71497fb3484d277def9a13bda35e857ff61ff724c8dfb257e636a9d11d9163f1cd313d86394fe6d176",
+      "maven" : {
+        "groupId" : "org.apache.xmlgraphics",
+        "artifactId" : "batik-util",
+        "version" : "1.14",
+      },
+    },
+
+    "BATIK-CONSTANTS-1.14" : {
+      "digest" : "sha512:b6e859e4cdb0c6f338955d5aacf26b08a24dea4ee043258a2e1ea84690f5c4fa219c1f5cabb7bc40499144a0c4fdcd964479c0afe7e09eac471490b67cb40bc8",
+      "maven" : {
+        "groupId" : "org.apache.xmlgraphics",
+        "artifactId" : "batik-constants",
+        "version" : "1.14",
+      },
+    },
+
+    "BATIK-I18N-1.14" : {
+      "digest" : "sha512:1631b8ccf27ea201c595cdf11f78a6ab0bbafd89e1e2ca2c55a4a5dd8ea200d09128fd5464a1c03ff9813a431407d6e21dc1c0351dfd1812d9af63bb24a8c111",
+      "maven" : {
+        "groupId" : "org.apache.xmlgraphics",
+        "artifactId" : "batik-i18n",
+        "version" : "1.14",
+      },
+    },
+
+    "BATIK-EXT-1.14" : {
+      "digest" : "sha512:ea86979d559ac16fb09bd49984ffc2f13ebdbf5e4bd054d3620b01e923afc0c189fdb47485a440507c456a752b228ffa1a7413169f2faaf9f3fa80946ca5ae44",
+      "maven" : {
+        "groupId" : "org.apache.xmlgraphics",
+        "artifactId" : "batik-ext",
+        "version" : "1.14",
+      },
+    },
+
+    "BATIK-XML-1.14" : {
+      "digest" : "sha512:0fa51a33cae4d36f18e5709647d96204eb0ca2327a7d9434f5210c1c6730006094656c067f961d508cc1780fc565b59df1546fab39abf58311cfbe4248eb092b",
+      "maven" : {
+        "groupId" : "org.apache.xmlgraphics",
+        "artifactId" : "batik-xml",
         "version" : "1.14",
       },
     },
@@ -331,7 +394,14 @@ suite = {
          "com.oracle.truffle.r.nodes",
          "org.rosuda.javaGD",
          "truffle:TRUFFLE_NFI",
-         'BATIK-ALL-1.14',
+         "BATIK-SVGGEN-1.14",
+         "BATIK-DOM-1.14",
+         "BATIK-AWT-UTIL-1.14",
+         "BATIK-UTIL-1.14",
+         "BATIK-CONSTANTS-1.14",
+         "BATIK-I18N-1.14",
+         "BATIK-EXT-1.14",
+         "BATIK-XML-1.14",
       ],
       "requires" : [
         "java.desktop",
@@ -530,7 +600,14 @@ suite = {
             "jdk.unsupported",
             "jdk.xml.dom",
             "java.desktop",
-            "batik.all",
+            "batik.svggen",
+            "batik.dom",
+            "batik.awt.util",
+            "batik.util",
+            "batik.constants",
+            "batik.i18n",
+            "batik.ext",
+            "batik.xml",
           ],
       },
       "useModulePath": True,
@@ -543,7 +620,14 @@ suite = {
       "exclude" : [
         "truffle:ANTLR4",
         "GNUR",
-        "BATIK-ALL-1.14",
+        "BATIK-SVGGEN-1.14",
+        "BATIK-DOM-1.14",
+        "BATIK-AWT-UTIL-1.14",
+        "BATIK-UTIL-1.14",
+        "BATIK-CONSTANTS-1.14",
+        "BATIK-I18N-1.14",
+        "BATIK-EXT-1.14",
+        "BATIK-XML-1.14",
       ],
       "distDependencies" : [
         "FASTR_COMMON",

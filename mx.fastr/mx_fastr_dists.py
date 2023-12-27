@@ -201,7 +201,10 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     license_files=['LICENSE_FASTR'],
     third_party_license_files=['3rd_party_licenses_fastr.txt'],
     dependencies=['Truffle', 'LLVM Runtime Native', 'LLVM.org toolchain', 'XZ'],
-    truffle_jars=['fastr:FASTR_COMMON', 'fastr:FASTR', 'fastr:BATIK-ALL-1.14'],
+    truffle_jars=['fastr:FASTR_COMMON', 'fastr:FASTR',
+                  'fastr:BATIK-SVGGEN-1.14', 'fastr:BATIK-DOM-1.14', 'fastr:BATIK-AWT-UTIL-1.14',
+                  'fastr:BATIK-UTIL-1.14', 'fastr:BATIK-CONSTANTS-1.14', 'fastr:BATIK-I18N-1.14',
+                  'fastr:BATIK-EXT-1.14', 'fastr:BATIK-XML-1.14'],
     support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
     provided_executables=[
         'bin/Rscript',
