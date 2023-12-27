@@ -484,6 +484,14 @@ suite = {
       "distDependencies" : [
         "sdk:GRAAL_SDK",
       ],
+      # Uncomment to publish Maven artifacts
+      # "noMavenJavadoc": True,
+      # "maven": {
+      #   "artifactId": "r-common",
+      #   "groupId": "org.graalvm.r",
+      #   "tag": ["default", "public"],
+      # },
+      # "license": ["GPLv3"],
     },
 
     "FASTR_LAUNCHER" : {
@@ -502,6 +510,14 @@ suite = {
         "sdk:LAUNCHER_COMMON",
         "sdk:JLINE3",
       ],
+      # Uncomment to publish Maven artifacts
+      # "noMavenJavadoc": True,
+      # "maven": {
+      #   "artifactId": "r-launcher",
+      #   "groupId": "org.graalvm.r",
+      #   "tag": ["default", "public"],
+      # },
+      # "license": ["GPLv3"],
     },
 
     "FASTR" : {
@@ -538,7 +554,31 @@ suite = {
         "sulong:SULONG_API",
         "sdk:JLINE3",
       ],
+      # Uncomment to publish Maven artifacts
+      # "noMavenJavadoc": True,
+      # "maven": {
+      #   "artifactId": "r-language",
+      #   "groupId": "org.graalvm.r",
+      #   "tag": ["default", "public"],
+      # },
+      # "license": ["GPLv3"],
     },
+
+    # Uncomment to publish Maven artifacts
+    # "R_COMMUNITY": {
+    #   "type": "pom",
+    #   "runtimeDependencies": [
+    #     "FASTR",
+    #     "FASTR_COMMON",
+    #   ],
+    #   "description": "FastR engine.",
+    #   "maven": {
+    #     "groupId": "org.graalvm.polyglot",
+    #     "artifactId": "r-community",
+    #     "tag": ["default", "public"],
+    #   },
+    #   "license": ["GPLv3"],
+    # },
 
     "FASTR_COMMUNITY" : {
       "type" : "pom",
