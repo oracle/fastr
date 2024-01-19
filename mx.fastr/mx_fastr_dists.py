@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2023, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2024, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -193,7 +193,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
     )
     fastr_graalvm_release_support.description = "FastR support distribution for the GraalVM"
     register_distribution(fastr_graalvm_release_support)
-
+mx.Library
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_fastr_suite,
     name='FastR',

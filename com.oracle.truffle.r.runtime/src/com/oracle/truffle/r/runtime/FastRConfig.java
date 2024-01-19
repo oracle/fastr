@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.TruffleOptions;
+
 public final class FastRConfig {
     /**
-     * Whether the internal grid emulation should use AWT backed graphical devices.
+     * Whether the graphics backend should use AWT backed graphical devices.
      */
     public static final boolean AwtSupport;
 
@@ -55,14 +57,14 @@ public final class FastRConfig {
     static {
         String rffiVal = System.getenv("FASTR_RFFI");
         ManagedMode = rffiVal != null && rffiVal.equals("managed");
-        if (ManagedMode) {
+        if (ManagedMode || TruffleOptions.AOT) {
             UseMXBeans = false;
             UseNativeEventLoop = false;
         } else {
             UseMXBeans = getBooleanOrTrue("fastr.internal.usemxbeans");
             UseNativeEventLoop = getBooleanOrTrue("fastr.internal.usenativeeventloop");
         }
-        AwtSupport = getBooleanOrTrue("fastr.awt.support");
+        AwtSupport = !TruffleOptions.AOT && getBooleanOrTrue("fastr.awt.support");
         DefaultDownloadMethod = System.getProperty("fastr.internal.defaultdownloadmethod");
     }
 
