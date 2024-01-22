@@ -2,6 +2,7 @@ suite = {
   "mxversion" : "6.0.1",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
+  "version": "24.1.0",
   "imports" : {
     "suites" : [
             {
@@ -288,6 +289,22 @@ suite = {
       "spotbugsIgnoresGenerated" : True,
     },
 
+    "com.oracle.truffle.r.test.integration" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "mx:JUNIT",
+        "sdk:GRAAL_SDK",
+      ],
+      "requires" : [
+        "java.logging",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "17+",
+      "workingSets" : "Truffle,FastR,Test",
+      "jacoco" : "include",
+      "spotbugsIgnoresGenerated" : True,
+    },
+
     "com.oracle.truffle.r.test.native" : {
       "native" : True,
       "sourceDirs" : [],
@@ -555,13 +572,14 @@ suite = {
         "sdk:GRAAL_SDK",
       ],
       # Uncomment to publish Maven artifacts
-      # "noMavenJavadoc": True,
-      # "maven": {
-      #   "artifactId": "r-common",
-      #   "groupId": "org.graalvm.r",
-      #   "tag": ["default", "public"],
-      # },
-      # "license": ["GPLv3"],
+      # Use: sed 's/\([ ]*\)#\([^#]*\)#Maven/\1\2/g'
+      # "noMavenJavadoc": True,         #Maven
+      # "maven": {                      #Maven
+      #   "artifactId": "r-common",     #Maven
+      #   "groupId": "org.graalvm.r",   #Maven
+      #   "tag": ["default", "public"], #Maven
+      # },                              #Maven
+      # "license": ["GPLv3"],           #Maven
     },
 
     "FASTR_LAUNCHER" : {
@@ -581,13 +599,13 @@ suite = {
         "sdk:JLINE3",
       ],
       # Uncomment to publish Maven artifacts
-      # "noMavenJavadoc": True,
-      # "maven": {
-      #   "artifactId": "r-launcher",
-      #   "groupId": "org.graalvm.r",
-      #   "tag": ["default", "public"],
-      # },
-      # "license": ["GPLv3"],
+      # "noMavenJavadoc": True,         #Maven
+      # "maven": {                      #Maven
+      #   "artifactId": "r-launcher",   #Maven
+      #   "groupId": "org.graalvm.r",   #Maven
+      #   "tag": ["default", "public"], #Maven
+    # },                                #Maven
+      # "license": ["GPLv3"],           #Maven
     },
 
     "FASTR" : {
@@ -639,30 +657,30 @@ suite = {
         "sdk:JLINE3",
       ],
       # Uncomment to publish Maven artifacts
-      # "noMavenJavadoc": True,
-      # "maven": {
-      #   "artifactId": "r-language",
-      #   "groupId": "org.graalvm.r",
-      #   "tag": ["default", "public"],
-      # },
-      # "license": ["GPLv3"],
+      # "noMavenJavadoc": True,         #Maven
+      # "maven": {                      #Maven
+      #   "artifactId": "r-language",   #Maven
+      #   "groupId": "org.graalvm.r",   #Maven
+      #   "tag": ["default", "public"], #Maven
+      # },                              #Maven
+      # "license": ["GPLv3"],           #Maven
     },
 
     # Uncomment to publish Maven artifacts
-    # "R_COMMUNITY": {
-    #   "type": "pom",
-    #   "runtimeDependencies": [
-    #     "FASTR",
-    #     "FASTR_COMMON",
-    #   ],
-    #   "description": "FastR engine.",
-    #   "maven": {
-    #     "groupId": "org.graalvm.polyglot",
-    #     "artifactId": "r-community",
-    #     "tag": ["default", "public"],
-    #   },
-    #   "license": ["GPLv3"],
-    # },
+    # "R_COMMUNITY": {                        #Maven
+    #   "type": "pom",                        #Maven
+    #   "runtimeDependencies": [              #Maven
+    #     "FASTR",                            #Maven
+    #     "FASTR_COMMON",                     #Maven
+    #   ],                                    #Maven
+    #   "description": "FastR engine.",       #Maven
+    #   "maven": {                            #Maven
+    #     "groupId": "org.graalvm.polyglot",  #Maven
+    #     "artifactId": "r-community",        #Maven
+    #     "tag": ["default", "public"],       #Maven
+    #   },                                    #Maven
+    #   "license": ["GPLv3"],                 #Maven
+    # },                                      #Maven
 
     "FASTR_COMMUNITY" : {
       "type" : "pom",
@@ -678,7 +696,8 @@ suite = {
       "description" : "unit tests",
       "dependencies" : [
         "com.oracle.truffle.r.test",
-        "com.oracle.truffle.r.nodes.test"
+        "com.oracle.truffle.r.test.integration",
+        "com.oracle.truffle.r.nodes.test",
        ],
       "exclude": ["mx:HAMCREST", "mx:JUNIT"],
       "distDependencies" : [

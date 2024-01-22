@@ -193,7 +193,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
     )
     fastr_graalvm_release_support.description = "FastR support distribution for the GraalVM"
     register_distribution(fastr_graalvm_release_support)
-mx.Library
+
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_fastr_suite,
     name='FastR',
