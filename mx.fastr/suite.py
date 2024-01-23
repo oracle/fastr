@@ -261,6 +261,7 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.test",
       ],
+      "testProject": True,
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "17+",
       "workingSets" : "Truffle,FastR,Test",
@@ -282,6 +283,7 @@ suite = {
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
+      "testProject": True,
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "17+",
       "workingSets" : "Truffle,FastR,Test",
@@ -298,6 +300,7 @@ suite = {
       "requires" : [
         "java.logging",
       ],
+      "testProject": True,
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "17+",
       "workingSets" : "Truffle,FastR,Test",
@@ -712,8 +715,8 @@ suite = {
 
     "FASTR_UNIT_TESTS_NATIVE" : {
       "description" : "unit tests support (from test.native project)",
-       "native" : True,
-       "platformDependent" : True,
+      "native" : True,
+      "platformDependent" : True,
       "dependencies" : [
         "com.oracle.truffle.r.test.native",
      ],
