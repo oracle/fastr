@@ -167,3 +167,4 @@ com.oracle.truffle.r.test.native/packages/*/*/src/*.so
 com.oracle.truffle.r.test.native/packages/*/*/src/*.o
 tags
 com.oracle.truffle.r.test.packages/r/fastr.functions.rdx
+com.oracle.truffle.r.test.integration/target
