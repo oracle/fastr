@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.r.runtime.context.RContext;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
+
+import com.oracle.truffle.api.TruffleOptions;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class ResourceHandlerFactory {
     /**
@@ -57,7 +59,7 @@ public abstract class ResourceHandlerFactory {
     static {
         String prop = System.getProperty("fastr.resource.factory.class");
         if (prop == null) {
-            if (FastRConfig.ManagedMode) {
+            if (FastRConfig.ManagedMode || TruffleOptions.AOT) {
                 prop = "com.oracle.truffle.r.nodes.builtin.EagerResourceHandlerFactory";
             } else {
                 prop = LazyResourceHandlerFactory.class.getName();

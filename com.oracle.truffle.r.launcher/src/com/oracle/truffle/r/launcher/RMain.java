@@ -117,8 +117,12 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         client = options.getClient();
 
         if (options.getClient() == null) {
-            System.err.printf("RMain: the first argument must be either 'R' or 'Rscript'. Given arguments: %s\n.", String.join(",", arguments.toArray(new String[0])));
-            System.err.println("If you did not run RMain class explicitly, then this is a bug in launcher script, please report it at http://github.com/oracle/fastr.");
+            System.err.printf("RMain: the first argument must be either 'R' or 'Rscript'. Given arguments: %s\n.",
+                            String.join(",", arguments.toArray(new String[0])));
+            System.err.println("The RMain launcher is internal and should not be executed directly.");
+            System.err.println("If you did not run the RMain launcher or Java class explicitly, then this is a bug in " +
+                            "a launcher script or some other component that should delegate to it, " +
+                            "please report it at http://github.com/oracle/fastr.");
             if (launcherMode) {
                 System.exit(1);
             }

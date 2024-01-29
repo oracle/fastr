@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2023, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2024, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ import glob
 import logging
 import platform, subprocess, sys, shlex
 from os.path import join, sep
+import pathlib
 from argparse import ArgumentParser
 import tarfile
 from typing import Optional
@@ -36,6 +37,7 @@ from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
 import mx_fastr_install_deps
 import mx_fastr_edinclude
 import mx_unittest
+import mx_urlrewrites
 
 import os
 import shutil
@@ -310,6 +312,44 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
     tests_script = join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/embedded/test.sh')
     return mx.run([tests_script], env=env, nonZeroIsFatal=nonZeroIsFatal)
 
+
+def extend_os_env(**kwargs):
+    env = os.environ.copy()
+    env.update(**kwargs)
+    return env
+
+
+def graalvm_jdk():
+    jdk_major_version = mx.get_jdk().version.parts[0]
+    mx_args = ['--quiet', '-p', os.path.join(mx.suite('truffle').dir, '..', 'vm'), '--env', 'ce']
+    mx.run_mx(mx_args + ["build", "--dep", f"GRAALVM_COMMUNITY_JAVA{jdk_major_version}"])
+    out = mx.OutputCapture()
+    mx.run_mx(mx_args + ["graalvm-home"], out=out)
+    return out.data.splitlines()[-1].strip()
+
+
+def deploy_local_maven_repo():
+    # deploy maven artifacts
+    version = _fastr_suite.suiteDict['version']
+    path = os.path.join(_fastr_suite.get_mx_output_dir(), 'public-maven-repo')
+    licenses = ['GPLv3', 'EPL-2.0', 'PSF-License', 'GPLv2-CPE', 'ICU,GPLv2', 'BSD-simplified', 'BSD-new', 'UPL', 'MIT']
+    deploy_args = [
+        '--tags=public',
+        '--all-suites',
+        '--all-distribution-types',
+        f'--version-string={version}',
+        '--validate=none',
+        '--licenses', ','.join(licenses),
+        '--suppress-javadoc',
+        'local',
+        pathlib.Path(path).as_uri(),
+    ]
+    mx.rmtree(path, ignore_errors=True)
+    os.mkdir(path)
+    mx.maven_deploy(deploy_args)
+    return path, version
+
+
 class FastRGateTags:
     unit_tests = 'unit_tests'
     very_slow_asserts = 'very_slow_asserts'
@@ -327,6 +367,8 @@ class FastRGateTags:
     cran_pkgs_test_check_last = 'cran_pkgs_test_check_last'
 
     recommended_load = 'recommended_load'
+
+    maven_smoke_test = 'maven_smoke_test'
 
     gc_torture1 = 'gc_torture1'
     gc_torture3 = 'gc_torture3'
@@ -409,6 +451,36 @@ def _fastr_gate_runner(args, tasks):
             # We need to run TCK separately, because it runs on class-path, and we need to pass the JVM option,
             # see also GR-48568
             mx.command_function('tck')(default_jvm_args + ['-Dorg.graalvm.language.R.home=' + _fastr_suite.dir])
+
+    with mx_gate.Task('Maven smoke test', tasks, tags=[FastRGateTags.maven_smoke_test]) as t:
+        if t:
+            if not mx.distribution("R_COMMUNITY", fatalIfMissing=False):
+                mx.abort("Cannot execute Maven smoke test when Maven artifacts are not build. "
+                         "Uncomment relevant parts of FastR's suite.py")
+            mvn_repo_path, artifacts_version = deploy_local_maven_repo()
+            mvn_repo_path = pathlib.Path(mvn_repo_path).as_uri()
+            central_override = mx_urlrewrites.rewriteurl('https://repo1.maven.org/maven2/')
+            pom_path = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.integration', 'pom.xml')
+            mvn_cmd_base = ['-f', pom_path,
+                            f'-Dcom.oracle.truffle.r.test.polyglot.version={artifacts_version}',
+                            f'-Dcom.oracle.truffle.r.test.polyglot_repo={mvn_repo_path}',
+                            f'-Dcom.oracle.truffle.r.test.central_repo={central_override}',
+                            '--batch-mode']
+
+            mx.logv("Purging the local repository before the test")
+            mx.run_maven(mvn_cmd_base + ['dependency:purge-local-repository', '-DreResolve=false'])
+
+            graalvm_home = graalvm_jdk()
+            mx.log(f"Running integration JUnit tests on GraalVM SDK: {graalvm_home}")
+            env = extend_os_env(JAVA_HOME=graalvm_home, R_HOME=_fastr_suite.dir)
+            mx.run_maven(mvn_cmd_base + ['-U', 'clean', 'test'], env=env)
+
+            mx.log(f"Running integration JUnit tests on vanilla JDK: {os.environ.get('JAVA_HOME', 'system java')}")
+            env = extend_os_env(R_HOME=_fastr_suite.dir)
+            mx.run_maven(mvn_cmd_base + ['-U', '-Dpolyglot.engine.WarnInterpreterOnly=false', 'clean', 'test'], env=env)
+
+            mx.logv("Purging the local repository after the test")
+            mx.run_maven(mvn_cmd_base + ['dependency:purge-local-repository', '-DreResolve=false'])
 
     # ----------------------------------
     # Package tests:

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) 2024, 2024, Oracle and/or its affiliates. All rights reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+
+This code is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 only, as
+published by the Free Software Foundation.
+
+This code is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+version 3 for more details (a copy is included in the LICENSE file that
+accompanied this code).
+
+You should have received a copy of the GNU General Public License version
+3 along with this work; if not, write to the Free Software Foundation,
+Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+
+Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+or visit www.oracle.com if you need additional information or have any
+questions.
+-->
+<!--
+This Maven project can compile and run the integration unit tests independently of
+the rest of the FastR sources on top of any supported JDK, e.g., OpenJDK, GraalVM JDK, etc.
+
+When testing with custom Maven repository, i.e., locally built, one can pass -Dpolyglot_repo
+pointing to the Maven repository, for example:
+
+mvn test -Dcom.oracle.truffle.r.test.polyglot_repo=file:///some/path/to/repo
+
+Additionally, one can change the polyglot artifacts version with
+-Dcom.oracle.truffle.r.test.polyglot.version=24.0-SNAPSHOT, for example.
+
+Do not forget that one must edit suite.py -> uncomment the Maven artifacts related
+configuration, which is commented out, and then build FastR and deploy Maven artifacts
+to a local repo to run this test locally.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.oracle.truffle.r.test</groupId>
+    <artifactId>integration</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <com.oracle.graal.python.test.polyglot.version>24.1.0</com.oracle.graal.python.test.polyglot.version>
+    </properties>
+
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>src</directory>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit4</artifactId>
+                        <version>2.22.0</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                    <testSourceDirectory>src</testSourceDirectory>
+                    <testClassesDirectory>${project.build.outputDirectory}</testClassesDirectory>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>Custom central repo</id>
+            <activation>
+                <property>
+                    <name>com.oracle.truffle.r.test.central_repo</name>
+                </property>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>release</id>
+                    <url>${com.oracle.truffle.r.test.central_repo}</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+        <profile>
+            <id>Custom polyglot repo</id>
+            <activation>
+                <property>
+                    <name>com.oracle.truffle.r.test.polyglot_repo</name>
+                </property>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>release</id>
+                    <url>${com.oracle.truffle.r.test.polyglot_repo}</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>polyglot</artifactId>
+            <version>${com.oracle.truffle.r.test.polyglot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>r-community</artifactId>
+            <version>${com.oracle.truffle.r.test.polyglot.version}</version>
+            <scope>runtime</scope>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+    </dependencies>
+</project>
