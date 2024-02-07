@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ public class BinaryVectorTest extends TestBase {
                     FOUR_COMPLEX, NOT_COMPLETE_LOGICAL, NOT_COMPLETE_INT, NOT_COMPLETE_DOUBLE, NOT_COMPLETE_COMPLEX, ONE, TWO, THREE, FIVE};
 
     protected Matcher<Object> isEmptyVectorOf(RType type) {
-        return new CustomMatcher<Object>("empty vector of type " + type) {
+        return new CustomMatcher<>("empty vector of type " + type) {
             @Override
             public boolean matches(Object item) {
                 return item instanceof RAbstractVector && ((RAbstractVector) item).getLength() == 0 && ((RAbstractVector) item).getRType() == type;
