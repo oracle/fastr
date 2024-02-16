@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -41,6 +42,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * values. This can be used to bridge the gap between code as runtime data and executed code.
  */
 public abstract class InlineCacheNode extends RBaseNode {
+    private static final int INLINED_AST_NODE_SIZE_LIMIT = 50;
 
     protected final int maxPicDepth;
 
@@ -51,7 +53,7 @@ public abstract class InlineCacheNode extends RBaseNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "maxPicDepth", guards = "value == cachedValue")
+    @Specialization(limit = "maxPicDepth", guards = {"value == cachedValue", "reified != null"})
     protected Object doCached(Frame frame, Object value,
                     @Cached("value") Object cachedValue,
                     @Cached("createBinaryProfile()") ConditionProfile isVirtualFrameProfile,
@@ -77,7 +79,11 @@ public abstract class InlineCacheNode extends RBaseNode {
     }
 
     protected RNode cache(Object value) {
-        return RASTUtils.cloneNode((RNode) ((Closure) value).getExpr());
+        RNode node = (RNode) ((Closure) value).getExpr();
+        if (NodeUtil.countNodes(node) > INLINED_AST_NODE_SIZE_LIMIT) {
+            return null;
+        }
+        return RASTUtils.cloneNode(node);
     }
 
     /**
