@@ -38,6 +38,7 @@ import mx_fastr_install_deps
 import mx_fastr_edinclude
 import mx_unittest
 import mx_urlrewrites
+import mx_util
 
 import os
 import shutil
@@ -1112,7 +1113,7 @@ def build_binary_pkgs(args_in, **kwargs):
     os_name = platform.system().lower()
     dest_dir = os.path.join(_fastr_suite.dir, 'binary-packages')
     shutil.rmtree(dest_dir, ignore_errors=True)
-    mx.ensure_dir_exists(dest_dir)
+    mx_util.ensure_dir_exists(dest_dir)
 
     # F2C
     # creates binary-packages/f2c-binary-{version}-{osname}-amd64/f2c with contents of FASTR_HOME/f2c
@@ -1130,7 +1131,7 @@ def build_binary_pkgs(args_in, **kwargs):
     pkgs_name = 'fastr-recommended-pkgs-' + str(args.recommended_version + 1) + '-' + os_name + '-amd64'
     pkgs_path = os.path.join(dest_dir, pkgs_name)
     pkgs_pkgs_path = os.path.join(pkgs_path, 'pkgs')
-    mx.ensure_dir_exists(pkgs_pkgs_path)
+    mx_util.ensure_dir_exists(pkgs_pkgs_path)
     for pkg_name in args.recommended_list.split(','):
         shutil.copytree(os.path.join(_fastr_suite.dir, 'library', pkg_name), os.path.join(pkgs_pkgs_path, pkg_name))
     # add file with API digest
