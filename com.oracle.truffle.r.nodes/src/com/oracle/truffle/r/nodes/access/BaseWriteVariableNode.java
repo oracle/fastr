@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,13 +42,13 @@ import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@NodeChild(value = "rhs", type = RNode.class)
 /**
  * Common code/state for all the variants of {@code WriteVariableNode}. At this level, we just have
  * a {@code name} for the variable and expression {@code rhs} to be assigned to.
  *
  * There are no create methods as this class is truly abstract.
  */
+@NodeChild(value = "rhs", type = RNode.class)
 abstract class BaseWriteVariableNode extends WriteVariableNode {
 
     protected BaseWriteVariableNode(String name) {

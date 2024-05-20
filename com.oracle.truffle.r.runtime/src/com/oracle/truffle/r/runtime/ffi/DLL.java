@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2024, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -155,9 +155,7 @@ public class DLL {
         }
     }
 
-    /**
-     * The list of loaded DLLs.
-     */
+    // The list of loaded DLLs.
 
     /**
      * Uniquely identifies the DLL (for use in an {@code externalptr}).
