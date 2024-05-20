@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -194,12 +194,12 @@ public abstract class RBaseNode extends Node {
         return false;
     }
 
-    @Override
     /**
      * Returns the {@link SourceSection} for this node, by locating the associated
      * {@link RSyntaxNode}. We do not want any code in FastR calling this method as it is subsumed
      * by {@link #getRSyntaxNode}. However, tools code may call it, so we simply delegate the call.
      */
+    @Override
     public SourceSection getEncapsulatingSourceSection() {
         return getRSyntaxNode().getSourceSection();
     }

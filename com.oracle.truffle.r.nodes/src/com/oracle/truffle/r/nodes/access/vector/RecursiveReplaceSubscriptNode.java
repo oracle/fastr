@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,17 +58,6 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
         return subscriptReplace.apply(vector, positions, value);
     }
 
-    /**
-     * Exemplary expansion. <code>
-     * a <- list(1,list(1,list(1))); a[[c(2,2,2)]] <- 2
-     * Gets desugared into:
-     * tmp1 <- a[[2]]
-     * tmp2 <- tmp1[[2]]
-     * tmp2[[2]] <- 2
-     * tmp1[[2]] <- tmp2
-     * a[[2]] <- tmp1
-     * </code>
-     */
     /**
      * Exemplary expansion. <code>
      * a <- list(1,list(1,list(1))); a[[c(2,2,2)]] <- 2
