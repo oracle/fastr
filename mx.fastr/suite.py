@@ -2,7 +2,8 @@ suite = {
   "mxversion" : "6.0.1",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
-  "version": "24.1.0",
+  # Uncomment to publish Maven artifacts
+  # "version": "24.1.0",
   "imports" : {
     "suites" : [
             {

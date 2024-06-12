@@ -331,7 +331,7 @@ def graalvm_jdk():
 
 def deploy_local_maven_repo():
     # deploy maven artifacts
-    version = _fastr_suite.suiteDict['version']
+    version = _fastr_suite.release_version()
     path = os.path.join(_fastr_suite.get_mx_output_dir(), 'public-maven-repo')
     licenses = ['GPLv3', 'EPL-2.0', 'PSF-License', 'GPLv2-CPE', 'ICU,GPLv2', 'BSD-simplified', 'BSD-new', 'UPL', 'MIT']
     deploy_args = [
