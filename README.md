@@ -72,7 +72,17 @@ The access point for contributions, issues and questions about FastR is the [Git
 ## Authors
 
 FastR is developed by Oracle Labs and is based on [the GNU-R runtime](http://www.r-project.org/).
-It contains contributions by researchers at Purdue University ([purdue-fastr](https://github.com/allr/purdue-fastr)), Northeastern University, JKU Linz, TU Dortmund and TU Berlin.  
+It contains contributions by researchers at Purdue University ([purdue-fastr](https://github.com/allr/purdue-fastr)), Northeastern University, JKU Linz, TU Dortmund and TU Berlin.
+
+## Contributing
+
+This project is not accepting external contributions at this time. For bugs or enhancement requests, please file a GitHub issue unless it’s security related.
+When filing a bug remember that the better written the bug is, the more likely it is to be fixed.
+If you think you’ve found a security vulnerability, do not raise a GitHub issue and follow the instructions in our security policy.
+
+## Security
+
+Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
 
 ## License
 
