@@ -57,7 +57,7 @@ class FastRReleaseProject(FastRProjectAdapter):  # pylint: disable=too-many-ance
         results = []
         for rdir in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
             self._get_files(rdir, results)
-        results.append(join(self.dir, 'LICENSE'))
+        results.append(join(self.dir, 'LICENSE.txt'))
         results.append(join(self.dir, 'COPYRIGHT'))
         results.append(join(self.dir, 'README.md'))
         return results
@@ -109,7 +109,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
                         data = infile.read()
                         outfile.write(data)
         # license/README
-        shutil.copy(join(fastr_dir, 'LICENSE'), output_dir)
+        shutil.copy(join(fastr_dir, 'LICENSE.txt'), output_dir)
         shutil.copy(join(fastr_dir, 'README.md'), output_dir)
 
         # jar files for the launchers
@@ -171,7 +171,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                     "path": "*",
                     "exclude": [
                         "COPYRIGHT",
-                        "LICENSE",
+                        "LICENSE.txt",
                         "README.md",
                         "bin/Rscript",
                         "bin/fastr_jars",
@@ -179,7 +179,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                     ],
                 },
             ],
-            "LICENSE_FASTR" : "file:LICENSE",
+            "LICENSE_FASTR" : "file:LICENSE.txt",
             "3rd_party_licenses_fastr.txt" : "file:3rd_party_licenses.txt",
             "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/README.md",
             "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_launcher",
