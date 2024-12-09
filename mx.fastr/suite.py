@@ -392,6 +392,8 @@ suite = {
         "java.logging",
         "jdk.unsupported" # sun.misc.Unsafe
       ],
+      # Disables all javac warnings, because of our Unsafe usages
+      "javac.lint.overrides" : "none",
     },
 
     "com.oracle.truffle.r.launcher" : {
