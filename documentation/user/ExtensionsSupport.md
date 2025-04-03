@@ -1,9 +1,3 @@
----
-layout: docs-experimental
-toc_group: fastr
-link_title: R Extensions Support
-permalink: /reference-manual/r/ExtensionsSupport/
----
 # R Extensions Support
 
 The GraalVM R runtime can run [R extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) in two modes:

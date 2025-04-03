@@ -1,9 +1,3 @@
----
-layout: docs-experimental
-toc_group: fastr
-link_title: GraalVM R Engine Compatibility
-permalink: /reference-manual/r/Compatibility/
----
 # GraalVM R Runtime Compatibility
 
 The GraalVM R runtime is based on GNU R and reuses the base packages.
