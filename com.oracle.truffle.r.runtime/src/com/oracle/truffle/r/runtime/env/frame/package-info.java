@@ -1,5 +1,6 @@
+
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,4 +30,7 @@
  * {@link com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess} handles Truffle frames and
  * locking/unlocking bindings.
  */
+@SuppressPackageWarnings({"truffle-inlining", "truffle-sharing", "truffle-neverdefault", "truffle-limit", "truffle-guard", "deprecated"})
 package com.oracle.truffle.r.runtime.env.frame;
+
+import com.oracle.truffle.api.dsl.SuppressPackageWarnings;

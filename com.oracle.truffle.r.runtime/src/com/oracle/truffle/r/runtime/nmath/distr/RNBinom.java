@@ -19,11 +19,11 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MAX;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MAX;
-
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
@@ -37,7 +37,7 @@ public final class RNBinom {
     public abstract static class RNBinomFunc extends RandFunction2_Double {
 
         @Specialization
-        public double execute(double size, double prob, RandomNumberProvider rand,
+        public double doIt(double size, double prob, RandomNumberProvider rand,
                         @Cached() RPois rpois,
                         @Cached() RGamma rgamma) {
             if (!Double.isFinite(prob) || Double.isNaN(size) || size <= 0 || prob <= 0 || prob > 1) {
