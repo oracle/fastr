@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2016, The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2025, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MAX;
+
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MAX;
-
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
@@ -37,7 +37,7 @@ public final class RNBinom {
     public abstract static class RNBinomFunc extends RandFunction2_Double {
 
         @Specialization
-        public double execute(double size, double prob, RandomNumberProvider rand,
+        public double doIt(double size, double prob, RandomNumberProvider rand,
                         @Cached() RPois rpois,
                         @Cached() RGamma rgamma) {
             if (!Double.isFinite(prob) || Double.isNaN(size) || size <= 0 || prob <= 0 || prob > 1) {

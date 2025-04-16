@@ -20,16 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/**
- * This package contains all the code related to the "frame" access aspect of an
- * {@link com.oracle.truffle.r.runtime.env.REnvironment}. The basic interface assumed by
- * {@link com.oracle.truffle.r.runtime.env.REnvironment} is defined in
- * {@link com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess}, which provides default
- * implementations, most of which fail. The subclass
- * {@link com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess} handles Truffle frames and
- * locking/unlocking bindings.
- */
+
 @SuppressPackageWarnings({"truffle-inlining", "truffle-sharing", "truffle-neverdefault", "truffle-limit", "truffle-guard", "deprecated"})
-package com.oracle.truffle.r.runtime.env.frame;
+package com.oracle.truffle.r.runtime.ops.na;
 
 import com.oracle.truffle.api.dsl.SuppressPackageWarnings;
